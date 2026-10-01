@@ -406,17 +406,19 @@ function draw(){
     ctx.fillStyle=C.ink2; ctx.textAlign="left"; lbls.forEach((l,k)=>{ if(l) ctx.fillText(l, L+plotW+5, sTop+2+rowH*(k+0.5)); });
     const pair = (cx, y, a, b) => { ctx.textAlign="left"; const wa = a? ctx.measureText(a+" ").width:0, wb=ctx.measureText(b||"").width; let x=cx-(wa+wb)/2;
       if(a){ ctx.fillStyle=C.ink; ctx.fillText(a+" ", x, y); x+=wa; } if(b){ ctx.fillStyle= sign(b)==="neg"? C.down : C.blue; ctx.fillText(b, x, y); } };
-    for(const q of Q){ const e = new Date(q.end); const start = Date.UTC(e.getUTCFullYear(), e.getUTCMonth()-2, 1);
-      let x0 = Math.max(L, xAtT(start)), x1 = Math.min(L+plotW, xAtT(q.end+864e5)); if(x1-x0 < 24) continue;
-      ctx.strokeStyle=C.grid; ctx.setLineDash([1,2]); ctx.beginPath(); ctx.moveTo(Math.round(x1)+.5, sTop); ctx.lineTo(Math.round(x1)+.5, sBot); ctx.stroke(); ctx.setLineDash([]);
-      const cx=(x0+x1)/2, wide = x1-x0 > 92;
-      ctx.save(); ctx.beginPath(); ctx.rect(x0+1,sTop,x1-x0-2,stripH); ctx.clip();
+    // last 8 quarters (4 on a phone) in equal columns, oldest on the left
+    const SQ = Q.slice(0, narrow ? 4 : 8).reverse(); const cw = plotW / SQ.length;
+    SQ.forEach((q, k) => {
+      const x0 = L + k*cw, x1 = x0 + cw;
+      if(k){ ctx.strokeStyle=C.grid; ctx.setLineDash([1,2]); ctx.beginPath(); ctx.moveTo(Math.round(x0)+.5, sTop); ctx.lineTo(Math.round(x0)+.5, sBot); ctx.stroke(); ctx.setLineDash([]); }
+      const cx=(x0+x1)/2, wide = cw > 92;
+      ctx.save(); ctx.beginPath(); ctx.rect(x0+1,sTop,cw-2,stripH); ctx.clip();
       ctx.fillStyle=C.ink; ctx.font=`700 ${narrow?9:10}px ${FONT_L}`; ctx.textAlign="center"; ctx.fillText(q.q, cx, sTop+2+rowH*0.5);
       ctx.font=`${narrow?9:10}px ${FONT_D}`;
       pair(cx, sTop+2+rowH*1.5, wide&&!narrow? q.eps : "", q.epsChg);
       pair(cx, sTop+2+rowH*2.5, wide&&!narrow? q.sales : "", q.salesChg);
       if(hasMargin && !narrow){ ctx.fillStyle=C.ink2; ctx.textAlign="center"; ctx.fillText(q.margin||"", cx, sTop+2+rowH*3.5); }
-      ctx.restore(); }
+      ctx.restore(); });
   }
 
   // last price tag + readout + crosshair
@@ -492,11 +494,19 @@ function renderPanels(){
   const Q = (F.quarters||[]).filter(q=>q.q||q.eps);
   $("#qtrs").innerHTML = Q.length ? `<table><thead><tr><th class="l">Qtr</th><th>Reported</th><th>EPS</th><th>% chg</th><th>Sales</th><th>% chg</th><th>Op. mgn</th><th>Surprise</th></tr></thead><tbody>${Q.map(q=>`<tr><td class="l">${esc(q.q)}</td><td>${q.date?fmtD(iso(q.date)):""}</td><td>${esc(q.eps)}</td><td class="${sign(q.epsChg)}">${esc(q.epsChg)}</td><td>${esc(q.sales)}</td><td class="${sign(q.salesChg)}">${esc(q.salesChg)}</td><td>${esc(q.margin||"")}</td><td class="${sign(q.surprise)}">${esc(q.surprise||"")}</td></tr>`).join("")}</tbody></table>`
     : `<div class="empty">${F.pending ? "Earnings and sales for this stock are still loading: the site fetches them for a batch of stocks each day, so they appear within the next few updates. Add it to watchlist.txt to get them on the next update." : "Yahoo did not return quarterly earnings for this ticker."}</div>`;
-  const A = (F.annual||[]).filter(a=>a.y||a.eps);
-  $("#annual").innerHTML = A.length ? `<table><thead><tr><th class="l">Year</th><th>EPS</th><th>EPS % chg</th><th>Sales % chg</th></tr></thead><tbody>${A.map(a=>`<tr><td class="l">${esc(a.y)}</td><td>${esc(a.eps)}</td><td class="${sign(a.chg)}">${esc(a.chg)}</td><td class="${sign(a.salesChg)}">${esc(a.salesChg||"")}</td></tr>`).join("")}</tbody></table>` : `<div class="empty">No annual data.</div>`;
+  const A = (F.annual||[]).filter(a=>a.y||a.eps).slice(0,10);
+  $("#annualN").textContent = A.length ? `last ${A.length} years` : "";
+  $("#annual").innerHTML = A.length ? `<table><thead><tr><th class="l">Year</th><th>EPS</th><th>% chg</th><th>Sales</th><th>% chg</th><th>Net mgn</th></tr></thead><tbody>${A.map(a=>`<tr><td class="l">${esc(a.y)}</td><td>${esc(a.eps)||"–"}</td><td class="${sign(a.chg)}">${esc(a.chg)||"–"}</td><td>${esc(a.sales)||"–"}</td><td class="${sign(a.salesChg)}">${esc(a.salesChg)||"–"}</td><td>${esc(a.netMgn)||"–"}</td></tr>`).join("")}</tbody></table>`
+    : `<div class="empty">${F.pending ? "Annual figures load with the fundamentals rotation in the next updates." : "No annual data."}</div>`;
 
-  const K = [["Sector · group",F.group],["Group rank",F.groupRank],["Market cap",F.mktCap],["Float",F.float],["Shares out",F.shares],["Institutional",F.inst],["ROE",F.roe],["Pretax margin",F.pretax],["Debt / equity",F.debt],["EPS growth (3y)",F.epsGrowth],["EPS surprises (8q)",F.epsSurprise],["Next earnings",F.nextEarn],["Next qtr EPS est.",F.epsDue]].filter(r=>r[1]);
-  $("#keydata").innerHTML = K.map(([k,v])=>`<dt>${k}</dt><dd>${esc(v)}</dd>`).join("") || `<div class="empty" style="grid-column:1/-1">No key data.</div>`;
+  $("#aboutSec").textContent = F.group || F.sector || "";
+  $("#about").textContent = F.about || (F.pending ? "The business description loads with the fundamentals rotation in the next updates." : "No description available.");
+  $("#about").classList.toggle("muted", !F.about);
+  const site = /^https?:\/\//i.test(F.website||"") ? `<a href="${esc(F.website)}" target="_blank" rel="noopener">${esc(F.website.replace(/^https?:\/\/(www\.)?/,"").replace(/\/$/,""))}</a>` : "";
+  const K = [["Market cap",F.mktCap],["Float",F.float],["Shares out",F.shares],["Institutional",F.inst],["ROE",F.roe],["Pretax margin",F.pretax],
+    ["Debt / equity",F.debt],["EPS growth (3y)",F.epsGrowth],["EPS surprises (8q)",F.epsSurprise],["Next earnings",F.nextEarn],["Next qtr EPS est.",F.epsDue],
+    ["Group rank",F.groupRank],["Employees",F.employees],["Headquarters",F.hq],["Exchange",F.exchange]].filter(r=>r[1]);
+  $("#keydata").innerHTML = K.map(([k,v])=>`<div><dt>${k}</dt><dd>${esc(v)}</dd></div>`).join("") + (site?`<div><dt>Website</dt><dd>${site}</dd></div>`:"");
 
   $("#baseBox").innerHTML = b ? `<p class="basebig">${esc(b.type)}</p>
       <dl class="kv"><dt>Status</dt><dd><span class="chip ${STATUS_CLASS[b.status]||""}">${esc(b.status)}</span></dd>
