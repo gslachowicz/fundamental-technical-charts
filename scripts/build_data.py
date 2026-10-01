@@ -564,6 +564,36 @@ def fetch_fundamentals(sym: str) -> dict:
     f["employees"] = "" if emp is None else f"{emp:,.0f}"
     f["hq"] = ", ".join(x for x in (info.get("city"), info.get("state"), info.get("country")) if x)
 
+    # --- analyst ratings and price targets
+    try:
+        rec = t.recommendations
+        if rec is not None and not rec.empty:
+            r0 = rec[rec["period"] == "0m"].iloc[0] if "period" in rec.columns and (rec["period"] == "0m").any() else rec.iloc[0]
+            f["analysts"] = {k: int(fnum(r0.get(k)) or 0) for k in ("strongBuy", "buy", "hold", "sell", "strongSell")}
+    except Exception as e:  # noqa: BLE001
+        log(f"{sym}: recommendations failed: {e}")
+    f["target"] = {"mean": fnum(info.get("targetMeanPrice")), "high": fnum(info.get("targetHighPrice")),
+                   "low": fnum(info.get("targetLowPrice")), "n": fnum(info.get("numberOfAnalystOpinions")),
+                   "key": info.get("recommendationKey") or ""}
+
+    # --- latest headlines
+    news = []
+    try:
+        for it in (t.news or [])[:12]:
+            c = it.get("content") if isinstance(it.get("content"), dict) else it
+            title = c.get("title")
+            url = ((c.get("canonicalUrl") or {}).get("url") or (c.get("clickThroughUrl") or {}).get("url")
+                   or it.get("link") or "")
+            pub = (c.get("provider") or {}).get("displayName") or it.get("publisher") or ""
+            when = c.get("pubDate") or c.get("displayTime") or ""
+            if not when and it.get("providerPublishTime"):
+                when = dt.datetime.fromtimestamp(int(it["providerPublishTime"]), dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+            if title and url.startswith("http"):
+                news.append({"title": title, "url": url, "pub": pub, "date": str(when)[:19]})
+    except Exception as e:  # noqa: BLE001
+        log(f"{sym}: news failed: {e}")
+    f["news"] = news[:8]
+
     # --- SEC filings: 10+ years of annual figures and quarterly sales / operating income
     g = None
     try:
@@ -882,7 +912,11 @@ def demo_inputs(watch: list[str]):
                             "worldwide. It operates through Data Center, Client and Embedded segments, and sells through "
                             "distributors, OEMs and directly to large customers. The company was founded in 1969 and is "
                             "headquartered in Santa Clara, California.",
-                   "website": "https://example.com", "employees": "28,000", "hq": "Santa Clara, CA, United States"}
+                   "website": "https://example.com", "employees": "28,000", "hq": "Santa Clara, CA, United States",
+                   "analysts": {"strongBuy": 12, "buy": 25, "hold": 9, "sell": 1, "strongSell": 1},
+                   "target": {"mean": 250.0, "high": 320.0, "low": 150.0, "n": 44, "key": "buy"},
+                   "news": [{"title": f"Demo headline {k} about {s}", "url": "https://example.com", "pub": "Demo Wire",
+                             "date": f"2026-09-{28 - k:02d}T13:00:00"} for k in range(6)]}
     return uni, prices, fund
 
 
