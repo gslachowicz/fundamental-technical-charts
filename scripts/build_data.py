@@ -130,12 +130,15 @@ def row_val(df: pd.DataFrame | None, names, col):
 
 # ---------------------------------------------------------------- universe
 def fetch_universe() -> dict[str, dict]:
-    """S&P 500 + Nasdaq-100 constituents with GICS sector / sub-industry (from Wikipedia)."""
+    """S&P 500 + S&P 400 + S&P 600 (= S&P 1500) + Nasdaq-100 constituents with GICS sector /
+    sub-industry and company name (from Wikipedia)."""
     import requests
 
     uni: dict[str, dict] = {}
     pages = [
         ("https://en.wikipedia.org/wiki/List_of_S%26P_500_companies", "sp500"),
+        ("https://en.wikipedia.org/wiki/List_of_S%26P_400_companies", "sp400"),
+        ("https://en.wikipedia.org/wiki/List_of_S%26P_600_companies", "sp600"),
         ("https://en.wikipedia.org/wiki/Nasdaq-100", "ndx"),
     ]
     for url, tag in pages:
@@ -148,11 +151,14 @@ def fetch_universe() -> dict[str, dict]:
                     continue
                 sec = cols.get("gics sector")
                 sub = cols.get("gics sub-industry") or cols.get("gics sub‑industry")
+                nm = cols.get("security") or cols.get("company")
                 for _, r in t.iterrows():
                     s = yf_symbol(str(r[sym_col]))
                     if not s or s == "NAN":
                         continue
                     d = uni.setdefault(s, {"sector": "", "industry": ""})
+                    if nm is not None and isinstance(r[nm], str) and not d.get("name"):
+                        d["name"] = r[nm]
                     if sec is not None and isinstance(r[sec], str):
                         d["sector"] = d["sector"] or r[sec]
                     if sub is not None and isinstance(r[sub], str):
@@ -653,13 +659,38 @@ def demo_inputs(watch: list[str]):
     return uni, prices, fund
 
 
+# ---------------------------------------------------------------- fundamentals cache (rotation)
+FUND_MAX_AGE_DAYS = 7      # universe fundamentals older than this get refreshed
+FUND_BATCH = int(__import__("os").environ.get("INK_FUND_BATCH", "150"))  # universe tickers refreshed per run
+
+
+def fund_cache_get(sym: str):
+    p = CACHE / "fund" / f"{sym}.json"
+    if not p.exists():
+        return None, None
+    try:
+        d = json.loads(p.read_text())
+        return d.get("fund"), d.get("ts")
+    except Exception:  # noqa: BLE001
+        return None, None
+
+
+def fund_cache_put(sym: str, fund: dict) -> None:
+    (CACHE / "fund").mkdir(parents=True, exist_ok=True)
+    (CACHE / "fund" / f"{sym}.json").write_text(jdumps({"ts": time.time(), "fund": fund}, separators=(",", ":")))
+
+
+def has_fund_data(f: dict | None) -> bool:
+    return bool(f and (f.get("quarters") or f.get("annual") or f.get("mktCap")))
+
+
 # ---------------------------------------------------------------- main
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--demo", action="store_true", help="synthetic data, no internet")
     ap.add_argument("--out", default=str(OUT_DEFAULT))
     ap.add_argument("--watchlist", default=str(ROOT / "watchlist.txt"))
-    ap.add_argument("--no-universe", action="store_true", help="skip S&P 500 / Nasdaq-100 download")
+    ap.add_argument("--no-universe", action="store_true", help="skip the S&P 1500 / Nasdaq-100 download")
     args = ap.parse_args()
 
     out = Path(args.out)
@@ -676,14 +707,18 @@ def main():
         demo_fund = None
         uni = {} if args.no_universe else fetch_universe()
         cache_uni = CACHE / "universe.json"
-        if len(uni) >= 300:
+        cached_uni = json.loads(cache_uni.read_text()) if cache_uni.exists() else {}
+        if len(uni) >= max(300, 0.8 * len(cached_uni)):
             cache_uni.write_text(jdumps(uni))
-        elif cache_uni.exists():
-            uni = json.loads(cache_uni.read_text())
-            log(f"universe: using cached list ({len(uni)})")
+        elif cached_uni:
+            # one Wikipedia page failed: keep what we got and fill the gaps from the last good list
+            for s, d in cached_uni.items():
+                uni.setdefault(s, d)
+            log(f"universe: completed from cached list ({len(uni)})")
         extra = read_list(ROOT / "universe_extra.txt")
         for s in extra:
             uni.setdefault(s, {"sector": "", "industry": ""})
+        log(f"universe: {len(uni)} stocks")
         symbols = list(dict.fromkeys(watch + list(INDEXES) + list(uni)))
         prices = download_prices(symbols, "3y")
 
@@ -719,7 +754,55 @@ def main():
              "prices": [[d.strftime("%Y-%m-%d"), round(float(x), 2)] for d, x in bench.items()]}
     (out / "bench.json").write_text(jdumps(bjson, separators=(",", ":")))
 
+    now_iso = dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%MZ")
+
+    def build(s: str, df: pd.DataFrame, fund: dict):
+        """Price analytics + fundamentals -> (screener row, chart bundle)."""
+        fund = dict(fund or {})
+        gi = uni.get(s, {})
+        fund.setdefault("name", gi.get("name") or s)
+        if not fund.get("name") or fund.get("name") == s:
+            fund["name"] = gi.get("name") or s
+        st = price_stats(df, bench)
+        st["rsRating"] = rs_rating(scores.get(s), ref)
+        base = detect_base(df)
+        group = gi.get("industry") or fund.get("industryYahoo") or ""
+        fund.pop("groupRank", None), fund.pop("grpRs", None)
+        if gi.get("industry") in grp_rank:
+            r = grp_rank[gi["industry"]]
+            fund["groupRank"] = f"{r} of {len(grp_rank)}"
+            fund["grpRs"] = grp_letter(r, len(grp_rank))
+        fund["group"] = " · ".join(x for x in (gi.get("sector") or fund.get("sector"), group) if x)
+        if st["rsRating"] is not None:
+            fund["rs"] = str(st["rsRating"])
+        q0 = (fund.get("quarters") or [{}])[0]
+        row = {
+            "symbol": s, "name": fund.get("name", s), "group": group, "sector": gi.get("sector") or fund.get("sector", ""),
+            "groupRank": fund.get("groupRank", ""), **{k: st.get(k) for k in (
+                "close", "chgPct", "rsRating", "offHighPct", "vs50Pct", "vs200Pct", "volVsAvgPct", "udRatio",
+                "atrPct", "perf3m", "perf12m", "rsLineNewHigh", "dollarVol50", "date")},
+            "epsChg": q0.get("epsChg", ""), "salesChg": q0.get("salesChg", ""),
+            "base": None if not base else {k: base[k] for k in ("type", "pivot", "distPct", "status", "weeks", "depthPct")},
+            "spark": [round(float(x), 2) for x in df["Close"].to_numpy()[-90:]],
+        }
+        bundle = {
+            "symbol": s, "name": fund.get("name", s), "updated": now_iso,
+            "prices": [[d.strftime("%Y-%m-%d"), round(r.Open, 2), round(r.High, 2), round(r.Low, 2), round(r.Close, 2), int(r.Volume)]
+                       for d, r in df.iterrows()],
+            "fund": fund, "stats": st, "base": base, "row": row,
+        }
+        return row, bundle, base
+
+    def write_bundle(s, bundle, keep_cache=False):
+        txt = jdumps(bundle, separators=(",", ":"))
+        (out / "t" / f"{s}.json").write_text(txt)
+        if keep_cache:
+            (CACHE / "t").mkdir(exist_ok=True)
+            (CACHE / "t" / f"{s}.json").write_text(txt)
+
+    # ---------- 1) watchlist: fresh fundamentals every run
     rows, errors = [], []
+    fresh: set[str] = set()
     for s in watch:
         df = prices.get(s)
         if df is None:
@@ -737,57 +820,88 @@ def main():
             else:
                 try:
                     fund = fetch_fundamentals(s)
+                    if has_fund_data(fund):
+                        fund_cache_put(s, fund)
+                        fresh.add(s)
+                    else:
+                        fund = fund_cache_get(s)[0] or fund
                 except Exception as e:  # noqa: BLE001
                     log(f"{s}: fundamentals failed: {e}")
                     errors.append(f"{s}: fundamentals unavailable")
-                    fund = {"name": s}
+                    fund = fund_cache_get(s)[0] or {"name": s}
                 time.sleep(0.8)
-            st = price_stats(df, bench)
-            st["rsRating"] = rs_rating(scores.get(s), ref)
-            base = detect_base(df)
-            gi = uni.get(s, {})
-            group = gi.get("industry") or fund.get("industryYahoo") or ""
-            if gi.get("industry") in grp_rank:
-                r = grp_rank[gi["industry"]]
-                fund["groupRank"] = f"{r} of {len(grp_rank)}"
-                fund["grpRs"] = grp_letter(r, len(grp_rank))
-            fund["group"] = " · ".join(x for x in (gi.get("sector") or fund.get("sector"), group) if x)
-            if st["rsRating"] is not None:
-                fund["rs"] = str(st["rsRating"])
-            q0 = (fund.get("quarters") or [{}])[0]
-            row = {
-                "symbol": s, "name": fund.get("name", s), "group": group, "sector": gi.get("sector") or fund.get("sector", ""),
-                "groupRank": fund.get("groupRank", ""), **{k: st.get(k) for k in (
-                    "close", "chgPct", "rsRating", "offHighPct", "vs50Pct", "vs200Pct", "volVsAvgPct", "udRatio",
-                    "atrPct", "perf3m", "perf12m", "rsLineNewHigh", "dollarVol50", "date")},
-                "epsChg": q0.get("epsChg", ""), "salesChg": q0.get("salesChg", ""),
-                "base": None if not base else {k: base[k] for k in ("type", "pivot", "distPct", "status", "weeks", "depthPct")},
-                "spark": [round(float(x), 2) for x in df["Close"].to_numpy()[-90:]],
-            }
-            bundle = {
-                "symbol": s, "name": fund.get("name", s), "updated": dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%MZ"),
-                "prices": [[d.strftime("%Y-%m-%d"), round(r.Open, 2), round(r.High, 2), round(r.Low, 2), round(r.Close, 2), int(r.Volume)]
-                           for d, r in df.iterrows()],
-                "fund": fund, "stats": st, "base": base, "row": row,
-            }
-            (out / "t" / f"{s}.json").write_text(jdumps(bundle, separators=(",", ":")))
-            (CACHE / "t").mkdir(exist_ok=True)
-            (CACHE / "t" / f"{s}.json").write_text(jdumps(bundle, separators=(",", ":")))
+            row, bundle, base = build(s, df, fund)
+            write_bundle(s, bundle, keep_cache=True)
             rows.append(row)
-            log(f"{s}: ok  RS {st['rsRating']}  base {base['type'] + ' / ' + base['status'] if base else '-'}")
+            log(f"{s}: ok  RS {row['rsRating']}  base {base['type'] + ' / ' + base['status'] if base else '-'}")
         except Exception as e:  # noqa: BLE001
             traceback.print_exc()
             errors.append(f"{s}: {e}")
 
+    # ---------- 2) universe: refresh the oldest fundamentals in rotation
+    watch_set = set(watch)
+    uni_syms = [s for s in uni if s not in watch_set and s in prices]
+    if demo_fund is None and uni_syms and FUND_BATCH > 0:
+        ages = []
+        for s in uni_syms:
+            f, ts = fund_cache_get(s)
+            ages.append((ts or 0, s))
+        due = [s for ts, s in sorted(ages) if time.time() - ts > FUND_MAX_AGE_DAYS * 86400][:FUND_BATCH]
+        log(f"fundamentals rotation: refreshing {len(due)} of {len(uni_syms)} universe stocks")
+        fails = 0
+        for s in due:
+            try:
+                f = fetch_fundamentals(s)
+                if has_fund_data(f):
+                    fund_cache_put(s, f)
+                    fresh.add(s)
+                    fails = 0
+                else:
+                    fails += 1
+            except Exception as e:  # noqa: BLE001
+                log(f"{s}: fundamentals failed: {e}")
+                fails += 1
+            if fails >= 12:
+                log("fundamentals rotation: too many failures in a row (Yahoo rate limit?), stopping for today")
+                break
+            time.sleep(0.8)
+
+    # ---------- 3) universe screener + chart files for every stock
+    uni_rows = []
+    with_fund = 0
+    for s in list(dict.fromkeys(watch + uni_syms)):
+        if s in watch_set:
+            r = next((x for x in rows if x["symbol"] == s), None)
+            if r:
+                uni_rows.append({**r, "w": 1})
+            continue
+        df = prices.get(s)
+        if df is None:
+            continue
+        try:
+            fund = fund_cache_get(s)[0] if demo_fund is None else None
+            if has_fund_data(fund):
+                with_fund += 1
+            else:
+                fund = {"name": uni.get(s, {}).get("name") or s, "pending": True}
+            row, bundle, _ = build(s, df, fund)
+            write_bundle(s, bundle)
+            uni_rows.append(row)
+        except Exception as e:  # noqa: BLE001
+            log(f"{s}: universe row failed: {e}")
+    log(f"universe screener: {len(uni_rows)} stocks, {with_fund + len(watch)} with fundamentals")
+
     (out / "screener.json").write_text(jdumps(rows, separators=(",", ":")))
+    (out / "universe.json").write_text(jdumps(uni_rows, separators=(",", ":")))
     meta = {
-        "updated": dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%MZ"),
+        "updated": now_iso,
         "dataDate": bench.index[-1].strftime("%Y-%m-%d"),
         "demo": bool(args.demo), "universeSize": int(len(ref)), "groups": len(grp_rank),
+        "allStocks": len(uni_rows), "withFundamentals": with_fund + len([s for s in watch if s in prices]),
         "market": market, "errors": errors,
     }
     (out / "meta.json").write_text(jdumps(meta, indent=1))
-    log(f"done: {len(rows)} tickers, {len(errors)} errors")
+    log(f"done: {len(rows)} watchlist tickers, {len(uni_rows)} in universe, {len(errors)} errors")
 
 
 if __name__ == "__main__":
