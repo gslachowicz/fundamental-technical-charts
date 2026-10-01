@@ -144,3 +144,7 @@ dl.kv dd{text-align:right;font-weight:700}
   .grp{border-left:0;padding-left:0}
   .spk{display:none}
 }
+
+.more{display:flex;justify-content:center;padding:4px 0 2px}
+.scr .star{color:var(--amber);font-size:11px;margin-left:3px}
+.bar .seg+.seg{margin-left:8px}

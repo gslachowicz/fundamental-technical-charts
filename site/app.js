@@ -32,8 +32,21 @@ const STATUS_CLASS = {"Breakout":"s-breakout","In buy zone":"s-buy","Near pivot"
 const MKT_CLASS = {"Uptrend":"st-up","Uptrend under pressure":"st-press","Correction":"st-corr"};
 
 /* ---------- app state ---------- */
-let META=null, ROWS=[], BENCH=null, order=[];
-const scrState = { key: store.get("ink:sortKey") || "rsRating", asc: !!store.get("ink:sortAsc"), filter: "all" };
+let META=null, ROWS=[], UNI=null, BENCH=null, order=[];
+const PAGE = 100;
+const scrState = { key: store.get("ink:sortKey") || "rsRating", asc: !!store.get("ink:sortAsc"), filter: "all",
+  scope: store.get("ink:scope")==="all" ? "all" : "watch", limit: PAGE };
+const list = () => scrState.scope==="all" && UNI ? UNI : ROWS;
+let uniLoading = null;
+function loadUni(){
+  if(UNI) return Promise.resolve(UNI);
+  if(!uniLoading) uniLoading = getJSON("universe.json").then(u=>{ UNI=u; fillSymlist(); return u; }).catch(e=>{ uniLoading=null; throw e; });
+  return uniLoading;
+}
+function fillSymlist(){
+  const src = UNI || ROWS;
+  $("#symlist").innerHTML = src.map(r=>`<option value="${esc(r.symbol)}">${esc(r.name)}</option>`).join("");
+}
 
 /* ================= SCREENER ================= */
 function rowVal(r, k){
@@ -50,12 +63,13 @@ function rowVal(r, k){
 }
 function filtered(){
   const f = scrState.filter;
-  return ROWS.filter(r => {
+  return list().filter(r => {
     const st = r.base && r.base.status;
     if(f==="setup") return st==="Breakout" || st==="In buy zone";
     if(f==="near") return st==="Near pivot" || st==="In buy zone" || st==="Breakout";
     if(f==="rs80") return (r.rsRating||0) >= 80;
     if(f==="trend") return (r.vs50Pct??-1) > 0;
+    if(f==="liquid") return (r.dollarVol50||0) >= 2e7;
     return true;
   });
 }
@@ -75,13 +89,14 @@ function renderScreener(){
     if(x==null && y==null) return 0; if(x==null) return 1; if(y==null) return -1;
     return (typeof x==="string" ? x.localeCompare(y) : x-y) * dir; });
   order = rows.map(r=>r.symbol);
+  const total = rows.length, shown = rows.slice(0, scrState.limit), all = list();
   $$("#scr th[data-k]").forEach(th=>{ th.classList.toggle("sorted", th.dataset.k===k); th.classList.toggle("asc", th.dataset.k===k && scrState.asc); th.tabIndex=0; });
   const tb = $("#scr tbody");
-  tb.innerHTML = rows.map(r => {
+  tb.innerHTML = shown.map(r => {
     const b = r.base || {};
     const rs = r.rsRating; const stc = STATUS_CLASS[b.status] || "";
     return `<tr data-s="${esc(r.symbol)}" tabindex="0">
-      <td class="l"><span class="sym">${esc(r.symbol)}</span>${r.stale?' <span class="stale">stale</span>':''}<span class="nm" title="${esc(r.name)}">${esc(r.name)}</span></td>
+      <td class="l"><span class="sym">${esc(r.symbol)}</span>${r.w && scrState.scope==="all"?'<span class="star" title="In your watchlist">★</span>':''}${r.stale?' <span class="stale">stale</span>':''}<span class="nm" title="${esc(r.name)}">${esc(r.name)}</span></td>
       <td class="spk"><canvas data-spark="${esc(r.symbol)}"></canvas></td>
       <td>${fmtP(r.close)}</td>
       <td class="${r.chgPct<0?'neg':''}">${fmtPct(r.chgPct,2)}</td>
@@ -98,8 +113,11 @@ function renderScreener(){
       <td class="${(b.distPct??0)<0?'neg':''}">${b.pivot?fmtPct(b.distPct):"—"}</td>
       <td class="l">${b.status?`<span class="chip ${stc}">${esc(b.status)}</span>`:"—"}</td>
     </tr>`; }).join("") || `<tr><td colspan="16" class="l" style="padding:18px">No tickers match this filter.</td></tr>`;
-  $$("canvas[data-spark]").forEach(cv=>{ const r = ROWS.find(x=>x.symbol===cv.dataset.spark); sparkline(cv, r && r.spark); });
-  $("#count").textContent = `${rows.length} of ${ROWS.length} tickers`;
+  const bySym = new Map(shown.map(r=>[r.symbol,r]));
+  $$("canvas[data-spark]").forEach(cv=>{ const r = bySym.get(cv.dataset.spark); sparkline(cv, r && r.spark); });
+  $("#count").textContent = total > shown.length ? `Showing ${shown.length} of ${total} · ${all.length} ${scrState.scope==="all"?"stocks":"tickers"}` : `${total} of ${all.length} ${scrState.scope==="all"?"stocks":"tickers"}`;
+  $("#moreWrap").hidden = total <= shown.length;
+  if(total > shown.length) $("#moreBtn").textContent = `Show ${Math.min(PAGE, total-shown.length)} more`;
 }
 function renderPulse(){
   const el = $("#pulse");
@@ -113,14 +131,26 @@ function renderPulse(){
 }
 $$("#scr th[data-k]").forEach(th=>{
   const go = ()=>{ const k=th.dataset.k; if(scrState.key===k) scrState.asc=!scrState.asc; else { scrState.key=k; scrState.asc = ["symbol","baseType","status","grp","distPct"].includes(k) ? true : false; }
-    store.set("ink:sortKey",scrState.key); store.set("ink:sortAsc",scrState.asc); renderScreener(); };
+    store.set("ink:sortKey",scrState.key); store.set("ink:sortAsc",scrState.asc); scrState.limit=PAGE; renderScreener(); };
   th.addEventListener("click", go); th.addEventListener("keydown", e=>{ if(e.key==="Enter") go(); });
 });
-$$("#filters button").forEach(b=>b.onclick=()=>{ scrState.filter=b.dataset.f; $$("#filters button").forEach(x=>x.classList.toggle("on",x===b)); renderScreener(); });
+$$("#filters button").forEach(b=>b.onclick=()=>{ scrState.filter=b.dataset.f; scrState.limit=PAGE; $$("#filters button").forEach(x=>x.classList.toggle("on",x===b)); renderScreener(); });
+async function setScope(s){
+  scrState.scope = s; scrState.limit = PAGE; store.set("ink:scope", s);
+  $$("#scope button").forEach(x=>x.classList.toggle("on", x.dataset.s===s));
+  if(s==="all" && !UNI){
+    $("#count").textContent = "Loading all stocks…";
+    try{ await loadUni(); }catch(e){ toast("Could not load the full stock list. It appears after the next data update."); scrState.scope="watch"; $$("#scope button").forEach(x=>x.classList.toggle("on", x.dataset.s==="watch")); }
+  }
+  renderScreener();
+}
+$$("#scope button").forEach(b=>b.onclick=()=>setScope(b.dataset.s));
+$("#moreBtn").onclick=()=>{ scrState.limit += PAGE; renderScreener(); };
 $("#scr tbody").addEventListener("click", e=>{ const tr=e.target.closest("tr[data-s]"); if(tr) location.hash = tr.dataset.s; });
 $("#scr tbody").addEventListener("keydown", e=>{ const tr=e.target.closest("tr[data-s]"); if(tr && e.key==="Enter") location.hash = tr.dataset.s; });
 $("#jump").addEventListener("change", e=>{ const v=e.target.value.trim().toUpperCase(); if(!v) return; e.target.value="";
-  if(ROWS.some(r=>r.symbol===v)) location.hash = v; else toast(`${v} is not in the watchlist. Add it to watchlist.txt and it will appear after the next update.`); });
+  const known = ROWS.some(r=>r.symbol===v) || (UNI && UNI.some(r=>r.symbol===v));
+  if(known || !UNI) location.hash = v; else toast(`${v} is not in the S&P 1500 or Nasdaq-100. Add it to watchlist.txt and it will appear after the next update.`); });
 
 /* ================= CHART ================= */
 let S = null;               // current ticker bundle
@@ -451,7 +481,7 @@ function renderPanels(){
 
   const Q = (F.quarters||[]).filter(q=>q.q||q.eps);
   $("#qtrs").innerHTML = Q.length ? `<table><thead><tr><th class="l">Qtr</th><th>Reported</th><th>EPS</th><th>% chg</th><th>Sales</th><th>% chg</th><th>Op. mgn</th><th>Surprise</th></tr></thead><tbody>${Q.map(q=>`<tr><td class="l">${esc(q.q)}</td><td>${q.date?fmtD(iso(q.date)):""}</td><td>${esc(q.eps)}</td><td class="${sign(q.epsChg)}">${esc(q.epsChg)}</td><td>${esc(q.sales)}</td><td class="${sign(q.salesChg)}">${esc(q.salesChg)}</td><td>${esc(q.margin||"")}</td><td class="${sign(q.surprise)}">${esc(q.surprise||"")}</td></tr>`).join("")}</tbody></table>`
-    : `<div class="empty">Yahoo did not return quarterly earnings for this ticker.</div>`;
+    : `<div class="empty">${F.pending ? "Earnings and sales for this stock are still loading: the site fetches them for a batch of stocks each day, so they appear within the next few updates. Add it to watchlist.txt to get them on the next update." : "Yahoo did not return quarterly earnings for this ticker."}</div>`;
   const A = (F.annual||[]).filter(a=>a.y||a.eps);
   $("#annual").innerHTML = A.length ? `<table><thead><tr><th class="l">Year</th><th>EPS</th><th>EPS % chg</th><th>Sales % chg</th></tr></thead><tbody>${A.map(a=>`<tr><td class="l">${esc(a.y)}</td><td>${esc(a.eps)}</td><td class="${sign(a.chg)}">${esc(a.chg)}</td><td class="${sign(a.salesChg)}">${esc(a.salesChg||"")}</td></tr>`).join("")}</tbody></table>` : `<div class="empty">No annual data.</div>`;
 
@@ -505,7 +535,7 @@ $("#pW").onclick=()=>{ view.weekly=true; $("#pW").classList.add("on"); $("#pD").
 $$("#rangeSeg button").forEach(b=>b.onclick=()=>{ view.months=+b.dataset.r; $$("#rangeSeg button").forEach(x=>x.classList.toggle("on",x===b)); draw(); });
 for(const [id,key] of [["#tBox","box"],["#tPiv","piv"],["#tBase","base"]]){
   $(id).onclick=()=>{ view[key]=!view[key]; $(id).classList.toggle("on",view[key]); $(id).setAttribute("aria-pressed",view[key]); draw(); renderDbox(); }; }
-function step(d){ if(!S) return; const list = order.length ? order : ROWS.map(r=>r.symbol); const i=list.indexOf(S.symbol); if(i<0) return; location.hash = list[(i+d+list.length)%list.length]; }
+function step(d){ if(!S) return; const L = order.length ? order : ROWS.map(r=>r.symbol); const i=L.indexOf(S.symbol); if(i<0) return; location.hash = L[(i+d+L.length)%L.length]; }
 $("#bPrev").onclick=()=>step(-1); $("#bNext").onclick=()=>step(1);
 document.addEventListener("keydown", e=>{
   if(e.target.closest("input")) return;
@@ -524,7 +554,7 @@ async function openChart(sym){
     hover=-1; renderPanels(); draw(); renderDbox();
   }catch(e){
     S=null; draw(); $("#sym").textContent = sym; $("#cname").textContent = "";
-    toast(`Could not load ${sym}. It may not be in the watchlist yet.`);
+    toast(`Could not load ${sym}. It is not in the S&P 1500 / Nasdaq-100 or your watchlist yet.`);
   }finally{ $("#loading").hidden = true; }
 }
 function route(){
@@ -548,8 +578,12 @@ function route(){
     if(META.errors && META.errors.length) notes.push("Last update had problems with: " + META.errors.slice(0,6).join("; ") + (META.errors.length>6?"…":""));
     if(notes.length){ $("#banner").hidden=false; $("#banner").textContent = notes.join(" "); }
   }
-  $("#symlist").innerHTML = ROWS.map(r=>`<option value="${esc(r.symbol)}">${esc(r.name)}</option>`).join("");
-  renderPulse(); renderScreener();
+  fillSymlist();
+  renderPulse();
+  if(scrState.scope==="all") await setScope("all"); else renderScreener();
+  if(META && META.allStocks){ $("#scope button[data-s=all]").textContent = `All stocks (${META.allStocks.toLocaleString("en-US")})`; }
+  else { $("#scope").hidden = true; }
+  setTimeout(()=>loadUni().catch(()=>{}), 400);   // background: full list for the ticker search
   window.addEventListener("hashchange", route); route();
   let rz; new ResizeObserver(()=>{ cancelAnimationFrame(rz); rz=requestAnimationFrame(()=>{ if(S && !$("#vChart").hidden){ draw(); renderDbox(); } }); }).observe(cv);
   if(document.fonts && document.fonts.ready) document.fonts.ready.then(()=>{ if(S) draw(); });

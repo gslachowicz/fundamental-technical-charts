@@ -25,12 +25,17 @@
     <section class="pulse" id="pulse" aria-label="Market pulse"></section>
 
     <div class="bar">
+      <div class="seg" role="group" aria-label="List" id="scope">
+        <button data-s="watch" class="on">Watchlist</button>
+        <button data-s="all">All stocks</button>
+      </div>
       <div class="seg" role="group" aria-label="Filter" id="filters">
         <button data-f="all" class="on">All</button>
         <button data-f="setup">Breakout / buy zone</button>
         <button data-f="near">Near pivot</button>
         <button data-f="rs80">RS ≥ 80</button>
         <button data-f="trend">Above 50-day</button>
+        <button data-f="liquid" title="Average dollar volume of at least $20M a day">Liquid</button>
       </div>
       <span class="sp"></span>
       <span class="count" id="count"></span>
@@ -43,7 +48,7 @@
           <th class="nosort spk">90 days</th>
           <th data-k="close">Price</th>
           <th data-k="chgPct">Chg</th>
-          <th data-k="rsRating" title="IBD-style relative strength rating 1–99 vs S&amp;P 500 + Nasdaq-100 stocks">RS</th>
+          <th data-k="rsRating" title="IBD-style relative strength rating 1–99 vs S&amp;P 1500 + Nasdaq-100 stocks">RS</th>
           <th data-k="grp" title="Industry group rank (GICS sub-industry, by average RS)">Group</th>
           <th data-k="eps" title="Latest quarter EPS change vs year ago">EPS Δ</th>
           <th data-k="sales" title="Latest quarter sales change vs year ago">Sales Δ</th>
@@ -59,7 +64,8 @@
         <tbody></tbody>
       </table>
     </div>
-    <p class="fine">RS Rating: each stock's 12-month performance (last quarter weighted double) ranked against the S&amp;P 500 and Nasdaq-100 stocks, 1–99. Bases and pivots are detected automatically from daily bars and are a starting point for your own read of the chart. Data: Yahoo Finance via yfinance, end of day.</p>
+    <div class="more" id="moreWrap" hidden><button class="btn" id="moreBtn">Show more</button></div>
+    <p class="fine">RS Rating: each stock's 12-month performance (last quarter weighted double) ranked against the S&amp;P 1500 and Nasdaq-100 stocks, 1–99. All stocks: every S&amp;P 500, MidCap 400, SmallCap 600 and Nasdaq-100 member; their earnings and sales data refresh in rotation, so a few may show — until their turn comes. Bases and pivots are detected automatically from daily bars and are a starting point for your own read of the chart. Data: Yahoo Finance via yfinance, end of day.</p>
   </main>
 
   <!-- ===================== CHART ===================== -->
