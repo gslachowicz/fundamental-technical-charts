@@ -786,6 +786,29 @@ def fetch_fundamentals(sym: str) -> dict:
     return f
 
 
+def _pnum(x):
+    try:
+        return float(str(x).replace("+", "").replace("%", "").replace(",", ""))
+    except (TypeError, ValueError):
+        return None
+
+
+def smr_rating(f: dict) -> str:
+    """Approximation of IBD's SMR (Sales growth, profit Margins, Return on equity), graded A-E."""
+    q = [v for v in (_pnum(x.get("salesChg")) for x in (f.get("quarters") or [])[:3]) if v is not None]
+    a = [v for v in (_pnum(x.get("salesChg")) for x in (f.get("annual") or [])) if v is not None]
+    sales = sum(q) / len(q) if q else (a[0] if a else None)
+
+    def pts(v, t):
+        return None if v is None else 3 if v >= t[0] else 2 if v >= t[1] else 1 if v >= t[2] else 0
+    sc = [x for x in (pts(sales, (25, 15, 5)), pts(_pnum(f.get("pretax")), (25, 15, 8)), pts(_pnum(f.get("roe")), (25, 17, 10)))
+          if x is not None]
+    if len(sc) < 2:
+        return ""
+    avg = sum(sc) / len(sc)
+    return "A" if avg >= 2.6 else "B" if avg >= 2 else "C" if avg >= 1.3 else "D" if avg >= 0.6 else "E"
+
+
 # ---------------------------------------------------------------- demo data
 def demo_inputs(watch: list[str]):
     """Synthetic market so the whole pipeline and site can be tested offline."""
@@ -1002,6 +1025,7 @@ def main():
                 "close", "chgPct", "rsRating", "offHighPct", "vs50Pct", "vs200Pct", "volVsAvgPct", "udRatio",
                 "atrPct", "perf3m", "perf12m", "rsLineNewHigh", "dollarVol50", "date")},
             "epsChg": q0.get("epsChg", ""), "salesChg": q0.get("salesChg", ""),
+            "smr": smr_rating(fund), "epsGrowth": fund.get("epsGrowth", ""),
             "base": None if not base else {k: base[k] for k in ("type", "pivot", "distPct", "status", "weeks", "depthPct")},
             "spark": [round(float(x), 2) for x in df["Close"].to_numpy()[-90:]],
         }
