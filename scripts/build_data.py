@@ -1,0 +1,794 @@
+#!/usr/bin/env python3
+"""
+Ink Charts — data builder.
+
+Downloads end-of-day prices and fundamentals from Yahoo Finance (via yfinance),
+computes O'Neil-style analytics and writes static JSON files for the website:
+
+  site/data/meta.json        last update, market pulse, errors
+  site/data/screener.json    one row per watchlist ticker
+  site/data/bench.json       S&P 500 closes (index line + RS line)
+  site/data/t/<SYM>.json     full bundle per watchlist ticker (prices, fundamentals, base)
+
+Usage:
+  python scripts/build_data.py                 # real data from Yahoo
+  python scripts/build_data.py --demo          # synthetic data, no internet (for testing)
+"""
+from __future__ import annotations
+
+import argparse
+import datetime as dt
+import json
+import math
+import sys
+import time
+import traceback
+from io import StringIO
+from pathlib import Path
+
+import numpy as np
+import pandas as pd
+
+ROOT = Path(__file__).resolve().parents[1]
+OUT_DEFAULT = ROOT / "site" / "data"
+CACHE = ROOT / "cache"
+BENCH = "^GSPC"
+INDEXES = {"^GSPC": "S&P 500", "^IXIC": "Nasdaq Composite"}
+UA = {"User-Agent": "Mozilla/5.0 (ink-charts data builder; +https://github.com)"}
+
+log_lines: list[str] = []
+
+
+def jdumps(obj, **kw):
+    kw.setdefault("default", lambda o: o.item() if hasattr(o, "item") else str(o))
+    return json.dumps(obj, **kw)
+
+
+def log(msg: str) -> None:
+    print(msg, flush=True)
+    log_lines.append(msg)
+
+
+# ---------------------------------------------------------------- helpers
+def fnum(x):
+    try:
+        v = float(x)
+    except (TypeError, ValueError):
+        return None
+    return None if (math.isnan(v) or math.isinf(v)) else v
+
+
+def pct_change(new, old):
+    new, old = fnum(new), fnum(old)
+    if new is None or old is None or old == 0:
+        return None
+    return (new - old) / abs(old) * 100
+
+
+def fmt_pct(v, digits=0):
+    if v is None:
+        return ""
+    if round(v, digits) == 0:
+        return "0%"
+    return f"{v:+.{digits}f}%"
+
+
+def fmt_big(v):
+    v = fnum(v)
+    if v is None:
+        return ""
+    a = abs(v)
+    for div, suf in ((1e12, "T"), (1e9, "B"), (1e6, "M"), (1e3, "K")):
+        if a >= div:
+            return f"{v / div:.2f}{suf}" if a / div < 100 else f"{v / div:.0f}{suf}"
+    return f"{v:.0f}"
+
+
+def qlabel(ts: pd.Timestamp) -> str:
+    if ts.month in (3, 6, 9, 12):
+        return f"{(ts.month - 1) // 3 + 1}Q{ts.year % 100:02d}"
+    return ts.strftime("%b-%y")
+
+
+def month_end(ts: pd.Timestamp) -> pd.Timestamp:
+    return (pd.Timestamp(ts.year, ts.month, 1) + pd.offsets.MonthEnd(0)).normalize()
+
+
+def yf_symbol(s: str) -> str:
+    return s.strip().upper().replace(".", "-")
+
+
+def read_list(path: Path) -> list[str]:
+    if not path.exists():
+        return []
+    out = []
+    for line in path.read_text().splitlines():
+        line = line.split("#", 1)[0].strip()
+        if line:
+            out.extend(yf_symbol(p) for p in line.replace(",", " ").split())
+    return list(dict.fromkeys(out))
+
+
+def find_col(df: pd.DataFrame, *keys):
+    for c in df.columns:
+        lc = str(c).lower().replace(" ", "")
+        if all(k in lc for k in keys):
+            return c
+    return None
+
+
+def row_val(df: pd.DataFrame | None, names, col):
+    if df is None or df.empty:
+        return None
+    for n in names:
+        if n in df.index:
+            v = fnum(df.at[n, col])
+            if v is not None:
+                return v
+    return None
+
+
+# ---------------------------------------------------------------- universe
+def fetch_universe() -> dict[str, dict]:
+    """S&P 500 + Nasdaq-100 constituents with GICS sector / sub-industry (from Wikipedia)."""
+    import requests
+
+    uni: dict[str, dict] = {}
+    pages = [
+        ("https://en.wikipedia.org/wiki/List_of_S%26P_500_companies", "sp500"),
+        ("https://en.wikipedia.org/wiki/Nasdaq-100", "ndx"),
+    ]
+    for url, tag in pages:
+        try:
+            html = requests.get(url, headers=UA, timeout=30).text
+            for t in pd.read_html(StringIO(html)):
+                cols = {str(c).lower(): c for c in t.columns}
+                sym_col = cols.get("symbol") or cols.get("ticker")
+                if sym_col is None or len(t) < 80:
+                    continue
+                sec = cols.get("gics sector")
+                sub = cols.get("gics sub-industry") or cols.get("gics sub‑industry")
+                for _, r in t.iterrows():
+                    s = yf_symbol(str(r[sym_col]))
+                    if not s or s == "NAN":
+                        continue
+                    d = uni.setdefault(s, {"sector": "", "industry": ""})
+                    if sec is not None and isinstance(r[sec], str):
+                        d["sector"] = d["sector"] or r[sec]
+                    if sub is not None and isinstance(r[sub], str):
+                        d["industry"] = d["industry"] or r[sub]
+                break
+            log(f"universe: {tag} ok ({len(uni)} total)")
+        except Exception as e:  # noqa: BLE001
+            log(f"universe: {tag} failed: {e}")
+    return uni
+
+
+# ---------------------------------------------------------------- prices
+def download_prices(symbols: list[str], period: str = "3y") -> dict[str, pd.DataFrame]:
+    import yfinance as yf
+
+    out: dict[str, pd.DataFrame] = {}
+    chunk = 80
+    for i in range(0, len(symbols), chunk):
+        batch = symbols[i : i + chunk]
+        for attempt in (1, 2):
+            try:
+                df = yf.download(batch, period=period, interval="1d", auto_adjust=False,
+                                 group_by="ticker", threads=True, progress=False, multi_level_index=True)
+                break
+            except Exception as e:  # noqa: BLE001
+                log(f"download batch {i // chunk + 1} attempt {attempt} failed: {e}")
+                df = None
+                time.sleep(10)
+        if df is None or df.empty:
+            continue
+        for s in batch:
+            try:
+                sub = df[s] if isinstance(df.columns, pd.MultiIndex) else df
+                sub = sub[["Open", "High", "Low", "Close", "Volume"]].dropna(subset=["Close"])
+                if len(sub) >= 30:
+                    sub.index = pd.to_datetime(sub.index).tz_localize(None).normalize()
+                    out[s] = sub.astype(float)
+            except Exception:  # noqa: BLE001
+                pass
+        time.sleep(1.5)
+    log(f"prices: {len(out)}/{len(symbols)} symbols downloaded")
+    return out
+
+
+# ---------------------------------------------------------------- analytics
+def rs_score(close: np.ndarray):
+    """IBD-style weighted relative performance: 40% last quarter, 20% each of the three before."""
+    n = len(close)
+    if n < 64:
+        return None
+    parts, weights = [], []
+    for lag, w in ((63, 0.4), (126, 0.2), (189, 0.2), (252, 0.2)):
+        if n > lag and close[-1 - lag] > 0:
+            parts.append(close[-1] / close[-1 - lag] - 1)
+            weights.append(w)
+    if not parts:
+        return None
+    return float(np.dot(parts, weights) / sum(weights))
+
+
+def rs_rating(score, ref_sorted: np.ndarray):
+    if score is None or len(ref_sorted) == 0:
+        return None
+    frac = np.searchsorted(ref_sorted, score, side="right") / len(ref_sorted)
+    return int(min(99, max(1, round(1 + 98 * frac))))
+
+
+def sma(a: np.ndarray, n: int):
+    return float(a[-n:].mean()) if len(a) >= n else None
+
+
+def market_pulse(df: pd.DataFrame | None, name: str):
+    if df is None or len(df) < 60:
+        return None
+    c, v = df["Close"].to_numpy(), df["Volume"].to_numpy()
+    ma50, ma200 = sma(c, 50), sma(c, 200)
+    ema21 = float(pd.Series(c).ewm(span=21, adjust=False).mean().iloc[-1])
+    # distribution day: index down >= 0.2% on higher volume than the prior session, last 25 sessions
+    dd = []
+    for i in range(max(1, len(c) - 25), len(c)):
+        if c[i] <= c[i - 1] * 0.998 and v[i] > v[i - 1] > 0:
+            dd.append(df.index[i].strftime("%Y-%m-%d"))
+    above50 = ma50 is not None and c[-1] > ma50
+    above200 = ma200 is not None and c[-1] > ma200
+    if not above50 and ma50 and ma200 and ma50 < ma200:
+        status = "Correction"
+    elif len(dd) >= 6 or not above50:
+        status = "Uptrend under pressure"
+    else:
+        status = "Uptrend"
+    return {
+        "name": name, "close": round(float(c[-1]), 2), "chgPct": round((c[-1] / c[-2] - 1) * 100, 2),
+        "above50": above50, "above200": above200, "above21": c[-1] > ema21,
+        "distDays": len(dd), "distDates": dd, "status": status,
+    }
+
+
+def detect_base(df: pd.DataFrame):
+    """Heuristic base / pivot detection on daily bars. Returns a dict or None.
+
+    Base = from the highest high of the last ~65 weeks (left side) to today, at least 5 weeks long.
+    If the stock just broke out, the base that it left is reported with status Breakout/Extended.
+    """
+    h, l, c, v = (df[k].to_numpy() for k in ("High", "Low", "Close", "Volume"))
+    n = len(c)
+    if n < 60:
+        return None
+    vavg = pd.Series(v).rolling(50, min_periods=20).mean().to_numpy()
+
+    def base_until(end):  # base over bars [pk, end)
+        start = max(0, end - 325)
+        if end - start < 30:
+            return None
+        pk = start + int(np.argmax(h[start:end]))
+        length = end - pk
+        if length < 25:
+            return None
+        hi = h[pk]
+        lo_i = pk + int(np.argmin(l[pk:end]))
+        depth = (hi - l[lo_i]) / hi
+        weeks = round(length / 5)
+        # handle: highest point of the right half, followed by a modest pullback in the upper half of the base
+        mid = pk + length // 2
+        r = mid + int(np.argmax(h[mid:end]))
+        handle = None
+        if r < end - 4 and r > lo_i and h[r] >= hi * 0.85:
+            pull = (h[r] - l[r:end].min()) / h[r]
+            mid_price = l[lo_i] + (hi - l[lo_i]) / 2
+            if 0.02 <= pull <= 0.15 and l[r:end].min() > mid_price and end - r <= 30:
+                handle = {"start": r, "depth": pull}
+        if depth <= 0.15:
+            kind = "Flat base"
+        elif depth <= 0.50:
+            if handle:
+                kind = "Cup with handle"
+            elif c[end - 1] >= hi * 0.90:
+                kind = "Cup"
+            else:
+                kind = "Base forming"
+        else:
+            kind = "Deep correction"
+        pivot = (h[handle["start"]] if handle else hi) + 0.10
+        return {"pk": pk, "lo": lo_i, "end": end, "kind": kind, "depth": depth, "weeks": weeks,
+                "pivot": pivot, "handle": handle, "high": hi, "low": l[lo_i]}
+
+    def pack(b, status, extra=None):
+        d = df.index
+        out = {
+            "type": b["kind"], "start": d[b["pk"]].strftime("%Y-%m-%d"), "end": d[b["end"] - 1].strftime("%Y-%m-%d"),
+            "low": round(float(b["low"]), 2), "lowDate": d[b["lo"]].strftime("%Y-%m-%d"),
+            "high": round(float(b["high"]), 2), "depthPct": round(b["depth"] * 100, 1), "weeks": b["weeks"],
+            "pivot": round(float(b["pivot"]), 2), "buyZoneTop": round(float(b["pivot"]) * 1.05, 2),
+            "handleStart": d[b["handle"]["start"]].strftime("%Y-%m-%d") if b["handle"] else None,
+            "status": status, "distPct": round((c[-1] / b["pivot"] - 1) * 100, 1),
+        }
+        if extra:
+            out.update(extra)
+        return out
+
+    # 1) latest breakout from a base in the last 25 sessions
+    latest = None
+    for e in range(n - 1, n - 26, -1):
+        b = base_until(e)
+        if b and b["kind"] != "Deep correction" and c[e] > b["pivot"] and c[e - 1] <= b["pivot"]:
+            volpct = (v[e] / vavg[e - 1] - 1) * 100 if vavg[e - 1] and vavg[e - 1] > 0 else None
+            dist = c[-1] / b["pivot"] - 1
+            status = "Failed breakout" if c[-1] < b["pivot"] * 0.97 else ("Breakout" if dist <= 0.05 else "Extended")
+            latest = pack(b, status, {"breakoutDate": df.index[e].strftime("%Y-%m-%d"),
+                                      "breakoutVolPct": None if volpct is None else round(float(volpct))})
+            break
+
+    # 2) current base (stock still inside)
+    cur = base_until(n)
+    if cur:
+        dist = c[-1] / cur["pivot"] - 1
+        if dist > 0.05:
+            status = "Extended"
+        elif dist > 0:
+            status = "In buy zone"
+        elif dist >= -0.05:
+            status = "Near pivot"
+        else:
+            status = "Below pivot"
+        if cur["kind"] == "Deep correction":
+            status = "Correcting"
+        current = pack(cur, status)
+        # a breakout above a handle pivot that is still inside the left-side high counts as current base
+        if latest and latest["start"] == current["start"]:
+            return latest
+        return current
+    return latest
+
+
+def zigzag_levels(df: pd.DataFrame, th=0.065):
+    """Unbroken last swing high / low (for screener 'resistance' / 'support')."""
+    h, l = df["High"].to_numpy(), df["Low"].to_numpy()
+    piv, hi_i, lo_i, trend = [], 0, 0, 0
+    for i in range(1, len(h)):
+        if trend == 0:
+            hi_i = i if h[i] > h[hi_i] else hi_i
+            lo_i = i if l[i] < l[lo_i] else lo_i
+            if hi_i > lo_i and h[hi_i] >= l[lo_i] * (1 + th):
+                piv.append((lo_i, l[lo_i], False)); trend = 1
+            elif lo_i > hi_i and l[lo_i] <= h[hi_i] * (1 - th):
+                piv.append((hi_i, h[hi_i], True)); trend = -1
+        elif trend == 1:
+            if h[i] >= h[hi_i]:
+                hi_i = i
+            elif l[i] <= h[hi_i] * (1 - th):
+                piv.append((hi_i, h[hi_i], True)); trend = -1; lo_i = i
+        else:
+            if l[i] <= l[lo_i]:
+                lo_i = i
+            elif h[i] >= l[lo_i] * (1 + th):
+                piv.append((lo_i, l[lo_i], False)); trend = 1; hi_i = i
+    return piv
+
+
+def price_stats(df: pd.DataFrame, bench: pd.Series | None):
+    c, h, l, v = (df[k].to_numpy() for k in ("Close", "High", "Low", "Volume"))
+    n = len(c)
+    yr = slice(max(0, n - 252), n)
+    hi52, lo52 = float(h[yr].max()), float(l[yr].min())
+    ma50, ma200 = sma(c, 50), sma(c, 200)
+    v50 = sma(v, 50)
+    up = dn = 0.0
+    for i in range(max(1, n - 50), n):
+        if c[i] >= c[i - 1]:
+            up += v[i]
+        else:
+            dn += v[i]
+    tr = [max(h[i], c[i - 1]) - min(l[i], c[i - 1]) for i in range(max(1, n - 21), n)]
+    st = {
+        "close": round(float(c[-1]), 2), "prevClose": round(float(c[-2]), 2),
+        "chgPct": round((c[-1] / c[-2] - 1) * 100, 2), "volume": int(v[-1]),
+        "hi52": round(hi52, 2), "lo52": round(lo52, 2), "offHighPct": round((c[-1] / hi52 - 1) * 100, 1),
+        "ma50": None if ma50 is None else round(ma50, 2), "ma200": None if ma200 is None else round(ma200, 2),
+        "vs50Pct": None if not ma50 else round((c[-1] / ma50 - 1) * 100, 1),
+        "vs200Pct": None if not ma200 else round((c[-1] / ma200 - 1) * 100, 1),
+        "avgVol50": None if v50 is None else int(v50),
+        "volVsAvgPct": None if not v50 else round((v[-1] / v50 - 1) * 100),
+        "dollarVol50": None if v50 is None else round(v50 * float(c[-1])),
+        "udRatio": round(up / dn, 2) if dn else None,
+        "atrPct": round(float(np.mean(tr)) / c[-1] * 100, 2) if tr else None,
+        "perf3m": round((c[-1] / c[-64] - 1) * 100, 1) if n > 64 else None,
+        "perf12m": round((c[-1] / c[-253] - 1) * 100, 1) if n > 253 else None,
+        "date": df.index[-1].strftime("%Y-%m-%d"),
+    }
+    if bench is not None:
+        b = bench.reindex(df.index).ffill().to_numpy()
+        if not np.isnan(b[-1]):
+            rs = c / b
+            lb = rs[max(0, n - 252) : n - 1]
+            lb = lb[~np.isnan(lb)]
+            st["rsLineNewHigh"] = bool(len(lb) and rs[-1] >= lb.max())
+            if n > 64 and not np.isnan(rs[-64]):
+                st["rsLine3mPct"] = round((rs[-1] / rs[-64] - 1) * 100, 1)
+    piv = zigzag_levels(df)
+    res = sup = None
+    for i, p, is_hi in reversed(piv):
+        if is_hi and res is None and i < n - 2 and h[i + 1 :].max() <= p:
+            res = round(float(p), 2)
+        if (not is_hi) and sup is None and i < n - 2 and l[i + 1 :].min() >= p:
+            sup = round(float(p), 2)
+        if res is not None and sup is not None:
+            break
+    st["resistance"], st["support"] = res, sup
+    return st
+
+
+# ---------------------------------------------------------------- fundamentals
+def fetch_fundamentals(sym: str) -> dict:
+    import yfinance as yf
+
+    t = yf.Ticker(sym)
+    f: dict = {}
+    info = {}
+    try:
+        info = t.get_info() or {}
+    except Exception as e:  # noqa: BLE001
+        log(f"{sym}: info failed: {e}")
+    f["name"] = info.get("longName") or info.get("shortName") or sym
+    f["exchange"] = info.get("fullExchangeName") or info.get("exchange") or ""
+    f["sector"] = info.get("sector") or ""
+    f["industryYahoo"] = info.get("industry") or ""
+    f["mktCap"] = fmt_big(info.get("marketCap"))
+    f["float"] = fmt_big(info.get("floatShares"))
+    f["shares"] = fmt_big(info.get("sharesOutstanding"))
+    inst = fnum(info.get("heldPercentInstitutions"))
+    f["inst"] = "" if inst is None else f"{inst * 100:.0f}%"
+    roe = fnum(info.get("returnOnEquity"))
+    f["roe"] = "" if roe is None else f"{roe * 100:.0f}%"
+    de = fnum(info.get("debtToEquity"))
+    f["debt"] = "" if de is None else f"{de:.0f}%"
+
+    # --- quarterly EPS from earnings dates (adjusted EPS, like IBD)
+    ed = None
+    try:
+        ed = t.get_earnings_dates(limit=20)
+    except Exception as e:  # noqa: BLE001
+        log(f"{sym}: earnings dates failed: {e}")
+    reports, next_earn = [], None
+    if ed is not None and not ed.empty:
+        ed = ed.copy()
+        ed.index = pd.to_datetime(ed.index).tz_localize(None)
+        c_rep, c_est, c_sur = find_col(ed, "reported"), find_col(ed, "estimate"), find_col(ed, "surprise")
+        c_typ = find_col(ed, "event")
+        if c_typ is not None:
+            ed = ed[ed[c_typ].astype(str).str.contains("Earn", case=False) | ed[c_typ].isna()]
+        today = pd.Timestamp.today().normalize()
+        fut = ed[(ed.index >= today)]
+        if c_rep is not None:
+            fut = fut[fut[c_rep].isna()]
+        if len(fut):
+            nd = fut.index.min()
+            next_earn = {"date": nd.strftime("%Y-%m-%d"), "est": fnum(fut.loc[nd, c_est]) if c_est else None}
+            if isinstance(next_earn["est"], pd.Series):
+                next_earn["est"] = fnum(next_earn["est"].iloc[0])
+        if c_rep is not None:
+            past = ed[ed[c_rep].notna() & (ed.index < today + pd.Timedelta(days=1))].sort_index(ascending=False)
+            past = past[~past.index.normalize().duplicated()]
+            for d, r in past.iterrows():
+                reports.append({"date": d, "eps": fnum(r[c_rep]), "est": fnum(r[c_est]) if c_est else None,
+                                "surprise": fnum(r[c_sur]) if c_sur else None})
+
+    qis = None
+    try:
+        qis = t.quarterly_income_stmt
+        if qis is not None and not qis.empty:
+            qis = qis.copy()
+            qis.columns = pd.to_datetime(qis.columns).tz_localize(None)
+            qis = qis.sort_index(axis=1, ascending=False)
+    except Exception as e:  # noqa: BLE001
+        log(f"{sym}: quarterly income failed: {e}")
+        qis = None
+
+    # period end for each report: anchor on income statement period ends, step back 3 months
+    q_ends = list(qis.columns) if qis is not None and not qis.empty else []
+
+    def period_end_for(report_date, k):
+        cands = [e for e in q_ends if pd.Timedelta(days=5) <= report_date - e <= pd.Timedelta(days=110)]
+        if cands:
+            return max(cands)
+        if k == 0 or not reports:
+            prev_q = pd.Timestamp(report_date.year, ((report_date.month - 1) // 3) * 3 + 1, 1) - pd.Timedelta(days=1)
+            return prev_q.normalize()
+        return None
+
+    ends = []
+    for k, r in enumerate(reports):
+        e = period_end_for(r["date"], k)
+        if e is None and ends and ends[-1] is not None:
+            e = month_end(ends[-1] - pd.DateOffset(months=3))
+        ends.append(e)
+
+    def rev_at(end):
+        if qis is None or end is None:
+            return None, None, None
+        for col in qis.columns:
+            if abs((col - end).days) <= 20:
+                rev = row_val(qis, ["Total Revenue", "Operating Revenue"], col)
+                op = row_val(qis, ["Operating Income", "EBIT"], col)
+                dil = row_val(qis, ["Diluted EPS"], col)
+                return rev, op, dil
+        return None, None, None
+
+    quarters = []
+    for k, r in enumerate(reports[:8]):
+        end = ends[k]
+        rev, op, _ = rev_at(end)
+        yago = reports[k + 4]["eps"] if k + 4 < len(reports) else None
+        rev_y = None
+        if end is not None:
+            rev_y, _, _ = rev_at(month_end(end - pd.DateOffset(months=12)))
+        quarters.append({
+            "q": qlabel(end) if end is not None else r["date"].strftime("%b-%y"),
+            "date": r["date"].strftime("%Y-%m-%d"),
+            "eps": "" if r["eps"] is None else f"{r['eps']:.2f}",
+            "epsChg": fmt_pct(pct_change(r["eps"], yago)),
+            "sales": fmt_big(rev),
+            "salesChg": fmt_pct(pct_change(rev, rev_y)),
+            "margin": "" if (rev in (None, 0) or op is None) else f"{op / rev * 100:.1f}%",
+            "surprise": fmt_pct(r["surprise"], 1),
+        })
+    f["quarters"] = quarters
+    beats = [r for r in reports[:8] if r["surprise"] is not None]
+    if beats:
+        n_beat = sum(1 for r in beats if r["surprise"] > 0)
+        f["epsSurprise"] = f"{n_beat}/{len(beats)} {fmt_pct(beats[0]['surprise'], 0)}"
+    if next_earn:
+        f["nextEarn"] = pd.Timestamp(next_earn["date"]).strftime("%d-%b-%y")
+        if next_earn["est"] is not None and len(reports) >= 4:
+            f["epsDue"] = fmt_pct(pct_change(next_earn["est"], reports[3]["eps"]))
+
+    # --- annual
+    ais = None
+    try:
+        ais = t.income_stmt
+        if ais is not None and not ais.empty:
+            ais = ais.copy()
+            ais.columns = pd.to_datetime(ais.columns).tz_localize(None)
+            ais = ais.sort_index(axis=1, ascending=False)
+    except Exception as e:  # noqa: BLE001
+        log(f"{sym}: annual income failed: {e}")
+        ais = None
+    annual = []
+    if ais is not None and not ais.empty:
+        cols = list(ais.columns)
+        for i, col in enumerate(cols):
+            eps = row_val(ais, ["Diluted EPS", "Basic EPS"], col)
+            rev = row_val(ais, ["Total Revenue", "Operating Revenue"], col)
+            prev = cols[i + 1] if i + 1 < len(cols) else None
+            peps = row_val(ais, ["Diluted EPS", "Basic EPS"], prev) if prev is not None else None
+            prev_rev = row_val(ais, ["Total Revenue", "Operating Revenue"], prev) if prev is not None else None
+            if eps is None and rev is None:
+                continue
+            annual.append({"y": str(col.year), "eps": "" if eps is None else f"{eps:.2f}",
+                           "chg": fmt_pct(pct_change(eps, peps)), "salesChg": fmt_pct(pct_change(rev, prev_rev))})
+        pre = row_val(ais, ["Pretax Income"], cols[0])
+        rev0 = row_val(ais, ["Total Revenue", "Operating Revenue"], cols[0])
+        if pre is not None and rev0:
+            f["pretax"] = f"{pre / rev0 * 100:.0f}%"
+        e0 = row_val(ais, ["Diluted EPS"], cols[0])
+        e3 = row_val(ais, ["Diluted EPS"], cols[3]) if len(cols) > 3 else None
+        if e0 and e3 and e0 > 0 and e3 > 0:
+            f["epsGrowth"] = fmt_pct(((e0 / e3) ** (1 / 3) - 1) * 100)
+    f["annual"] = annual[:7]
+    return f
+
+
+# ---------------------------------------------------------------- demo data
+def demo_inputs(watch: list[str]):
+    """Synthetic market so the whole pipeline and site can be tested offline."""
+    rng = np.random.default_rng(7)
+    days = pd.bdate_range(end=pd.Timestamp("2026-09-30"), periods=760)
+    sectors = ["Information Technology", "Health Care", "Industrials", "Financials", "Energy", "Consumer Discretionary"]
+    subs = {s: [f"{s.split()[0]} Group {k}" for k in "ABC"] for s in sectors}
+
+    def walk(p0, drift, vol, vol0):
+        regimes, out, p = [], [], p0
+        i = 0
+        while i < len(days):
+            n = int(rng.integers(30, 90))
+            mu = drift + rng.normal(0, 0.0015)
+            sig = vol * rng.uniform(0.7, 1.3)
+            for _ in range(min(n, len(days) - i)):
+                r = mu + sig * rng.normal()
+                o = p * (1 + sig * 0.3 * rng.normal())
+                c = p * (1 + r)
+                hi = max(o, c) * (1 + abs(sig * 0.5 * rng.normal()))
+                lo = min(o, c) * (1 - abs(sig * 0.5 * rng.normal()))
+                big = abs(r) > sig * 1.6
+                vv = vol0 * (0.7 + 0.5 * rng.random()) * (2.2 if big else 1) * (1.08 if r > 0 else 0.95)
+                out.append((o, hi, lo, c, vv))
+                p = c
+                i += 1
+        return pd.DataFrame(out, index=days, columns=["Open", "High", "Low", "Close", "Volume"])
+
+    prices: dict[str, pd.DataFrame] = {}
+    uni: dict[str, dict] = {}
+    for k in range(160):
+        s = f"U{k:03d}"
+        sec = sectors[k % len(sectors)]
+        uni[s] = {"sector": sec, "industry": subs[sec][k % 3]}
+        prices[s] = walk(rng.uniform(20, 300), rng.normal(0.0004, 0.0009), rng.uniform(0.012, 0.03), 3e6)
+    idx = walk(4200, 0.0005, 0.009, 3.5e9)
+    prices["^GSPC"] = idx
+    prices["^IXIC"] = walk(13000, 0.0006, 0.011, 5e9)
+    fund = {}
+    for j, s in enumerate(watch):
+        sec = sectors[j % len(sectors)]
+        prices[s] = walk(rng.uniform(40, 400), 0.0009 + 0.0004 * rng.random(), rng.uniform(0.013, 0.022), rng.uniform(2e6, 2e7))
+        if j % 3 == 0:
+            uni[s] = {"sector": sec, "industry": subs[sec][j % 3]}
+        eps = rng.uniform(0.5, 3)
+        reps = []
+        for q in range(12):
+            reps.append(eps)
+            eps *= 1 / (1 + rng.uniform(-0.03, 0.12))
+        rev = rng.uniform(1e9, 2e10)
+        last_q = pd.Timestamp("2026-06-30")
+        quarters = []
+        for q in range(8):
+            end = month_end(last_q - pd.DateOffset(months=3 * q))
+            e, ey = reps[q], reps[q + 4]
+            quarters.append({"q": qlabel(end), "date": (end + pd.Timedelta(days=24)).strftime("%Y-%m-%d"),
+                             "eps": f"{e:.2f}", "epsChg": fmt_pct(pct_change(e, ey)), "sales": fmt_big(rev * (0.93 ** q)),
+                             "salesChg": fmt_pct(rng.uniform(-5, 45)), "margin": f"{rng.uniform(10, 45):.1f}%",
+                             "surprise": fmt_pct(rng.uniform(-4, 12), 1)})
+        annual = [{"y": str(2025 - k), "eps": f"{sum(reps[4 * k:4 * k + 4]):.2f}",
+                   "chg": fmt_pct(rng.uniform(-10, 60)), "salesChg": fmt_pct(rng.uniform(-5, 40))} for k in range(4)]
+        fund[s] = {"name": f"Demo Company {s}", "exchange": "NYSE", "sector": sec, "industryYahoo": subs[sec][j % 3],
+                   "mktCap": fmt_big(rng.uniform(5e9, 9e11)), "float": fmt_big(rng.uniform(1e8, 3e9)),
+                   "shares": fmt_big(rng.uniform(1e8, 3e9)), "inst": f"{rng.uniform(40, 85):.0f}%",
+                   "roe": f"{rng.uniform(8, 45):.0f}%", "debt": f"{rng.uniform(0, 80):.0f}%", "pretax": f"{rng.uniform(10, 45):.0f}%",
+                   "epsGrowth": fmt_pct(rng.uniform(5, 45)), "epsSurprise": "7/8 +5%", "nextEarn": "22-Oct-26",
+                   "epsDue": fmt_pct(rng.uniform(5, 40)), "quarters": quarters, "annual": annual}
+    return uni, prices, fund
+
+
+# ---------------------------------------------------------------- main
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--demo", action="store_true", help="synthetic data, no internet")
+    ap.add_argument("--out", default=str(OUT_DEFAULT))
+    ap.add_argument("--watchlist", default=str(ROOT / "watchlist.txt"))
+    ap.add_argument("--no-universe", action="store_true", help="skip S&P 500 / Nasdaq-100 download")
+    args = ap.parse_args()
+
+    out = Path(args.out)
+    (out / "t").mkdir(parents=True, exist_ok=True)
+    CACHE.mkdir(exist_ok=True)
+    watch = read_list(Path(args.watchlist))
+    if not watch:
+        sys.exit("watchlist.txt is empty")
+    log(f"watchlist: {len(watch)} tickers")
+
+    if args.demo:
+        uni, prices, demo_fund = demo_inputs(watch)
+    else:
+        demo_fund = None
+        uni = {} if args.no_universe else fetch_universe()
+        cache_uni = CACHE / "universe.json"
+        if len(uni) >= 300:
+            cache_uni.write_text(jdumps(uni))
+        elif cache_uni.exists():
+            uni = json.loads(cache_uni.read_text())
+            log(f"universe: using cached list ({len(uni)})")
+        extra = read_list(ROOT / "universe_extra.txt")
+        for s in extra:
+            uni.setdefault(s, {"sector": "", "industry": ""})
+        symbols = list(dict.fromkeys(watch + list(INDEXES) + list(uni)))
+        prices = download_prices(symbols, "3y")
+
+    bench_df = prices.get(BENCH)
+    if bench_df is None:
+        sys.exit("Could not download the S&P 500 (^GSPC). Yahoo may be rate-limiting; try again later.")
+    bench = bench_df["Close"]
+
+    # RS ratings against the universe (plus watchlist so the scale is never empty)
+    scores = {s: rs_score(df["Close"].to_numpy()) for s, df in prices.items() if not s.startswith("^")}
+    ref_syms = [s for s in uni if scores.get(s) is not None] or [s for s in scores if scores[s] is not None]
+    ref = np.sort(np.array([scores[s] for s in ref_syms]))
+    log(f"RS reference set: {len(ref)} stocks")
+
+    # industry group ranking (GICS sub-industry, by average RS score of members)
+    groups: dict[str, list[float]] = {}
+    for s in ref_syms:
+        ind = uni.get(s, {}).get("industry")
+        if ind:
+            groups.setdefault(ind, []).append(scores[s])
+    grp_avg = {g: float(np.mean(v)) for g, v in groups.items() if len(v) >= 2}
+    grp_order = sorted(grp_avg, key=lambda g: -grp_avg[g])
+    grp_rank = {g: i + 1 for i, g in enumerate(grp_order)}
+
+    def grp_letter(rank, total):
+        p = rank / total
+        return "A" if p <= 0.2 else "B" if p <= 0.4 else "C" if p <= 0.6 else "D" if p <= 0.8 else "E"
+
+    market = [m for m in (market_pulse(prices.get(k), v) for k, v in INDEXES.items()) if m]
+
+    # benchmark file
+    bjson = {"name": "S&P 500", "symbol": BENCH,
+             "prices": [[d.strftime("%Y-%m-%d"), round(float(x), 2)] for d, x in bench.items()]}
+    (out / "bench.json").write_text(jdumps(bjson, separators=(",", ":")))
+
+    rows, errors = [], []
+    for s in watch:
+        df = prices.get(s)
+        if df is None:
+            cached = CACHE / "t" / f"{s}.json"
+            errors.append(f"{s}: no price data from Yahoo" + (" (showing cached data)" if cached.exists() else ""))
+            if cached.exists():
+                bundle = json.loads(cached.read_text())
+                (out / "t" / f"{s}.json").write_text(jdumps(bundle, separators=(",", ":")))
+                if bundle.get("row"):
+                    rows.append({**bundle["row"], "stale": True})
+            continue
+        try:
+            if demo_fund is not None:
+                fund = demo_fund.get(s, {})
+            else:
+                try:
+                    fund = fetch_fundamentals(s)
+                except Exception as e:  # noqa: BLE001
+                    log(f"{s}: fundamentals failed: {e}")
+                    errors.append(f"{s}: fundamentals unavailable")
+                    fund = {"name": s}
+                time.sleep(0.8)
+            st = price_stats(df, bench)
+            st["rsRating"] = rs_rating(scores.get(s), ref)
+            base = detect_base(df)
+            gi = uni.get(s, {})
+            group = gi.get("industry") or fund.get("industryYahoo") or ""
+            if gi.get("industry") in grp_rank:
+                r = grp_rank[gi["industry"]]
+                fund["groupRank"] = f"{r} of {len(grp_rank)}"
+                fund["grpRs"] = grp_letter(r, len(grp_rank))
+            fund["group"] = " · ".join(x for x in (gi.get("sector") or fund.get("sector"), group) if x)
+            if st["rsRating"] is not None:
+                fund["rs"] = str(st["rsRating"])
+            q0 = (fund.get("quarters") or [{}])[0]
+            row = {
+                "symbol": s, "name": fund.get("name", s), "group": group, "sector": gi.get("sector") or fund.get("sector", ""),
+                "groupRank": fund.get("groupRank", ""), **{k: st.get(k) for k in (
+                    "close", "chgPct", "rsRating", "offHighPct", "vs50Pct", "vs200Pct", "volVsAvgPct", "udRatio",
+                    "atrPct", "perf3m", "perf12m", "rsLineNewHigh", "dollarVol50", "date")},
+                "epsChg": q0.get("epsChg", ""), "salesChg": q0.get("salesChg", ""),
+                "base": None if not base else {k: base[k] for k in ("type", "pivot", "distPct", "status", "weeks", "depthPct")},
+                "spark": [round(float(x), 2) for x in df["Close"].to_numpy()[-90:]],
+            }
+            bundle = {
+                "symbol": s, "name": fund.get("name", s), "updated": dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%MZ"),
+                "prices": [[d.strftime("%Y-%m-%d"), round(r.Open, 2), round(r.High, 2), round(r.Low, 2), round(r.Close, 2), int(r.Volume)]
+                           for d, r in df.iterrows()],
+                "fund": fund, "stats": st, "base": base, "row": row,
+            }
+            (out / "t" / f"{s}.json").write_text(jdumps(bundle, separators=(",", ":")))
+            (CACHE / "t").mkdir(exist_ok=True)
+            (CACHE / "t" / f"{s}.json").write_text(jdumps(bundle, separators=(",", ":")))
+            rows.append(row)
+            log(f"{s}: ok  RS {st['rsRating']}  base {base['type'] + ' / ' + base['status'] if base else '-'}")
+        except Exception as e:  # noqa: BLE001
+            traceback.print_exc()
+            errors.append(f"{s}: {e}")
+
+    (out / "screener.json").write_text(jdumps(rows, separators=(",", ":")))
+    meta = {
+        "updated": dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%MZ"),
+        "dataDate": bench.index[-1].strftime("%Y-%m-%d"),
+        "demo": bool(args.demo), "universeSize": int(len(ref)), "groups": len(grp_rank),
+        "market": market, "errors": errors,
+    }
+    (out / "meta.json").write_text(jdumps(meta, indent=1))
+    log(f"done: {len(rows)} tickers, {len(errors)} errors")
+
+
+if __name__ == "__main__":
+    main()
