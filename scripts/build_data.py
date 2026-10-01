@@ -665,6 +665,28 @@ def fetch_fundamentals(sym: str) -> dict:
             op = near(sec_q_op, end)
         return rev, op, dil
 
+    # --- consensus estimates. Yahoo only gives the estimate for the quarter not yet reported, so each run
+    # keeps a snapshot per quarter; once the quarter is reported the last snapshot is the expectation it faced.
+    est_store = est_cache_get(sym)
+    next_lbl = None
+    if ends and ends[0] is not None and next_earn:
+        next_lbl = qlabel(month_end(ends[0] + pd.DateOffset(months=3)))
+        snap = {"seen": pd.Timestamp.today().strftime("%Y-%m-%d")}
+        try:
+            re_ = t.revenue_estimate
+            if re_ is not None and "0q" in re_.index:
+                snap["rev"] = fnum(re_.loc["0q"].get("avg"))
+        except Exception:  # noqa: BLE001
+            pass
+        if next_earn.get("est") is not None:
+            snap["eps"] = next_earn["est"]
+        if snap.get("rev") is not None or snap.get("eps") is not None:
+            est_store[next_lbl] = snap
+            est_cache_put(sym, est_store)
+        f["nextQ"] = {"q": next_lbl, "date": next_earn["date"],
+                      "epsEst": "" if snap.get("eps") is None else f"{snap['eps']:.2f}",
+                      "salesEst": fmt_big(snap.get("rev"))}
+
     quarters = []
     for k, r in enumerate(reports[:8]):
         end = ends[k]
@@ -682,7 +704,12 @@ def fetch_fundamentals(sym: str) -> dict:
             "salesChg": fmt_pct(pct_change(rev, rev_y)),
             "margin": "" if (rev in (None, 0) or op is None) else f"{op / rev * 100:.1f}%",
             "surprise": fmt_pct(r["surprise"], 1),
+            "epsEst": "" if r["est"] is None else f"{r['est']:.2f}",
         })
+        se = (est_store.get(quarters[-1]["q"]) or {}).get("rev")
+        if se and rev is not None:
+            quarters[-1]["salesEst"] = fmt_big(se)
+            quarters[-1]["salesSurprise"] = fmt_pct(pct_change(rev, se), 1)
     f["quarters"] = quarters
     beats = [r for r in reports[:8] if r["surprise"] is not None]
     if beats:
@@ -817,7 +844,8 @@ def demo_inputs(watch: list[str]):
             quarters.append({"q": qlabel(end), "date": (end + pd.Timedelta(days=24)).strftime("%Y-%m-%d"),
                              "eps": f"{e:.2f}", "epsChg": fmt_pct(pct_change(e, ey)), "sales": fmt_big(rev * (0.93 ** q)),
                              "salesChg": fmt_pct(rng.uniform(-5, 45)), "margin": f"{rng.uniform(10, 45):.1f}%",
-                             "surprise": fmt_pct(rng.uniform(-4, 12), 1)})
+                             "surprise": fmt_pct(rng.uniform(-4, 12), 1), "epsEst": f"{e / 1.04:.2f}",
+                             "salesEst": fmt_big(rev * (0.93 ** q) / 1.02), "salesSurprise": fmt_pct(rng.uniform(-3, 6), 1)})
         annual = [{"y": str(2025 - k), "eps": f"{sum(reps[4 * k:4 * k + 4]):.2f}",
                    "chg": fmt_pct(rng.uniform(-10, 60)), "sales": fmt_big(rev * 4 * (0.85 ** k)),
                    "salesChg": fmt_pct(rng.uniform(-5, 40)), "netMgn": f"{rng.uniform(5, 30):.1f}%"} for k in range(10)]
@@ -837,8 +865,22 @@ def demo_inputs(watch: list[str]):
 
 # ---------------------------------------------------------------- fundamentals cache (rotation)
 FUND_MAX_AGE_DAYS = 7      # universe fundamentals older than this get refreshed
-FUND_VERSION = 2          # bump when fetch_fundamentals gains new fields
+FUND_VERSION = 3          # bump when fetch_fundamentals gains new fields
 FUND_BATCH = int(__import__("os").environ.get("INK_FUND_BATCH", "150"))  # universe tickers refreshed per run
+
+
+def est_cache_get(sym: str) -> dict:
+    p = CACHE / "est" / f"{sym}.json"
+    try:
+        return json.loads(p.read_text()) if p.exists() else {}
+    except Exception:  # noqa: BLE001
+        return {}
+
+
+def est_cache_put(sym: str, d: dict) -> None:
+    (CACHE / "est").mkdir(parents=True, exist_ok=True)
+    keep = dict(sorted(d.items(), key=lambda kv: kv[1].get("seen", ""))[-16:])
+    (CACHE / "est" / f"{sym}.json").write_text(jdumps(keep, separators=(",", ":")))
 
 
 def fund_cache_get(sym: str):
