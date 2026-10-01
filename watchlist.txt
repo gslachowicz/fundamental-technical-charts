@@ -1,0 +1,25 @@
+# One ticker per line (Yahoo symbols). Lines starting with # are ignored.
+TSM
+NVDA
+AVGO
+AMD
+MU
+ANET
+META
+NFLX
+AXON
+PLTR
+CRWD
+NOW
+APP
+UBER
+GE
+VST
+CEG
+LLY
+ISRG
+COST
+MELI
+GGAL
+YPF
+VIST
