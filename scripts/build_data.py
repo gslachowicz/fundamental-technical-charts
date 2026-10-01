@@ -592,6 +592,8 @@ def fetch_fundamentals(sym: str) -> dict:
                 news.append({"title": title, "url": url, "pub": pub, "date": str(when)[:19]})
     except Exception as e:  # noqa: BLE001
         log(f"{sym}: news failed: {e}")
+    if not news:
+        news = rss_news(sym)
     f["news"] = news[:8]
 
     # --- SEC filings: 10+ years of annual figures and quarterly sales / operating income
@@ -821,6 +823,41 @@ def _pnum(x):
         return float(str(x).replace("+", "").replace("%", "").replace(",", ""))
     except (TypeError, ValueError):
         return None
+
+
+def rss_news(sym: str) -> list[dict]:
+    """Headlines from Yahoo Finance's RSS feed (fallback when yfinance returns none), then Google News."""
+    import requests
+    import xml.etree.ElementTree as ET
+    from email.utils import parsedate_to_datetime
+    feeds = [f"https://feeds.finance.yahoo.com/rss/2.0/headline?s={sym}&region=US&lang=en-US",
+             f"https://news.google.com/rss/search?q={sym}+stock&hl=en-US&gl=US&ceid=US:en"]
+    for url in feeds:
+        try:
+            r = requests.get(url, headers=UA, timeout=20)
+            if r.status_code != 200:
+                continue
+            out = []
+            for it in ET.fromstring(r.content).iter("item"):
+                title = (it.findtext("title") or "").strip()
+                link = (it.findtext("link") or "").strip()
+                src = it.find("source")
+                pub = (src.text if src is not None and src.text else "").strip()
+                if not pub and " - " in title and "google" in url:
+                    title, pub = title.rsplit(" - ", 1)
+                when = ""
+                try:
+                    when = parsedate_to_datetime(it.findtext("pubDate") or "").astimezone(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%S")
+                except Exception:  # noqa: BLE001
+                    pass
+                if title and link.startswith("http"):
+                    out.append({"title": title, "url": link, "pub": pub or ("Yahoo Finance" if "yahoo" in url else ""), "date": when})
+            if out:
+                out.sort(key=lambda n: n["date"], reverse=True)
+                return out[:8]
+        except Exception:  # noqa: BLE001
+            continue
+    return []
 
 
 def smr_rating(f: dict) -> str:
