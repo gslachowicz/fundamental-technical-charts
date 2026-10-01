@@ -17,6 +17,8 @@
     <span class="sp"></span>
     <label class="jump"><span class="vh">Go to ticker</span><input id="jump" placeholder="Ticker…" maxlength="10" spellcheck="false" autocomplete="off" list="symlist"></label>
     <datalist id="symlist"></datalist>
+    <button class="gear" id="gear" title="Chart settings" aria-label="Chart settings" aria-expanded="false" aria-controls="settings"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M19.4 13a7.5 7.5 0 0 0 0-2l2.1-1.6-2-3.5-2.5 1a7.6 7.6 0 0 0-1.7-1L15 3.3h-4l-.4 2.6a7.6 7.6 0 0 0-1.7 1l-2.5-1-2 3.5L6.6 11a7.5 7.5 0 0 0 0 2l-2.1 1.6 2 3.5 2.5-1c.5.4 1.1.7 1.7 1l.4 2.6h4l.4-2.6c.6-.3 1.2-.6 1.7-1l2.5 1 2-3.5zM13 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z" transform="translate(-1 0)"/></svg></button>
+    <div class="settings" id="settings" hidden role="dialog" aria-label="Chart settings"></div>
   </nav>
   <div class="banner" id="banner" hidden></div>
 
@@ -134,13 +136,16 @@
       <div class="box">
         <h3>Annual earnings &amp; sales <small id="annualN">last 10 years</small></h3>
         <div class="tbl" id="annual"></div>
-        <h3>Quarterly <small>% vs. year-ago quarter</small></h3>
-        <div class="tbl" id="qtrs"></div>
       </div>
       <div class="box">
         <h3>Base analysis <small>auto-detected</small></h3>
         <div class="in" id="baseBox"></div>
       </div>
+    </section>
+
+    <section class="box">
+      <h3>Quarterly earnings &amp; sales <small>reported vs. expected · growth vs. year-ago quarter</small></h3>
+      <div class="tbl" id="qtrs"></div>
     </section>
   </main>
 </div>

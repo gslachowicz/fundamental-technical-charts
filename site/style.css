@@ -168,3 +168,27 @@ dl.facts a{color:var(--navy)}
 .box .tbl td,.box .tbl th{padding:4px 8px}
 @media (max-width:980px){.about .in{grid-template-columns:1fr}}
 @media (max-width:640px){dl.facts{grid-template-columns:1fr}}
+
+/* settings */
+.topbar{position:relative}
+.gear{display:grid;place-items:center;width:34px;height:34px;border:1px solid var(--ink);background:var(--plate);color:var(--navy);cursor:pointer;padding:0}
+.gear:hover,.gear[aria-expanded="true"]{background:var(--navy);color:#fff;border-color:var(--navy)}
+.settings{position:absolute;right:0;top:calc(100% + 6px);z-index:50;width:min(460px,calc(100vw - 32px));background:var(--plate);border:1px solid var(--ink);box-shadow:4px 4px 0 rgba(21,23,28,.12);font-family:var(--f-label)}
+.sethd{display:flex;align-items:center;justify-content:space-between;background:var(--navy);color:#fff;padding:6px 10px;font-family:var(--f-head);font-size:12px;letter-spacing:.1em;text-transform:uppercase}
+.sethd .x{background:none;border:0;color:#fff;font-size:20px;line-height:1;cursor:pointer;padding:0 2px}
+.setrow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 12px;border-bottom:1px dotted var(--rule);flex-wrap:wrap}
+.setrow>span{font-size:13px;color:var(--ink2);text-transform:uppercase;letter-spacing:.06em}
+.setrow.col{display:grid;gap:6px}
+.setrow .seg button{font-size:12px;padding:4px 8px}
+.checks{display:grid;gap:5px}
+.checks label{display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer}
+.checks small{color:var(--ink2);font-size:12px}
+.checks i{display:inline-block;width:18px;border-top:2.5px solid}
+.checks input{accent-color:var(--navy);width:15px;height:15px;margin:0}
+.setft{padding:9px 12px;display:flex;justify-content:flex-end}
+.more-link{background:none;border:0;padding:0;font-family:var(--f-label);font-size:13px;color:var(--navy);text-decoration:underline;cursor:pointer}
+.qt th.hgrp{text-align:center;border-bottom:1px solid var(--rule);color:var(--navy)}
+.qt .g0{border-left:1px dotted var(--rule)}
+.qt tr.next td{font-style:italic;color:var(--ink2);background:#f8f7f2}
+.tbl .na{color:var(--ink2)}
+.tnote{margin:0;padding:6px 10px 8px;font-size:12px;color:var(--ink2);line-height:1.4}

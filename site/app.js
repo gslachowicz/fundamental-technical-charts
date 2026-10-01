@@ -152,6 +152,42 @@ $("#jump").addEventListener("change", e=>{ const v=e.target.value.trim().toUpper
   const known = ROWS.some(r=>r.symbol===v) || (UNI && UNI.some(r=>r.symbol===v));
   if(known || !UNI) location.hash = v; else toast(`${v} is not in the S&P 1500 or Nasdaq-100. Add it to watchlist.txt and it will appear after the next update.`); });
 
+/* ================= SETTINGS ================= */
+const MAS = [
+  {k:"d10",  n:10,  w:null, ema:false, color:"#e07b1f", d:"10-day MA"},
+  {k:"e21",  n:21,  w:null, ema:true,  color:"#5fa35a", d:"21-day EMA"},
+  {k:"d50",  n:50,  w:10,   ema:false, color:"#d23a2a", d:"50-day MA",  wl:"10-week MA"},
+  {k:"d150", n:150, w:30,   ema:false, color:"#7b4bb3", d:"150-day MA", wl:"30-week MA"},
+  {k:"d200", n:200, w:40,   ema:false, color:"#15171c", d:"200-day MA", wl:"40-week MA"}];
+const DEF_CFG = {scale:"log", bars:"hlc", weight:"bold", grid:"dotted", ma:{d10:false,e21:false,d50:true,d150:false,d200:true}};
+let cfg = (()=>{ const c = store.get("ink:cfg") || {}; return {...DEF_CFG, ...c, ma:{...DEF_CFG.ma, ...(c.ma||{})}}; })();
+const GRID_DASH = {dotted:[1,3], dashed:[5,4], solid:[]};
+function niceStep(x){ const m=Math.pow(10,Math.floor(Math.log10(x))); for(const k of [1,2,2.5,5,10]) if(k*m>=x) return k*m; return 10*m; }
+function linTicks(lo, hi, pxH){ const step=niceStep((hi-lo)/Math.max(2,Math.floor(pxH/38))); const out=[]; for(let v=Math.ceil(lo/step)*step; v<=hi; v+=step) out.push(+v.toFixed(6)); return out; }
+
+function settingsHTML(){
+  const seg = (key, opts) => `<div class="seg">${opts.map(([v,l])=>`<button data-cfg="${key}" data-v="${v}" class="${cfg[key]===v?'on':''}">${l}</button>`).join("")}</div>`;
+  return `<div class="sethd"><b>Chart settings</b><button class="x" id="setClose" aria-label="Close">×</button></div>
+    <div class="setrow"><span>Price scale</span>${seg("scale",[["log","Log"],["linear","Linear"]])}</div>
+    <div class="setrow"><span>Price bars</span>${seg("bars",[["hlc","O'Neil (H-L-C)"],["ohlc","OHLC"],["candle","Candles"]])}</div>
+    <div class="setrow"><span>Bar weight</span>${seg("weight",[["thin","Thin"],["normal","Normal"],["bold","Bold"]])}</div>
+    <div class="setrow"><span>Grid lines</span>${seg("grid",[["dotted","Dotted"],["dashed","Dashed"],["solid","Solid"],["none","None"]])}</div>
+    <div class="setrow col"><span>Moving averages</span><div class="checks">${MAS.map(m=>`<label><input type="checkbox" data-ma="${m.k}" ${cfg.ma[m.k]?'checked':''}><i style="border-color:${m.color}"></i>${m.d}${m.wl?` <small>(${m.wl} on weekly)</small>`:` <small>(daily only)</small>`}</label>`).join("")}</div></div>
+    <div class="setft"><button class="btn" id="setReset">Reset to defaults</button></div>`;
+}
+function applyCfg(){ store.set("ink:cfg", cfg); $("#settings").innerHTML = settingsHTML(); bindSettings(); if(S){ renderPanels(); draw(); } }
+function bindSettings(){
+  $$("#settings [data-cfg]").forEach(b=>b.onclick=()=>{ cfg[b.dataset.cfg]=b.dataset.v; applyCfg(); });
+  $$("#settings [data-ma]").forEach(c=>c.onchange=()=>{ cfg.ma[c.dataset.ma]=c.checked; applyCfg(); });
+  $("#setReset").onclick=()=>{ cfg = JSON.parse(JSON.stringify(DEF_CFG)); applyCfg(); };
+  $("#setClose").onclick=()=>toggleSettings(false);
+}
+function toggleSettings(on){ const p=$("#settings"); on = on==null ? p.hidden : on; p.hidden=!on; $("#gear").setAttribute("aria-expanded", on);
+  if(on){ p.innerHTML = settingsHTML(); bindSettings(); } }
+$("#gear").onclick = e => { e.stopPropagation(); toggleSettings(); };
+document.addEventListener("click", e=>{ const p=$("#settings"), path=e.composedPath(); if(!p.hidden && !path.includes(p) && !path.includes($("#gear"))) toggleSettings(false); });
+document.addEventListener("keydown", e=>{ if(e.key==="Escape" && !$("#settings").hidden) toggleSettings(false); });
+
 /* ================= CHART ================= */
 let S = null;               // current ticker bundle
 let view = { weekly:false, months:18, box:true, piv:true, base:true, idx:true, rsl:true };
@@ -205,13 +241,13 @@ function logTicks(lo, hi, pxH){
 }
 function series(){
   const base = view.weekly ? toWeekly(S.px) : S.px;
-  const ma1 = sma(base, view.weekly?10:50, b=>b.c), ma2 = sma(base, view.weekly?40:200, b=>b.c);
-  const e21 = view.weekly ? null : ema(base, 21, b=>b.c);
+  const mas = MAS.filter(m=>cfg.ma[m.k] && (!view.weekly || m.w)).map(m=>{ const n = view.weekly ? m.w : m.n;
+    return {...m, data: m.ema ? ema(base, n, b=>b.c) : sma(base, n, b=>b.c)}; });
   const vma = sma(base, view.weekly?10:50, b=>b.v);
   const bA = alignBench(base);
   const rs = bA ? base.map((b,i)=> bA[i] ? b.c/bA[i] : null) : null;
   const nVis = Math.min(base.length, Math.round(view.months*(view.weekly?4.33:21)));
-  return {base, ma1, ma2, e21, vma, bA, rs, s0: base.length - nVis};
+  return {base, mas, vma, bA, rs, s0: base.length - nVis};
 }
 
 function draw(){
@@ -225,7 +261,7 @@ function draw(){
   ctx.fillStyle = C.plate; ctx.fillRect(0,0,W,H);
   if(!S || !S.px.length) return;
   const F = S.fund || {};
-  const sr = series(); const {base,ma1,ma2,e21,vma,s0} = sr; const bA = view.idx ? sr.bA : null; const rs = view.rsl ? sr.rs : null;
+  const sr = series(); const {base,mas,vma,s0} = sr; const bA = view.idx ? sr.bA : null; const rs = view.rsl ? sr.rs : null;
   const vis = base.slice(s0); const n = vis.length;
   const narrow = W < 600;
   const L=6, R= narrow?50:66, T=20, B=18;
@@ -247,28 +283,32 @@ function draw(){
     let a=0,b=n-1; while(b-a>1){ const m=(a+b)>>1; if(vis[m].t<=t) a=m; else b=m; } return xOf(a) + (t-vis[a].t)/(vis[b].t-vis[a].t)*bw; };
 
   let lo=Infinity, hi=-Infinity; for(const b of vis){ lo=Math.min(lo,b.l); hi=Math.max(hi,b.h); }
+  const isLog = cfg.scale !== "linear";
   const pad = Math.log(hi/lo)*0.04 || 0.01; const lLo=Math.log(lo)-pad, lHi=Math.log(hi)+pad;
-  const yOf = p => prBot - (Math.log(p)-lLo)/(lHi-lLo)*(prBot-prTop);
-  const pOf = y => Math.exp(lLo + (prBot-y)/(prBot-prTop)*(lHi-lLo));
+  const linPad = (hi-lo)*0.04 || hi*0.01; const pLo = Math.max(lo-linPad, lo*0.5), pHi = hi+linPad;
+  const yOf = isLog ? p => prBot - (Math.log(p)-lLo)/(lHi-lLo)*(prBot-prTop) : p => prBot - (p-pLo)/(pHi-pLo)*(prBot-prTop);
+  const pOf = isLog ? y => Math.exp(lLo + (prBot-y)/(prBot-prTop)*(lHi-lLo)) : y => pLo + (prBot-y)/(prBot-prTop)*(pHi-pLo);
+  const gridOn = cfg.grid !== "none", gridDash = GRID_DASH[cfg.grid] || [1,3];
   let vMax=0; for(let i=s0;i<base.length;i++) vMax=Math.max(vMax, base[i].v);
   const vY = v => vBot - v/((vMax||1)*1.28)*(volH-2);
 
   // month grid + labels
   const monthStarts=[]; let lastM=-1;
   for(let i=0;i<n;i++){ const d=new Date(vis[i].t); const m=d.getUTCMonth()+d.getUTCFullYear()*12; if(m!==lastM){ monthStarts.push({i,d}); lastM=m; } }
-  ctx.strokeStyle=C.grid; ctx.lineWidth=1; ctx.setLineDash([1,3]);
+  ctx.strokeStyle=C.grid; ctx.lineWidth=1; ctx.setLineDash(gridDash);
   const skipM = (narrow && view.months>12) || view.months>24 ? 2 : 1;
   ctx.textBaseline="alphabetic"; ctx.textAlign="center"; let lastLabelX=-99;
   monthStarts.forEach(ms=>{ const x = Math.round(L + ms.i*bw)+.5; const isJan=ms.d.getUTCMonth()===0;
-    if(ms.i>0){ ctx.beginPath(); ctx.moveTo(x,pTop); ctx.lineTo(x,vBot); ctx.stroke(); }
+    if(ms.i>0 && gridOn){ ctx.beginPath(); ctx.moveTo(x,pTop); ctx.lineTo(x,vBot); ctx.stroke(); }
     if((ms.d.getUTCMonth()%skipM===0 || isJan) && x-lastLabelX>(narrow?28:34)){
       ctx.fillStyle = isJan? C.ink : C.ink2; ctx.font = `${isJan?700:600} ${narrow?10:11}px ${FONT_L}`;
       ctx.fillText(isJan? String(ms.d.getUTCFullYear()) : MON[ms.d.getUTCMonth()], Math.min(x+14, L+plotW-12), H-5); lastLabelX=x; } });
 
   // price grid + axis
   ctx.font = `${narrow?10:11}px ${FONT_D}`; ctx.textAlign="left"; ctx.textBaseline="middle"; let lastY = 1e9;
-  for(const t of logTicks(Math.exp(lLo), Math.exp(lHi), prBot-prTop)){ const y=yOf(t); if(y<pTop+4||y>pBot-4 || lastY-y<13) continue; lastY=y;
-    ctx.strokeStyle=C.grid; ctx.beginPath(); ctx.moveTo(L,Math.round(y)+.5); ctx.lineTo(L+plotW,Math.round(y)+.5); ctx.stroke();
+  const ticks = isLog ? logTicks(Math.exp(lLo), Math.exp(lHi), prBot-prTop) : linTicks(pLo, pHi, prBot-prTop);
+  for(const t of ticks){ const y=yOf(t); if(y<pTop+4||y>pBot-4 || lastY-y<13) continue; lastY=y;
+    ctx.strokeStyle=C.grid; if(gridOn){ ctx.beginPath(); ctx.moveTo(L,Math.round(y)+.5); ctx.lineTo(L+plotW,Math.round(y)+.5); ctx.stroke(); }
     ctx.fillStyle=C.ink2; ctx.fillText(fmtP(t), L+plotW+5, y); }
   ctx.setLineDash([]);
   ctx.strokeStyle=C.ink; ctx.lineWidth=1; ctx.strokeRect(L+.5,pTop+.5,plotW,priceH); ctx.strokeRect(L+.5,vTop+.5,plotW,volH);
@@ -316,7 +356,7 @@ function draw(){
   // moving averages
   const line = (arr, color, w) => { if(!arr) return; ctx.strokeStyle=color; ctx.lineWidth=w; ctx.beginPath(); let on=false;
     for(let i=0;i<n;i++){ const v=arr[s0+i]; if(v==null){on=false;continue;} const x=xOf(i), y=yOf(v); on? ctx.lineTo(x,y) : ctx.moveTo(x,y); on=true; } ctx.stroke(); };
-  line(e21, C.ema, 1.2); line(ma2, C.ma200, 1.3); line(ma1, C.ma50, 1.4);
+  for(const m of mas) line(m.data, m.color, m.k==="d50" ? 1.4 : 1.3);
 
   // swing pivots
   if(view.piv){
@@ -333,18 +373,30 @@ function draw(){
   }
 
   // price bars
-  // crisp OHLC bars: whole device pixels, blue = up close, pink = down close
-  const lw = bw >= 7 ? 2 : 1, off = lw % 2 ? .5 : 0;
-  const tickW = Math.max(1, Math.min(5, Math.floor(bw*0.42)));
+  // crisp bars on whole device pixels; blue = close above prior close, pink = below
+  const LW = {thin:[1,1,1], normal:[1,2,2], bold:[1,2,3]}[cfg.weight] || [1,2,3];
+  const lw = bw >= 9 ? LW[2] : bw >= 4 ? LW[1] : LW[0], off = lw % 2 ? .5 : 0;
+  const tickW = Math.max(lw+1, Math.min(cfg.weight==="bold"?7:5, Math.floor(bw*(cfg.weight==="bold"?0.5:0.42))));
   const snapY = v => Math.round(yOf(v)) + off;
-  ctx.lineWidth = lw; ctx.lineCap = "butt";
-  for(const up of [true,false]){ ctx.strokeStyle = up ? C.up : C.down; ctx.beginPath();
-    for(let i=0;i<n;i++){ const b=vis[i]; const prev = s0+i>0 ? base[s0+i-1].c : b.o; if((b.c >= prev) !== up) continue;
-      const x=Math.round(xOf(i))+off; let yh=snapY(b.h), yl=snapY(b.l); if(yl-yh<1) yl=yh+1;
-      ctx.moveTo(x,yh-off); ctx.lineTo(x,yl+off);
-      if(bw>2.4){ ctx.moveTo(x-tickW-off,snapY(b.o)); ctx.lineTo(x,snapY(b.o)); }
-      ctx.moveTo(x,snapY(b.c)); ctx.lineTo(x+tickW+off,snapY(b.c)); }
-    ctx.stroke(); }
+  ctx.lineCap = "butt";
+  if(cfg.bars === "candle"){
+    const bodyW = Math.max(1, Math.min(Math.floor(bw*0.7), 15));
+    for(let i=0;i<n;i++){ const b=vis[i]; const prev = s0+i>0 ? base[s0+i-1].c : b.o; const col = b.c >= prev ? C.up : C.down;
+      const x=Math.round(xOf(i)); ctx.strokeStyle=col; ctx.lineWidth=1;
+      ctx.beginPath(); ctx.moveTo(x+.5, Math.round(yOf(b.h))); ctx.lineTo(x+.5, Math.round(yOf(b.l))); ctx.stroke();
+      const yt=Math.round(yOf(Math.max(b.o,b.c))), yb=Math.max(yt+1, Math.round(yOf(Math.min(b.o,b.c)))); const x0=Math.round(x+.5-bodyW/2);
+      if(b.c >= b.o && bodyW>2){ ctx.fillStyle=C.plate; ctx.fillRect(x0, yt, bodyW, yb-yt); ctx.strokeRect(x0+.5, yt+.5, bodyW-1, Math.max(0,yb-yt-1)); }
+      else { ctx.fillStyle=col; ctx.fillRect(x0, yt, bodyW, yb-yt); } }
+  } else {
+    ctx.lineWidth = lw;
+    for(const up of [true,false]){ ctx.strokeStyle = up ? C.up : C.down; ctx.beginPath();
+      for(let i=0;i<n;i++){ const b=vis[i]; const prev = s0+i>0 ? base[s0+i-1].c : b.o; if((b.c >= prev) !== up) continue;
+        const x=Math.round(xOf(i))+off; let yh=snapY(b.h), yl=snapY(b.l); if(yl-yh<1) yl=yh+1;
+        ctx.moveTo(x,yh-off); ctx.lineTo(x,yl+off);
+        if(cfg.bars==="ohlc" && bw>2.4){ ctx.moveTo(x-tickW-off,snapY(b.o)); ctx.lineTo(x,snapY(b.o)); }
+        if(bw>1.6){ ctx.moveTo(x,snapY(b.c)); ctx.lineTo(x+tickW+off,snapY(b.c)); } }
+      ctx.stroke(); }
+  }
 
   // RS line + rating
   let rsNewHigh=false;
@@ -410,7 +462,7 @@ function draw(){
     const SQ = Q.slice(0, narrow ? 4 : 8).reverse(); const cw = plotW / SQ.length;
     SQ.forEach((q, k) => {
       const x0 = L + k*cw, x1 = x0 + cw;
-      if(k){ ctx.strokeStyle=C.grid; ctx.setLineDash([1,2]); ctx.beginPath(); ctx.moveTo(Math.round(x0)+.5, sTop); ctx.lineTo(Math.round(x0)+.5, sBot); ctx.stroke(); ctx.setLineDash([]); }
+      if(k){ ctx.strokeStyle=C.grid; ctx.setLineDash(gridDash); ctx.beginPath(); ctx.moveTo(Math.round(x0)+.5, sTop); ctx.lineTo(Math.round(x0)+.5, sBot); ctx.stroke(); ctx.setLineDash([]); }
       const cx=(x0+x1)/2, wide = cw > 92;
       ctx.save(); ctx.beginPath(); ctx.rect(x0+1,sTop,cw-2,stripH); ctx.clip();
       ctx.fillStyle=C.ink; ctx.font=`700 ${narrow?9:10}px ${FONT_L}`; ctx.textAlign="center"; ctx.fillText(q.q, cx, sTop+2+rowH*0.5);
@@ -492,7 +544,13 @@ function renderPanels(){
   $("#calc").innerHTML = calc.map(([k,v])=>`<dt>${k}</dt><dd>${esc(v)}</dd>`).join("");
 
   const Q = (F.quarters||[]).filter(q=>q.q||q.eps);
-  $("#qtrs").innerHTML = Q.length ? `<table><thead><tr><th class="l">Qtr</th><th>Reported</th><th>EPS</th><th>% chg</th><th>Sales</th><th>% chg</th><th>Op. mgn</th><th>Surprise</th></tr></thead><tbody>${Q.map(q=>`<tr><td class="l">${esc(q.q)}</td><td>${q.date?fmtD(iso(q.date)):""}</td><td>${esc(q.eps)}</td><td class="${sign(q.epsChg)}">${esc(q.epsChg)}</td><td>${esc(q.sales)}</td><td class="${sign(q.salesChg)}">${esc(q.salesChg)}</td><td>${esc(q.margin||"")}</td><td class="${sign(q.surprise)}">${esc(q.surprise||"")}</td></tr>`).join("")}</tbody></table>`
+  const nx = F.nextQ;
+  const d = v => esc(v)||'<span class="na">–</span>';
+  $("#qtrs").innerHTML = Q.length ? `<table class="qt"><thead><tr><th class="l" rowspan="2">Qtr</th><th rowspan="2">Reported</th><th colspan="4" class="hgrp">EPS</th><th colspan="4" class="hgrp">Sales</th><th rowspan="2">Op. mgn</th></tr>
+      <tr><th class="g0">Actual</th><th>Est.</th><th>Surprise</th><th>Y/Y</th><th class="g0">Actual</th><th>Est.</th><th>Surprise</th><th>Y/Y</th></tr></thead><tbody>${
+      nx && nx.q ? `<tr class="next"><td class="l">${esc(nx.q)}</td><td>${nx.date?fmtD(iso(nx.date)):""}</td><td class="g0">due</td><td>${d(nx.epsEst)}</td><td></td><td></td><td class="g0">due</td><td>${d(nx.salesEst)}</td><td></td><td></td><td></td></tr>` : ""}${
+      Q.map(q=>`<tr><td class="l">${esc(q.q)}</td><td>${q.date?fmtD(iso(q.date)):""}</td><td class="g0">${d(q.eps)}</td><td>${d(q.epsEst)}</td><td class="${sign(q.surprise)}">${d(q.surprise)}</td><td class="${sign(q.epsChg)}">${d(q.epsChg)}</td><td class="g0">${d(q.sales)}</td><td>${d(q.salesEst)}</td><td class="${sign(q.salesSurprise)}">${d(q.salesSurprise)}</td><td class="${sign(q.salesChg)}">${d(q.salesChg)}</td><td>${d(q.margin)}</td></tr>`).join("")}</tbody></table>
+      <p class="tnote">EPS is adjusted (as reported to analysts). Sales estimates are recorded before each report, so they fill in quarter by quarter from now on.</p>`
     : `<div class="empty">${F.pending ? "Earnings and sales for this stock are still loading: the site fetches them for a batch of stocks each day, so they appear within the next few updates. Add it to watchlist.txt to get them on the next update." : "Yahoo did not return quarterly earnings for this ticker."}</div>`;
   const A = (F.annual||[]).filter(a=>a.y||a.eps).slice(0,10);
   $("#annualN").textContent = A.length ? `last ${A.length} years` : "";
@@ -500,8 +558,11 @@ function renderPanels(){
     : `<div class="empty">${F.pending ? "Annual figures load with the fundamentals rotation in the next updates." : "No annual data."}</div>`;
 
   $("#aboutSec").textContent = F.group || F.sector || "";
-  $("#about").textContent = F.about || (F.pending ? "The business description loads with the fundamentals rotation in the next updates." : "No description available.");
-  $("#about").classList.toggle("muted", !F.about);
+  const ab = $("#about"); ab.classList.toggle("muted", !F.about);
+  if(!F.about) ab.textContent = F.pending ? "The business description loads with the fundamentals rotation in the next updates." : "No description available.";
+  else { const short = shortAbout(F.about);
+    ab.innerHTML = esc(short) + (short.length < F.about.length - 20 ? ` <button class="more-link" id="aboutMore">Full description</button>` : "");
+    const mb = $("#aboutMore"); if(mb) mb.onclick = () => { ab.textContent = F.about; }; }
   const site = /^https?:\/\//i.test(F.website||"") ? `<a href="${esc(F.website)}" target="_blank" rel="noopener">${esc(F.website.replace(/^https?:\/\/(www\.)?/,"").replace(/\/$/,""))}</a>` : "";
   const K = [["Market cap",F.mktCap],["Float",F.float],["Shares out",F.shares],["Institutional",F.inst],["ROE",F.roe],["Pretax margin",F.pretax],
     ["Debt / equity",F.debt],["EPS growth (3y)",F.epsGrowth],["EPS surprises (8q)",F.epsSurprise],["Next earnings",F.nextEarn],["Next qtr EPS est.",F.epsDue],
@@ -519,12 +580,23 @@ function renderPanels(){
     : `<div class="empty">No base detected. The stock is either trending at new highs without a 5-week consolidation, or has too little history.</div>`;
 
   const nm = view.weekly? ["10-week","40-week","10-week"] : ["50-day","200-day","50-day"];
-  $("#legend").innerHTML = (view.weekly?"":`<span><span class="sw" style="border-color:${C.ema}"></span><b>21-day EMA</b></span>`) +
-    `<span><span class="sw" style="border-color:${C.ma50}"></span><b>${nm[0]} MA</b></span><span><span class="sw" style="border-color:${C.ma200}"></span><b>${nm[1]} MA</b></span>` +
+  $("#legend").innerHTML = MAS.filter(m=>cfg.ma[m.k] && (!view.weekly || m.w)).map(m=>`<span><span class="sw" style="border-color:${m.color}"></span><b>${view.weekly?m.wl:m.d}</b></span>`).join("") +
     `<span><span class="sw" style="border-color:${C.rs}"></span><b>RS line</b> vs S&amp;P 500</span><span><span class="sw" style="border-color:${C.idx};border-top-width:1px"></span><b>S&amp;P 500</b></span>` +
     `<span><span class="sw" style="border-color:${C.vavg}"></span><b>${nm[2]} avg volume</b></span><span><span class="sw" style="border-color:${C.piv};border-top-style:dotted"></span><b>Unbroken swing</b></span>` +
-    `<span><span class="sw" style="border-color:${C.navy};border-top-style:dashed"></span><b>Pivot · buy zone</b></span><span><b style="color:${C.up}">Blue</b> / <b style="color:${C.down}">pink</b>: close above / below prior close · log scale</span>`;
+    `<span><span class="sw" style="border-color:${C.navy};border-top-style:dashed"></span><b>Pivot · buy zone</b></span><span><b style="color:${C.up}">Blue</b> / <b style="color:${C.down}">pink</b>: close above / below prior close · ${cfg.scale==="linear"?"linear":"log"} scale</span>`;
   renderDbox();
+}
+// The first one or two sentences of Yahoo's business summary: what the company does, without the history and legal boilerplate
+const ABBR = /\b(?:Inc|Corp|Co|Ltd|Cos|Bros|plc|L\.P|N\.V|S\.A|U\.S|U\.K|No|St|Dr|Mr|e\.g|i\.e|etc|approx|vs|Jr|Sr|[A-Z])\.$/;
+function sentences(t){ const out=[]; let start=0; const re=/[.!?](?=\s+[A-Z(“"])/g; let m;
+  while((m=re.exec(t))){ const chunk=t.slice(start, m.index+1); if(ABBR.test(chunk.trim())) continue; out.push(chunk.trim()); start=m.index+1; }
+  const rest=t.slice(start).trim(); if(rest) out.push(rest); return out; }
+function shortAbout(t){
+  const ss = sentences(String(t).replace(/\s+/g," ").trim()).filter(x=>!/\b(was founded|was incorporated|is headquartered|is based in|formerly known|changed its name|was established)\b/i.test(x));
+  if(!ss.length) return t;
+  let out = ss[0]; if(out.length < 170 && ss[1] && out.length + ss[1].length < 360) out += " " + ss[1];
+  if(out.length > 380){ out = out.slice(0, 370).replace(/[,;:]?\s+\S*$/,"") + "…"; }
+  return out;
 }
 function baseNote(b){
   const bits = [];
