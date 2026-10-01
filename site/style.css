@@ -192,3 +192,15 @@ dl.facts a{color:var(--navy)}
 .qt tr.next td{font-style:italic;color:var(--ink2);background:#f8f7f2}
 .tbl .na{color:var(--ink2)}
 .tnote{margin:0;padding:6px 10px 8px;font-size:12px;color:var(--ink2);line-height:1.4}
+
+/* peers */
+.peers .sym{font-family:var(--f-head);font-weight:800;font-size:13px;color:var(--navy)}
+.peers .nm{display:block;font-family:var(--f-label);font-size:11px;color:var(--ink2);max-width:150px;overflow:hidden;text-overflow:ellipsis}
+.peers tbody tr{cursor:pointer}
+.peers tbody tr:hover{background:#f6f5f0}
+.peers tr.me{background:#eef1f8}
+.peers tr.me td:first-child{box-shadow:inset 3px 0 0 var(--navy)}
+.peers td,.peers th{padding:4px 6px}
+.peers td.pos{font-weight:700;color:var(--navy)}
+.peers td,.peers th{padding:4px 5px;font-size:12.5px}
+.peers .nm{max-width:120px}

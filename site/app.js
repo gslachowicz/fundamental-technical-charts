@@ -40,7 +40,7 @@ const list = () => scrState.scope==="all" && UNI ? UNI : ROWS;
 let uniLoading = null;
 function loadUni(){
   if(UNI) return Promise.resolve(UNI);
-  if(!uniLoading) uniLoading = getJSON("universe.json").then(u=>{ UNI=u; fillSymlist(); return u; }).catch(e=>{ uniLoading=null; throw e; });
+  if(!uniLoading) uniLoading = getJSON("universe.json").then(u=>{ UNI=u; if(LIVE) UNI.forEach(patchRow); fillSymlist(); return u; }).catch(e=>{ uniLoading=null; throw e; });
   return uniLoading;
 }
 function fillSymlist(){
@@ -524,15 +524,10 @@ function renderPanels(){
   document.title = `${S.symbol} · Ink Charts`;
   $("#qPx").textContent = fmtP(st.close);
   $("#qChg").innerHTML = `<span class="${ch<0?'dn':''}">${ch>=0?"+":""}${fmtP(st.close-st.prevClose)} (${fmtPct(ch,2)})</span>`;
-  $("#qMeta").textContent = `${fmtLong(iso(st.date))} close · Vol ${fmtV(st.volume)}` + (F.exchange? " · "+F.exchange : "");
+  $("#qMeta").textContent = (S.live ? `${fmtLong(iso(st.date))} · ${liveTime()} ET, delayed` : `${fmtLong(iso(st.date))} close`) + ` · Vol ${fmtV(st.volume)}` + (F.exchange? " · "+F.exchange : "");
   const chip = $("#baseChip"); chip.hidden = !(b && b.status); if(b && b.status){ chip.textContent = b.status; chip.className = "chip " + (STATUS_CLASS[b.status]||""); }
 
-  const tiles = [["RS Rating", F.rs, +F.rs>=80, +F.rs<50], ["Group RS", F.grpRs, /^A/.test(F.grpRs||""), /^[DE]/.test(F.grpRs||"")],
-    ["U/D vol", st.udRatio!=null? st.udRatio.toFixed(2):"", st.udRatio>=1.2, st.udRatio<1],
-    ["EPS Δ", (F.quarters&&F.quarters[0]&&F.quarters[0].epsChg)||"", pnum(F.quarters&&F.quarters[0]&&F.quarters[0].epsChg)>=25, pnum(F.quarters&&F.quarters[0]&&F.quarters[0].epsChg)<0],
-    ["Sales Δ", (F.quarters&&F.quarters[0]&&F.quarters[0].salesChg)||"", pnum(F.quarters&&F.quarters[0]&&F.quarters[0].salesChg)>=20, pnum(F.quarters&&F.quarters[0]&&F.quarters[0].salesChg)<0],
-    ["Off high", fmtPct(st.offHighPct,0), st.offHighPct>-5, st.offHighPct<-25]];
-  $("#ratings").innerHTML = `<div class="ratings">${tiles.map(([k,v,hot,cold])=>`<div class="rt"><div class="stamp ${v&&hot?'hot':v&&cold?'cold':''}">${esc(v||"–")}</div><span>${k}</span></div>`).join("")}</div>`;
+  renderPeers();
 
   const calc = [["52-week high", fmtP(st.hi52)], ["Off 52-week high", fmtPct(st.offHighPct)], ["52-week low", fmtP(st.lo52)],
     ["50-day MA", st.ma50? `${fmtP(st.ma50)} (${fmtPct(st.vs50Pct)})` : "—"], ["200-day MA", st.ma200? `${fmtP(st.ma200)} (${fmtPct(st.vs200Pct)})` : "—"],
@@ -598,6 +593,67 @@ function shortAbout(t){
   if(out.length > 380){ out = out.slice(0, 370).replace(/[,;:]?\s+\S*$/,"") + "…"; }
   return out;
 }
+/* ---------- peers: the stock against the rest of its industry group ---------- */
+function renderPeers(){
+  const box = $("#peers"); if(!S) return; const me = S.symbol, F = S.fund||{}, st = S.stats||{};
+  if(!UNI){ box.innerHTML = `<div class="empty">Loading peers…</div>`; loadUni().then(()=>{ if(S && S.symbol===me) renderPeers(); }).catch(()=>{ box.innerHTML = `<div class="empty">Peers are not available yet.</div>`; }); return; }
+  const self = UNI.find(r=>r.symbol===me) || ROWS.find(r=>r.symbol===me);
+  const grp = self && self.group;
+  const q0 = (F.quarters||[])[0] || {};
+  const meRow = {symbol:me, name:S.name, rsRating: F.rs!=null ? +F.rs : self && self.rsRating, smr: smrRating(F) || (self && self.smr),
+    udRatio: st.udRatio, epsChg: q0.epsChg || (self && self.epsChg), salesChg: q0.salesChg || (self && self.salesChg), epsGrowth: F.epsGrowth || (self && self.epsGrowth), me:true};
+  let peers = grp ? UNI.filter(r=>r.group===grp && r.symbol!==me) : [];
+  $("#peersSub").textContent = grp ? `${grp}${F.groupRank?` · rank ${F.groupRank}`:""}` : "same industry group";
+  if(!peers.length){ box.innerHTML = `<div class="empty">No other stocks from this industry group in the S&amp;P 1500 / Nasdaq-100.</div>`; return; }
+  peers.sort((a,b)=>(b.rsRating||0)-(a.rsRating||0));
+  const rows = [meRow, ...peers.slice(0, 9)].sort((a,b)=>(b.rsRating||0)-(a.rsRating||0));
+  const n = v => v==null||v===""||v==="—" ? `<span class="na">–</span>` : esc(v);
+  box.innerHTML = `<table class="peers"><thead><tr><th class="l">Symbol</th><th title="RS Rating 1–99">RS</th><th title="Sales growth, margins, ROE (A–E)">SMR</th><th title="Up/down volume, 50 days">U/D</th><th title="Latest quarter EPS vs year ago">EPS Δ</th><th title="Latest quarter sales vs year ago">Sales Δ</th><th title="Annual EPS growth, 3 years">EPS 3y</th></tr></thead><tbody>${
+    rows.map(r=>`<tr data-s="${esc(r.symbol)}" class="${r.me?'me':''}"><td class="l"><span class="sym">${esc(r.symbol)}</span><span class="nm" title="${esc(r.name)}">${esc(r.name||"")}</span></td>
+      <td><span class="rsv ${(r.rsRating||0)>=80?'hot':''}">${n(r.rsRating)}</span></td>
+      <td class="${/^[AB]/.test(r.smr||"")?'pos':''}">${n(r.smr)}</td>
+      <td class="${(r.udRatio??1)<1?'neg':''}">${r.udRatio==null?n(null):(+r.udRatio).toFixed(2)}</td>
+      <td class="${sign(r.epsChg)}">${n(r.epsChg)}</td><td class="${sign(r.salesChg)}">${n(r.salesChg)}</td><td class="${sign(r.epsGrowth)}">${n(r.epsGrowth)}</td></tr>`).join("")}</tbody></table>
+    ${peers.length > 9 ? `<p class="tnote">Top ${Math.min(9,peers.length)} of ${peers.length} peers by RS Rating.</p>` : ""}`;
+  $$("#peers tr[data-s]").forEach(tr=>tr.onclick=()=>{ if(tr.dataset.s!==me) location.hash = tr.dataset.s; });
+}
+
+/* ---------- intraday prices (live.json on the "live" branch, refreshed every 15 min in market hours) ---------- */
+let LIVE = null;
+const LIVE_URL = (()=>{ const h = location.hostname; if(!h.endsWith(".github.io")) return "data/live.json";
+  const repo = location.pathname.split("/")[1]; return repo ? `https://raw.githubusercontent.com/${h.split(".")[0]}/${repo}/live/live.json` : null; })();
+const liveTime = () => LIVE ? new Date(LIVE.updated).toLocaleTimeString("en-US",{timeZone:"America/New_York", hour:"numeric", minute:"2-digit"}) : "";
+function patchRow(r){
+  const q = LIVE && LIVE.q[r.symbol]; if(!q || !r.date) return;
+  if(r._c0==null){ r._c0 = r.close; r._chg0 = r.chgPct; }
+  let prev; if(LIVE.date > r.date) prev = r._c0; else if(LIVE.date === r.date) prev = r._c0/(1+(r._chg0||0)/100); else return;
+  const c = q[3]; r.close = c; r.chgPct = (c/prev-1)*100; r.live = true;
+  if(r.base && r.base.pivot) r.base.distPct = +((c/r.base.pivot-1)*100).toFixed(1);
+}
+function patchS(){
+  const q = LIVE && S && LIVE.q[S.symbol]; if(!q) return;
+  const t = iso(LIVE.date), last = S.px[S.px.length-1], st = S.stats;
+  const bar = {t, o:q[0], h:q[1], l:q[2], c:q[3], v:q[4]};
+  if(t > last.t){ S.px.push(bar); st.prevClose = last.c; } else if(t === last.t){ S.px[S.px.length-1] = bar; } else return;
+  st.close = q[3]; st.chgPct = (q[3]/st.prevClose-1)*100; st.volume = q[4]; st.date = LIVE.date; S.live = true;
+  if(S.base && S.base.pivot) S.base.distPct = +((q[3]/S.base.pivot-1)*100).toFixed(1);
+}
+function applyLive(){
+  if(!LIVE) return;
+  ROWS.forEach(patchRow); if(UNI) UNI.forEach(patchRow);
+  if(META && META.market){ const sym = {"S&P 500":"^GSPC","Nasdaq Composite":"^IXIC"};
+    META.market.forEach(m=>patchRow(Object.assign(m, {symbol: sym[m.name], date: m.date || META.dataDate}))); renderPulse(); }
+  $("#asof").textContent = `Data as of ${fmtLong(iso(META.dataDate))} close · live prices ${liveTime()} ET (delayed) · RS vs ${META.universeSize} stocks`;
+  if(!$("#vScreener").hidden) renderScreener();
+  if(S && !$("#vChart").hidden){ patchS(); renderPanels(); draw(); }
+}
+async function loadLive(){
+  if(!LIVE_URL || !META) return;
+  try{ const r = await fetch(LIVE_URL + "?t=" + Date.now(), {cache:"no-store"}); if(!r.ok) return;
+    const L = await r.json(); if(!L || !L.q || L.date < META.dataDate) return;
+    if(LIVE && L.updated === LIVE.updated) return; LIVE = L; applyLive(); }catch(e){}
+}
+
 function baseNote(b){
   const bits = [];
   if(b.status==="Breakout") bits.push(`Broke out above the ${fmtP(b.pivot)} pivot${b.breakoutVolPct!=null?` on volume ${fmtPct(b.breakoutVolPct,0)} vs average`:""}. Still inside the 5% buy zone.`);
@@ -660,7 +716,7 @@ async function openChart(sym){
     const [bundle] = await Promise.all([getJSON(`t/${encodeURIComponent(sym)}.json`), BENCH ? null : getJSON("bench.json").then(b=>{ BENCH = b.prices.map(([d,c])=>({t:iso(d),c})); })]);
     S = { symbol: bundle.symbol, name: bundle.name, fund: bundle.fund||{}, stats: bundle.stats||{}, base: bundle.base,
       px: bundle.prices.map(([d,o,h,l,c,v])=>({t:iso(d),o,h,l,c,v})), marks: store.get(marksKey(bundle.symbol)) || [] };
-    hover=-1; renderPanels(); draw(); renderDbox();
+    patchS(); hover=-1; renderPanels(); draw(); renderDbox();
   }catch(e){
     S=null; draw(); $("#sym").textContent = sym; $("#cname").textContent = "";
     toast(`Could not load ${sym}. It is not in the S&P 1500 / Nasdaq-100 or your watchlist yet.`);
@@ -694,6 +750,8 @@ function route(){
   else { $("#scope").hidden = true; }
   setTimeout(()=>loadUni().catch(()=>{}), 400);   // background: full list for the ticker search
   window.addEventListener("hashchange", route); route();
+  loadLive(); setInterval(loadLive, 3*60*1000);
+  document.addEventListener("visibilitychange", ()=>{ if(!document.hidden) loadLive(); });
   let rz; new ResizeObserver(()=>{ cancelAnimationFrame(rz); rz=requestAnimationFrame(()=>{ if(S && !$("#vChart").hidden){ draw(); renderDbox(); } }); }).observe(cv);
   if(document.fonts && document.fonts.ready) document.fonts.ready.then(()=>{ if(S) draw(); });
 })();
