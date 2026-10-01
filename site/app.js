@@ -159,7 +159,7 @@ const MAS = [
   {k:"d50",  n:50,  w:10,   ema:false, color:"#d23a2a", d:"50-day MA",  wl:"10-week MA"},
   {k:"d150", n:150, w:30,   ema:false, color:"#7b4bb3", d:"150-day MA", wl:"30-week MA"},
   {k:"d200", n:200, w:40,   ema:false, color:"#15171c", d:"200-day MA", wl:"40-week MA"}];
-const DEF_CFG = {scale:"log", bars:"hlc", weight:"bold", grid:"dotted", ma:{d10:false,e21:false,d50:true,d150:false,d200:true}};
+const DEF_CFG = {scale:"log", bars:"hlc", weight:"bold", grid:"dotted", ants:"on", ma:{d10:false,e21:false,d50:true,d150:false,d200:true}};
 let cfg = (()=>{ const c = store.get("ink:cfg") || {}; return {...DEF_CFG, ...c, ma:{...DEF_CFG.ma, ...(c.ma||{})}}; })();
 const GRID_DASH = {dotted:[1,3], dashed:[5,4], solid:[]};
 function niceStep(x){ const m=Math.pow(10,Math.floor(Math.log10(x))); for(const k of [1,2,2.5,5,10]) if(k*m>=x) return k*m; return 10*m; }
@@ -171,6 +171,7 @@ function settingsHTML(){
     <div class="setrow"><span>Price scale</span>${seg("scale",[["log","Log"],["linear","Linear"]])}</div>
     <div class="setrow"><span>Price bars</span>${seg("bars",[["hlc","O'Neil (H-L-C)"],["ohlc","OHLC"],["candle","Candles"]])}</div>
     <div class="setrow"><span>Bar weight</span>${seg("weight",[["thin","Thin"],["normal","Normal"],["bold","Bold"]])}</div>
+    <div class="setrow"><span title="David Ryan's Ants: up at least 12 of the last 15 sessions with volume 20%+ above its 50-day average. Gold when the stock also gained 20%+ in those 15 days.">Ants</span>${seg("ants",[["on","Show"],["off","Hide"]])}</div>
     <div class="setrow"><span>Grid lines</span>${seg("grid",[["dotted","Dotted"],["dashed","Dashed"],["solid","Solid"],["none","None"]])}</div>
     <div class="setrow col"><span>Moving averages</span><div class="checks">${MAS.map(m=>`<label><input type="checkbox" data-ma="${m.k}" ${cfg.ma[m.k]?'checked':''}><i style="border-color:${m.color}"></i>${m.d}${m.wl?` <small>(${m.wl} on weekly)</small>`:` <small>(daily only)</small>`}</label>`).join("")}</div></div>
     <div class="setft"><button class="btn" id="setReset">Reset to defaults</button></div>`;
@@ -398,6 +399,21 @@ function draw(){
       ctx.stroke(); }
   }
 
+  // Ants (David Ryan): 12+ up days in the last 15 with volume 20%+ above its 50-day average; gold if also +20% in price
+  if(cfg.ants !== "off" && !view.weekly){
+    const mark = new Map();
+    for(let g=Math.max(15, s0); g<base.length; g++){
+      let up=0; for(let j=g-14;j<=g;j++) if(base[j].c > base[j-1].c) up++;
+      if(up < 12) continue;
+      let v15=0; for(let j=g-14;j<=g;j++) v15+=base[j].v; v15/=15;
+      const avg = vma[g-15]; if(!avg || v15 < avg*1.2) continue;
+      const strong = base[g].c / base[g-15].c >= 1.2;
+      for(let j=g-14;j<=g;j++) if(j>=s0) mark.set(j, strong || mark.get(j)===true);
+    }
+    for(const [g, strong] of mark){ const i=g-s0; const x=xOf(i), y=Math.min(prBot+8, yOf(base[g].l)+8);
+      ctx.fillStyle = strong ? "#c99a06" : "#2f9e44"; ctx.beginPath(); ctx.arc(x, y, Math.max(1.6, Math.min(2.6, bw*0.3)), 0, 7); ctx.fill(); }
+  }
+
   // RS line + rating
   let rsNewHigh=false;
   if(rs){ let a=Infinity,z=-Infinity; for(let i=s0;i<base.length;i++){ const v=rs[i]; if(v!=null){a=Math.min(a,v);z=Math.max(z,v);} }
@@ -527,7 +543,7 @@ function renderPanels(){
   $("#qMeta").textContent = (S.live ? `${fmtLong(iso(st.date))} · ${liveTime()} ET, delayed` : `${fmtLong(iso(st.date))} close`) + ` · Vol ${fmtV(st.volume)}` + (F.exchange? " · "+F.exchange : "");
   const chip = $("#baseChip"); chip.hidden = !(b && b.status); if(b && b.status){ chip.textContent = b.status; chip.className = "chip " + (STATUS_CLASS[b.status]||""); }
 
-  renderPeers();
+  renderPeers(); renderAnalysts(); renderNews();
 
   const calc = [["52-week high", fmtP(st.hi52)], ["Off 52-week high", fmtPct(st.offHighPct)], ["52-week low", fmtP(st.lo52)],
     ["50-day MA", st.ma50? `${fmtP(st.ma50)} (${fmtPct(st.vs50Pct)})` : "—"], ["200-day MA", st.ma200? `${fmtP(st.ma200)} (${fmtPct(st.vs200Pct)})` : "—"],
@@ -578,7 +594,7 @@ function renderPanels(){
   $("#legend").innerHTML = MAS.filter(m=>cfg.ma[m.k] && (!view.weekly || m.w)).map(m=>`<span><span class="sw" style="border-color:${m.color}"></span><b>${view.weekly?m.wl:m.d}</b></span>`).join("") +
     `<span><span class="sw" style="border-color:${C.rs}"></span><b>RS line</b> vs S&amp;P 500</span><span><span class="sw" style="border-color:${C.idx};border-top-width:1px"></span><b>S&amp;P 500</b></span>` +
     `<span><span class="sw" style="border-color:${C.vavg}"></span><b>${nm[2]} avg volume</b></span><span><span class="sw" style="border-color:${C.piv};border-top-style:dotted"></span><b>Unbroken swing</b></span>` +
-    `<span><span class="sw" style="border-color:${C.navy};border-top-style:dashed"></span><b>Pivot · buy zone</b></span><span><b style="color:${C.up}">Blue</b> / <b style="color:${C.down}">pink</b>: close above / below prior close · ${cfg.scale==="linear"?"linear":"log"} scale</span>`;
+    `<span><span class="sw" style="border-color:${C.navy};border-top-style:dashed"></span><b>Pivot · buy zone</b></span>${cfg.ants!=="off"&&!view.weekly?`<span><b style="color:#2f9e44">●</b><b style="color:#c99a06">●</b> <b>Ants</b> 12/15 up days on rising volume</span>`:""}<span><b style="color:${C.up}">Blue</b> / <b style="color:${C.down}">pink</b>: close above / below prior close · ${cfg.scale==="linear"?"linear":"log"} scale</span>`;
   renderDbox();
 }
 // The first one or two sentences of Yahoo's business summary: what the company does, without the history and legal boilerplate
@@ -593,6 +609,27 @@ function shortAbout(t){
   if(out.length > 380){ out = out.slice(0, 370).replace(/[,;:]?\s+\S*$/,"") + "…"; }
   return out;
 }
+/* ---------- analysts & news ---------- */
+function renderAnalysts(){
+  const F = S.fund||{}, a = F.analysts, tg = F.target||{}, px = (S.stats||{}).close;
+  const parts = [["strongBuy","Strong buy","#14306b"],["buy","Buy","#3d63c9"],["hold","Hold","#9a9ca3"],["sell","Sell","#e46a9f"],["strongSell","Strong sell","#b0124f"]];
+  const tot = a ? parts.reduce((s,[k])=>s+(a[k]||0),0) : 0;
+  $("#anSub").textContent = tg.key ? tg.key.replace(/_/g," ") : "consensus";
+  if(!tot && !tg.mean){ $("#analysts").innerHTML = `<div class="empty" style="padding:4px 0">${F.pending?"Loads with the fundamentals rotation.":"No analyst coverage from Yahoo."}</div>`; return; }
+  const up = tg.mean && px ? (tg.mean/px-1)*100 : null;
+  $("#analysts").innerHTML = (tot ? `<div class="anbar">${parts.filter(([k])=>a[k]).map(([k,l,c])=>`<i style="flex:${a[k]};background:${c}" title="${l}: ${a[k]}"></i>`).join("")}</div>
+      <div class="anleg">${parts.map(([k,l,c])=>`<span><i style="background:${c}"></i>${l} <b>${a[k]||0}</b></span>`).join("")}</div>` : "") +
+    (tg.mean ? `<dl class="kv" style="margin-top:6px"><dt>Mean price target</dt><dd>${fmtP(tg.mean)} <span class="${up<0?'neg':''}">(${fmtPct(up)})</span></dd>
+      <dt>Target range</dt><dd>${fmtP(tg.low)} – ${fmtP(tg.high)}</dd><dt>Analysts</dt><dd>${tg.n||tot}</dd></dl>` : "");
+}
+function renderNews(){
+  const N = (S.fund||{}).news || [];
+  const ago = d => { const t = Date.parse(d.length<=19 ? d+"Z" : d); if(!isFinite(t)) return ""; const h=(Date.now()-t)/36e5;
+    return h<1 ? "now" : h<24 ? Math.round(h)+"h ago" : h<24*7 ? Math.round(h/24)+"d ago" : fmtD(t); };
+  $("#news").innerHTML = N.length ? `<ul class="news">${N.map(n=>`<li><a href="${esc(n.url)}" target="_blank" rel="noopener">${esc(n.title)}</a><span>${esc(n.pub||"")}${n.date?` · ${ago(n.date)}`:""}</span></li>`).join("")}</ul>`
+    : `<div class="empty" style="padding:4px 0">No recent headlines.</div>`;
+}
+
 /* ---------- peers: the stock against the rest of its industry group ---------- */
 function renderPeers(){
   const box = $("#peers"); if(!S) return; const me = S.symbol, F = S.fund||{}, st = S.stats||{};
