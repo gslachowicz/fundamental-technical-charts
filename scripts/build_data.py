@@ -20,6 +20,7 @@ import argparse
 import datetime as dt
 import json
 import math
+import re
 import sys
 import time
 import traceback
@@ -139,18 +140,18 @@ def fetch_universe() -> dict[str, dict]:
         ("https://en.wikipedia.org/wiki/List_of_S%26P_500_companies", "sp500"),
         ("https://en.wikipedia.org/wiki/List_of_S%26P_400_companies", "sp400"),
         ("https://en.wikipedia.org/wiki/List_of_S%26P_600_companies", "sp600"),
-        ("https://en.wikipedia.org/wiki/Nasdaq-100", "ndx"),
+        ("https://en.wikipedia.org/wiki/List_of_NASDAQ-100_companies", "ndx"),
     ]
     for url, tag in pages:
         try:
             html = requests.get(url, headers=UA, timeout=30).text
             for t in pd.read_html(StringIO(html)):
-                cols = {str(c).lower(): c for c in t.columns}
+                cols = {re.sub(r"\[.*?\]", "", str(c)).strip().lower(): c for c in t.columns}
                 sym_col = cols.get("symbol") or cols.get("ticker")
                 if sym_col is None or len(t) < 80:
                     continue
-                sec = cols.get("gics sector")
-                sub = cols.get("gics sub-industry") or cols.get("gics sub‑industry")
+                sec = cols.get("gics sector") or cols.get("icb industry")
+                sub = cols.get("gics sub-industry") or cols.get("gics sub‑industry") or cols.get("icb subsector")
                 nm = cols.get("security") or cols.get("company")
                 for _, r in t.iterrows():
                     s = yf_symbol(str(r[sym_col]))
