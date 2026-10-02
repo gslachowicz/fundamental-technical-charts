@@ -922,6 +922,23 @@ async function openChart(sym){
 const ROUTES = {watchlist:"watch", screener:"all", etfs:"etf"};
 let lastList = "";
 function setTab(v){ $$("#tabs a").forEach(a=>a.classList.toggle("on", a.dataset.v===v)); }
+// anonymous usage statistics: one beacon per page view (section, ticker, language, screen width, where the visit came from).
+// No cookies and no identifiers; the API counts unique visitors with a hash that changes every day.
+let trackFirst = true;
+function track(p, s){
+  try{
+    if(/^(localhost|127\.)/.test(location.hostname) || navigator.doNotTrack === "1" || !navigator.sendBeacon) return;
+    let r = "";
+    if(trackFirst){
+      const via = new URLSearchParams(location.search).get("via");
+      if(via){ r = via.slice(0, 20); history.replaceState(null, "", location.pathname + location.hash); }
+      else if(document.referrer){ const h = new URL(document.referrer).hostname; r = /(^|\.)tickerandtape\.com$/.test(h) ? "" : h; }
+      else r = "direct";
+      trackFirst = false;
+    }
+    navigator.sendBeacon(API + "/t", new Blob([JSON.stringify({p, s: p === "chart" ? s : "", r, l: I18N.lang, w: innerWidth, u: auth.token ? 1 : 0})], {type:"text/plain"}));
+  }catch(e){}
+}
 function route(){
   let raw = decodeURIComponent(location.hash.slice(1)).trim();
   if(/^reset=[0-9a-f]{48}$/.test(raw)){   // link from the password reset email
@@ -929,6 +946,7 @@ function route(){
   if(raw.toLowerCase() === "alerts"){ history.replaceState(null, "", location.pathname); raw = ""; setTimeout(()=>{ if(auth.token) loadAlerts().then(openAlertsList); else openAuth("in"); }, 300); }
   const low = raw.toLowerCase();
   const isList = raw === low && ROUTES[low];
+  track(low === "" || low === "home" ? "home" : isList ? low : ["groups","heatmap","breadth","ideas","earnings","wall","welcome"].includes(low) ? low : "chart", raw.toUpperCase());
   const isHome = raw === "" || raw === "home";
   ["#vWelcome","#vHome","#vScreener","#vChart","#vHeat","#vIdeas","#vEarn","#vBreadth","#vGroups","#vWall"].forEach(id=>$(id).hidden = true); $("#hmTip").hidden = true;
   document.body.classList.toggle("on-welcome", raw === "welcome");
