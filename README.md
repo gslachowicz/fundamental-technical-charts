@@ -1,13 +1,13 @@
-# Ink Charts
+# Ticker&Tape
 
-Sitio personal de gráficos estilo O'Neil con datos de cierre de Yahoo Finance (yfinance). Incluye:
+Código de [tickerandtape.com](https://tickerandtape.com): gráficos estilo O'Neil, RS Ratings, grupos, amplitud de mercado y gráficos comparativos, con datos de Yahoo Finance. Incluye:
 
 - **Screener** de tu watchlist con RS Rating propio (1–99), rank del grupo de industria, EPS y ventas del último trimestre, distancia al máximo, volumen, ratio de volumen arriba/abajo y la base detectada con su pivot y estado (Breakout, In buy zone, Near pivot, Extended…).
 - **Market pulse** del S&P 500 y el Nasdaq: posición contra las medias de 21, 50 y 200 días y conteo de días de distribución.
 - **All stocks**: las ~1.500 acciones del S&P 500, MidCap 400, SmallCap 600 y Nasdaq-100 con las mismas columnas, filtros y gráfico. Se pueden buscar por ticker arriba a la derecha.
 - **Gráfico por ticker**: S&P 500 arriba, línea RS con el rating, medias, pivots, base con pivot y zona de compra, marcas "E" de balance, volumen etiquetado, tira trimestral y recuadro de datos. Podés dibujar líneas y notas; quedan guardadas en tu navegador.
 
-Se actualiza solo de lunes a viernes después del cierre de EE.UU. y se publica gratis en GitHub Pages.
+Se actualiza solo de lunes a viernes después del cierre de EE.UU. y se publica gratis en GitHub Pages con el dominio tickerandtape.com. Cada gráfico y sección tiene su propia dirección (`/chart/NVDA/`, `/breadth/`, `/compare/`…); el build genera esas páginas y el `sitemap.xml`. El workflow *Health check* revisa cada 3 horas que el sitio, los datos y la API respondan y te avisa por mail si algo falla.
 
 ## Puesta en marcha (una sola vez, ~10 minutos)
 
@@ -16,7 +16,7 @@ Se actualiza solo de lunes a viernes después del cierre de EE.UU. y se publica 
    - En Mac, Finder oculta las carpetas que empiezan con punto: apretá `Cmd + Shift + .` para verlas antes de arrastrar.
 3. **Activá Pages.** *Settings → Pages → Build and deployment → Source: **GitHub Actions***.
 4. **Corré la primera actualización.** *Actions → Update data → Run workflow*. Tarda 15 a 30 minutos (baja ~1.500 acciones).
-5. **Abrí el sitio:** https://gslachowicz.github.io/fundamental-technical-charts/.
+5. **Abrí el sitio:** https://tickerandtape.com/.
 
 ## Uso diario
 
