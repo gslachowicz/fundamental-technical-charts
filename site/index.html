@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Ticker&amp;Tape</title>
+<title>Ticker&amp;Tape · Wall Street’s chart room, open to everyone</title>
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" type="image/svg+xml" href="/img/logo.svg">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
@@ -159,6 +159,7 @@
     </details>
   </main>
 
+  <div class="gatebar" id="gateBar" hidden role="region" aria-label="Create an account"><p><b>You're viewing a shared chart.</b> Open a free account to use the screener, watchlists, market breadth, alerts and every tool on Ticker&amp;Tape.</p><div class="ctas"><button class="btn on" data-g="up">Open a free account</button><button class="btn" data-g="in">Sign in</button></div></div>
   <!-- ===================== COMPARATIVE CHARTS ===================== -->
   <main id="vCmp" class="cmpv" hidden>
     <section class="ihead">
@@ -249,59 +250,84 @@
   </main>
 
   <!-- ===================== WELCOME ===================== -->
-  <main id="vWelcome" class="welcome" hidden>
-    <section class="hero">
-      <div class="hcopy">
-        <p class="kicker">Est. 2026 · The chart room for growth-stock traders</p>
-        <h1>Read the tape.<br>Find the leaders.</h1>
-        <p class="lede">Ticker&amp;Tape puts O'Neil-style daily charts, RS Ratings, industry group ranks and automatic base-and-pivot detection for every U.S. stock and ADR worth $1 billion or more in one clean, fast chart room.</p>
+  <main id="vWelcome" class="welcome w2" hidden>
+    <div class="w2tape" aria-label="Market prices, delayed"><div class="w2tape-in" id="wTape"></div></div>
+
+    <section class="w2hero">
+      <div class="w2copy">
+        <button class="w2new" data-w="up"><b>New</b> Comparative charts: SPY vs RSP vs MAGS <span aria-hidden="true">→</span></button>
+        <p class="w2kick"><span>Est. MMXXVI</span><span>Research for growth-stock traders</span></p>
+        <h1>Wall Street&rsquo;s chart&nbsp;room.<br><em>Now open to everyone.</em></h1>
+        <p class="w2lede">Institutional-grade charts, relative-strength ratings and market breadth for every U.S. stock and ADR worth $1&nbsp;billion or more. Calculated every session, explained in full, and free.</p>
         <div class="ctas">
-          <button class="btn on big" data-w="up">Create your free account</button>
+          <button class="btn on big" data-w="up">Open a free account</button>
           <button class="btn big" data-w="in">Sign in</button>
         </div>
-        <p class="fine2">Free. No credit card. Your watchlist, chart settings and drawings sync to every device.</p>
-        <button class="lnk explore" data-w="explore">Explore without an account →</button>
+        <p class="w2trust"><span>Free to use</span><span>No credit card</span><span>Syncs on every device</span></p>
       </div>
-      <figure class="plate">
+      <figure class="w2term">
+        <div class="w2bar"><span class="w2led" aria-hidden="true"></span><b>T&amp;T</b><span>NVDA</span><span>Daily</span><span class="sp"></span><span class="w2live">Delayed 15 min</span></div>
         <img src="/img/hero-chart.jpg" alt="Ticker&amp;Tape daily chart of NVDA with a cup base, pivot, RS line, labeled volume and quarterly earnings strip" width="1380" height="654">
-        <figcaption>NVDA, daily: cup base with its pivot, 50- and 200-day lines, RS line, labeled volume and the quarterly earnings strip.</figcaption>
+        <figcaption>Fig. 1 · NVDA, daily: cup base with pivot and buy zone, 50- and 200-day lines, RS line, labeled volume and the quarterly earnings strip.</figcaption>
       </figure>
     </section>
 
-    <section class="stats">
-      <div><b>2,500+</b><span>stocks rated every trading day</span></div>
-      <div><b>146</b><span>industry groups ranked</span></div>
-      <div><b>1–99</b><span>RS Rating on every stock</span></div>
-      <div><b>15 min</b><span>delayed prices during the session</span></div>
-    </section>
-
-    <section class="feats">
-      <h2>Everything on one page. Nothing you don't need.</h2>
-      <div class="fgrid">
-        <article><span class="no">No. 1</span><h3>Charts the way the pros printed them</h3><p>High-low-close bars in blue and pink, the 50- and 200-day lines, the RS line against the S&amp;P&nbsp;500, labeled volume spikes and a quarterly EPS and sales strip under every chart.</p></article>
-        <article><span class="no">No. 2</span><h3>RS Rating and group rank</h3><p>Every stock ranked 1 to 99 on twelve-month price strength against more than 2,500 peers, and every industry group ranked, so you can see where the leadership is.</p></article>
-        <article><span class="no">No. 3</span><h3>Bases and pivots, spotted for you</h3><p>Cups, handles and flat bases detected automatically, with the pivot, the 5% buy zone and the status: near pivot, breakout, extended.</p></article>
-        <article><span class="no">No. 4</span><h3>Earnings at a glance</h3><p>Quarterly and annual EPS and sales growth, surprises, margins and analyst price targets, right beside the chart.</p></article>
-        <article><span class="no">No. 5</span><h3>A screener that thinks in setups</h3><p>Filter for breakouts, stocks near a pivot, RS 80 and up, names above the 50-day and liquid leaders. Sort by any column.</p></article>
-        <article><span class="no">No. 6</span><h3>Your watchlist, everywhere</h3><p>Star any ticker. Your list, chart settings, lines and notes follow you from the desk to your phone.</p></article>
+    <section class="w2board" aria-label="Market board">
+      <header><b>The board</b><span id="wBoardAsOf">Updated every trading day after the close</span></header>
+      <div class="w2tiles" id="wBoard">
+        <div><span>S&amp;P 500</span><b>—</b><small>market direction</small></div>
+        <div><span>Nasdaq</span><b>—</b><small>market direction</small></div>
+        <div><span>Coverage</span><b>2,500+</b><small>stocks rated every session</small></div>
+        <div><span>Industry groups</span><b>140+</b><small>ranked by relative strength</small></div>
+        <div><span>Trade ideas</span><b>—</b><small>leaders near a buy point today</small></div>
       </div>
     </section>
 
-    <section class="how">
-      <h2>How it works</h2>
-      <ol>
-        <li><b>Create a free account.</b> Thirty seconds, just an email and a password.</li>
-        <li><b>Star the stocks you follow.</b> Any U.S. stock or ADR, big or small.</li>
-        <li><b>Check the screener after the close.</b> Leaders, setups and pivots on a single page, updated every trading day.</li>
+    <section class="w2feats">
+      <div class="w2head"><p class="w2kick"><span>The research desk</span></p><h2>Everything the big desks look at. Without the desk fee.</h2></div>
+      <ol class="w2ledger">
+        <li><h3>Charts the way the pros printed them</h3><p>High-low-close bars, the 50- and 200-day lines, the RS line against the S&amp;P&nbsp;500, labeled volume and a quarterly EPS and sales strip under every chart.</p></li>
+        <li><h3>Ratings on every stock</h3><p>RS Rating, Composite and SMR from 1 to 99 and A to E, plus a rank for every industry group, so you can see where the leadership is.</p></li>
+        <li><h3>Bases and pivots, spotted for you</h3><p>Cups, handles and flat bases detected automatically, with the pivot, the 5% buy zone and the status: near pivot, breakout, extended.</p></li>
+        <li><h3>Market direction and breadth</h3><p>Distribution and follow-through days, stocks above their moving averages, new highs and lows, the A/D line and the McClellan oscillator.</p></li>
+        <li><h3>A screener that thinks in setups</h3><p>Filter for breakouts, names near a pivot, RS 80 and up and liquid leaders. Save your screens, compare tickers side by side, view a whole list as a chart wall.</p></li>
+        <li><h3>Alerts and watchlists, everywhere</h3><p>Price, trendline and moving-average alerts by email. Watchlists, drawings and notes follow you from the desk to your phone.</p></li>
       </ol>
     </section>
 
-    <section class="cta2">
-      <h2>The tape is running.</h2>
-      <div class="ctas"><button class="btn on big" data-w="up">Create your free account</button><button class="lnk explore" data-w="explore">or explore without an account →</button></div>
+    <section class="w2pillars" aria-label="Product">
+      <div><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 1 0 9 9h-2a7 7 0 1 1-2.05-4.95L14 10h7V3l-2.64 2.64A8.96 8.96 0 0 0 12 3Z"/></svg><b>Every session</b><span>Ratings and charts rebuilt after each close, prices refreshed every 15 minutes during the day.</span></div>
+      <div><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h11v8H4V5Zm-2-2v12h15V3H2Zm16 4h4v14H8v-4h2v2h10V9h-2V7Z"/></svg><b>Every device</b><span>Desk, laptop or phone. One account keeps your lists, settings and drawings in sync.</span></div>
+      <div><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22Zm7-6v-5a7 7 0 0 0-5.5-6.84V3.5a1.5 1.5 0 0 0-3 0v.66A7 7 0 0 0 5 11v5l-2 2v1h18v-1l-2-2Z"/></svg><b>Alerts that reach you</b><span>Set a level on any chart and get an email and a notice on the site when it trades.</span></div>
+      <div><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm6.9 6h-2.95a15.7 15.7 0 0 0-1.38-3.56A8.03 8.03 0 0 1 18.9 8ZM12 4.04c.83 1.2 1.48 2.53 1.91 3.96h-3.82c.43-1.43 1.08-2.76 1.91-3.96ZM4.26 14a8.2 8.2 0 0 1 0-4h3.38a16.5 16.5 0 0 0 0 4H4.26Zm.82 2h2.95c.32 1.25.78 2.45 1.38 3.56A7.99 7.99 0 0 1 5.08 16Zm2.95-8H5.08a7.99 7.99 0 0 1 4.33-3.56A15.7 15.7 0 0 0 8.03 8ZM12 19.96A14.1 14.1 0 0 1 10.09 16h3.82A14.1 14.1 0 0 1 12 19.96ZM14.34 14H9.66a14.7 14.7 0 0 1 0-4h4.68a14.7 14.7 0 0 1 0 4Zm.25 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95a8.03 8.03 0 0 1-4.33 3.56ZM16.36 14a16.5 16.5 0 0 0 0-4h3.38a8.2 8.2 0 0 1 0 4h-3.38Z"/></svg><b>English · Español · Português</b><span>The whole interface in three languages, from Settings.</span></div>
     </section>
 
-    <p class="fine wfine">Data: Yahoo Finance, end of day plus delayed intraday prices. Ratings, bases and pivots are calculated automatically and are a starting point for your own analysis. Ticker&amp;Tape is a charting and research tool, not investment advice.</p>
+    <section class="w2trustblk">
+      <div class="w2quote"><p class="w2kick"><span>Methodology</span></p><h2>No black boxes.</h2><p>Every rating on Ticker&amp;Tape comes with its formula: what goes into the RS Rating, how a base is measured, when the market turns. Read it, check it, and trust the numbers you trade on.</p><a class="btn" href="/methodology/">Read the methodology</a></div>
+      <dl class="w2src">
+        <div><dt>Prices</dt><dd>Yahoo Finance · daily bars, intraday delayed ~15 min</dd></div>
+        <div><dt>Financials</dt><dd>Yahoo Finance and SEC EDGAR filings</dd></div>
+        <div><dt>Earnings dates</dt><dd>Nasdaq earnings calendar</dd></div>
+        <div><dt>Universe</dt><dd>S&amp;P 1500, Nasdaq-100 and every U.S. stock and ADR over $1B</dd></div>
+        <div><dt>Built in</dt><dd>Buenos Aires, Argentina · trading U.S. hours</dd></div>
+      </dl>
+    </section>
+
+    <section class="w2how">
+      <h2>Up and running in a minute</h2>
+      <ol>
+        <li><b>Open a free account.</b> An email and a password. Nothing else.</li>
+        <li><b>Star the stocks you follow.</b> Any U.S. stock or ADR, big or small.</li>
+        <li><b>Check the board after the close.</b> Leaders, setups and pivots, updated every trading day.</li>
+      </ol>
+    </section>
+
+    <section class="w2cta">
+      <div><p class="w2kick"><span>Ticker&amp;Tape</span></p><h2>The tape is running.</h2></div>
+      <div class="ctas"><button class="btn on big" data-w="up">Open a free account</button><button class="lnk explore" data-w="in">Already have an account? Sign in →</button></div>
+    </section>
+
+    <p class="fine wfine">Ticker&amp;Tape is a charting and research tool, not investment advice. Ratings, bases and pivots are calculated automatically and are a starting point for your own analysis. Not affiliated with Investor's Business Daily or William O'Neil + Co.</p>
   </main>
 
   <!-- ===================== SCREENER ===================== -->

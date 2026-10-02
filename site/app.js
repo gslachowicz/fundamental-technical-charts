@@ -846,6 +846,7 @@ function applyLive(){
   if(!$("#vHeat").hidden) renderHeat();
   if(S && !$("#vChart").hidden){ patchS(); renderPanels(); draw(); }
   if(!$("#vCmp").hidden) renderCmp();
+  if(!$("#vWelcome").hidden) renderWelcome();
 }
 async function loadLive(){
   if(!LIVE_URL || !META) return;
@@ -970,15 +971,18 @@ function route(){
     resetToken = raw.slice(6); history.replaceState(null, "", location.pathname); openAuth("reset"); raw = ""; }
   if(raw.toLowerCase() === "alerts"){ history.replaceState(null, "", location.pathname); raw = ""; setTimeout(()=>{ if(auth.token) loadAlerts().then(openAlertsList); else openAuth("in"); }, 300); }
   if(location.hash) history.replaceState(null, "", keyToPath(raw));   // old #links → clean URL
+  // signed-out visitors only get the welcome page, except for a chart link (shared on X, found on Google), which opens with a sign-up bar
+  { const l = raw.toLowerCase(), chartish = chartPath || (raw !== "" && l !== "home" && !SECTIONS.includes(l) && !l.startsWith("compare/"));
+    if(!auth.token && l !== "welcome" && !chartish){ history.replaceState(null, "", "/welcome/"); raw = "welcome"; } }
   const low = raw.toLowerCase();
   const isList = raw === low && ROUTES[low];
   track(low === "" || low === "home" ? "home" : isList ? low : ["groups","heatmap","breadth","ideas","earnings","wall","welcome"].includes(low) ? low : low === "compare" || low.startsWith("compare/") ? "compare" : "chart", raw.toUpperCase());
   const isHome = raw === "" || raw === "home";
-  ["#vWelcome","#vHome","#vScreener","#vChart","#vHeat","#vIdeas","#vEarn","#vBreadth","#vGroups","#vWall","#vCmp"].forEach(id=>$(id).hidden = true); $("#hmTip").hidden = true;
+  ["#vWelcome","#vHome","#vScreener","#vChart","#vHeat","#vIdeas","#vEarn","#vBreadth","#vGroups","#vWall","#vCmp"].forEach(id=>$(id).hidden = true); $("#hmTip").hidden = true; $("#gateBar").hidden = true;
   document.body.classList.toggle("on-welcome", raw === "welcome");
   document.body.classList.toggle("on-home", isHome);
-  if(chartPath && raw){ setTab(""); openChart(raw.toUpperCase()); return; }
-  if(raw === "welcome"){ $("#vWelcome").hidden = false; setTab(""); document.title = "Ticker&Tape · O'Neil-style charts, RS ratings and bases"; window.scrollTo(0,0); return; }
+  if(chartPath && raw){ setTab(""); $("#gateBar").hidden = !!auth.token; openChart(raw.toUpperCase()); return; }
+  if(raw === "welcome"){ $("#vWelcome").hidden = false; setTab(""); document.title = "Ticker&Tape · Wall Street's chart room, open to everyone"; window.scrollTo(0,0); renderWelcome(); return; }
   if(low === "earnings"){ lastList = "earnings"; $("#vEarn").hidden = false; setTab("earn"); document.title = "Earnings calendar · Ticker&Tape"; window.scrollTo(0,0); renderEarn(); return; }
   if(low === "ideas"){ lastList = "ideas"; $("#vIdeas").hidden = false; setTab("ideas"); document.title = "Trade ideas · Ticker&Tape"; window.scrollTo(0,0); renderIdeas(); return; }
   if(low === "groups"){ lastList = "groups"; $("#vGroups").hidden = false; setTab("groups"); document.title = "Industry groups · Ticker&Tape"; window.scrollTo(0,0); renderGroups(); return; }
@@ -990,7 +994,7 @@ function route(){
   if(isList){ lastList = raw; $("#vScreener").hidden = false; setTab(ROUTES[low]); document.title = `${{watch:"Watchlist",all:"Screener",etf:"ETFs"}[ROUTES[low]]} · Ticker&Tape`;
     if(ROUTES[low] !== "all"){ scrState.sector = null; scrState.industry = null; }
     setScope(ROUTES[low]); return; }
-  setTab(""); openChart(raw.toUpperCase());
+  setTab(""); $("#gateBar").hidden = !!auth.token; openChart(raw.toUpperCase());
 }
 $("#bBack").onclick = () => { go(lastList); };   // back to the list (or home) the chart was opened from
 $$("#tabs a").forEach(a=>a.addEventListener("click", ()=>{ if(a.dataset.v==="all"){ scrState.sector = null; scrState.industry = null; } }));
@@ -1660,8 +1664,10 @@ function signedOut(expired){
   WL = null; LISTS = null; NOTES = {}; ALERTS = []; NOTIF = {items:[], unread:0}; clearInterval(notifTimer); $("#vBar").hidden = true; renderBell(); if(S) renderTkNote(); if(S){ S.marks = []; draw(); } if(!$("#vIdeas").hidden) renderIdeas();
   renderAcct(); updateStar(); if(!$("#vScreener").hidden) renderScreener();
   if(expired) toast("Your session expired. Sign in again to sync your watchlist.");
+  route();
 }
 function renderAcct(){
+  if(auth.token) $("#gateBar").hidden = true;
   const b = $("#acct"); b.textContent = auth.email ? auth.email.split("@")[0] : "Sign in";
   b.title = auth.email ? `Signed in as ${auth.email}` : "Sign in or create a free account";
   b.classList.toggle("on", !!auth.email);
@@ -2545,6 +2551,31 @@ function openCmp(spec){
 }
 
 /* ================= WELCOME PAGE ================= */
+// ticker tape (index ETFs, sectors and commodities, with delayed intraday prices when the market is open) and the market board
+function renderWelcome(){
+  if(!HOME){ loadHome().then(()=>{ if(!$("#vWelcome").hidden) renderWelcome(); }).catch(()=>{}); }
+  else {
+    const rows = [...(HOME.market||[]), ...(HOME.sectors||[]), ...(HOME.commodities||[])].map(r=>{
+      let c = r.close, ch = r.d1; const q = LIVE && LIVE.q[r.symbol];
+      if(q && LIVE.date && r.date){ const prev = LIVE.date > r.date ? r.close : LIVE.date === r.date && r.d1 != null ? r.close / (1 + r.d1/100) : null;
+        if(prev){ c = q[3]; ch = (c / prev - 1) * 100; } }
+      return {s: r.symbol, c, ch}; }).filter(r=>r.c != null);
+    const one = rows.map(r=>`<a href="${keyToPath(r.s)}"><b>${esc(r.s.replace(/=F$/,""))}</b><span class="px">${r.c < 20 ? r.c.toFixed(3) : fmtP(r.c)}</span><span class="${(r.ch??0) < 0 ? "d" : "u"}">${(r.ch??0) < 0 ? "▼" : "▲"} ${Math.abs(r.ch??0).toFixed(2)}%</span></a>`).join("");
+    $("#wTape").innerHTML = one + one;   // twice, so the loop is seamless
+  }
+  const tiles = $$("#wBoard > div");
+  if(META){
+    const M = META.market || [], dir = n => M.find(m=>m.name.startsWith(n));
+    [["S&P",0],["Nasdaq",1]].forEach(([n,i])=>{ const m = dir(n); if(!m) return;
+      const b = tiles[i].querySelector("b"); b.textContent = TX(MKT_SHORT[m.status] || m.status); b.className = m.status === "Uptrend" ? "u" : m.status === "Correction" ? "d" : "";
+      tiles[i].querySelector("small").textContent = `${m.distDays} ${TX(m.distDays === 1 ? "distribution day" : "distribution days")}`; });
+    if(META.allStocks) tiles[2].querySelector("b").textContent = Number(META.allStocks).toLocaleString("en-US");
+    if(META.groups) tiles[3].querySelector("b").textContent = META.groups;
+    $("#wBoardAsOf").textContent = `${TX("As of")} ${fmtLong(iso(META.dataDate))} ${TX("close")}`;
+  }
+  loadIdeas().then(()=>{ const n = (IDEAS && IDEAS.ideas || []).length; tiles[4].querySelector("b").textContent = n || "—"; }).catch(()=>{});
+}
+$("#gateBar").addEventListener("click", e=>{ const b = e.target.closest("[data-g]"); if(b) openAuth(b.dataset.g); });
 $("#vWelcome").addEventListener("click", e=>{
   const b = e.target.closest("[data-w]"); if(!b) return;
   const w = b.dataset.w;
@@ -2676,7 +2707,7 @@ addEventListener("scroll", ()=>{ if(TOUR_ON()) placeTour(); }, true);
   $("#scope").hidden = true;
   loadHome(); loadEarn().then(()=>{ if(!$("#vScreener").hidden) renderScreener(); if(S && !$("#vChart").hidden) setEarnChip(); });
   setTimeout(()=>loadUni().catch(()=>{}), 400);   // background: full list for the ticker search
-  if(!auth.token && !store.get("tt:welcomed") && !location.hash && !pathToKey()) history.replaceState(null, "", "/welcome/");
+
   window.addEventListener("hashchange", route); window.addEventListener("popstate", route);
   // in-site links navigate without reloading the page
   document.addEventListener("click", e=>{
