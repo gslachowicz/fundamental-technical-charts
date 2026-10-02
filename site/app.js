@@ -1108,9 +1108,11 @@ function renderHeat(){
     const inner = squarify(sec.rs.map(r=>({r, v:size(r)})).sort((a,b)=>b.v-a.v), x+1, y+(showHd?HD:1), w-2, h-(showHd?HD:1)-1);
     inner.forEach(({item, x:tx, y:ty, w:tw, h:th})=>{
       const r = item.r, v = hmValue(r), i = hmTiles.length; hmTiles.push({r, v});
-      const fs = Math.max(8, Math.min(46, tw/(r.symbol.length*0.66+0.6), th/2.3));
-      const vtxt = HM.c === "rsRating" ? (v==null?"—":String(Math.round(v))) : fmtPct(v, 2);
-      const lab = tw > 22 && th > 13 ? `<span class="s" style="font-size:${fs.toFixed(1)}px">${esc(r.symbol)}</span>${th > fs*2.2 && tw > 34 ? `<span class="v" style="font-size:${Math.max(8, fs*0.5).toFixed(1)}px">${vtxt}</span>` : ""}` : "";
+      // type scales with the box but stays restrained: room on the sides, capped size, hidden when it would not fit
+      const fs = Math.min(28, (tw - 10)/(r.symbol.length*0.56 + 0.3), th*0.36);
+      const vfs = Math.max(9, Math.min(15, fs*0.52));
+      const vtxt = HM.c === "rsRating" ? (v==null?"—":String(Math.round(v))) : fmtPct(v, HM.c === "chgPct" ? 2 : 1);
+      const lab = fs >= 9 ? `<span class="s" style="font-size:${fs.toFixed(1)}px">${esc(r.symbol)}</span>${th >= fs*1.1 + vfs + 10 && tw >= vtxt.length*vfs*0.62 + 8 ? `<span class="v" style="font-size:${vfs.toFixed(1)}px">${vtxt}</span>` : ""}` : "";
       html.push(`<div class="hmt" data-i="${i}" style="left:${tx}px;top:${ty}px;width:${tw}px;height:${th}px;background:${hmColor(v)}">${lab}</div>`);
     });
   });

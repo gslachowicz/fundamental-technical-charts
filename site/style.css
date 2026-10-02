@@ -426,8 +426,8 @@ ul.news span{display:block;font-size:11.5px;color:var(--ink2);margin-top:2px}
 .hmsec{position:absolute;box-sizing:border-box;border:1px solid #1b1d22;background:#1b1d22}
 .hmsec b{display:block;height:16px;line-height:16px;padding:0 5px;font:700 11.5px var(--f-label);letter-spacing:.06em;text-transform:uppercase;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .hmt{position:absolute;box-sizing:border-box;border:1px solid #1b1d22;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;cursor:pointer;overflow:hidden;line-height:1.05;text-align:center;transition:filter .08s}
-.hmt .s{font-family:var(--f-head);font-weight:800;letter-spacing:.01em;text-shadow:0 1px 1px rgba(0,0,0,.25)}
-.hmt .v{font-family:var(--f-data);margin-top:2px;opacity:.95}
+.hmt .s{font-family:var(--f-label);font-weight:700;letter-spacing:.02em;line-height:1;text-shadow:0 1px 2px rgba(0,0,0,.28)}
+.hmt .v{font-family:var(--f-label);font-weight:400;line-height:1;margin-top:3px;opacity:.88;font-variant-numeric:tabular-nums}
 .hmt:hover,.hmt.hl{filter:brightness(1.18);outline:2px solid #fff;outline-offset:-2px;z-index:2}
 .hmfoot{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;padding:6px 8px;border-top:1px solid var(--ink)}
 .hmfoot .fine{margin:0;font-size:12px}
