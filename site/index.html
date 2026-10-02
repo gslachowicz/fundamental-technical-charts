@@ -23,7 +23,7 @@
 <meta name="description" content="O'Neil-style daily charts, RS Ratings, industry group ranks and automatic base and pivot detection for every S&amp;P 1500 and Nasdaq-100 stock. Free.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&family=Archivo+Narrow:wght@400;600;700&family=Libre+Franklin:wght@600;800&family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&display=swap">
-<link rel="stylesheet" href="style.css?v=20261004a">
+<link rel="stylesheet" href="style.css?v=20261005a">
 </head>
 <body>
 <div class="sheet">
@@ -41,7 +41,7 @@
   </nav>
   <div class="banner" id="banner" hidden></div>
   <nav class="tabs" id="tabs" aria-label="Sections">
-    <a href="#" data-v="home">Home</a><a href="#watchlist" data-v="watch">Watchlist</a><a href="#screener" data-v="all">Screener</a><a href="#etfs" data-v="etf">ETFs</a><a href="#heatmap" data-v="heat">Heatmap</a><a href="#ideas" data-v="ideas">Trade ideas</a><a href="#earnings" data-v="earn">Earnings</a>
+    <a href="#" data-v="home">Home</a><a href="#watchlist" data-v="watch">Watchlist</a><a href="#screener" data-v="all">Screener</a><a href="#etfs" data-v="etf">ETFs</a><a href="#heatmap" data-v="heat">Heatmap</a><a href="#breadth" data-v="breadth">Breadth</a><a href="#ideas" data-v="ideas">Trade ideas</a><a href="#earnings" data-v="earn">Earnings</a>
   </nav>
 
   <!-- ===================== HOME ===================== -->
@@ -94,6 +94,29 @@
       </div>
     </section>
     <div class="hmtip" id="hmTip" hidden></div>
+  </main>
+
+  <!-- ===================== MARKET BREADTH ===================== -->
+  <main id="vBreadth" class="breadthv" hidden>
+    <section class="ihead">
+      <div>
+        <p class="kicker">Research · market health, updated every trading day after the close</p>
+        <h2>Market breadth</h2>
+        <p class="lede">Is the rally broad or carried by a handful of names? The market direction of the S&amp;P&nbsp;500 and the Nasdaq, read the O'Neil way with distribution days and follow-through days, next to how many stocks sit above their 20-, 50- and 200-day lines, new 52-week highs against new lows, the advance/decline line and the McClellan oscillator.</p>
+      </div>
+      <div class="istats" id="bStats"></div>
+    </section>
+    <section class="bstatus" id="bStatus" aria-label="Market direction"></section>
+    <div class="bar">
+      <div class="seg" role="group" aria-label="Stocks" id="bGroup"><button data-g="all">S&amp;P 1500 + Nasdaq-100</button><button data-g="sp500">S&amp;P 500</button><button data-g="ndx">Nasdaq-100</button></div>
+      <div class="seg" role="group" aria-label="Range" id="bRange"><button data-r="63">3M</button><button data-r="126">6M</button><button data-r="252">1Y</button><button data-r="504">2Y</button></div>
+      <span class="count" id="bCount"></span>
+    </div>
+    <section class="box bchart">
+      <h3><span id="bTitle">Breadth</span><small id="bAsOf"></small></h3>
+      <div class="bcwrap"><canvas id="bcv" aria-label="Market breadth charts: index, percent of stocks above moving averages, new highs and lows, advance/decline line and McClellan oscillator"></canvas></div>
+    </section>
+    <p class="fine">Market direction is worked out automatically from price and volume and is not IBD's call. Distribution day: the index falls 0.2% or more on higher volume than the day before; it counts for 25 sessions or until the index rises 5% above that close. A rally attempt starts with the first up day after a low; a follow-through day comes on day 4 or later with a gain of at least 1.25% on higher volume. Under pressure: 5 or more distribution days, or the index under its 50-day line. Correction: 8% off the peak, or 6 distribution days under the 50-day line. McClellan oscillator: 19-day minus 39-day average of ratio-adjusted net advances. Not investment advice.</p>
   </main>
 
   <!-- ===================== TRADE IDEAS ===================== -->
@@ -380,6 +403,7 @@
         <ul>
           <li><a href="#">Market dashboard</a></li>
           <li><a href="#heatmap">Heatmap</a></li>
+          <li><a href="#breadth">Market breadth</a></li>
           <li><a href="#ideas">Trade ideas</a></li>
           <li><a href="#earnings">Earnings calendar</a></li>
           <li><a href="#screener">Screener</a></li>
@@ -424,6 +448,6 @@
   </div>
 </div>
 <div class="toast" id="toast" hidden></div>
-<script src="app.js?v=20261004a"></script>
+<script src="app.js?v=20261005a"></script>
 </body>
 </html>

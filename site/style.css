@@ -622,3 +622,15 @@ ul.news span{display:block;font-size:11.5px;color:var(--ink2);margin-top:2px}
 .aforgot .lnk{font:13px var(--f-label);color:var(--navy)}
 .alegal{margin:8px 0 0;font:12px/1.4 var(--f-label);color:var(--ink2);text-align:center}
 .alegal a{color:var(--navy)}
+
+/* market breadth */
+.st-rally{color:#fff;background:#8a8f9c;border-color:#8a8f9c}
+.plink{font:600 12px var(--f-label);color:var(--navy);text-decoration:none;white-space:nowrap}
+.plink:hover{text-decoration:underline}
+.bstatus{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:12px}
+.bcard .bwhy{margin:0;font:14px/1.45 var(--f-serif);color:var(--ink)}
+.bcard .dd{flex-wrap:wrap}
+.bchart .bcwrap{padding:0}
+#bcv{display:block;width:100%;height:900px;cursor:crosshair;touch-action:pan-y}
+@media (max-width:900px){.breadthv .ihead{grid-template-columns:1fr}}
+@media (max-width:640px){.breadthv .istats{grid-template-columns:1fr 1fr}.breadthv .istats > div:nth-child(3){border-left:0}.breadthv .istats > div:nth-child(n+3){border-top:1px solid var(--rule)}#bcv{height:760px}}
