@@ -150,7 +150,7 @@ function renderScreener(){
   if(total > shown.length) $("#moreBtn").textContent = `Show ${Math.min(PAGE, total-shown.length)} more`;
 }
 function renderPulse(){
-  const els = [$("#pulse"), $("#hPulse")];
+  const els = [$("#pulse"), $("#hPulse")].filter(Boolean);
   if(!META || !META.market || !META.market.length){ els.forEach(el=>el.innerHTML=""); return; }
   const html = META.market.map(m => `<div class="pcard">
       <div class="top"><span class="nm">${esc(m.name)}</span><span class="px">${fmtP(m.close)}</span><span class="${m.chgPct<0?'neg':''}" style="font-family:var(--f-data)">${fmtPct(m.chgPct,2)}</span>
