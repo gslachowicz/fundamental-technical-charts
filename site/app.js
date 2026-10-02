@@ -3,7 +3,7 @@
 "use strict";
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
-const DATA = "data/";
+const DATA = "/data/";
 const C = {ink:"#15171c", ink2:"#5a5d66", grid:"#c9cbd3", up:"#1d3fc4", down:"#e0337f", ma50:"#d23a2a", ma200:"#15171c", ema:"#5fa35a",
   blue:"#1d3fc4", rs:"#0b2263", navy:"#1f3c6e", idx:"#7d808a", plate:"#ffffff", vavg:"#15171c", piv:"#3c8a3a", zone:"rgba(29,63,196,.07)"};
 const FONT_D = '"Courier Prime", "Courier New", monospace', FONT_L = '"Archivo Narrow", "Arial Narrow", Arial, sans-serif';
@@ -12,6 +12,25 @@ const store = {
   get(k){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : null; }catch(e){ return null; } },
   set(k,v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
 };
+/* ---------- clean URLs: /chart/NVDA/, /breadth/, /compare/ … (old #NVDA links still work and get rewritten) ---------- */
+const SECTIONS = ["watchlist","screener","etfs","groups","heatmap","breadth","ideas","earnings","compare","wall","welcome"];
+function keyToPath(k){
+  k = String(k || "").replace(/^#/, "").trim(); const low = k.toLowerCase();
+  if(!k || low === "home") return "/";
+  if(k === low && SECTIONS.includes(low)) return "/" + low + "/";     // sections are lowercase, tickers uppercase
+  if(low.startsWith("compare/")) return "/compare/?t=" + encodeURIComponent(k.slice(8)).replace(/%2C/gi, ",").replace(/%3A/gi, ":");
+  return "/chart/" + encodeURIComponent(k.toUpperCase()).replace(/%3D/gi, "=").replace(/%5E/gi, "^") + "/";
+}
+function pathToKey(){
+  const p = location.pathname.replace(/index\.html$/, ""); let m;
+  if((m = p.match(/^\/chart\/([^\/]+)\/?$/))) return decodeURIComponent(m[1]).toUpperCase();
+  if((m = p.match(/^\/([a-z]+)\/?$/)) && SECTIONS.includes(m[1])){
+    if(m[1] === "compare"){ const t = new URLSearchParams(location.search).get("t"); if(t) return "compare/" + t; }
+    return m[1]; }
+  return "";
+}
+const here = () => "#" + pathToKey();          // the current view, in the old "#key" form
+function go(k){ const path = keyToPath(k); if(path !== location.pathname + location.search) history.pushState(null, "", path); route(); }
 async function getJSON(path){ const r = await fetch(DATA + path, {cache:"no-cache"}); if(!r.ok) throw new Error(r.status+" "+path); return r.json(); }
 
 /* ---------- formatting ---------- */
@@ -150,7 +169,7 @@ function renderScreener(){
       <td>${b.pivot?fmtP(b.pivot):"—"}</td>
       <td class="${b.pivot ? TIER.pivot(b.distPct) : ""}" data-l="To pivot">${b.pivot?fmtPct(b.distPct):"—"}</td>
       <td class="l">${b.status?`<span class="chip ${stc}">${esc(b.status)}</span>`:"—"}</td>
-    </tr>`; }).join("") || `<tr><td colspan="17" class="l" style="padding:18px">${scrState.scope==="watch" && !getWL().length ? `Your watchlist is empty. Open any ticker and tap the ☆ next to its symbol to add it.<span class="wlgo"><a class="btn" href="#screener">Browse the screener →</a><a class="btn" href="#ideas">See trade ideas →</a><a class="btn" href="#heatmap">Open the heatmap →</a></span>` : "No tickers match this filter."}</td></tr>`;
+    </tr>`; }).join("") || `<tr><td colspan="17" class="l" style="padding:18px">${scrState.scope==="watch" && !getWL().length ? `Your watchlist is empty. Open any ticker and tap the ☆ next to its symbol to add it.<span class="wlgo"><a class="btn" href="/screener/">Browse the screener →</a><a class="btn" href="/ideas/">See trade ideas →</a><a class="btn" href="/heatmap/">Open the heatmap →</a></span>` : "No tickers match this filter."}</td></tr>`;
   const bySym = new Map(shown.map(r=>[r.symbol,r]));
   $$("canvas[data-spark]").forEach(cv=>{ const r = bySym.get(cv.dataset.spark); sparkline(cv, r && r.spark); });
   const noun = {all:"stocks", etf:"ETFs", watch:"tickers"}[scrState.scope];
@@ -177,7 +196,7 @@ function renderPulse(){
       <div class="top"><span class="nm">${esc(m.name)}</span><span class="px">${fmtP(m.close)}</span><span class="${m.chgPct<0?'neg':''}" style="font-family:var(--f-data)">${fmtPct(m.chgPct,2)}</span>
         <span class="sp"></span><span class="chip ${MKT_CLASS[m.status]||''}">${esc(m.status)}</span></div>
       <div class="flags"><span class="flag ${m.above21?'ok':'no'}">${m.above21?'Above':'Below'} 21-day</span><span class="flag ${m.above50?'ok':'no'}">${m.above50?'Above':'Below'} 50-day</span><span class="flag ${m.above200?'ok':'no'}">${m.above200?'Above':'Below'} 200-day</span></div>
-      <div class="dd" title="Distribution days in the last 25 sessions: index down 0.2% or more on higher volume">${Array.from({length:8},(_,i)=>`<i class="${i<m.distDays?'on':''}"></i>`).join("")}<span>${m.distDays} distribution day${m.distDays===1?'':'s'}${m.rallyDay?` · rally day ${m.rallyDay}`:''}</span><span class="sp"></span><a class="plink" href="#breadth">Breadth →</a></div>
+      <div class="dd" title="Distribution days in the last 25 sessions: index down 0.2% or more on higher volume">${Array.from({length:8},(_,i)=>`<i class="${i<m.distDays?'on':''}"></i>`).join("")}<span>${m.distDays} distribution day${m.distDays===1?'':'s'}${m.rallyDay?` · rally day ${m.rallyDay}`:''}</span><span class="sp"></span><a class="plink" href="/breadth/">Breadth →</a></div>
     </div>`).join("");
   els.forEach(el=>el.innerHTML = html);
 }
@@ -197,11 +216,11 @@ async function setScope(s){
 }
 $$("#scope button").forEach(b=>b.onclick=()=>setScope(b.dataset.s));
 $("#moreBtn").onclick=()=>{ scrState.limit += PAGE; renderScreener(); };
-$("#scr tbody").addEventListener("click", e=>{ const tr=e.target.closest("tr[data-s]"); if(tr) location.hash = tr.dataset.s; });
-$("#scr tbody").addEventListener("keydown", e=>{ const tr=e.target.closest("tr[data-s]"); if(tr && e.key==="Enter") location.hash = tr.dataset.s; });
+$("#scr tbody").addEventListener("click", e=>{ const tr=e.target.closest("tr[data-s]"); if(tr) go(tr.dataset.s); });
+$("#scr tbody").addEventListener("keydown", e=>{ const tr=e.target.closest("tr[data-s]"); if(tr && e.key==="Enter") go(tr.dataset.s); });
 $("#jump").addEventListener("change", e=>{ const v=e.target.value.trim().toUpperCase().replace(/\./g,"-"); if(!v) return; e.target.value="";
   const known = ROWS.some(r=>r.symbol===v) || (UNI && UNI.some(r=>r.symbol===v));
-  if(known || !UNI || SYM_OK.test(v)) location.hash = v; else toast(`${v} is not a valid ticker.`); });
+  if(known || !UNI || SYM_OK.test(v)) go(v); else toast(`${v} is not a valid ticker.`); });
 
 /* ================= SETTINGS ================= */
 const MAS = [
@@ -620,7 +639,7 @@ function renderPanels(){
   const F = S.fund||{}, st = S.stats||{}, b = S.base;
   const ch = st.chgPct;
   $("#sym").textContent = S.symbol; $("#cname").textContent = S.name || "";
-  document.title = `${S.symbol} · Ticker&Tape`;
+  document.title = `${S.symbol}${S.name ? " · " + S.name : ""} stock chart · Ticker&Tape`;
   $("#qPx").textContent = fmtP(st.close);
   $("#qChg").innerHTML = `<span class="${ch<0?'dn':''}">${ch>=0?"+":""}${fmtP(st.close-st.prevClose)} (${fmtPct(ch,2)})</span>`;
   $("#qMeta").textContent = (S.live ? `${fmtLong(iso(st.date))} · ${liveTime()} ET, delayed` : `${fmtLong(iso(st.date))} close`) + ` · Vol ${fmtV(st.volume)}` + (F.exchange? " · "+F.exchange : "");
@@ -653,7 +672,7 @@ function renderPanels(){
       Hd.map(h=>`<tr data-s="${esc(h.symbol)}"><td class="l"><span class="sym">${esc(h.symbol)}</span></td><td class="l nmc">${esc(h.name)}</td><td class="wcell"><span class="wbar" style="width:${(h.pct/mx*100).toFixed(0)}%"></span><b>${(h.pct||0).toFixed(2)}%</b></td></tr>`).join("")}</tbody></table>
       <p class="tnote">Click a holding to open its chart.</p>`
       : `<div class="empty">${F.pending ? "Holdings load with the fundamentals rotation in the next updates." : "Yahoo does not publish holdings for this fund."}</div>`;
-    $$("#qtrs tr[data-s]").forEach(tr=>tr.onclick=()=>{ location.hash = tr.dataset.s; });
+    $$("#qtrs tr[data-s]").forEach(tr=>tr.onclick=()=>{ go(tr.dataset.s); });
   } else {
   $("#qtrsH").innerHTML = `Quarterly earnings &amp; sales <small>reported vs. expected · y/y growth</small>`;
   $("#qtrs").innerHTML = Q.length ? `<table class="qt"><thead><tr><th class="l" rowspan="2">Qtr</th><th colspan="4" class="hgrp">EPS</th><th colspan="4" class="hgrp">Sales</th><th rowspan="2">Op.<br>mgn</th></tr>
@@ -670,7 +689,7 @@ function renderPanels(){
     const prof = [["Tracks", E.tracks], ["Category", E.category], ["Assets", E.aum], ["Expense ratio", E.expense], ["Yield", E.yield], ["Since", E.inception]].filter(r=>r[1]);
     $("#annual").innerHTML = `<dl class="kv in">${prof.map(([k,v])=>`<dt>${k}</dt><dd>${esc(v)}</dd>`).join("")}</dl>` +
       (SW.length ? `<div class="in"><div class="swh">Sector weights</div>${SW.slice(0,11).map(x=>`<div class="swrow"><span>${esc(x.name)}</span><i style="width:${Math.min(100,x.pct)}%"></i><b>${x.pct.toFixed(1)}%</b></div>`).join("")}</div>` : "") +
-      (E.gics ? `<div class="in"><a class="btn" href="#screener" data-sector="${esc(E.gics)}">See the ${esc(E.gics)} stocks →</a></div>` : "");
+      (E.gics ? `<div class="in"><a class="btn" href="/screener/" data-sector="${esc(E.gics)}">See the ${esc(E.gics)} stocks →</a></div>` : "");
   } else {
   $("#annualH").innerHTML = `Annual earnings &amp; sales <small id="annualN">${A.length ? `last ${A.length} years` : ""}</small>`;
   $("#annual").innerHTML = A.length ? `<table class="qt ann"><thead><tr><th class="l">Year</th><th>EPS</th><th>% chg</th><th>Sales</th><th>% chg</th><th>Net mgn</th></tr></thead><tbody>${A.map(a=>`<tr><td class="l">${esc(a.y)}</td><td class="act">${esc(a.eps)||"–"}</td><td class="${gc(a.chg)}">${esc(a.chg)||"–"}</td><td class="act">${esc(a.sales)||"–"}</td><td class="${gc(a.salesChg)}">${esc(a.salesChg)||"–"}</td><td>${esc(a.netMgn)||"–"}</td></tr>`).join("")}</tbody></table>`
@@ -793,12 +812,12 @@ function renderPeers(){
       <td class="${(r.udRatio??1)<1?'neg':''}">${r.udRatio==null?n(null):(+r.udRatio).toFixed(2)}</td>
       <td class="${sign(r.epsChg)}">${n(r.epsChg)}</td><td class="${sign(r.salesChg)}">${n(r.salesChg)}</td><td class="${sign(r.epsGrowth)}">${n(r.epsGrowth)}</td></tr>`).join("")}</tbody></table>
     ${peers.length > 9 ? `<p class="tnote">Top ${Math.min(9,peers.length)} of ${peers.length} peers by RS Rating.</p>` : ""}`;
-  $$("#peers tr[data-s]").forEach(tr=>tr.onclick=()=>{ if(tr.dataset.s!==me) location.hash = tr.dataset.s; });
+  $$("#peers tr[data-s]").forEach(tr=>tr.onclick=()=>{ if(tr.dataset.s!==me) go(tr.dataset.s); });
 }
 
 /* ---------- intraday prices (live.json on the "live" branch, refreshed every 15 min in market hours) ---------- */
 let LIVE = null;
-const LIVE_URL = (location.hostname === "localhost" || location.protocol === "file:") ? "data/live.json"
+const LIVE_URL = (location.hostname === "localhost" || location.protocol === "file:") ? "/data/live.json"
   : "https://raw.githubusercontent.com/gslachowicz/fundamental-technical-charts/live/live.json";
 const liveTime = () => LIVE ? new Date(LIVE.updated).toLocaleTimeString("en-US",{timeZone:"America/New_York", hour:"numeric", minute:"2-digit"}) : "";
 function patchRow(r){
@@ -892,7 +911,7 @@ $("#pW").onclick=()=>{ view.weekly=true; $("#pW").classList.add("on"); $("#pD").
 $$("#rangeSeg button").forEach(b=>b.onclick=()=>{ view.months=+b.dataset.r; $$("#rangeSeg button").forEach(x=>x.classList.toggle("on",x===b)); draw(); });
 for(const [id,key] of [["#tBox","box"],["#tPiv","piv"],["#tBase","base"],["#tIdx","idx"],["#tRs","rsl"]]){
   $(id).onclick=()=>{ view[key]=!view[key]; $(id).classList.toggle("on",view[key]); $(id).setAttribute("aria-pressed",view[key]); draw(); renderDbox(); }; }
-function step(d){ const cur = CUR || (S && S.symbol); if(!cur) return; const L = order.length ? order : ROWS.map(r=>r.symbol); const i=L.indexOf(cur); if(i<0) return; location.hash = L[(i+d+L.length)%L.length]; }
+function step(d){ const cur = CUR || (S && S.symbol); if(!cur) return; const L = order.length ? order : ROWS.map(r=>r.symbol); const i=L.indexOf(cur); if(i<0) return; go(L[(i+d+L.length)%L.length]); }
 function setNavPos(){   // "3 of 30 · Trade ideas" next to the ‹ › arrows
   const el = $("#bPos"); if(!el || !S) return; const L = order.length ? order : ROWS.map(r=>r.symbol); const i = L.indexOf(S.symbol);
   const name = {ideas:"Trade ideas", heatmap:"Heatmap", earnings:"Earnings", watchlist:"Watchlist", screener:"Screener", etfs:"ETFs"}[lastList] || "";
@@ -922,7 +941,11 @@ async function openChart(sym){
 }
 const ROUTES = {watchlist:"watch", screener:"all", etfs:"etf"};
 let lastList = "";
-function setTab(v){ $$("#tabs a").forEach(a=>a.classList.toggle("on", a.dataset.v===v)); }
+function setTab(v){ $$("#tabs a").forEach(a=>a.classList.toggle("on", a.dataset.v===v));
+  const on = $("#tabs a.on"); $("#tabsCur").textContent = on ? on.textContent : TX("Sections"); tabsMenu(false); }
+function tabsMenu(open){ $("#tabs").classList.toggle("open", open); $("#tabsBtn").setAttribute("aria-expanded", open); }
+$("#tabsBtn").onclick = e => { e.stopPropagation(); tabsMenu(!$("#tabs").classList.contains("open")); };
+document.addEventListener("click", e=>{ if($("#tabs").classList.contains("open") && !e.target.closest("#tabs,#tabsBtn")) tabsMenu(false); });
 // anonymous usage statistics: one beacon per page view (section, ticker, language, screen width, where the visit came from).
 // No cookies and no identifiers; the API counts unique visitors with a hash that changes every day.
 let trackFirst = true;
@@ -932,7 +955,7 @@ function track(p, s){
     let r = "";
     if(trackFirst){
       const via = new URLSearchParams(location.search).get("via");
-      if(via){ r = via.slice(0, 20); history.replaceState(null, "", location.pathname + location.hash); }
+      if(via){ r = via.slice(0, 20); const q = new URLSearchParams(location.search); q.delete("via"); history.replaceState(null, "", location.pathname + (q.toString() ? "?" + q : "") + location.hash); }
       else if(document.referrer){ const h = new URL(document.referrer).hostname; r = /(^|\.)tickerandtape\.com$/.test(h) ? "" : h; }
       else r = "direct";
       trackFirst = false;
@@ -941,10 +964,12 @@ function track(p, s){
   }catch(e){}
 }
 function route(){
-  let raw = decodeURIComponent(location.hash.slice(1)).trim();
+  const chartPath = location.hash.length <= 1 && /^\/chart\//.test(location.pathname);
+  let raw = location.hash.length > 1 ? decodeURIComponent(location.hash.slice(1)).trim() : pathToKey();
   if(/^reset=[0-9a-f]{48}$/.test(raw)){   // link from the password reset email
     resetToken = raw.slice(6); history.replaceState(null, "", location.pathname); openAuth("reset"); raw = ""; }
   if(raw.toLowerCase() === "alerts"){ history.replaceState(null, "", location.pathname); raw = ""; setTimeout(()=>{ if(auth.token) loadAlerts().then(openAlertsList); else openAuth("in"); }, 300); }
+  if(location.hash) history.replaceState(null, "", keyToPath(raw));   // old #links → clean URL
   const low = raw.toLowerCase();
   const isList = raw === low && ROUTES[low];
   track(low === "" || low === "home" ? "home" : isList ? low : ["groups","heatmap","breadth","ideas","earnings","wall","welcome"].includes(low) ? low : low === "compare" || low.startsWith("compare/") ? "compare" : "chart", raw.toUpperCase());
@@ -952,6 +977,7 @@ function route(){
   ["#vWelcome","#vHome","#vScreener","#vChart","#vHeat","#vIdeas","#vEarn","#vBreadth","#vGroups","#vWall","#vCmp"].forEach(id=>$(id).hidden = true); $("#hmTip").hidden = true;
   document.body.classList.toggle("on-welcome", raw === "welcome");
   document.body.classList.toggle("on-home", isHome);
+  if(chartPath && raw){ setTab(""); openChart(raw.toUpperCase()); return; }
   if(raw === "welcome"){ $("#vWelcome").hidden = false; setTab(""); document.title = "Ticker&Tape · O'Neil-style charts, RS ratings and bases"; window.scrollTo(0,0); return; }
   if(low === "earnings"){ lastList = "earnings"; $("#vEarn").hidden = false; setTab("earn"); document.title = "Earnings calendar · Ticker&Tape"; window.scrollTo(0,0); renderEarn(); return; }
   if(low === "ideas"){ lastList = "ideas"; $("#vIdeas").hidden = false; setTab("ideas"); document.title = "Trade ideas · Ticker&Tape"; window.scrollTo(0,0); renderIdeas(); return; }
@@ -966,10 +992,25 @@ function route(){
     setScope(ROUTES[low]); return; }
   setTab(""); openChart(raw.toUpperCase());
 }
-$("#bBack").onclick = () => { location.hash = lastList; };   // back to the list (or home) the chart was opened from
+$("#bBack").onclick = () => { go(lastList); };   // back to the list (or home) the chart was opened from
 $$("#tabs a").forEach(a=>a.addEventListener("click", ()=>{ if(a.dataset.v==="all"){ scrState.sector = null; scrState.industry = null; } }));
 document.addEventListener("click", e=>{ const b = e.target.closest("[data-sector]"); if(!b) return; e.preventDefault(); scrState.sector = b.dataset.sector; scrState.industry = null; scrState.filter = "all"; store.set("ink:filter", "all");
-  $$("#filters button").forEach(x=>x.classList.toggle("on", x.dataset.f==="all")); if(location.hash === "#screener") setScope("all"); else location.hash = "screener"; });
+  $$("#filters button").forEach(x=>x.classList.toggle("on", x.dataset.f==="all")); if(here() === "#screener") setScope("all"); else go("screener"); });
+
+// warns when the nightly data is older than the last session that should already be in (NYSE holidays skipped)
+const NYSE_HOLIDAYS = new Set(["2026-01-01","2026-01-19","2026-02-16","2026-04-03","2026-05-25","2026-06-19","2026-07-03","2026-09-07","2026-11-26","2026-12-25",
+  "2027-01-01","2027-01-18","2027-02-15","2027-03-26","2027-05-31","2027-06-18","2027-07-05","2027-09-06","2027-11-25","2027-12-24"]);
+function staleNote(dataDate){
+  try{
+    const et = new Date(new Date().toLocaleString("en-US", {timeZone:"America/New_York"}));
+    const d = new Date(Date.UTC(et.getFullYear(), et.getMonth(), et.getDate()));
+    if(et.getHours() < 20) d.setUTCDate(d.getUTCDate() - 1);          // tonight's update is usually in by 8 p.m. New York time
+    const isSession = x => x.getUTCDay() % 6 !== 0 && !NYSE_HOLIDAYS.has(x.toISOString().slice(0,10));
+    while(!isSession(d)) d.setUTCDate(d.getUTCDate() - 1);
+    const want = d.toISOString().slice(0,10);
+    return dataDate < want ? TX(`Heads up: charts and ratings are from the ${fmtLong(iso(dataDate))} close. The latest update is running late and will appear here automatically.`) : "";
+  }catch(e){ return ""; }
+}
 
 /* ================= HOME DASHBOARD ================= */
 let HOME = null, homeLoading = null, SPYB = null, movMode = "up";
@@ -979,7 +1020,7 @@ function loadHome(){
   if(!homeLoading) homeLoading = Promise.all([
     getJSON("home.json").then(h=>{ HOME = h; }).catch(()=>{ HOME = {market:[], sectors:[], commodities:[], news:[]}; }),
     getJSON(`t/${HC.file}.json`).catch(()=>{ Object.assign(HC, {symbol:"SPY", file:"SPY", title:"S&amp;P 500 · SPY"}); return getJSON("t/SPY.json"); })
-      .then(b=>{ SPYB = b; $("#hcTitle").innerHTML = HC.title; $("#hcLink").setAttribute("href", "#"+HC.symbol); }).catch(()=>{})
+      .then(b=>{ SPYB = b; $("#hcTitle").innerHTML = HC.title; $("#hcLink").setAttribute("href", keyToPath(HC.symbol)); }).catch(()=>{})
   ]);
   return homeLoading;
 }
@@ -1004,14 +1045,14 @@ function renderHome(){
   const row = (r, sector) => `<tr data-s="${esc(r.symbol)}"><td class="l"><span class="sym">${esc(r.symbol)}</span><span class="nm">${esc(r.name)}</span></td>
       <td>${fmtP(r.px ?? r.close)}</td>${PERF.map(([k,,sc])=>`<td style="${heat(r[k],sc)}" class="${(r[k]??0)<0?'neg':''}">${fmtPct(r[k],1)}</td>`).join("")}
       <td class="spk"><canvas data-hspark="${esc(r.symbol)}"></canvas></td>
-      <td class="l">${sector && r.gics ? `<a href="#screener" class="comp" data-sector="${esc(r.gics)}">Components →</a>` : ""}</td></tr>`;
+      <td class="l">${sector && r.gics ? `<a href="/screener/" class="comp" data-sector="${esc(r.gics)}">Components →</a>` : ""}</td></tr>`;
   $("#hSect").innerHTML = `<table class="scr sect"><thead><tr><th class="l nosort">ETF</th><th class="nosort">Price</th>${PERF.map(([k,l])=>`<th data-hk="${k}" class="${sectSort.k===k?'sorted'+(sectSort.asc?' asc':''):''}">${l}</th>`).join("")}<th class="nosort spk">3 months</th><th class="nosort"></th></tr></thead>
     <tbody><tr class="grp"><td colspan="${PERF.length+4}">Market</td></tr>${M.map(r=>row(r,false)).join("")}
     <tr class="grp"><td colspan="${PERF.length+4}">Sectors <small>click a column to rank them</small></td></tr>${Sx.map(r=>row(r,true)).join("")}</tbody></table>`;
   const all = [...M, ...Sx];
   $$("canvas[data-hspark]").forEach(cv=>{ const r = all.find(x=>x.symbol===cv.dataset.hspark); sparkline(cv, r && r.spark); });
   $$("#hSect th[data-hk]").forEach(th=>th.onclick=()=>{ const k=th.dataset.hk; sectSort = {k, asc: sectSort.k===k ? !sectSort.asc : false}; renderHome(); });
-  $$("#hSect tr[data-s]").forEach(tr=>tr.onclick=e=>{ if(e.target.closest("[data-sector]")) return; location.hash = tr.dataset.s; });
+  $$("#hSect tr[data-s]").forEach(tr=>tr.onclick=e=>{ if(e.target.closest("[data-sector]")) return; go(tr.dataset.s); });
   $("#hAsOf").textContent = LIVE ? `1D live, ${liveTime()} ET (delayed)` : (Sx[0] ? `as of ${fmtLong(iso(Sx[0].date))} close` : "");
   renderCommodities(live);
   // news
@@ -1035,7 +1076,7 @@ function renderCommodities(live){
     <tbody>${groups.map(([g,rs],i)=>`<tr class="grp"><td colspan="${PERF.length+3}">${g}${i===0?' <small>click a column to rank within each group</small>':''}</td></tr>${rs.map(row).join("")}`).join("")}</tbody></table>`;
   $$("canvas[data-cspark]").forEach(cv=>{ const r = Cx.find(x=>x.symbol===cv.dataset.cspark); sparkline(cv, r && r.spark); });
   $$("#hCom th[data-ck]").forEach(th=>th.onclick=()=>{ const k=th.dataset.ck; comSort = {k, asc: comSort.k===k ? !comSort.asc : false}; renderCommodities(live); });
-  $$("#hCom tr[data-s]").forEach(tr=>tr.onclick=()=>{ location.hash = tr.dataset.s; });
+  $$("#hCom tr[data-s]").forEach(tr=>tr.onclick=()=>{ go(tr.dataset.s); });
   $("#hComAsOf").textContent = Cx.some(r=>r.live) ? `1D live, ${liveTime()} ET (delayed)` : `as of ${fmtLong(iso(Cx[0].date))} settle`;
 }
 function renderHomeLists(){
@@ -1049,7 +1090,7 @@ function renderHomeLists(){
   $("#hUD").innerHTML = tbl(top(pool, "udRatio").map(r=>li(r, r.udRatio.toFixed(2))).join(""), "U/D");
   const mv = top(pool, "chgPct", movMode==="up");
   $("#hMov").innerHTML = tbl(mv.map(r=>li(r, fmtPct(r.chgPct,1), r.chgPct<0?'neg':'up', `<td class="${(r.volVsAvgPct??0)>=40?'up':''}" title="Volume vs 50-day average">${fmtPct(r.volVsAvgPct,0)}</td>`)).join(""), "Chg", "Vol Δ");
-  $$("#vHome .hlists tr[data-s]").forEach(tr=>tr.onclick=()=>{ location.hash = tr.dataset.s; });
+  $$("#vHome .hlists tr[data-s]").forEach(tr=>tr.onclick=()=>{ go(tr.dataset.s); });
 }
 $$("#hMovSeg button").forEach(b=>b.onclick=e=>{ e.stopPropagation(); movMode = b.dataset.m; $$("#hMovSeg button").forEach(x=>x.classList.toggle("on", x===b)); renderHomeLists(); });
 
@@ -1204,7 +1245,7 @@ function renderHeatRank(){
   const vt = v => HM.c === "rsRating" ? Math.round(v) : fmtPct(v, 2);
   $("#hmRank").innerHTML = `<table class="scr mini"><thead><tr><th class="l nosort">Stock</th><th class="nosort">Price</th><th class="nosort">${HM.c==="rsRating"?"RS":esc(HM_LABEL[HM.c].replace(" change",""))}</th></tr></thead><tbody>${
     list.map(t=>`<tr data-s="${esc(t.r.symbol)}"><td class="l"><span class="sym">${esc(t.r.symbol)}</span><span class="nm">${esc(t.r.name)}</span></td><td>${fmtP(t.r.close)}</td><td class="big ${t.v<(HM.c==="rsRating"?50:0)?'neg':'up'}">${vt(t.v)}</td></tr>`).join("")}</tbody></table>`;
-  $$("#hmRank tr[data-s]").forEach(tr=>{ tr.onclick = ()=>{ location.hash = tr.dataset.s; };
+  $$("#hmRank tr[data-s]").forEach(tr=>{ tr.onclick = ()=>{ go(tr.dataset.s); };
     tr.onmouseenter = ()=>{ const i = hmTiles.findIndex(t=>t.r.symbol===tr.dataset.s); const el = $(`#hmap .hmt[data-i="${i}"]`); if(el) el.classList.add("hl"); };
     tr.onmouseleave = ()=>{ $$("#hmap .hmt.hl").forEach(e=>e.classList.remove("hl")); }; });
 }
@@ -1225,7 +1266,7 @@ function hmTip(e){
 const fmtBigM = m => m >= 1e6 ? (m/1e6).toFixed(2)+"T" : m >= 1e3 ? (m/1e3).toFixed(m>=1e5?0:1)+"B" : Math.round(m)+"M";
 $("#hmap").addEventListener("mousemove", hmTip);
 $("#hmap").addEventListener("mouseleave", ()=>{ $("#hmTip").hidden = true; });
-$("#hmap").addEventListener("click", e=>{ const el = e.target.closest(".hmt"); if(!el) return; $("#hmTip").hidden = true; const t = hmTiles[+el.dataset.i]; if(t) location.hash = t.r.symbol; });
+$("#hmap").addEventListener("click", e=>{ const el = e.target.closest(".hmt"); if(!el) return; $("#hmTip").hidden = true; const t = hmTiles[+el.dataset.i]; if(t) go(t.r.symbol); });
 [["#hmGroup","g","g"],["#hmColor","c","c"],["#hmSize","z","z"],["#hmScheme","k","k"],["#hmRankSeg","rank","r"]].forEach(([sel,key,attr])=>
   $$(sel+" button").forEach(b=>b.onclick = e=>{ e.stopPropagation(); HM[key] = b.dataset[attr]; store.set("tt:heat", HM); key === "rank" ? (renderHeatRank(), $$("#hmRankSeg button").forEach(x=>x.classList.toggle("on", x===b))) : renderHeat(); }));
 /* ================= EARNINGS CALENDAR ================= */
@@ -1288,7 +1329,7 @@ function renderEarn(){
       ? `<span class="${(e.surprise??0)<0?'neg':'up'}" title="EPS ${e.epsAct} vs ${e.epsEst ?? "—"} expected">${e.surprise!=null ? fmtPct(e.surprise,0) : "—"}</span>${e.reactPct!=null ? `<b class="${e.reactPct<0?'neg':'up'}" title="Reaction in the first session after the report">${fmtPct(e.reactPct,1)}</b>` : ""}`
       : `<span title="Consensus EPS${e.epsLY?` vs ${e.epsLY} a year ago`:""}">${e.epsEst!=null ? "$"+(+e.epsEst).toFixed(2) : ""}</span>${g!=null && isFinite(g) ? `<b class="${g<0?'neg':'up'}" title="Expected EPS growth vs the same quarter last year">${fmtPct(g,0)}</b>` : ""}`;
     const res = done ? ((e.surprise ?? 0) > 0 ? " beat" : (e.surprise ?? 0) < 0 ? " miss" : "") : "";
-    return `<a class="eitem${lead?" lead":""}${wl.has(e.symbol)?" mine":""}${res}" href="#${esc(e.symbol)}" title="${esc(e.name)}${e.groupRank?` · group ${esc(e.groupRank)}`:""}">
+    return `<a class="eitem${lead?" lead":""}${wl.has(e.symbol)?" mine":""}${res}" href="/chart/${esc(e.symbol)}/" title="${esc(e.name)}${e.groupRank?` · group ${esc(e.groupRank)}`:""}">
       <span class="es">${esc(e.symbol)}</span><span class="ers${lead?" hot":""}">${e.rs ?? "—"}</span><span class="ev">${right}</span></a>`;
   };
   const ICON = {
@@ -1335,8 +1376,7 @@ $$("form[data-nl] input").forEach(i=>i.addEventListener("focus", ()=>{ if(auth.e
 /* ================= SHARE ON X ================= */
 function xShareUrl(sym, extra){
   const text = `$${sym.replace(/=F$/,"")}${extra ? " · " + extra : ""}`;
-  const card = !/[=^]/.test(sym) && !!rowOf(sym);   // the nightly build makes a share card (chart image + page) for every stock and ETF on the site
-  return "https://x.com/intent/post?" + new URLSearchParams({text, url: card ? `https://tickerandtape.com/c/${sym}/` : `https://tickerandtape.com/#${sym}`, via:"Tickerandtape"}).toString();
+  return "https://x.com/intent/post?" + new URLSearchParams({text, url: `https://tickerandtape.com${keyToPath(sym)}`, via:"Tickerandtape"}).toString();
 }
 function setShare(){
   const a = $("#bShare"); if(!a || !S) return;
@@ -1555,10 +1595,10 @@ function renderIdeas(){
         <div><span>Stop (−7%)</span><b class="neg">${signed ? fmtP(it.stop) : "000.00"}</b></div>
         ${signed ? "" : `<button class="btn on ilock" data-w="up">Free account: see the trade plan</button>`}
       </div>
-      <footer><a href="#${esc(it.symbol)}" class="btn">Open chart →</a><a class="btn xshare" target="_blank" rel="noopener" href="${esc(xShareUrl(it.symbol, `RS ${it.rs} · ${it.type}, ${it.status.toLowerCase()} (pivot ${fmtP(it.pivot)}) — today's trade ideas on Ticker&Tape`))}">Share on X</a></footer>
+      <footer><a href="/chart/${esc(it.symbol)}/" class="btn">Open chart →</a><a class="btn xshare" target="_blank" rel="noopener" href="${esc(xShareUrl(it.symbol, `RS ${it.rs} · ${it.type}, ${it.status.toLowerCase()} (pivot ${fmtP(it.pivot)}) — today's trade ideas on Ticker&Tape`))}">Share on X</a></footer>
     </article>`).join("") : `<div class="empty">No stock passes every filter today${ideaFilter!=="all" ? " in this group" : ""}. In weak markets that is normal: fewer leaders set up.</div>`;
   $$("#iCards canvas.icv").forEach(cv=>ideaChart(cv, list[+cv.dataset.k]));
-  $$("#iCards .icard").forEach(c=>c.onclick = e=>{ if(e.target.closest("a,button")) return; location.hash = c.dataset.s; });
+  $$("#iCards .icard").forEach(c=>c.onclick = e=>{ if(e.target.closest("a,button")) return; go(c.dataset.s); });
   $$("#iCards [data-w=up]").forEach(b=>b.onclick = e=>{ e.stopPropagation(); openAuth("up"); });
   // track record
   const H = (IDEAS.history || []).filter(h=>h.date < (IDEAS.date||"9")).slice(0, 60);
@@ -1566,7 +1606,7 @@ function renderIdeas(){
     H.map(h=>`<tr data-s="${esc(h.symbol)}"><td class="l"><span class="sym">${esc(h.symbol)}</span><span class="nm">${esc(h.name||"")}</span></td><td>${fmtD(Date.parse(h.date))}</td><td class="l">${esc(h.status)}</td><td>${fmtP(h.price)}</td><td>${fmtP(h.last)}</td>
       <td class="${h.retPct<0?'neg':'up'}"><b>${fmtPct(h.retPct,1)}</b></td><td>${fmtPct(h.maxPct,1)}</td><td class="l"><span class="res r-${esc(h.result.toLowerCase())}">${esc(h.result)}${h.closed?` · ${fmtD(Date.parse(h.closed))}`:""}</span></td></tr>`).join("")}</tbody></table>`
     : `<div class="empty">The first ideas enter the track record after their first full trading day.</div>`;
-  $$("#iTrack tr[data-s]").forEach(tr=>tr.onclick = ()=>{ location.hash = tr.dataset.s; });
+  $$("#iTrack tr[data-s]").forEach(tr=>tr.onclick = ()=>{ go(tr.dataset.s); });
 }
 $$("#iFilter button").forEach(b=>b.onclick = ()=>{ ideaFilter = b.dataset.f; store.set("tt:ideaF", ideaFilter); renderIdeas(); });
 $$("#iSmr button").forEach(b=>b.onclick = ()=>{ ideaSmr = b.dataset.q; store.set("tt:ideaSmr", ideaSmr); renderIdeas(); });
@@ -1692,7 +1732,7 @@ $("#authForm").addEventListener("submit", async e=>{
       toast(authMode==="up" ? "Account created. Your watchlist now syncs to every device." : `Welcome back, ${r.email}.`);
       await pullData(true, authMode==="up");
       store.set("tt:welcomed", true);
-      if(!$("#vWelcome").hidden){ location.hash = ""; if(authMode==="up" && !store.get("tt:toured")) setTimeout(startTour, 700); }
+      if(!$("#vWelcome").hidden){ go(""); if(authMode==="up" && !store.get("tt:toured")) setTimeout(startTour, 700); }
     }
   }catch(ex){ err.textContent = ex.message; err.hidden = false; }
   finally{ go.disabled = false; }
@@ -1904,7 +1944,7 @@ function openAlertsList(){
   if(!auth.token){ openAuth("in"); return; }
   const fmtT = t => t ? fmtLong(t*1000) : "";
   const act = ALERTS.filter(a=>!a.fired), done = ALERTS.filter(a=>a.fired);
-  const row = a => `<div class="arow"><a href="#${esc(a.symbol)}" class="asym">${esc(a.symbol)}</a><span>${esc(TX(alertDesc(a)))}${a.note?` <i>${esc(a.note)}</i>`:""}${a.fired?`<small>${esc(TX("Fired"))} ${fmtT(a.fired)} · ${fmtP(a.fired_px)}</small>`:""}</span><button class="lnk" data-del="${a.id}" aria-label="${esc(TX("Delete alert"))}">×</button></div>`;
+  const row = a => `<div class="arow"><a href="/chart/${esc(a.symbol)}/" class="asym">${esc(a.symbol)}</a><span>${esc(TX(alertDesc(a)))}${a.note?` <i>${esc(a.note)}</i>`:""}${a.fired?`<small>${esc(TX("Fired"))} ${fmtT(a.fired)} · ${fmtP(a.fired_px)}</small>`:""}</span><button class="lnk" data-del="${a.id}" aria-label="${esc(TX("Delete alert"))}">×</button></div>`;
   dlg(TX("My alerts"), `<div class="alist">${act.length ? act.map(row).join("") : `<p class="msub">${esc(TX("No active alerts. Open any chart and tap 🔔 Alert to set one."))}</p>`}
     ${done.length ? `<h5>${esc(TX("Fired in the last 30 days"))}</h5>${done.map(row).join("")}` : ""}</div>
     ${VERIFIED ? "" : `<p class="msub">${esc(TX("Confirm your email to also get alerts by email."))}</p>`}`, B=>{
@@ -1940,7 +1980,7 @@ async function pollNotifs(first){
   if(fresh.length && !first){
     const t = notifText(fresh[0]); toast(`🔔 ${t.txt}`);
     if("Notification" in window && Notification.permission === "granted") fresh.slice(0,3).forEach(n=>{ const x = notifText(n);
-      try{ const no = new Notification("Ticker&Tape", {body: `${x.txt} · ${TX("last")} ${x.last}`, tag:"tt"+n.id}); no.onclick = ()=>{ focus(); location.hash = n.symbol; }; }catch(e){} });
+      try{ const no = new Notification("Ticker&Tape", {body: `${x.txt} · ${TX("last")} ${x.last}`, tag:"tt"+n.id}); no.onclick = ()=>{ focus(); go(n.symbol); }; }catch(e){} });
     loadAlerts();
   }
   if(NOTIF.items.length){ notifSeen = Math.max(notifSeen, ...NOTIF.items.map(n=>n.id)); store.set("tt:notifSeen", notifSeen); }
@@ -1953,7 +1993,7 @@ function bellMenu(on){
   if(!on) return;
   const ago = t => { const h = (Date.now()/1000 - t)/3600; return h < 1 ? TX("now") : h < 24 ? TX(`${Math.round(h)}h ago`) : fmtLong(t*1000); };
   m.innerHTML = `<div class="who">${esc(TX("Notifications"))}</div>${NOTIF.items.length ? NOTIF.items.slice(0,15).map(n=>{ const x = notifText(n);
-      return `<a class="nitem ${n.read?"":"new"}" href="#${esc(n.symbol)}"><b>${esc(x.txt)}</b><small>${esc(TX("last"))} ${x.last} · ${ago(n.created)}${x.note?` · ${esc(x.note)}`:""}</small></a>`; }).join("")
+      return `<a class="nitem ${n.read?"":"new"}" href="/chart/${esc(n.symbol)}/"><b>${esc(x.txt)}</b><small>${esc(TX("last"))} ${x.last} · ${ago(n.created)}${x.note?` · ${esc(x.note)}`:""}</small></a>`; }).join("")
     : `<p class="nempty">${esc(TX("No notifications yet. Set an alert from any chart with 🔔 Alert."))}</p>`}
     ${"Notification" in window && Notification.permission === "default" ? `<button data-n="perm">${esc(TX("Enable browser notifications"))}</button>` : ""}
     <button data-n="list">${esc(TX("My alerts"))}</button>`;
@@ -2111,11 +2151,11 @@ function renderGroups(){
     ${L.map(g=>`<tr data-g="${esc(g.name)}" tabindex="0"><td class="big"><b>${g.rank}</b></td><td>${arrow(g.r6w, g.rank)}</td><td>${arrow(g.r1w, g.rank)}</td><td>${arrow(g.r3w, g.rank)}</td>
       <td class="l"><span class="sym">${esc(g.name)}</span><span class="nm">${esc(TX(g.sector))}</span></td><td>${g.n}</td>${pc(g.chg1w,4)}${pc(g.chg1m,8)}${pc(g.chg3m,16)}${pc(g.ytd,30)}
       <td><span class="gbar"><i style="width:${g.above50??0}%"></i></span>${g.above50==null?"—":g.above50+"%"}</td>
-      <td class="l">${(g.leaders||[]).map(([s,rs])=>`<a class="glead" href="#${esc(s)}">${esc(s)} <b>${rs??"—"}</b></a>`).join("")}</td></tr>`).join("")}</tbody></table>`;
+      <td class="l">${(g.leaders||[]).map(([s,rs])=>`<a class="glead" href="/chart/${esc(s)}/">${esc(s)} <b>${rs??"—"}</b></a>`).join("")}</td></tr>`).join("")}</tbody></table>`;
   $("#gCount").textContent = `${L.length} ${TX("of")} ${T} · ${GROUPS.date ? fmtLong(iso(GROUPS.date)) : ""}`;
   $$("#gTbl th[data-gk]").forEach(t=>t.onclick = ()=>{ const k = t.dataset.gk; gSort = {k, asc: gSort.k===k ? !gSort.asc : ["rank","name"].includes(k)}; renderGroups(); });
   $$("#gTbl tr[data-g]").forEach(tr=>tr.onclick = e=>{ if(e.target.closest("a")) return; scrState.industry = tr.dataset.g; scrState.sector = null; scrState.filter = "all"; syncFilters();
-    if(location.hash === "#screener") setScope("all"); else location.hash = "screener"; });
+    if(here() === "#screener") setScope("all"); else go("screener"); });
 }
 $("#gSector").onchange = e => { store.set("tt:gSec", e.target.value); renderGroups(); };
 $$("#gShow button").forEach(b=>b.onclick = ()=>{ gShow = b.dataset.n; renderGroups(); });
@@ -2128,12 +2168,12 @@ function getBundle(sym){
   if(bundles.size > 150) bundles.delete(bundles.keys().next().value);
   return bundles.get(sym);
 }
-function openWall(syms, title){ WALL.syms = syms.slice(0, 300); WALL.title = title; WALL.from = location.hash || "#"; WALL.n = 24; location.hash = "wall"; }
+function openWall(syms, title){ WALL.syms = syms.slice(0, 300); WALL.title = title; WALL.from = here(); WALL.n = 24; go("wall"); }
 $("#bWall").onclick = () => { if(!order.length){ toast("This list is empty."); return; }
   const t = scrState.scope === "watch" ? (LISTS ? activeList().name : "Watchlist") : scrState.scope === "etf" ? "ETFs" : "Screener";
   openWall(order, t === "My watchlist" ? TX(t) : t); };
 $("#iWall").onclick = () => { const L = (IDEAS && IDEAS.ideas || []).filter(i=>ideaFilter==="all" || i.status===ideaFilter).map(i=>i.symbol); if(!L.length) return; openWall(L, TX("Trade ideas")); };
-$("#wBack").onclick = () => { location.hash = WALL.from && WALL.from !== "#wall" ? WALL.from : "watchlist"; };
+$("#wBack").onclick = () => { go(WALL.from && WALL.from !== "#wall" ? WALL.from : "watchlist"); };
 $$("#wRange button").forEach(b=>b.onclick = ()=>{ WALL.range = +b.dataset.r; store.set("tt:wRange", WALL.range); renderWall(); });
 $("#wMoreBtn").onclick = () => { WALL.n += 24; renderWall(); };
 let wallIO = null;
@@ -2151,7 +2191,7 @@ function renderWall(){
       ${r.rsRating!=null?`<span class="rsv ${r.rsRating>=80?'hot':''}" title="RS Rating">RS ${r.rsRating}</span>`:""}${r.comp!=null?`<span class="cmp" title="Composite Rating">Comp ${r.comp}</span>`:""}</header>
       <div class="wq"><b>${fmtP(r.close)}</b> <span class="${(r.chgPct??0)<0?'neg':''}">${fmtPct(r.chgPct,2)}</span>${b.status?` <span class="chip ${stc}">${esc(b.status)}</span>`:""}${NOTES[s]?` <span class="wnote" title="${esc(NOTES[s])}">✎ ${esc(NOTES[s])}</span>`:""}</div>
       <canvas class="wcv"></canvas></article>`; }).join("") || `<div class="empty">${esc(TX("This list is empty."))}</div>`;
-  $$("#wGrid .wtile").forEach(t=>t.onclick = ()=>{ location.hash = t.dataset.s; });
+  $$("#wGrid .wtile").forEach(t=>t.onclick = ()=>{ go(t.dataset.s); });
   if(wallIO) wallIO.disconnect();
   wallIO = new IntersectionObserver(es=>es.forEach(en=>{ if(!en.isIntersecting) return; wallIO.unobserve(en.target); const t = en.target;
     getBundle(t.dataset.s).then(bd=>{ if(bd) drawMini(t.querySelector("canvas"), bd); else t.querySelector("canvas").replaceWith(Object.assign(document.createElement("div"), {className:"empty", textContent: TX("Loads after the next nightly update")})); }); }), {rootMargin:"300px"});
@@ -2223,7 +2263,7 @@ function cmpPx(bd, sym){
 function renderCmpCtl(){
   $("#cChips").innerHTML = CMP.items.map((it,i)=>{ const ratio = it.s.includes(":");
     return `<span class="cchip" style="--c:${it.c}"><input type="color" class="swatch" data-ccol="${i}" value="${it.c}" title="Color" aria-label="${esc(it.s)} color">`
-      + (ratio ? `<b>${esc(it.s)}</b>` : `<a href="#${esc(it.s)}" title="Open chart">${esc(it.s)}</a>`)
+      + (ratio ? `<b>${esc(it.s)}</b>` : `<a href="/chart/${esc(it.s)}/" title="Open chart">${esc(it.s)}</a>`)
       + `<button class="cmv" data-cmv="${i}" title="Move up" aria-label="Move ${esc(it.s)} up" ${i?"":"disabled"}>↑</button><button class="cx" data-cdel="${i}" title="Remove" aria-label="Remove ${esc(it.s)}">×</button></span>`; }).join("")
     || `<span class="fine">${esc(TX("Add a ticker to start comparing."))}</span>`;
   $("#cInd").innerHTML = CMP.ind.map((m,i)=>`<span class="cma" style="--c:${m.c}">
@@ -2466,12 +2506,12 @@ $("#vCmp").addEventListener("click", e=>{
   if(t.closest("#cScale")){ CMP.scale = d.s; saveCmp(); renderCmpCtl(); drawCmp(); return; }
   if(t.closest("#cStyle")){ CMP.style = d.s; saveCmp(); renderCmpCtl(); drawCmp(); return; }
   if(t.closest("#cColor")){ CMP.color = d.c; saveCmp(); renderCmpCtl(); drawCmp(); return; }
-  if(t.id === "cLink"){ const url = location.origin + location.pathname + "#compare/" + CMP.items.map(x=>x.s).join(",");
+  if(t.id === "cLink"){ const url = location.origin + keyToPath("compare/" + CMP.items.map(x=>x.s).join(","));
     (navigator.clipboard ? navigator.clipboard.writeText(url) : Promise.reject()).then(()=>toast(TX("Link copied."))).catch(()=>prompt(TX("Copy this link:"), url)); return; }
   if(t.id === "cReset"){ CMP = normCmp({range: CMP.range, mode: CMP.mode}); saveCmp(); renderCmp(); return; }
-  if(d.go){ location.hash = d.go; }
+  if(d.go){ go(d.go); }
 });
-$("#vCmp").addEventListener("keydown", e=>{ const r = e.target.closest("[data-go]"); if(r && e.key === "Enter") location.hash = r.dataset.go; });
+$("#vCmp").addEventListener("keydown", e=>{ const r = e.target.closest("[data-go]"); if(r && e.key === "Enter") go(r.dataset.go); });
 $("#vCmp").addEventListener("change", e=>{
   const t = e.target, d = t.dataset;
   if(d.it != null){ CMP.ind[+d.it].t = t.value; saveCmp(); renderCmp(); }
@@ -2493,14 +2533,14 @@ $("#vCmp").addEventListener("input", e=>{   // live color preview while the pick
   c.addEventListener("mousemove", mv); c.addEventListener("touchmove", mv, {passive:true});
   c.addEventListener("mouseleave", ()=>{ cmpHover = -1; cmpY = -1; drawCmp(); });
   c.addEventListener("dblclick", ()=>{ const b = c._cx; if(!b || CMP.mode === "perf") return; const i = b.P.findIndex(p=>cmpY >= p.top && cmpY <= p.top + p.h), r = b.rows[i];
-    if(r && !r.ratio) location.hash = r.s; });
+    if(r && !r.ratio) go(r.s); });
 })();
 let cmpResize = 0; addEventListener("resize", ()=>{ clearTimeout(cmpResize); cmpResize = setTimeout(()=>{ if(!$("#vCmp").hidden) drawCmp(); }, 120); });
 function openCmp(spec){
   CMP = normCmp(cfg.cmp);
   if(spec){ const syms = [...new Set(spec.toUpperCase().split(/[,\s]+/).map(s=>s.replace(/[\/÷]/g, ":")).filter(s=>CMP_SYM.test(s)))].slice(0, CMP_MAX);
     if(syms.length){ CMP.items = syms.map((s,i)=>({s, c: (CMP.items.find(x=>x.s === s) || {}).c || CMP_PAL[i % CMP_PAL.length]})); saveCmp(); }
-    history.replaceState(null, "", location.pathname + location.search + "#compare"); }
+    history.replaceState(null, "", "/compare/"); }
   renderCmp();
 }
 
@@ -2510,7 +2550,7 @@ $("#vWelcome").addEventListener("click", e=>{
   const w = b.dataset.w;
   if(w==="up") openAuth("up");
   else if(w==="in") openAuth("in");
-  else if(w==="explore"){ store.set("tt:welcomed", true); location.hash = ""; if(!store.get("tt:toured")) setTimeout(startTour, 700); }
+  else if(w==="explore"){ store.set("tt:welcomed", true); go(""); if(!store.get("tt:toured")) setTimeout(startTour, 700); }
 });
 
 /* ================= GUIDED TOUR ================= */
@@ -2558,22 +2598,22 @@ function startTour(){
 }
 function endTour(){ tourI = -1; tourEl = null; $("#tour").hidden = true; }
 async function ensureView(v){
-  if(v==="h" && $("#vHome").hidden){ location.hash = ""; await waitFor(()=>!$("#vHome").hidden && HOME); await sleep(150); }
-  if(v==="s" && $("#vScreener").hidden){ location.hash = "watchlist"; await waitFor(()=>!$("#vScreener").hidden); }
+  if(v==="h" && $("#vHome").hidden){ go(""); await waitFor(()=>!$("#vHome").hidden && HOME); await sleep(150); }
+  if(v==="s" && $("#vScreener").hidden){ go("watchlist"); await waitFor(()=>!$("#vScreener").hidden); }
   if(v==="c" && ($("#vChart").hidden || !S || (S.fund||{}).etf)){
     const have = r => r && !r.pending && !r.etf;
     const pick = (watchRows().find(have) || ROWS[0] || {symbol:"NVDA"}).symbol;
-    location.hash = pick;
+    go(pick);
     await waitFor(()=>!$("#vChart").hidden && S && $("#loading").hidden);
   }
-  if(v==="*" && !$("#vWelcome").hidden){ location.hash = ""; await waitFor(()=>!$("#vHome").hidden); }
+  if(v==="*" && !$("#vWelcome").hidden){ go(""); await waitFor(()=>!$("#vHome").hidden); }
 }
 async function showStep(){
   const i = tourI, st = TOUR[i];
   await ensureView(st.v);
   if(i !== tourI) return;
   let el = $(st.sel); if(el && st.up) el = el.closest(".seg,.grp") || el;
-  if(!el || !el.getClientRects().length){ return go(tourI < TOUR.length-1 ? 1 : 0); }
+  if(!el || !el.getClientRects().length){ return tourGo(tourI < TOUR.length-1 ? 1 : 0); }
   tourEl = el;
   el.scrollIntoView({block: el.offsetHeight > innerHeight*0.6 ? "start" : "center", inline:"center", behavior:"smooth"});
   $("#tNum").textContent = `Step ${i+1} of ${TOUR.length}`;
@@ -2595,9 +2635,9 @@ function placeTour(){
   let x = Math.min(Math.max(8, r.left + r.width/2 - cw/2), innerWidth - cw - 8);
   Object.assign(card.style, {left:x+"px", top:y+"px"});
 }
-function go(d){ const n = tourI + d; if(n < 0) return; if(n >= TOUR.length) return endTour(); tourI = n; showStep(); }
-$("#tNext").onclick = () => go(1);
-$("#tBack").onclick = () => go(-1);
+function tourGo(d){ const n = tourI + d; if(n < 0) return; if(n >= TOUR.length) return endTour(); tourI = n; showStep(); }
+$("#tNext").onclick = () => tourGo(1);
+$("#tBack").onclick = () => tourGo(-1);
 $("#tSkip").onclick = endTour;
 $("#help").onclick = e => { e.stopPropagation(); startTour(); };
 document.addEventListener("click", e=>{ if(e.target.closest("[data-tour]")) startTour(); });
@@ -2605,8 +2645,8 @@ document.addEventListener("click", e=>{ if(e.target.closest("[data-tour]")) star
 document.addEventListener("keydown", e=>{
   if(!TOUR_ON()) return;
   if(e.key==="Escape") endTour();
-  else if(e.key==="ArrowRight"){ e.preventDefault(); go(1); }
-  else if(e.key==="ArrowLeft"){ e.preventDefault(); go(-1); }
+  else if(e.key==="ArrowRight"){ e.preventDefault(); tourGo(1); }
+  else if(e.key==="ArrowLeft"){ e.preventDefault(); tourGo(-1); }
 });
 addEventListener("resize", ()=>{ if(TOUR_ON()) placeTour(); });
 addEventListener("scroll", ()=>{ if(TOUR_ON()) placeTour(); }, true);
@@ -2616,7 +2656,7 @@ addEventListener("scroll", ()=>{ if(TOUR_ON()) placeTour(); }, true);
   try{
     [META, ROWS] = await Promise.all([getJSON("meta.json"), getJSON("screener.json")]);
   }catch(e){
-    $("#banner").hidden=false; $("#banner").textContent = "No data yet. The first update runs automatically after the US close; you can also start it from the Actions tab on GitHub (Update data → Run workflow).";
+    $("#banner").hidden=false; $("#banner").textContent = TX("Market data is being updated. Please check back in a few minutes.");
     ROWS = []; META = null;
   }
   if(META){
@@ -2624,7 +2664,8 @@ addEventListener("scroll", ()=>{ if(TOUR_ON()) placeTour(); }, true);
     const notes = [];
     if(META.demo) notes.push("Demo data: synthetic prices and fundamentals generated for testing. The live site shows real Yahoo Finance data.");
     if(META.errors && META.errors.length) notes.push("Last update had problems with: " + META.errors.slice(0,6).join("; ") + (META.errors.length>6?"…":""));
-    if(notes.length){ $("#banner").hidden=false; $("#banner").textContent = notes.join(" "); }
+    const late = staleNote(META.dataDate); if(late) notes.push(late);
+    if(notes.length){ $("#banner").hidden=false; $("#banner").textContent = notes.join(" "); $("#banner").classList.toggle("stale", !!late); }
   }
   fillSymlist();
   renderPulse();
@@ -2635,8 +2676,20 @@ addEventListener("scroll", ()=>{ if(TOUR_ON()) placeTour(); }, true);
   $("#scope").hidden = true;
   loadHome(); loadEarn().then(()=>{ if(!$("#vScreener").hidden) renderScreener(); if(S && !$("#vChart").hidden) setEarnChip(); });
   setTimeout(()=>loadUni().catch(()=>{}), 400);   // background: full list for the ticker search
-  if(!auth.token && !store.get("tt:welcomed") && !location.hash) history.replaceState(null, "", "#welcome");
-  window.addEventListener("hashchange", route); route();
+  if(!auth.token && !store.get("tt:welcomed") && !location.hash && !pathToKey()) history.replaceState(null, "", "/welcome/");
+  window.addEventListener("hashchange", route); window.addEventListener("popstate", route);
+  // in-site links navigate without reloading the page
+  document.addEventListener("click", e=>{
+    if(e.defaultPrevented || e.button || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    const a = e.target.closest("a[href]"); if(!a || a.target || a.hasAttribute("download")) return;
+    const href = a.getAttribute("href");
+    if(href.startsWith("#")){ e.preventDefault(); go(href); return; }
+    const u = new URL(a.href, location.href); if(u.origin !== location.origin) return;
+    const seg = u.pathname.replace(/^\/|\/$/g, "");
+    if(u.pathname === "/" || /^chart\/[^\/]+$/.test(seg) || SECTIONS.includes(seg)){ e.preventDefault();
+      if(u.pathname + u.search !== location.pathname + location.search) history.pushState(null, "", u.pathname + u.search); route(); }
+  });
+  route();
   loadLive(); setInterval(loadLive, 3*60*1000);
   document.addEventListener("visibilitychange", ()=>{ if(!document.hidden) loadLive(); });
   let rz; new ResizeObserver(()=>{ cancelAnimationFrame(rz); rz=requestAnimationFrame(()=>{ if(S && !$("#vChart").hidden){ draw(); renderDbox(); } }); }).observe(cv);

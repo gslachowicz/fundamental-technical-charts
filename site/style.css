@@ -827,3 +827,21 @@ details.howto > p{margin:8px 0 0}
 @media (max-width:640px){.cprelist{grid-template-columns:1fr}.cpre{border-left:0!important;border-top:1px dotted var(--rule)!important}.cpre:first-child{border-top:0!important}
   .clbl{min-width:0;width:100%}.cadd input{width:10em}.ctbl .nm{display:none}}
 .cmpv .box .tablewrap{border:0}
+
+/* sections menu on phones */
+.tabsbtn{display:none}
+@media (max-width:760px){
+  .tabsbtn{display:flex;align-items:center;gap:10px;width:100%;margin-top:-4px;padding:10px 12px;background:var(--plate);border:1px solid var(--ink);color:var(--navy);font:700 14px var(--f-label);letter-spacing:.1em;text-transform:uppercase;cursor:pointer}
+  .tabsbtn b{flex:1;text-align:left}
+  .tabsbtn[aria-expanded="true"] .car{transform:rotate(180deg)}
+  .tabs{display:none;flex-direction:column;margin-top:-13px;border:1px solid var(--ink);border-top:0;background:var(--plate);overflow:visible}
+  .tabs.open{display:flex}
+  .tabs a{border:0;border-bottom:1px dotted var(--rule);margin:0;padding:12px 14px;font-size:14px}
+  .tabs a:last-of-type{border-bottom:0}
+  .tabs a.on{background:var(--navy);color:#fff;border:0}
+  .tabs .mktchip{display:none!important}
+  .on-welcome .tabsbtn{display:none}
+}
+/* data older than expected */
+.on-home #banner.stale{display:block!important}
+#banner.stale{border-color:var(--down);background:#fdf0f5;color:#7a1240}

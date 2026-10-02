@@ -21,15 +21,15 @@
 <meta name="twitter:creator" content="@Tickerandtape">
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"Ticker&Tape","url":"https://tickerandtape.com/","logo":"https://tickerandtape.com/icon-512.png","email":"contacto@tickerandtape.com","sameAs":["https://x.com/Tickerandtape"]}</script>
 <meta name="description" content="O'Neil-style daily charts, RS Ratings, industry group ranks and automatic base and pivot detection for every U.S. stock and ADR worth $1 billion or more. Free.">
-<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&family=Archivo+Narrow:wght@400;600;700&family=Libre+Franklin:wght@600;800&family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&display=swap">
-<link rel="stylesheet" href="style.css?v=20261009a">
+<link rel="stylesheet" href="/style.css?v=20261010a">
 <style id="colcss"></style>
 </head>
 <body>
 <div class="sheet">
   <nav class="topbar">
-    <a href="#" class="brand"><img src="img/logo.svg" alt="" width="34" height="34">Ticker&amp;Tape</a>
+    <a href="/" class="brand"><img src="/img/logo.svg" alt="" width="34" height="34">Ticker&amp;Tape</a>
     <span class="asof" id="asof"></span>
     <span class="sp"></span>
     <label class="jump"><span class="vh">Go to ticker</span><input id="jump" placeholder="Ticker…" maxlength="10" spellcheck="false" autocomplete="off" list="symlist"></label>
@@ -44,15 +44,16 @@
   </nav>
   <div class="banner" id="banner" hidden></div>
   <div class="vbar" id="vBar" hidden></div>
+  <button class="tabsbtn" id="tabsBtn" aria-expanded="false" aria-controls="tabs"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg><b id="tabsCur">Sections</b><span class="car" aria-hidden="true">▾</span></button>
   <nav class="tabs" id="tabs" aria-label="Sections">
-    <a href="#" data-v="home">Home</a><a href="#watchlist" data-v="watch">Watchlist</a><a href="#screener" data-v="all">Screener</a><a href="#etfs" data-v="etf">ETFs</a><a href="#groups" data-v="groups">Groups</a><a href="#heatmap" data-v="heat">Heatmap</a><a href="#breadth" data-v="breadth">Breadth</a><a href="#compare" data-v="cmp">Compare</a><a href="#ideas" data-v="ideas">Trade ideas</a><a href="#earnings" data-v="earn">Earnings</a><a href="#breadth" class="mktchip" id="mktChip" title="Market direction · open Market breadth" hidden></a>
+    <a href="/" data-v="home">Home</a><a href="/watchlist/" data-v="watch">Watchlist</a><a href="/screener/" data-v="all">Screener</a><a href="/etfs/" data-v="etf">ETFs</a><a href="/groups/" data-v="groups">Groups</a><a href="/heatmap/" data-v="heat">Heatmap</a><a href="/breadth/" data-v="breadth">Breadth</a><a href="/compare/" data-v="cmp">Compare</a><a href="/ideas/" data-v="ideas">Trade ideas</a><a href="/earnings/" data-v="earn">Earnings</a><a href="/breadth/" class="mktchip" id="mktChip" title="Market direction · open Market breadth" hidden></a>
   </nav>
 
   <!-- ===================== HOME ===================== -->
   <main id="vHome" class="home" hidden>
     <section class="hgrid">
       <div class="box hchart">
-        <h3><span><span id="hcTitle">S&amp;P 500 futures · ES</span> <small id="hSpyQ"></small></span><a href="#ES=F" id="hcLink" class="h3link">Full chart →</a></h3>
+        <h3><span><span id="hcTitle">S&amp;P 500 futures · ES</span> <small id="hSpyQ"></small></span><a href="/chart/ES=F/" id="hcLink" class="h3link">Full chart →</a></h3>
         <div class="hcwrap"><canvas id="hcv" aria-label="S&amp;P 500 E-mini futures daily chart"></canvas></div>
       </div>
       <div class="hside">
@@ -262,7 +263,7 @@
         <button class="lnk explore" data-w="explore">Explore without an account →</button>
       </div>
       <figure class="plate">
-        <img src="img/hero-chart.jpg" alt="Ticker&amp;Tape daily chart of NVDA with a cup base, pivot, RS line, labeled volume and quarterly earnings strip" width="1380" height="654">
+        <img src="/img/hero-chart.jpg" alt="Ticker&amp;Tape daily chart of NVDA with a cup base, pivot, RS line, labeled volume and quarterly earnings strip" width="1380" height="654">
         <figcaption>NVDA, daily: cup base with its pivot, 50- and 200-day lines, RS line, labeled volume and the quarterly earnings strip.</figcaption>
       </figure>
     </section>
@@ -356,7 +357,7 @@
     <details class="howto">
       <summary>How to read this table</summary>
       <p class="cleg"><span>Colors follow your chart's up/down colors.</span><span><i class="t-up2">+32%</i> strong: EPS or sales +25% or more, U/D 1.5+, inside the buy zone, heavy volume on an up day</span><span><i class="t-dn2">−9%</i> weak: big drop, heavy volume on a down day, far below highs</span><span><i class="t-warn">+28%</i> extended: 25%+ over the 50-day or 5%+ past the pivot</span></p>
-      <p class="fine">RS Rating: each stock's 12-month performance (last quarter weighted double) ranked against every stock on the site, 1–99. All stocks: every S&amp;P 1500 and Nasdaq-100 member plus every other U.S. stock and ADR worth $1 billion or more; their earnings and sales data refresh in rotation. Star any ticker to add it to your watchlist; tickers outside these indexes load after the next nightly update. Bases and pivots are detected automatically from daily bars and are a starting point for your own read of the chart. Data: Yahoo Finance via yfinance, end of day. <a href="#welcome">About Ticker&amp;Tape</a> · <button class="lnk" data-tour>Take the tour</button></p>
+      <p class="fine">RS Rating: each stock's 12-month performance (last quarter weighted double) ranked against every stock on the site, 1–99. All stocks: every S&amp;P 1500 and Nasdaq-100 member plus every other U.S. stock and ADR worth $1 billion or more; their earnings and sales data refresh in rotation. Star any ticker to add it to your watchlist; tickers outside these indexes load after the next nightly update. Bases and pivots are detected automatically from daily bars and are a starting point for your own read of the chart. Data: Yahoo Finance, end of day. <a href="/methodology/">How the ratings work</a> · <button class="lnk" data-tour>Take the tour</button></p>
     </details>
   </main>
 
@@ -369,7 +370,7 @@
         <button class="starbtn notebtn" id="tkNoteBtn" title="Add a private note to this ticker" aria-label="Add a private note to this ticker">✎</button>
         <span id="cname" class="cname"></span>
         <span id="baseChip" class="chip"></span>
-        <a id="earnChip" class="chip echip" href="#earnings" hidden></a>
+        <a id="earnChip" class="chip echip" href="/earnings/" hidden></a>
       </div>
       <div class="quote">
         <div class="px" id="qPx">—</div>
@@ -407,7 +408,7 @@
         <button class="btn" id="bAlert" title="Get an alert when the price reaches a level">🔔 Alert</button>
       </span>
       <span class="grp">
-        <a class="btn xshare" id="bShare" href="#" target="_blank" rel="noopener" title="Share this chart on X"><svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><path fill="currentColor" d="M18.9 2H22l-6.8 7.8L23.2 22h-6.3l-4.9-6.4L6.4 22H3.3l7.3-8.3L1 2h6.4l4.4 5.9L18.9 2Zm-1.1 18.1h1.7L6.3 3.8H4.5l13.3 16.3Z"/></svg>Share</a>
+        <a class="btn xshare" id="bShare" href="/" target="_blank" rel="noopener" title="Share this chart on X"><svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><path fill="currentColor" d="M18.9 2H22l-6.8 7.8L23.2 22h-6.3l-4.9-6.4L6.4 22H3.3l7.3-8.3L1 2h6.4l4.4 5.9L18.9 2Zm-1.1 18.1h1.7L6.3 3.8H4.5l13.3 16.3Z"/></svg>Share</a>
       </span>
     </div>
 
@@ -470,7 +471,7 @@
     </form>
     <div class="fcols">
       <div class="fbrand">
-        <a href="#" class="brand"><img src="img/logo.svg" alt="" width="28" height="28">Ticker&amp;Tape</a>
+        <a href="/" class="brand"><img src="/img/logo.svg" alt="" width="28" height="28">Ticker&amp;Tape</a>
         <p>O'Neil-style charts, RS Ratings and market breadth for growth-stock traders.</p>
       </div>
       <div>
@@ -483,21 +484,23 @@
       <div>
         <h4>Explore</h4>
         <ul>
-          <li><a href="#">Market dashboard</a></li>
-          <li><a href="#heatmap">Heatmap</a></li>
-          <li><a href="#breadth">Market breadth</a></li>
-          <li><a href="#compare">Comparative charts</a></li>
-          <li><a href="#ideas">Trade ideas</a></li>
-          <li><a href="#earnings">Earnings calendar</a></li>
-          <li><a href="#screener">Screener</a></li>
-          <li><a href="#etfs">ETFs</a></li>
+          <li><a href="/">Market dashboard</a></li>
+          <li><a href="/heatmap/">Heatmap</a></li>
+          <li><a href="/breadth/">Market breadth</a></li>
+          <li><a href="/compare/">Comparative charts</a></li>
+          <li><a href="/ideas/">Trade ideas</a></li>
+          <li><a href="/earnings/">Earnings calendar</a></li>
+          <li><a href="/screener/">Screener</a></li>
+          <li><a href="/etfs/">ETFs</a></li>
         </ul>
       </div>
       <div>
         <h4>Help</h4>
         <ul>
           <li><button class="lnk" data-tour>Take the tour</button></li>
-          <li><a href="#welcome">About Ticker&amp;Tape</a></li>
+          <li><a href="/about/">About Ticker&amp;Tape</a></li>
+          <li><a href="/methodology/">How the ratings work</a></li>
+          <li><a href="/changelog/">What's new</a></li>
           <li><a href="mailto:contacto@tickerandtape.com?subject=Ticker%26Tape%20feedback">Report a bug or suggest a feature</a></li>
           <li><a href="/terms.html">Terms of Use</a></li>
           <li><a href="/privacy.html">Privacy Policy</a></li>
@@ -537,7 +540,7 @@
   </div>
 </div>
 <div class="toast" id="toast" hidden></div>
-<script src="i18n.js?v=20261009a"></script>
-<script src="app.js?v=20261009a"></script>
+<script src="/i18n.js?v=20261010a"></script>
+<script src="/app.js?v=20261010a"></script>
 </body>
 </html>
