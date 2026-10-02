@@ -37,6 +37,39 @@ BENCH = "^GSPC"
 INDEXES = {"^GSPC": "S&P 500", "^IXIC": "Nasdaq Composite"}
 UA = {"User-Agent": "Mozilla/5.0 (ink-charts data builder; +https://github.com)"}
 
+# ETFs shown on the site: symbol -> (group, short name, GICS sector it tracks or "")
+ETFS = {
+    "SPY": ("Market", "S&P 500", ""), "QQQ": ("Market", "Nasdaq-100", ""), "DIA": ("Market", "Dow Jones Industrial Average", ""),
+    "IWM": ("Market", "Russell 2000", ""), "MDY": ("Market", "S&P MidCap 400", ""), "RSP": ("Market", "S&P 500 Equal Weight", ""),
+    "XLK": ("Sector", "Technology", "Information Technology"), "XLF": ("Sector", "Financials", "Financials"),
+    "XLV": ("Sector", "Health Care", "Health Care"), "XLE": ("Sector", "Energy", "Energy"),
+    "XLY": ("Sector", "Consumer Discretionary", "Consumer Discretionary"), "XLP": ("Sector", "Consumer Staples", "Consumer Staples"),
+    "XLI": ("Sector", "Industrials", "Industrials"), "XLB": ("Sector", "Materials", "Materials"),
+    "XLU": ("Sector", "Utilities", "Utilities"), "XLRE": ("Sector", "Real Estate", "Real Estate"),
+    "XLC": ("Sector", "Communication Services", "Communication Services"),
+    "SMH": ("Industry", "Semiconductors", ""), "SOXX": ("Industry", "Semiconductors", ""), "IGV": ("Industry", "Software", ""),
+    "XBI": ("Industry", "Biotech (equal weight)", ""), "IBB": ("Industry", "Biotech", ""), "KRE": ("Industry", "Regional Banks", ""),
+    "KBE": ("Industry", "Banks", ""), "XHB": ("Industry", "Homebuilders", ""), "ITB": ("Industry", "Home Construction", ""),
+    "XRT": ("Industry", "Retail", ""), "XOP": ("Industry", "Oil & Gas E&P", ""), "OIH": ("Industry", "Oil Services", ""),
+    "XME": ("Industry", "Metals & Mining", ""), "XAR": ("Industry", "Aerospace & Defense", ""), "ITA": ("Industry", "Aerospace & Defense", ""),
+    "JETS": ("Industry", "Airlines", ""), "IYT": ("Industry", "Transportation", ""), "TAN": ("Industry", "Solar", ""),
+    "ICLN": ("Industry", "Clean Energy", ""), "URA": ("Industry", "Uranium", ""), "LIT": ("Industry", "Lithium & Battery", ""),
+    "CIBR": ("Industry", "Cybersecurity", ""), "SKYY": ("Industry", "Cloud Computing", ""), "BOTZ": ("Industry", "Robotics & AI", ""),
+    "ARKK": ("Industry", "Disruptive Innovation", ""), "KWEB": ("Industry", "China Internet", ""), "GDX": ("Industry", "Gold Miners", ""),
+    "GDXJ": ("Industry", "Junior Gold Miners", ""), "COPX": ("Industry", "Copper Miners", ""),
+    "GLD": ("Commodity", "Gold", ""), "SLV": ("Commodity", "Silver", ""), "USO": ("Commodity", "Crude Oil", ""),
+    "UNG": ("Commodity", "Natural Gas", ""), "DBA": ("Commodity", "Agriculture", ""), "DBC": ("Commodity", "Broad Commodities", ""),
+    "TLT": ("Bonds", "20+ Year Treasury", ""), "IEF": ("Bonds", "7-10 Year Treasury", ""), "SHY": ("Bonds", "1-3 Year Treasury", ""),
+    "HYG": ("Bonds", "High Yield Corporate", ""), "LQD": ("Bonds", "Investment Grade Corporate", ""), "TIP": ("Bonds", "TIPS", ""),
+    "EFA": ("International", "Developed Markets", ""), "EEM": ("International", "Emerging Markets", ""), "FXI": ("International", "China Large-Cap", ""),
+    "EWJ": ("International", "Japan", ""), "EWZ": ("International", "Brazil", ""), "EWW": ("International", "Mexico", ""),
+    "INDA": ("International", "India", ""), "ARGT": ("International", "Argentina", ""), "EWG": ("International", "Germany", ""),
+    "EWU": ("International", "United Kingdom", ""),
+    "IBIT": ("Crypto", "Bitcoin", ""), "ETHA": ("Crypto", "Ether", ""), "UUP": ("Currency", "U.S. Dollar", ""),
+}
+HOME_MARKET = ["SPY", "QQQ", "DIA", "IWM", "RSP"]
+HOME_SECTORS = ["XLK", "XLC", "XLY", "XLF", "XLI", "XLV", "XLE", "XLB", "XLP", "XLU", "XLRE"]
+
 log_lines: list[str] = []
 
 
@@ -554,6 +587,157 @@ def split_factor_after(splits: pd.Series | None, filed: str) -> float:
 
 
 # ---------------------------------------------------------------- fundamentals
+def yf_news(t, n=8) -> list[dict]:
+    news = []
+    try:
+        for it in (t.news or [])[:14]:
+            c = it.get("content") if isinstance(it.get("content"), dict) else it
+            title = c.get("title")
+            url = ((c.get("canonicalUrl") or {}).get("url") or (c.get("clickThroughUrl") or {}).get("url")
+                   or it.get("link") or "")
+            pub = (c.get("provider") or {}).get("displayName") or it.get("publisher") or ""
+            when = c.get("pubDate") or c.get("displayTime") or ""
+            if not when and it.get("providerPublishTime"):
+                when = dt.datetime.fromtimestamp(int(it["providerPublishTime"]), dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+            if title and url.startswith("http"):
+                news.append({"title": title, "url": url, "pub": pub, "date": str(when)[:19]})
+    except Exception as e:  # noqa: BLE001
+        log(f"news failed: {e}")
+    return news[:n]
+
+
+def _date(v) -> str:
+    try:
+        return pd.Timestamp(v).strftime("%Y-%m-%d")
+    except Exception:  # noqa: BLE001
+        return ""
+
+
+def fetch_ownership(t, sym: str) -> dict:
+    """Insider transactions (Form 4 via Yahoo) and institutional holders (13F via Yahoo)."""
+    o: dict = {}
+    # --- headline percentages
+    try:
+        mh = t.major_holders
+        if mh is not None and not mh.empty:
+            col = mh.columns[0]
+            def mv(key):
+                return fnum(mh.loc[key, col]) if key in mh.index else None
+            ins, inst, instf, cnt = mv("insidersPercentHeld"), mv("institutionsPercentHeld"), mv("institutionsFloatPercentHeld"), mv("institutionsCount")
+            o["insidersPct"] = None if ins is None else round(ins * 100, 2)
+            o["instPct"] = None if inst is None else round(inst * 100, 1)
+            o["instFloatPct"] = None if instf is None else round(instf * 100, 1)
+            o["instCount"] = None if cnt is None else int(cnt)
+    except Exception as e:  # noqa: BLE001
+        log(f"{sym}: major holders failed: {e}")
+    # --- top institutional holders
+    try:
+        ih = t.institutional_holders
+        if ih is not None and not ih.empty:
+            c_h, c_p, c_s, c_v, c_c, c_d = (find_col(ih, k) for k in ("holder", "pctheld", "shares", "value", "pctchange", "date"))
+            rows = []
+            for _, r in ih.head(10).iterrows():
+                pct, chg = fnum(r[c_p]) if c_p else None, fnum(r[c_c]) if c_c else None
+                rows.append({"holder": str(r[c_h]) if c_h else "", "pct": None if pct is None else round(pct * 100, 2),
+                             "shares": fmt_big(fnum(r[c_s])) if c_s else "", "value": fmt_big(fnum(r[c_v])) if c_v else "",
+                             "chg": None if chg is None else round(chg * 100, 1), "date": _date(r[c_d]) if c_d else ""})
+            o["holders"] = rows
+    except Exception as e:  # noqa: BLE001
+        log(f"{sym}: institutional holders failed: {e}")
+    # --- insider summary, last 6 months
+    try:
+        ip = t.insider_purchases
+        if ip is not None and not ip.empty:
+            lab = ip.columns[0]
+            c_s, c_t = find_col(ip, "shares"), find_col(ip, "trans")
+            summ = {}
+            for _, r in ip.iterrows():
+                k = str(r[lab]).lower()
+                sh = fnum(r[c_s]) if c_s else None
+                tr = fnum(r[c_t]) if c_t else None
+                if k.startswith("purchases"):
+                    summ["buyShares"], summ["buyTrans"] = sh, tr
+                elif k.startswith("sales"):
+                    summ["sellShares"], summ["sellTrans"] = sh, tr
+                elif k.startswith("net shares"):
+                    summ["netShares"] = sh
+                elif k.startswith("% net"):
+                    summ["netPct"] = None if sh is None else round(sh * 100, 2)
+            if summ:
+                o["insider6m"] = summ
+    except Exception as e:  # noqa: BLE001
+        log(f"{sym}: insider purchases failed: {e}")
+    # --- individual insider transactions
+    try:
+        it = t.insider_transactions
+        if it is not None and not it.empty:
+            c_i, c_p, c_tx, c_tr, c_s, c_v, c_d = (find_col(it, k) for k in ("insider", "position", "text", "transaction", "shares", "value", "start"))
+            rows = []
+            for _, r in it.head(40).iterrows():
+                txt = (str(r[c_tx]) if c_tx and pd.notna(r[c_tx]) else "") + " " + (str(r[c_tr]) if c_tr and pd.notna(r[c_tr]) else "")
+                tl = txt.lower()
+                kind = ("Buy" if "purchase" in tl or "buy" in tl else "Sell" if "sale" in tl or "sell" in tl
+                        else "Award" if "award" in tl or "grant" in tl else "Exercise" if "exercise" in tl or "conversion" in tl
+                        else "Gift" if "gift" in tl else "Other")
+                rows.append({"date": _date(r[c_d]) if c_d else "", "who": str(r[c_i]).title() if c_i else "",
+                             "pos": str(r[c_p]) if c_p and pd.notna(r[c_p]) else "", "type": kind,
+                             "shares": fmt_big(fnum(r[c_s])) if c_s else "", "value": fmt_big(fnum(r[c_v])) if c_v else ""})
+            # buys and sells first: awards and exercises are compensation, not conviction
+            key = {"Buy": 0, "Sell": 0}
+            rows.sort(key=lambda x: (key.get(x["type"], 1), "".join(chr(255 - ord(ch)) for ch in x["date"])))
+            o["insiders"] = sorted(rows[:14], key=lambda x: x["date"], reverse=True)
+    except Exception as e:  # noqa: BLE001
+        log(f"{sym}: insider transactions failed: {e}")
+    return o
+
+
+def fetch_etf(t, sym: str, info: dict) -> dict:
+    grp, short, gics = ETFS.get(sym, ("ETF", "", ""))
+    f: dict = {"name": info.get("longName") or info.get("shortName") or sym, "exchange": info.get("fullExchangeName") or "",
+               "mktCap": fmt_big(info.get("totalAssets") or info.get("netAssets")), "about": (info.get("longBusinessSummary") or "").strip()}
+    e = {"group": grp, "tracks": short, "gics": gics, "aum": fmt_big(info.get("totalAssets") or info.get("netAssets"))}
+    er = fnum(info.get("netExpenseRatio"))
+    if er is None:
+        er2 = fnum(info.get("annualReportExpenseRatio"))
+        er = None if er2 is None else er2 * 100
+    e["expense"] = "" if er is None else f"{er:.2f}%"
+    y = fnum(info.get("yield")) or fnum(info.get("dividendYield"))
+    e["yield"] = "" if y is None else (f"{y * 100:.2f}%" if y < 1 else f"{y:.2f}%")
+    inc = info.get("fundInceptionDate")
+    if inc:
+        try:
+            e["inception"] = dt.datetime.fromtimestamp(int(inc), dt.timezone.utc).strftime("%Y")
+        except Exception:  # noqa: BLE001
+            pass
+    try:
+        fd = t.funds_data
+        try:
+            ov = fd.fund_overview or {}
+            e["category"] = ov.get("categoryName") or ""
+            e["family"] = ov.get("family") or ""
+        except Exception:  # noqa: BLE001
+            pass
+        try:
+            th = fd.top_holdings
+            if th is not None and not th.empty:
+                c_n, c_p = find_col(th, "name"), find_col(th, "percent")
+                e["holdings"] = [{"symbol": str(ix).replace(".", "-"), "name": str(r[c_n]) if c_n else "",
+                                  "pct": round((fnum(r[c_p]) or 0) * 100, 2)} for ix, r in th.head(15).iterrows()]
+        except Exception as ex:  # noqa: BLE001
+            log(f"{sym}: top holdings failed: {ex}")
+        try:
+            sw = fd.sector_weightings or {}
+            e["sectors"] = sorted(({"name": k.replace("_", " ").title(), "pct": round(float(v) * 100, 1)}
+                                   for k, v in sw.items() if fnum(v)), key=lambda x: -x["pct"])
+        except Exception:  # noqa: BLE001
+            pass
+    except Exception as ex:  # noqa: BLE001
+        log(f"{sym}: funds data failed: {ex}")
+    f["etf"] = e
+    f["news"] = yf_news(t) or rss_news(sym)
+    return f
+
+
 def fetch_fundamentals(sym: str) -> dict:
     import yfinance as yf
 
@@ -564,6 +748,8 @@ def fetch_fundamentals(sym: str) -> dict:
         info = t.get_info() or {}
     except Exception as e:  # noqa: BLE001
         log(f"{sym}: info failed: {e}")
+    if sym in ETFS or str(info.get("quoteType", "")).upper() == "ETF":
+        return fetch_etf(t, sym, info)
     f["name"] = info.get("longName") or info.get("shortName") or sym
     f["exchange"] = info.get("fullExchangeName") or info.get("exchange") or ""
     f["sector"] = info.get("sector") or ""
@@ -596,24 +782,16 @@ def fetch_fundamentals(sym: str) -> dict:
                    "key": info.get("recommendationKey") or ""}
 
     # --- latest headlines
-    news = []
-    try:
-        for it in (t.news or [])[:12]:
-            c = it.get("content") if isinstance(it.get("content"), dict) else it
-            title = c.get("title")
-            url = ((c.get("canonicalUrl") or {}).get("url") or (c.get("clickThroughUrl") or {}).get("url")
-                   or it.get("link") or "")
-            pub = (c.get("provider") or {}).get("displayName") or it.get("publisher") or ""
-            when = c.get("pubDate") or c.get("displayTime") or ""
-            if not when and it.get("providerPublishTime"):
-                when = dt.datetime.fromtimestamp(int(it["providerPublishTime"]), dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-            if title and url.startswith("http"):
-                news.append({"title": title, "url": url, "pub": pub, "date": str(when)[:19]})
-    except Exception as e:  # noqa: BLE001
-        log(f"{sym}: news failed: {e}")
+    news = yf_news(t)
     if not news:
         news = rss_news(sym)
     f["news"] = news[:8]
+
+    # --- insiders and institutions
+    try:
+        f["own"] = fetch_ownership(t, sym)
+    except Exception as e:  # noqa: BLE001
+        log(f"{sym}: ownership failed: {e}")
 
     # --- SEC filings: 10+ years of annual figures and quarterly sales / operating income
     g = None
@@ -930,6 +1108,9 @@ def demo_inputs(watch: list[str]):
         sec = sectors[k % len(sectors)]
         uni[s] = {"sector": sec, "industry": subs[sec][k % 3]}
         prices[s] = walk(rng.uniform(20, 300), rng.normal(0.0004, 0.0009), rng.uniform(0.012, 0.03), 3e6)
+    for e_sym, (grp, short, gics) in ETFS.items():
+        uni[e_sym] = {"sector": "ETF", "industry": grp, "name": short, "etf": True}
+        prices[e_sym] = walk(rng.uniform(20, 600), rng.normal(0.0003, 0.0006), rng.uniform(0.008, 0.018), 2e7)
     idx = walk(4200, 0.0005, 0.009, 3.5e9)
     prices["^GSPC"] = idx
     prices["^IXIC"] = walk(13000, 0.0006, 0.011, 5e9)
@@ -973,12 +1154,31 @@ def demo_inputs(watch: list[str]):
                    "target": {"mean": 250.0, "high": 320.0, "low": 150.0, "n": 44, "key": "buy"},
                    "news": [{"title": f"Demo headline {k} about {s}", "url": "https://example.com", "pub": "Demo Wire",
                              "date": f"2026-09-{28 - k:02d}T13:00:00"} for k in range(6)]}
+    for e_sym, (grp, short, gics) in ETFS.items():
+        fund[e_sym] = {"name": f"Demo {short} ETF", "exchange": "NYSE Arca", "mktCap": "41.2B",
+                       "about": f"The fund seeks to track the {short} index.",
+                       "etf": {"group": grp, "tracks": short, "gics": gics, "aum": "41.2B", "expense": "0.09%", "yield": "1.35%",
+                               "inception": "1998", "category": f"{short}", "family": "Demo Funds",
+                               "holdings": [{"symbol": w, "name": f"Demo Company {w}", "pct": round(12 - i * 0.7, 2)} for i, w in enumerate(watch[:12])],
+                               "sectors": [{"name": n, "pct": p} for n, p in (("Technology", 41.2), ("Communication Services", 12.1), ("Consumer Cyclical", 10.4), ("Financial Services", 9.8), ("Healthcare", 8.7))]},
+                       "news": []}
+    for s_ in watch:
+        fund[s_]["own"] = {"insidersPct": 3.9, "instPct": 67.4, "instFloatPct": 70.1, "instCount": 4812,
+                           "insider6m": {"buyShares": 12000, "buyTrans": 2, "sellShares": 1450000, "sellTrans": 31, "netShares": -1438000, "netPct": -2.1},
+                           "insiders": [{"date": f"2026-09-{25 - k * 3:02d}", "who": ["Huang Jen-Hsun", "Kress Colette", "Puri Ajay", "Stevens Mark A"][k % 4],
+                                         "pos": ["Chief Executive Officer", "Chief Financial Officer", "Officer", "Director"][k % 4],
+                                         "type": ["Sell", "Sell", "Buy", "Award", "Sell", "Exercise"][k % 6],
+                                         "shares": ["240K", "35K", "10K", "120K", "60K", "80K"][k % 6], "value": ["42.1M", "6.2M", "1.8M", "", "10.4M", ""][k % 6]} for k in range(8)],
+                           "holders": [{"holder": h, "pct": p, "shares": sh, "value": v, "chg": c, "date": "2026-06-30"} for h, p, sh, v, c in (
+                               ("Vanguard Group Inc", 9.1, "2.22B", "390.5B", 1.2), ("Blackrock Inc.", 7.8, "1.90B", "334.0B", -0.4),
+                               ("State Street Corporation", 4.0, "975M", "171.3B", 2.6), ("FMR, LLC", 3.6, "880M", "154.6B", -5.1),
+                               ("Geode Capital Management, LLC", 2.3, "561M", "98.6B", 3.3))]}
     return uni, prices, fund
 
 
 # ---------------------------------------------------------------- fundamentals cache (rotation)
 FUND_MAX_AGE_DAYS = 7      # universe fundamentals older than this get refreshed
-FUND_VERSION = 3          # bump when fetch_fundamentals gains new fields
+FUND_VERSION = 4          # bump when fetch_fundamentals gains new fields
 FUND_BATCH = int(__import__("os").environ.get("INK_FUND_BATCH", "150"))  # universe tickers refreshed per run
 
 
@@ -1053,6 +1253,8 @@ def main():
             uni.setdefault(s, {"sector": "", "industry": ""})
         # tickers starred by site users that the indexes and watchlist.txt do not cover: chart + rotation
         # fundamentals like any universe stock, but kept out of the RS reference set and group ranks
+        for s in ETFS:
+            uni[s] = {"sector": "ETF", "industry": ETFS[s][0], "name": ETFS[s][1], "etf": True}
         user_extra = [s for s in fetch_user_tickers() if s not in uni and s not in watch]
         for s in user_extra:
             uni[s] = {"sector": "", "industry": "", "user": True}
@@ -1068,7 +1270,7 @@ def main():
 
     # RS ratings against the universe (plus watchlist so the scale is never empty)
     scores = {s: rs_score(df["Close"].to_numpy()) for s, df in prices.items() if not s.startswith("^")}
-    ref_syms = [s for s in uni if scores.get(s) is not None and not uni[s].get("user")] or [s for s in scores if scores[s] is not None]
+    ref_syms = [s for s in uni if scores.get(s) is not None and not uni[s].get("user") and not uni[s].get("etf")] or [s for s in scores if scores[s] is not None]
     ref = np.sort(np.array([scores[s] for s in ref_syms]))
     log(f"RS reference set: {len(ref)} stocks")
 
@@ -1125,6 +1327,11 @@ def main():
             "base": None if not base else {k: base[k] for k in ("type", "pivot", "distPct", "status", "weeks", "depthPct")},
             "spark": [round(float(x), 2) for x in df["Close"].to_numpy()[-90:]],
         }
+        if gi.get("etf"):
+            row["etf"] = 1
+            row["group"] = ETFS.get(s, ("ETF",))[0]
+            row["sector"] = "ETF"
+            row["tracks"] = ETFS.get(s, ("", ""))[1]
         bundle = {
             "symbol": s, "name": fund.get("name", s), "updated": now_iso,
             "prices": [[d.strftime("%Y-%m-%d"), round(r.Open, 2), round(r.High, 2), round(r.Low, 2), round(r.Close, 2), int(r.Volume)]
@@ -1219,7 +1426,7 @@ def main():
         if df is None:
             continue
         try:
-            fund = fund_cache_get(s)[0] if demo_fund is None else None
+            fund = fund_cache_get(s)[0] if demo_fund is None else demo_fund.get(s)
             if has_fund_data(fund):
                 with_fund += 1
             else:
@@ -1241,6 +1448,42 @@ def main():
         "market": market, "errors": errors,
     }
     (out / "meta.json").write_text(jdumps(meta, indent=1))
+
+    # ---------- home page: market and sector ETFs performance + market headlines
+    def perf_row(sym):
+        df = prices.get(sym)
+        if df is None or df.empty:
+            return None
+        c = df["Close"].dropna()
+        last = float(c.iloc[-1])
+        def rnd(v):
+            return None if v is None else round(v, 2)
+        def back(n):
+            return None if len(c) <= n else rnd(pct_change(last, float(c.iloc[-1 - n])))
+        prev_year = c[c.index < pd.Timestamp(c.index[-1].year, 1, 1)]
+        ytd = rnd(pct_change(last, float(prev_year.iloc[-1]))) if len(prev_year) else None
+        grp, short, gics = ETFS.get(sym, ("", sym, ""))
+        return {"symbol": sym, "name": short, "gics": gics, "close": round(last, 2), "date": c.index[-1].strftime("%Y-%m-%d"),
+                "d1": back(1), "w1": back(5), "m3": back(63), "m9": back(189), "ytd": ytd, "m12": back(252),
+                "spark": [round(float(x), 2) for x in c.to_numpy()[-63:]]}
+    home = {"updated": now_iso, "market": [r for r in map(perf_row, HOME_MARKET) if r],
+            "sectors": [r for r in map(perf_row, HOME_SECTORS) if r], "news": []}
+    if not args.demo:
+        try:
+            import yfinance as yf
+            seen, news = set(), []
+            for sym in ("SPY", "QQQ", "^GSPC"):
+                for n in yf_news(yf.Ticker(sym), 10):
+                    if n["title"] not in seen:
+                        seen.add(n["title"]); news.append(n)
+            news.sort(key=lambda n: n.get("date", ""), reverse=True)
+            home["news"] = news[:12] or rss_news("^GSPC")
+        except Exception as e:  # noqa: BLE001
+            log(f"market news failed: {e}")
+    else:
+        home["news"] = [{"title": f"Demo market headline {k}", "url": "https://example.com", "pub": "Demo Wire",
+                         "date": f"2026-09-{29 - k:02d}T14:00:00"} for k in range(8)]
+    (out / "home.json").write_text(jdumps(home, separators=(",", ":")))
     log(f"done: {len(rows)} watchlist tickers, {len(uni_rows)} in universe, {len(errors)} errors")
 
 
