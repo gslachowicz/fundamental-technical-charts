@@ -131,6 +131,22 @@ def fmt_big(v):
     return f"{v:.0f}"
 
 
+def parse_big(txt) -> float | None:
+    """Inverse of fmt_big: "41.2B" -> 4.12e10."""
+    if txt is None or txt == "":
+        return None
+    if isinstance(txt, (int, float)):
+        return float(txt)
+    m = re.fullmatch(r"\s*(-?[\d.]+)\s*([KMBT]?)\s*", str(txt))
+    if not m:
+        return None
+    return float(m.group(1)) * {"": 1, "K": 1e3, "M": 1e6, "B": 1e9, "T": 1e12}[m.group(2)]
+
+
+# heatmap index membership bits
+IDX_BITS = {"sp500": 1, "ndx": 2, "sp400": 4, "sp600": 8}
+
+
 def qlabel(ts: pd.Timestamp) -> str:
     if ts.month in (3, 6, 9, 12):
         return f"{(ts.month - 1) // 3 + 1}Q{ts.year % 100:02d}"
@@ -238,6 +254,7 @@ def fetch_universe() -> dict[str, dict]:
                     if not s or s == "NAN":
                         continue
                     d = uni.setdefault(s, {"sector": "", "industry": ""})
+                    d["ix"] = d.get("ix", 0) | IDX_BITS[tag]
                     if nm is not None and isinstance(r[nm], str) and not d.get("name"):
                         d["name"] = r[nm]
                     if sec is not None and isinstance(r[sec], str):
@@ -1134,7 +1151,7 @@ def demo_inputs(watch: list[str]):
     for k in range(160):
         s = f"U{k:03d}"
         sec = sectors[k % len(sectors)]
-        uni[s] = {"sector": sec, "industry": subs[sec][k % 3]}
+        uni[s] = {"sector": sec, "industry": subs[sec][k % 3], "ix": 1 | (2 if k % 4 == 0 else 0)}
         prices[s] = walk(rng.uniform(20, 300), rng.normal(0.0004, 0.0009), rng.uniform(0.012, 0.03), 3e6)
     for e_sym, (grp, short, gics) in ETFS.items():
         uni[e_sym] = {"sector": "ETF", "industry": grp, "name": short, "etf": True}
@@ -1334,6 +1351,22 @@ def main():
 
     now_iso = dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%MZ")
 
+    def heat_fields(df: pd.DataFrame, fund: dict, gi: dict) -> dict:
+        """Extra columns for the heatmap: 1W / 1M / YTD change, market cap (shares x last close) and index bits."""
+        c = df["Close"].to_numpy()
+        last = float(c[-1])
+        def back(n):
+            return None if len(c) <= n else round((last / float(c[-1 - n]) - 1) * 100, 2)
+        prev_year = df["Close"][df.index < pd.Timestamp(df.index[-1].year, 1, 1)]
+        shares = parse_big((fund or {}).get("shares"))
+        mcap = shares * last if shares else parse_big((fund or {}).get("mktCap"))
+        out = {"perf1w": back(5), "perf1m": back(21),
+               "ytd": round((last / float(prev_year.iloc[-1]) - 1) * 100, 2) if len(prev_year) else None,
+               "mcap": round(mcap / 1e6) if mcap else None}   # millions of dollars
+        if gi.get("ix"):
+            out["ix"] = gi["ix"]
+        return out
+
     def build(s: str, df: pd.DataFrame, fund: dict):
         """Price analytics + fundamentals -> (screener row, chart bundle)."""
         fund = dict(fund or {})
@@ -1363,6 +1396,7 @@ def main():
             "smr": smr_rating(fund), "epsGrowth": fund.get("epsGrowth", ""),
             "base": None if not base else {k: base[k] for k in ("type", "pivot", "distPct", "status", "weeks", "depthPct")},
             "spark": [round(float(x), 2) for x in df["Close"].to_numpy()[-90:]],
+            **heat_fields(df, fund, gi),
         }
         if gi.get("etf"):
             row["etf"] = 1
