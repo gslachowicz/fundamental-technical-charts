@@ -753,7 +753,7 @@ for(const [id,key] of [["#tBox","box"],["#tPiv","piv"],["#tBase","base"],["#tIdx
 function step(d){ if(!S) return; const L = order.length ? order : ROWS.map(r=>r.symbol); const i=L.indexOf(S.symbol); if(i<0) return; location.hash = L[(i+d+L.length)%L.length]; }
 $("#bPrev").onclick=()=>step(-1); $("#bNext").onclick=()=>step(1);
 document.addEventListener("keydown", e=>{
-  if(e.target.closest("input")) return;
+  if(e.target.closest("input") || TOUR_ON()) return;
   if(e.key==="Escape" && drag){ drag=null; draw(); }
   if($("#vChart").hidden) return;
   if(e.key==="ArrowRight") step(1); if(e.key==="ArrowLeft") step(-1);
@@ -775,6 +775,8 @@ async function openChart(sym){
 }
 function route(){
   const sym = decodeURIComponent(location.hash.slice(1)).toUpperCase();
+  $("#vWelcome").hidden = sym !== "WELCOME"; document.body.classList.toggle("on-welcome", sym === "WELCOME");
+  if(sym === "WELCOME"){ $("#vChart").hidden = true; $("#vScreener").hidden = true; document.title = "Ticker&Tape · O'Neil-style charts, RS ratings and bases"; window.scrollTo(0,0); return; }
   if(sym){ openChart(sym); }
   else { $("#vChart").hidden = true; $("#vScreener").hidden = false; document.title = "Ticker&Tape"; renderScreener(); }
 }
@@ -874,6 +876,8 @@ $("#authForm").addEventListener("submit", async e=>{
       closeAuth(); renderAcct();
       toast(authMode==="up" ? "Account created. Your watchlist now syncs to every device." : `Welcome back, ${r.email}.`);
       await pullData(true);
+      store.set("tt:welcomed", true);
+      if(!$("#vWelcome").hidden){ location.hash = ""; if(authMode==="up" && !store.get("tt:toured")) setTimeout(startTour, 700); }
     }
   }catch(ex){ err.textContent = ex.message; err.hidden = false; }
   finally{ go.disabled = false; }
@@ -896,6 +900,109 @@ $("#star").onclick = () => {
   }
   WL = L; store.set("tt:wl", WL); push("watchlist", WL); updateStar();
 };
+
+/* ================= WELCOME PAGE ================= */
+$("#vWelcome").addEventListener("click", e=>{
+  const b = e.target.closest("[data-w]"); if(!b) return;
+  const w = b.dataset.w;
+  if(w==="up") openAuth("up");
+  else if(w==="in") openAuth("in");
+  else if(w==="explore"){ store.set("tt:welcomed", true); location.hash = ""; if(!store.get("tt:toured")) setTimeout(startTour, 700); }
+});
+
+/* ================= GUIDED TOUR ================= */
+// v: "s" = screener, "c" = chart, "*" = any. up: highlight the whole button group.
+const TOUR = [
+  {v:"s", sel:"#scope", t:"Your watchlist and all stocks",
+   b:"Watchlist shows the tickers you starred. All stocks shows every S&P 1500 and Nasdaq-100 member, about 1,500 names, rated every trading day."},
+  {v:"s", sel:"#filters", t:"Filter for setups",
+   b:"Breakout / buy zone: up to 5% above the pivot. Near pivot: within 5% below it. RS ≥ 80: the strongest fifth of the market. Liquid: $20M or more traded a day."},
+  {v:"s", sel:'#scr th[data-k="rsRating"]', t:"RS Rating",
+   b:"Relative strength from 1 to 99: twelve-month price performance, with the last quarter counted double, ranked against about 1,500 stocks. 80 and up is leadership territory. Click any column header to sort by it."},
+  {v:"s", sel:'#scr th[data-k="baseType"]', t:"Base, pivot and status",
+   b:"The base the stock is building (cup, cup with handle, flat base), its pivot or buy point, how far price is from it, and the status: Near pivot, Breakout, In buy zone, Extended."},
+  {v:"s", sel:"#pulse", t:"Market pulse",
+   b:"The S&P 500 and the Nasdaq against their 21, 50 and 200-day lines, plus distribution days (heavy-volume declines) in the last 25 sessions. Three out of four stocks follow the market's direction."},
+  {v:"s", sel:"#jump", t:"Jump to any ticker",
+   b:"Type a symbol and press Enter to open its chart. Tickers outside the indexes work too: star them and they load after the next nightly update."},
+  {v:"c", sel:"#star", t:"Star it",
+   b:"Tap the star next to the symbol to add the stock to your watchlist, or tap again to remove it."},
+  {v:"c", sel:"#chartbox", t:"Reading the chart",
+   b:"Blue bars closed higher than the day before, pink bars closed lower. Red line: 50-day average. Black: 200-day. The dark line under the price is the RS line against the S&P 500, with the RS Rating at its end. The dashed line marks the pivot, and each E is an earnings report."},
+  {v:"c", sel:"#pD", up:true, t:"Daily or weekly",
+   b:"Switch between daily and weekly bars, and pick the time range next to it: 6 months to 3 years."},
+  {v:"c", sel:"#tBox", up:true, t:"Overlays",
+   b:"Turn the data box, pivots, base outline, S&P 500 line and RS line on or off."},
+  {v:"c", sel:"#bLine", up:true, t:"Draw and take notes",
+   b:"Line: drag across the chart to draw a trendline. Note: click a bar and type. Your drawings stay with the chart, and sync to your account when you are signed in."},
+  {v:"c", sel:".boxes", t:"Fundamentals under the chart",
+   b:"Scroll down for peers in the same group, chart statistics, quarterly and annual earnings and sales, the base analysis, analyst targets and the latest news."},
+  {v:"*", sel:"#gear", t:"Make the chart yours",
+   b:"Log or linear scale, O'Neil bars, OHLC or candles, bar weight, moving averages and grid lines."},
+  {v:"*", sel:"#acct", t:"Your account",
+   b:"Sign in to keep your watchlist, chart settings and drawings on every device. You can replay this tour anytime with the ? button."}
+];
+let tourI = -1, tourEl = null;
+const TOUR_ON = () => tourI >= 0;
+const sleep = ms => new Promise(r=>setTimeout(r, ms));
+async function waitFor(f, ms=6000){ const t0=Date.now(); while(!f() && Date.now()-t0 < ms) await sleep(80); }
+function startTour(){
+  toggleSettings(false); toggleMenu(false); closeAuth();
+  tourI = 0; store.set("tt:toured", true); store.set("tt:welcomed", true);
+  $("#tour").hidden = false; showStep();
+}
+function endTour(){ tourI = -1; tourEl = null; $("#tour").hidden = true; }
+async function ensureView(v){
+  if(v==="s" && $("#vScreener").hidden){ location.hash = ""; await waitFor(()=>!$("#vScreener").hidden); }
+  if(v==="c" && ($("#vChart").hidden || !S)){
+    const have = r => r && !r.pending;
+    const pick = (watchRows().find(have) || ROWS[0] || {symbol:"NVDA"}).symbol;
+    location.hash = pick;
+    await waitFor(()=>!$("#vChart").hidden && S && $("#loading").hidden);
+  }
+  if(v==="*" && !$("#vWelcome").hidden){ location.hash = ""; await waitFor(()=>!$("#vScreener").hidden); }
+}
+async function showStep(){
+  const i = tourI, st = TOUR[i];
+  await ensureView(st.v);
+  if(i !== tourI) return;
+  let el = $(st.sel); if(el && st.up) el = el.closest(".seg,.grp") || el;
+  if(!el || !el.getClientRects().length){ return go(tourI < TOUR.length-1 ? 1 : 0); }
+  tourEl = el;
+  el.scrollIntoView({block: el.offsetHeight > innerHeight*0.6 ? "start" : "center", inline:"center", behavior:"smooth"});
+  $("#tNum").textContent = `Step ${i+1} of ${TOUR.length}`;
+  $("#tTitle").textContent = st.t; $("#tBody").textContent = st.b;
+  $("#tBack").hidden = i === 0;
+  $("#tNext").textContent = i === TOUR.length-1 ? "Done" : "Next";
+  placeTour(); await sleep(400); if(i === tourI) placeTour();
+  $("#tNext").focus({preventScroll:true});
+}
+function placeTour(){
+  if(!tourEl) return;
+  const r = tourEl.getBoundingClientRect(), pad = 6, sp = $("#tspot"), card = $("#tcard");
+  const top = Math.max(4, r.top - pad), bottom = Math.min(innerHeight - 4, r.bottom + pad);
+  Object.assign(sp.style, {left:(r.left-pad)+"px", top:top+"px", width:(r.width+pad*2)+"px", height:Math.max(0,bottom-top)+"px"});
+  const cw = card.offsetWidth, ch = card.offsetHeight, m = 12;
+  let y = bottom + m;
+  if(y + ch > innerHeight - 8) y = top - ch - m;
+  if(y < 8) y = Math.max(8, innerHeight - ch - 12);
+  let x = Math.min(Math.max(8, r.left + r.width/2 - cw/2), innerWidth - cw - 8);
+  Object.assign(card.style, {left:x+"px", top:y+"px"});
+}
+function go(d){ const n = tourI + d; if(n < 0) return; if(n >= TOUR.length) return endTour(); tourI = n; showStep(); }
+$("#tNext").onclick = () => go(1);
+$("#tBack").onclick = () => go(-1);
+$("#tSkip").onclick = endTour;
+$("#help").onclick = e => { e.stopPropagation(); startTour(); };
+document.addEventListener("click", e=>{ if(e.target.closest("[data-tour]")) startTour(); });
+document.addEventListener("keydown", e=>{
+  if(!TOUR_ON()) return;
+  if(e.key==="Escape") endTour();
+  else if(e.key==="ArrowRight"){ e.preventDefault(); go(1); }
+  else if(e.key==="ArrowLeft"){ e.preventDefault(); go(-1); }
+});
+addEventListener("resize", ()=>{ if(TOUR_ON()) placeTour(); });
+addEventListener("scroll", ()=>{ if(TOUR_ON()) placeTour(); }, true);
 
 /* ---------- boot ---------- */
 (async function boot(){
@@ -921,6 +1028,7 @@ $("#star").onclick = () => {
   if(META && META.allStocks){ $("#scope button[data-s=all]").textContent = `All stocks (${META.allStocks.toLocaleString("en-US")})`; }
   else { $("#scope").hidden = true; }
   setTimeout(()=>loadUni().catch(()=>{}), 400);   // background: full list for the ticker search
+  if(!auth.token && !store.get("tt:welcomed") && !location.hash) history.replaceState(null, "", "#welcome");
   window.addEventListener("hashchange", route); route();
   loadLive(); setInterval(loadLive, 3*60*1000);
   document.addEventListener("visibilitychange", ()=>{ if(!document.hidden) loadLive(); });

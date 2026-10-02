@@ -4,7 +4,20 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Ticker&amp;Tape</title>
-<meta name="description" content="O'Neil-style end-of-day charts, RS ratings and base detection for a personal watchlist.">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/svg+xml" href="/img/logo.svg">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
+<meta name="theme-color" content="#1f3c6e">
+<meta name="apple-mobile-web-app-title" content="Ticker&amp;Tape">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Ticker&amp;Tape">
+<meta property="og:title" content="Ticker&amp;Tape: O'Neil-style charts and RS ratings">
+<meta property="og:description" content="Daily charts, RS Ratings, group ranks and automatic base and pivot detection for 1,500+ U.S. stocks. Free.">
+<meta property="og:url" content="https://tickerandtape.com/">
+<meta property="og:image" content="https://tickerandtape.com/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="O'Neil-style daily charts, RS Ratings, industry group ranks and automatic base and pivot detection for every S&amp;P 1500 and Nasdaq-100 stock. Free.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&family=Archivo+Narrow:wght@400;600;700&family=Libre+Franklin:wght@600;800&family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&display=swap">
 <link rel="stylesheet" href="style.css">
@@ -12,17 +25,74 @@
 <body>
 <div class="sheet">
   <nav class="topbar">
-    <a href="#" class="brand">Ticker&amp;Tape</a>
+    <a href="#" class="brand"><img src="img/logo.svg" alt="" width="34" height="34">Ticker&amp;Tape</a>
     <span class="asof" id="asof"></span>
     <span class="sp"></span>
     <label class="jump"><span class="vh">Go to ticker</span><input id="jump" placeholder="Ticker…" maxlength="10" spellcheck="false" autocomplete="off" list="symlist"></label>
     <datalist id="symlist"></datalist>
     <button class="btn acct" id="acct" aria-haspopup="true">Sign in</button>
     <div class="acctmenu" id="acctMenu" hidden role="menu"></div>
+    <button class="gear help" id="help" title="How Ticker&amp;Tape works (tour)" aria-label="Help: take the tour">?</button>
     <button class="gear" id="gear" title="Chart settings" aria-label="Chart settings" aria-expanded="false" aria-controls="settings"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M19.4 13a7.5 7.5 0 0 0 0-2l2.1-1.6-2-3.5-2.5 1a7.6 7.6 0 0 0-1.7-1L15 3.3h-4l-.4 2.6a7.6 7.6 0 0 0-1.7 1l-2.5-1-2 3.5L6.6 11a7.5 7.5 0 0 0 0 2l-2.1 1.6 2 3.5 2.5-1c.5.4 1.1.7 1.7 1l.4 2.6h4l.4-2.6c.6-.3 1.2-.6 1.7-1l2.5 1 2-3.5zM13 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z" transform="translate(-1 0)"/></svg></button>
     <div class="settings" id="settings" hidden role="dialog" aria-label="Chart settings"></div>
   </nav>
   <div class="banner" id="banner" hidden></div>
+
+  <!-- ===================== WELCOME ===================== -->
+  <main id="vWelcome" class="welcome" hidden>
+    <section class="hero">
+      <div class="hcopy">
+        <p class="kicker">Est. 2026 · The chart room for growth-stock traders</p>
+        <h1>Read the tape.<br>Find the leaders.</h1>
+        <p class="lede">Ticker&amp;Tape puts O'Neil-style daily charts, RS Ratings, industry group ranks and automatic base-and-pivot detection for every S&amp;P&nbsp;1500 and Nasdaq-100 stock in one clean, fast chart room.</p>
+        <div class="ctas">
+          <button class="btn on big" data-w="up">Create your free account</button>
+          <button class="btn big" data-w="in">Sign in</button>
+        </div>
+        <p class="fine2">Free. No credit card. Your watchlist, chart settings and drawings sync to every device.</p>
+        <button class="lnk explore" data-w="explore">Explore without an account →</button>
+      </div>
+      <figure class="plate">
+        <img src="img/hero-chart.jpg" alt="Ticker&amp;Tape daily chart of NVDA with a cup base, pivot, RS line, labeled volume and quarterly earnings strip" width="1380" height="654">
+        <figcaption>NVDA, daily: cup base with its pivot, 50- and 200-day lines, RS line, labeled volume and the quarterly earnings strip.</figcaption>
+      </figure>
+    </section>
+
+    <section class="stats">
+      <div><b>1,500+</b><span>stocks rated every trading day</span></div>
+      <div><b>146</b><span>industry groups ranked</span></div>
+      <div><b>1–99</b><span>RS Rating on every stock</span></div>
+      <div><b>15 min</b><span>delayed prices during the session</span></div>
+    </section>
+
+    <section class="feats">
+      <h2>Everything on one page. Nothing you don't need.</h2>
+      <div class="fgrid">
+        <article><span class="no">No. 1</span><h3>Charts the way the pros printed them</h3><p>High-low-close bars in blue and pink, the 50- and 200-day lines, the RS line against the S&amp;P&nbsp;500, labeled volume spikes and a quarterly EPS and sales strip under every chart.</p></article>
+        <article><span class="no">No. 2</span><h3>RS Rating and group rank</h3><p>Every stock ranked 1 to 99 on twelve-month price strength against 1,500 peers, and every industry group ranked, so you can see where the leadership is.</p></article>
+        <article><span class="no">No. 3</span><h3>Bases and pivots, spotted for you</h3><p>Cups, handles and flat bases detected automatically, with the pivot, the 5% buy zone and the status: near pivot, breakout, extended.</p></article>
+        <article><span class="no">No. 4</span><h3>Earnings at a glance</h3><p>Quarterly and annual EPS and sales growth, surprises, margins and analyst price targets, right beside the chart.</p></article>
+        <article><span class="no">No. 5</span><h3>A screener that thinks in setups</h3><p>Filter for breakouts, stocks near a pivot, RS 80 and up, names above the 50-day and liquid leaders. Sort by any column.</p></article>
+        <article><span class="no">No. 6</span><h3>Your watchlist, everywhere</h3><p>Star any ticker. Your list, chart settings, lines and notes follow you from the desk to your phone.</p></article>
+      </div>
+    </section>
+
+    <section class="how">
+      <h2>How it works</h2>
+      <ol>
+        <li><b>Create a free account.</b> Thirty seconds, just an email and a password.</li>
+        <li><b>Star the stocks you follow.</b> Any S&amp;P 1500 or Nasdaq-100 name, or any other U.S. ticker.</li>
+        <li><b>Check the screener after the close.</b> Leaders, setups and pivots on a single page, updated every trading day.</li>
+      </ol>
+    </section>
+
+    <section class="cta2">
+      <h2>The tape is running.</h2>
+      <div class="ctas"><button class="btn on big" data-w="up">Create your free account</button><button class="lnk explore" data-w="explore">or explore without an account →</button></div>
+    </section>
+
+    <p class="fine wfine">Data: Yahoo Finance, end of day plus delayed intraday prices. Ratings, bases and pivots are calculated automatically and are a starting point for your own analysis. Ticker&amp;Tape is a charting and research tool, not investment advice.</p>
+  </main>
 
   <!-- ===================== SCREENER ===================== -->
   <main id="vScreener">
@@ -69,7 +139,7 @@
       </table>
     </div>
     <div class="more" id="moreWrap" hidden><button class="btn" id="moreBtn">Show more</button></div>
-    <p class="fine">RS Rating: each stock's 12-month performance (last quarter weighted double) ranked against the S&amp;P 1500 and Nasdaq-100 stocks, 1–99. All stocks: every S&amp;P 500, MidCap 400, SmallCap 600 and Nasdaq-100 member; their earnings and sales data refresh in rotation. Star any ticker to add it to your watchlist; tickers outside these indexes load after the next nightly update. Bases and pivots are detected automatically from daily bars and are a starting point for your own read of the chart. Data: Yahoo Finance via yfinance, end of day.</p>
+    <p class="fine">RS Rating: each stock's 12-month performance (last quarter weighted double) ranked against the S&amp;P 1500 and Nasdaq-100 stocks, 1–99. All stocks: every S&amp;P 500, MidCap 400, SmallCap 600 and Nasdaq-100 member; their earnings and sales data refresh in rotation. Star any ticker to add it to your watchlist; tickers outside these indexes load after the next nightly update. Bases and pivots are detected automatically from daily bars and are a starting point for your own read of the chart. Data: Yahoo Finance via yfinance, end of day. <a href="#welcome">About Ticker&amp;Tape</a> · <button class="lnk" data-tour>Take the tour</button></p>
   </main>
 
   <!-- ===================== CHART ===================== -->
@@ -164,6 +234,15 @@
     <button class="btn on wide" id="aGo" type="submit">Sign in</button>
     <p class="aswitch" id="aSwitch"><span id="aSwTxt">New here?</span> <button type="button" class="lnk" id="aToggle">Create a free account</button></p>
   </form>
+</div>
+<div class="tour" id="tour" hidden>
+  <div class="tspot" id="tspot"></div>
+  <div class="tcard" id="tcard" role="dialog" aria-modal="true" aria-labelledby="tTitle">
+    <div class="tnum" id="tNum"></div>
+    <h4 id="tTitle"></h4>
+    <p id="tBody"></p>
+    <div class="tbtns"><button class="lnk" id="tSkip">Skip tour</button><span class="sp"></span><button class="btn" id="tBack">Back</button><button class="btn on" id="tNext">Next</button></div>
+  </div>
 </div>
 <div class="toast" id="toast" hidden></div>
 <script src="app.js"></script>
