@@ -1901,6 +1901,31 @@ def main():
 
     (out / "screener.json").write_text(jdumps(rows, separators=(",", ":")))
     (out / "universe.json").write_text(jdumps(uni_rows, separators=(",", ":")))
+
+    # ---------- reference levels for alerts: 21-day EMA, 50/200-day lines, pivot and average volume per ticker.
+    # The API checks alerts against the delayed intraday prices every 15 minutes during the session.
+    try:
+        aref = {}
+        for r in rows + uni_rows:
+            sym = r.get("symbol")
+            adf = prices.get(sym)
+            if not sym or sym in aref or adf is None or len(adf) < 30:
+                continue
+            ac = adf["Close"].astype(float)
+            e21 = float(ac.ewm(span=21, adjust=False).mean().iloc[-1])
+            s50 = float(ac.tail(50).mean()) if len(ac) >= 50 else None
+            s200 = float(ac.tail(200).mean()) if len(ac) >= 200 else None
+            v50 = float(adf["Volume"].tail(50).mean())
+            piv = (r.get("base") or {}).get("pivot")
+            rnd = lambda x: None if x is None or x != x else round(float(x), 4)
+            aref[sym] = [rnd(e21), rnd(s50), rnd(s200), rnd(piv), None if v50 != v50 else int(v50), rnd(ac.iloc[-1])]
+        (out / "alertref.json").write_text(jdumps({"updated": now_iso, "date": bench.index[-1].strftime("%Y-%m-%d"),
+                                                   "cols": ["ema21", "sma50", "sma200", "pivot", "avgVol50", "close"], "s": aref},
+                                                  separators=(",", ":")))
+        log(f"alert levels: {len(aref)} tickers")
+    except Exception as e:  # noqa: BLE001
+        traceback.print_exc()
+        log(f"alert levels failed: {e}")
     meta = {
         "updated": now_iso,
         "dataDate": bench.index[-1].strftime("%Y-%m-%d"),
