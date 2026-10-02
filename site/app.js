@@ -77,6 +77,7 @@ function fillSymlist(){
 /* ================= SCREENER ================= */
 function rowVal(r, k){
   switch(k){
+    case "comp": return r.comp ?? null;
     case "grp": { const m=String(r.groupRank||"").match(/^(\d+)/); return m? +m[1] : null; }
     case "eps": return pnum(r.epsChg);
     case "sales": return pnum(r.salesChg);
@@ -88,9 +89,12 @@ function rowVal(r, k){
   }
 }
 function filtered(){
-  const f = scrState.filter, sec = scrState.sector;
+  const f = scrState.filter, sec = scrState.sector, ind = scrState.industry;
+  const us = /^u:/.test(f) ? SCREENS().find(x=>"u:"+x.id===f) : null;
   return list().filter(r => {
     if(sec && r.sector !== sec) return false;
+    if(ind && r.group !== ind) return false;
+    if(us) return matchScreen(r, us);
     const st = r.base && r.base.status;
     if(f==="setup") return st==="Breakout" || st==="In buy zone";
     if(f==="near") return st==="Near pivot" || st==="In buy zone" || st==="Breakout";
@@ -132,6 +136,7 @@ function renderScreener(){
       <td>${fmtP(r.close)}</td>
       <td class="${TIER.chg(r.chgPct)}" data-l="Chg">${fmtPct(r.chgPct,2)}</td>
       <td><span class="rsv ${rs>=80?'hot':''}">${rs??"—"}</span></td>
+      <td class="${(r.comp??0)>=80?'t-up2':''}">${r.comp??"—"}</td>
       <td title="${esc(r.group)}">${r.etf ? `<span class="nm">${esc(r.tracks||r.group||"")}</span>` : esc(r.groupRank||"—")}</td>
       <td class="${TIER.eps(pnum(r.epsChg))}" data-l="EPS Δ">${esc(r.epsChg||"—")}</td>
       <td class="${TIER.sales(pnum(r.salesChg))}" data-l="Sales Δ">${esc(r.salesChg||"—")}</td>
@@ -143,13 +148,14 @@ function renderScreener(){
       <td>${b.pivot?fmtP(b.pivot):"—"}</td>
       <td class="${b.pivot ? TIER.pivot(b.distPct) : ""}" data-l="To pivot">${b.pivot?fmtPct(b.distPct):"—"}</td>
       <td class="l">${b.status?`<span class="chip ${stc}">${esc(b.status)}</span>`:"—"}</td>
-    </tr>`; }).join("") || `<tr><td colspan="16" class="l" style="padding:18px">${scrState.scope==="watch" && !getWL().length ? `Your watchlist is empty. Open any ticker and tap the ☆ next to its symbol to add it.<span class="wlgo"><a class="btn" href="#screener">Browse the screener →</a><a class="btn" href="#ideas">See trade ideas →</a><a class="btn" href="#heatmap">Open the heatmap →</a></span>` : "No tickers match this filter."}</td></tr>`;
+    </tr>`; }).join("") || `<tr><td colspan="17" class="l" style="padding:18px">${scrState.scope==="watch" && !getWL().length ? `Your watchlist is empty. Open any ticker and tap the ☆ next to its symbol to add it.<span class="wlgo"><a class="btn" href="#screener">Browse the screener →</a><a class="btn" href="#ideas">See trade ideas →</a><a class="btn" href="#heatmap">Open the heatmap →</a></span>` : "No tickers match this filter."}</td></tr>`;
   const bySym = new Map(shown.map(r=>[r.symbol,r]));
   $$("canvas[data-spark]").forEach(cv=>{ const r = bySym.get(cv.dataset.spark); sparkline(cv, r && r.spark); });
   const noun = {all:"stocks", etf:"ETFs", watch:"tickers"}[scrState.scope];
   $("#count").textContent = total > shown.length ? `Showing ${shown.length} of ${total} · ${all.length} ${noun}` : `${total} of ${all.length} ${noun}`;
-  const sc = $("#secChip"); sc.hidden = !scrState.sector;
-  if(scrState.sector){ sc.innerHTML = `Sector: <b>${esc(scrState.sector)}</b> <button aria-label="Clear sector filter">×</button>`; sc.querySelector("button").onclick = ()=>{ scrState.sector=null; scrState.limit=PAGE; renderScreener(); }; }
+  const sc = $("#secChip"); sc.hidden = !scrState.sector && !scrState.industry;
+  if(!sc.hidden){ sc.innerHTML = `${scrState.industry ? "Group" : "Sector"}: <b>${esc(scrState.industry || scrState.sector)}</b> <button aria-label="Clear sector filter">×</button>`;
+    sc.querySelector("button").onclick = ()=>{ scrState.sector = null; scrState.industry = null; scrState.limit=PAGE; renderScreener(); }; }
   fitTable();
   renderWlCtl();
   $("#moreWrap").hidden = total <= shown.length;
@@ -178,8 +184,6 @@ $$("#scr th[data-k]").forEach(th=>{
     store.set("ink:sortKey",scrState.key); store.set("ink:sortAsc",scrState.asc); scrState.limit=PAGE; renderScreener(); };
   th.addEventListener("click", go); th.addEventListener("keydown", e=>{ if(e.key==="Enter") go(); });
 });
-$$("#filters button").forEach(b=>b.classList.toggle("on", b.dataset.f===scrState.filter));
-$$("#filters button").forEach(b=>b.onclick=()=>{ scrState.filter=b.dataset.f; store.set("ink:filter", scrState.filter); scrState.limit=PAGE; $$("#filters button").forEach(x=>x.classList.toggle("on",x===b)); renderScreener(); });
 async function setScope(s){
   scrState.scope = s; scrState.limit = PAGE;
   $$("#scope button").forEach(x=>x.classList.toggle("on", x.dataset.s===s));
@@ -248,7 +252,7 @@ function bindSettings(){
   $$("#settings [data-cfg]").forEach(b=>b.onclick=()=>{ cfg[b.dataset.cfg]=b.dataset.v; applyCfg(); });
   $$("#settings [data-lang]").forEach(b=>b.onclick=()=>{ const l = b.dataset.lang; if(l === I18N.lang) return; cfg.lang = l; store.set("ink:cfg", cfg); push("cfg", cfg); setTimeout(()=>I18N.setLang && I18N.setLang(l), 250); });
   $$("#settings [data-ma]").forEach(c=>c.onchange=()=>{ cfg.ma[c.dataset.ma]=c.checked; applyCfg(); });
-  $("#setReset").onclick=()=>{ cfg = normCfg(JSON.parse(JSON.stringify(DEF_CFG))); applyCfg(); };
+  $("#setReset").onclick=()=>{ const keep = {screens: cfg.screens, cols: cfg.cols, lang: cfg.lang}; cfg = normCfg({...JSON.parse(JSON.stringify(DEF_CFG)), ...keep}); applyCfg(); };
   // colors: live preview while dragging, save when the picker closes
   const setCol = (el, v) => { if(el.dataset.col) cfg.colors[el.dataset.col] = v; else cfg.colors.ma[el.dataset.macol] = v; };
   $$("#settings input[type=color]").forEach(el=>{
@@ -865,7 +869,8 @@ function renderDbox(){
   }
   const A=(F.annual||[]).filter(a=>a.y||a.eps).slice(0,7).reverse();
   const smr = smrRating(F);
-  const rows = [["RS Rating",F.rs],["Group Rank",F.groupRank],["SMR Rating",smr],["U/D Vol Ratio",st.udRatio!=null?st.udRatio.toFixed(2):""],
+  const rw = rowOf(S.symbol);
+  const rows = [["RS Rating",F.rs],["Composite Rating", rw && rw.comp != null ? String(rw.comp) : ""],["Group Rank",F.groupRank],["SMR Rating",smr],["U/D Vol Ratio",st.udRatio!=null?st.udRatio.toFixed(2):""],
     ["Mkt Cap",F.mktCap],["% vs 52w High",fmtPct(st.offHighPct)],["EPS Growth Rate",F.epsGrowth],["EPS Surprise",F.epsSurprise]];
   const show = view.box && !(geo && geo.narrow);
   box.hidden = !show; if(!show) return;
@@ -923,23 +928,25 @@ function route(){
   const low = raw.toLowerCase();
   const isList = raw === low && ROUTES[low];
   const isHome = raw === "" || raw === "home";
-  ["#vWelcome","#vHome","#vScreener","#vChart","#vHeat","#vIdeas","#vEarn","#vBreadth"].forEach(id=>$(id).hidden = true); $("#hmTip").hidden = true;
+  ["#vWelcome","#vHome","#vScreener","#vChart","#vHeat","#vIdeas","#vEarn","#vBreadth","#vGroups","#vWall"].forEach(id=>$(id).hidden = true); $("#hmTip").hidden = true;
   document.body.classList.toggle("on-welcome", raw === "welcome");
   document.body.classList.toggle("on-home", isHome);
   if(raw === "welcome"){ $("#vWelcome").hidden = false; setTab(""); document.title = "Ticker&Tape · O'Neil-style charts, RS ratings and bases"; window.scrollTo(0,0); return; }
   if(low === "earnings"){ lastList = "earnings"; $("#vEarn").hidden = false; setTab("earn"); document.title = "Earnings calendar · Ticker&Tape"; window.scrollTo(0,0); renderEarn(); return; }
   if(low === "ideas"){ lastList = "ideas"; $("#vIdeas").hidden = false; setTab("ideas"); document.title = "Trade ideas · Ticker&Tape"; window.scrollTo(0,0); renderIdeas(); return; }
+  if(low === "groups"){ lastList = "groups"; $("#vGroups").hidden = false; setTab("groups"); document.title = "Industry groups · Ticker&Tape"; window.scrollTo(0,0); renderGroups(); return; }
+  if(low === "wall"){ lastList = "wall"; $("#vWall").hidden = false; setTab(""); document.title = "Chart wall · Ticker&Tape"; window.scrollTo(0,0); renderWall(); return; }
   if(low === "breadth"){ lastList = "breadth"; $("#vBreadth").hidden = false; setTab("breadth"); document.title = "Market breadth · Ticker&Tape"; window.scrollTo(0,0); renderBreadth(); return; }
   if(low === "heatmap"){ lastList = "heatmap"; $("#vHeat").hidden = false; setTab("heat"); document.title = "Heatmap · Ticker&Tape"; window.scrollTo(0,0); renderHeat(); return; }
   if(isHome){ lastList = ""; $("#vHome").hidden = false; setTab("home"); document.title = "Ticker&Tape · Market dashboard"; renderHome(); return; }
   if(isList){ lastList = raw; $("#vScreener").hidden = false; setTab(ROUTES[low]); document.title = `${{watch:"Watchlist",all:"Screener",etf:"ETFs"}[ROUTES[low]]} · Ticker&Tape`;
-    if(ROUTES[low] !== "all") scrState.sector = null;
+    if(ROUTES[low] !== "all"){ scrState.sector = null; scrState.industry = null; }
     setScope(ROUTES[low]); return; }
   setTab(""); openChart(raw.toUpperCase());
 }
 $("#bBack").onclick = () => { location.hash = lastList; };   // back to the list (or home) the chart was opened from
-$$("#tabs a").forEach(a=>a.addEventListener("click", ()=>{ if(a.dataset.v==="all") scrState.sector = null; }));
-document.addEventListener("click", e=>{ const b = e.target.closest("[data-sector]"); if(!b) return; e.preventDefault(); scrState.sector = b.dataset.sector; scrState.filter = "all"; store.set("ink:filter", "all");
+$$("#tabs a").forEach(a=>a.addEventListener("click", ()=>{ if(a.dataset.v==="all"){ scrState.sector = null; scrState.industry = null; } }));
+document.addEventListener("click", e=>{ const b = e.target.closest("[data-sector]"); if(!b) return; e.preventDefault(); scrState.sector = b.dataset.sector; scrState.industry = null; scrState.filter = "all"; store.set("ink:filter", "all");
   $$("#filters button").forEach(x=>x.classList.toggle("on", x.dataset.f==="all")); if(location.hash === "#screener") setScope("all"); else location.hash = "screener"; });
 
 /* ================= HOME DASHBOARD ================= */
@@ -1306,7 +1313,8 @@ $$("form[data-nl] input").forEach(i=>i.addEventListener("focus", ()=>{ if(auth.e
 /* ================= SHARE ON X ================= */
 function xShareUrl(sym, extra){
   const text = `$${sym.replace(/=F$/,"")}${extra ? " · " + extra : ""}`;
-  return "https://x.com/intent/post?" + new URLSearchParams({text, url:`https://tickerandtape.com/#${sym}`, via:"Tickerandtape"}).toString();
+  const card = !/[=^]/.test(sym) && !!rowOf(sym);   // the nightly build makes a share card (chart image + page) for every stock and ETF on the site
+  return "https://x.com/intent/post?" + new URLSearchParams({text, url: card ? `https://tickerandtape.com/c/${sym}/` : `https://tickerandtape.com/#${sym}`, via:"Tickerandtape"}).toString();
 }
 function setShare(){
   const a = $("#bShare"); if(!a || !S) return;
@@ -1572,7 +1580,7 @@ async function pullData(fresh, isNew){
   else { WL = fresh && WL ? WL.slice() : []; store.set("tt:wl", WL); push("watchlist", WL); if(!(fresh && LISTS)) LISTS = null; ensureLists(); activeList().t = WL.slice(); saveLists(); }   // accounts never use the sample list; lists made before signing up are kept
   if(d.notes && typeof d.notes === "object"){ NOTES = fresh ? {...d.notes, ...NOTES} : d.notes; store.set("tt:notes", NOTES); if(fresh) push("notes", NOTES); }
   else if(fresh && Object.keys(NOTES).length) push("notes", NOTES);   // new accounts start empty; the sample list is only for visitors
-  if(d.cfg && typeof d.cfg==="object"){ cfg = normCfg(d.cfg); store.set("ink:cfg", cfg); redrawAll();
+  if(d.cfg && typeof d.cfg==="object"){ cfg = normCfg(d.cfg); store.set("ink:cfg", cfg); redrawAll(); renderScreenBtns(); applyCols();
     if(cfg.lang && cfg.lang !== I18N.lang && I18N.setLang) I18N.setLang(cfg.lang); }
   else if(fresh){ push("cfg", cfg); }
   const remote = new Set();
@@ -1961,6 +1969,195 @@ function openDelete(){
       catch(e){ toast(e.message); b.disabled = false; } }; });
 }
 
+/* ================= COMPOSITE RATING (from the nightly rows) ================= */
+function rowOf(sym){ return ROWS.find(r=>r.symbol===sym) || (UNI && UNI.find(r=>r.symbol===sym)) || null; }
+
+/* ================= SAVED SCREENS ================= */
+const SCREENS = () => Array.isArray(cfg.screens) ? cfg.screens : [];
+const SCR_ST = ["Near pivot","Breakout","In buy zone","Extended","Below pivot","Correcting","Base forming"];
+function saveCfg(){ store.set("ink:cfg", cfg); push("cfg", cfg); }
+function syncFilters(){ $$("#filters button").forEach(x=>x.classList.toggle("on", x.dataset.f===scrState.filter)); }
+function renderScreenBtns(){
+  $$("#filters button[data-u]").forEach(b=>b.remove());
+  const f = $("#filters");
+  SCREENS().forEach(sc=>{ const b = document.createElement("button"); b.dataset.f = "u:"+sc.id; b.dataset.u = "1"; b.className = "ubtn";
+    b.textContent = sc.name; b.title = TX("Your screen · click it again to edit"); f.appendChild(b); });
+  if(/^u:/.test(scrState.filter) && !SCREENS().some(s=>"u:"+s.id===scrState.filter)) scrState.filter = "all";
+  syncFilters();
+}
+function matchScreen(r, c){
+  const has = v => v !== null && v !== undefined && v !== "" && isFinite(v);
+  if(has(c.rs) && (r.rsRating ?? -1) < c.rs) return false;
+  if(has(c.comp) && (r.comp ?? -1) < c.comp) return false;
+  if(has(c.eps) && (pnum(r.epsChg) ?? -1e9) < c.eps) return false;
+  if(has(c.sales) && (pnum(r.salesChg) ?? -1e9) < c.sales) return false;
+  if(has(c.offHigh) && (r.offHighPct ?? -1e9) < -Math.abs(c.offHigh)) return false;
+  if(c.a50 && !((r.vs50Pct ?? -1) > 0)) return false;
+  if(c.a200 && !((r.vs200Pct ?? -1) > 0)) return false;
+  if(has(c.dvol) && (r.dollarVol50 || 0) < c.dvol * 1e6) return false;
+  if(c.sector && r.sector !== c.sector) return false;
+  if(c.smrAB && !/^[AB]/.test(r.smr || "")) return false;
+  if(c.st && c.st.length && !(r.base && c.st.includes(r.base.status))) return false;
+  if(has(c.pmin) || has(c.pmax)){ const d = r.base && r.base.pivot ? r.base.distPct : null; if(d == null) return false;
+    if(has(c.pmin) && d < c.pmin) return false; if(has(c.pmax) && d > c.pmax) return false; }
+  return true;
+}
+function openScreen(id){
+  const cur = SCREENS().find(s=>s.id===id) || {name:"", rs:80, comp:null, eps:25, sales:null, offHigh:15, a50:true, a200:false, dvol:20, sector:"", smrAB:false, st:[], pmin:null, pmax:null};
+  const secs = [...new Set(((UNI||[]).concat(ROWS)).map(r=>r.sector).filter(Boolean))].sort();
+  const num = (k, lbl, ph) => `<label class="fld sm"><span>${esc(TX(lbl))}</span><input type="number" step="any" data-k="${k}" value="${cur[k]??""}" placeholder="${esc(ph||TX("any"))}"></label>`;
+  dlg(TX(id ? "Edit screen" : "New screen"), `<div class="scrform">
+    <label class="fld"><span>${esc(TX("Name"))}</span><input id="sName" maxlength="24" value="${esc(cur.name)}" placeholder="${esc(TX("e.g. CAN SLIM leaders"))}"></label>
+    <div class="fgrid">${num("rs","RS Rating at least")}${num("comp","Composite at least")}${num("eps","EPS growth at least (%)")}${num("sales","Sales growth at least (%)")}
+      ${num("offHigh","At most % off the high")}${num("dvol","Traded a day at least ($M)")}${num("pmin","To pivot from (%)","-5")}${num("pmax","To pivot up to (%)","5")}</div>
+    <label class="fld"><span>${esc(TX("Sector"))}</span><select id="sSec"><option value="">${esc(TX("All sectors"))}</option>${secs.map(s=>`<option value="${esc(s)}" ${cur.sector===s?"selected":""}>${esc(TX(s))}</option>`).join("")}</select></label>
+    <div class="chks"><label class="chk"><input type="checkbox" data-c="a50" ${cur.a50?"checked":""}> ${esc(TX("Above the 50-day line"))}</label><label class="chk"><input type="checkbox" data-c="a200" ${cur.a200?"checked":""}> ${esc(TX("Above the 200-day line"))}</label>
+      <label class="chk"><input type="checkbox" data-c="smrAB" ${cur.smrAB?"checked":""}> ${esc(TX("SMR A or B"))}</label></div>
+    <p class="msub">${esc(TX("Base status (none checked = any)"))}</p>
+    <div class="chks">${SCR_ST.map(s=>`<label class="chk"><input type="checkbox" data-st="${esc(s)}" ${(cur.st||[]).includes(s)?"checked":""}> ${esc(TX(s))}</label>`).join("")}</div>
+    <p class="msub" id="sPrev"></p>
+    <div class="dlgbtns"><button class="btn on" id="sOk">${esc(TX("Save screen"))}</button>${id?`<button class="btn ghost" id="sDel">${esc(TX("Delete screen"))}</button>`:""}</div></div>`, B=>{
+    const read = () => { const c = {id: id || "s"+Date.now().toString(36), name: B.querySelector("#sName").value.trim().slice(0,24)};
+      B.querySelectorAll("[data-k]").forEach(i=>{ c[i.dataset.k] = i.value === "" ? null : +i.value; });
+      B.querySelectorAll("[data-c]").forEach(i=>{ c[i.dataset.c] = i.checked; });
+      c.sector = B.querySelector("#sSec").value; c.st = [...B.querySelectorAll("[data-st]:checked")].map(i=>i.dataset.st); return c; };
+    const prev = () => { const c = read(), pool = (UNI ? UNI.filter(r=>!r.etf) : ROWS); B.querySelector("#sPrev").textContent = TX(`${pool.filter(r=>matchScreen(r,c)).length} of ${pool.length} stocks pass today`); };
+    B.querySelectorAll("input,select").forEach(i=>i.addEventListener("input", prev)); prev();
+    B.querySelector("#sOk").onclick = () => { const c = read(); if(!c.name){ B.querySelector("#sName").focus(); return; }
+      const L = SCREENS().filter(s=>s.id!==c.id); if(L.length >= 12){ toast("You can save up to 12 screens."); return; }
+      const i = SCREENS().findIndex(s=>s.id===c.id); cfg.screens = SCREENS().slice(); if(i >= 0) cfg.screens[i] = c; else cfg.screens.push(c);
+      saveCfg(); closeDlg(); scrState.filter = "u:"+c.id; store.set("ink:filter", scrState.filter); scrState.limit = PAGE; renderScreenBtns(); renderScreener(); };
+    const d = B.querySelector("#sDel"); if(d) d.onclick = () => { cfg.screens = SCREENS().filter(s=>s.id!==id); saveCfg(); closeDlg(); scrState.filter = "all"; store.set("ink:filter","all"); renderScreenBtns(); renderScreener(); };
+  });
+  if(!UNI) loadUni().catch(()=>{});
+}
+$("#bScreen").onclick = () => openScreen(null);
+$("#filters").addEventListener("click", e=>{
+  const b = e.target.closest("button[data-f]"); if(!b) return;
+  if(b.dataset.u && scrState.filter === b.dataset.f){ openScreen(b.dataset.f.slice(2)); return; }
+  scrState.filter = b.dataset.f; store.set("ink:filter", scrState.filter); scrState.limit = PAGE; syncFilters(); renderScreener();
+});
+
+/* ================= COLUMNS ================= */
+function colList(){ return $$("#scr thead th").map((th,i)=>({i:i+1, k: th.dataset.k || (th.classList.contains("spk") ? "spark" : "c"+i), label: th.textContent.replace(/[▾▴]/g,"").trim()})); }
+function applyCols(){
+  const hid = new Set(cfg.cols || []);
+  const sel = colList().filter(c=>hid.has(c.k) && c.k !== "symbol").map(c=>`#scr th:nth-child(${c.i}),#scr td:nth-child(${c.i})`).join(",");
+  $("#colcss").textContent = sel ? `@media (min-width:641px){${sel}{display:none}}` : "";
+  fitTable();
+}
+function colMenu(on){
+  const m = $("#colMenu"); on = on==null ? m.hidden : on; m.hidden = !on; $("#bCols").setAttribute("aria-expanded", on);
+  if(!on) return; const hid = new Set(cfg.cols || []);
+  m.innerHTML = `<div class="who">${esc(TX("Columns"))}</div>` + colList().filter(c=>c.k!=="symbol").map(c=>`<label class="chk"><input type="checkbox" data-col="${esc(c.k)}" ${hid.has(c.k)?"":"checked"}> ${esc(c.label || "—")}</label>`).join("")
+    + `<button data-reset="1">${esc(TX("Show all columns"))}</button>`;
+}
+$("#bCols").onclick = e => { e.stopPropagation(); colMenu(); };
+document.addEventListener("click", e=>{ if(!$("#colMenu").hidden && !e.target.closest("#colMenu,#bCols")) colMenu(false); });
+$("#colMenu").addEventListener("change", e=>{ const i = e.target.closest("[data-col]"); if(!i) return;
+  const hid = new Set(cfg.cols || []); i.checked ? hid.delete(i.dataset.col) : hid.add(i.dataset.col); cfg.cols = [...hid]; saveCfg(); applyCols(); });
+$("#colMenu").addEventListener("click", e=>{ if(e.target.closest("[data-reset]")){ cfg.cols = []; saveCfg(); applyCols(); colMenu(true); } });
+
+/* ================= INDUSTRY GROUPS ================= */
+let GROUPS = null, groupsLoading = null, gSort = {k:"rank", asc:true}, gShow = "all";
+function loadGroups(){ if(!groupsLoading) groupsLoading = getJSON("groups.json").then(d=>{ GROUPS = d; }).catch(()=>{ GROUPS = {groups:[], total:0}; }); return groupsLoading; }
+function renderGroups(){
+  if(!GROUPS){ $("#gTbl").innerHTML = `<div class="empty">Loading…</div>`; loadGroups().then(()=>{ if(!$("#vGroups").hidden) renderGroups(); }); return; }
+  const G = GROUPS.groups || [], T = GROUPS.total || G.length;
+  if(!G.length){ $("#gTbl").innerHTML = `<div class="empty">The group ranking appears after the next nightly update.</div>`; $("#gStats").innerHTML = ""; return; }
+  const sel = $("#gSector"), secs = [...new Set(G.map(g=>g.sector).filter(Boolean))].sort(), cur = store.get("tt:gSec") || "";
+  sel.innerHTML = `<option value="">${esc(TX("All sectors"))}</option>` + secs.map(s=>`<option value="${esc(s)}" ${s===cur?"selected":""}>${esc(TX(s))}</option>`).join("");
+  $$("#gShow button").forEach(b=>b.classList.toggle("on", b.dataset.n===gShow));
+  const d6 = g => g.r6w ? g.r6w - g.rank : null;
+  const best = G[0], climb = G.filter(g=>d6(g)!=null).sort((a,b)=>d6(b)-d6(a))[0];
+  const strongSec = Object.entries(G.slice(0, Math.max(10, Math.round(T/5))).reduce((m,g)=>(m[g.sector]=(m[g.sector]||0)+1, m), {})).sort((a,b)=>b[1]-a[1])[0];
+  $("#gStats").innerHTML = `<div><b>${T}</b><span>${esc(TX("groups ranked"))}</span></div><div class="wide2"><b class="gname">${esc(best.name)}</b><span>${esc(TX("strongest group"))}</span></div>`
+    + (climb ? `<div class="wide2"><b class="gname">${esc(climb.name)}</b><span>${esc(TX("biggest climber, 6 weeks"))} (+${d6(climb)})</span></div>` : "")
+    + (strongSec ? `<div><b class="gname">${esc(TX(strongSec[0]))}</b><span>${esc(TX("leading sector"))}</span></div>` : "");
+  let L = G.filter(g=>!cur || g.sector===cur);
+  if(gShow === "top") L = L.filter(g=>g.rank <= 40);
+  if(gShow === "up") L = L.filter(g=>(d6(g)||0) >= 10);
+  const k = gSort.k, dir = gSort.asc ? 1 : -1, val = g => k === "d6" ? d6(g) : g[k];
+  L = L.slice().sort((a,b)=>{ const x = val(a), y = val(b); if(x==null) return 1; if(y==null) return -1; return (typeof x === "string" ? x.localeCompare(y) : x - y) * dir; });
+  const arrow = (prev, now) => { if(!prev) return `<span class="gd">—</span>`; const d = prev - now; return d === 0 ? `<span class="gd">=</span>` : `<span class="gd ${d>0?"up":"dn"}">${d>0?"▲":"▼"}${Math.abs(d)}</span>`; };
+  const pc = (v, sc) => `<td style="${heat(v, sc)}" class="${(v??0)<0?'neg':''}">${fmtPct(v,1)}</td>`;
+  const th = (key, lbl, cls="") => `<th data-gk="${key}" class="${cls} ${gSort.k===key?'sorted'+(gSort.asc?' asc':''):''}">${lbl}</th>`;
+  $("#gTbl").innerHTML = `<table class="scr gtbl"><thead><tr>${th("rank","Rank")}${th("d6","6 wks")}<th class="nosort">1 wk</th><th class="nosort">3 wks</th>${th("name","Group","l")}${th("n","Stocks")}${th("chg1w","1W")}${th("chg1m","1M")}${th("chg3m","3M")}${th("ytd","YTD")}${th("above50","&gt; 50-day")}<th class="l nosort">Leaders · RS</th></tr></thead><tbody>
+    ${L.map(g=>`<tr data-g="${esc(g.name)}" tabindex="0"><td class="big"><b>${g.rank}</b></td><td>${arrow(g.r6w, g.rank)}</td><td>${arrow(g.r1w, g.rank)}</td><td>${arrow(g.r3w, g.rank)}</td>
+      <td class="l"><span class="sym">${esc(g.name)}</span><span class="nm">${esc(TX(g.sector))}</span></td><td>${g.n}</td>${pc(g.chg1w,4)}${pc(g.chg1m,8)}${pc(g.chg3m,16)}${pc(g.ytd,30)}
+      <td><span class="gbar"><i style="width:${g.above50??0}%"></i></span>${g.above50==null?"—":g.above50+"%"}</td>
+      <td class="l">${(g.leaders||[]).map(([s,rs])=>`<a class="glead" href="#${esc(s)}">${esc(s)} <b>${rs??"—"}</b></a>`).join("")}</td></tr>`).join("")}</tbody></table>`;
+  $("#gCount").textContent = `${L.length} ${TX("of")} ${T} · ${GROUPS.date ? fmtLong(iso(GROUPS.date)) : ""}`;
+  $$("#gTbl th[data-gk]").forEach(t=>t.onclick = ()=>{ const k = t.dataset.gk; gSort = {k, asc: gSort.k===k ? !gSort.asc : ["rank","name"].includes(k)}; renderGroups(); });
+  $$("#gTbl tr[data-g]").forEach(tr=>tr.onclick = e=>{ if(e.target.closest("a")) return; scrState.industry = tr.dataset.g; scrState.sector = null; scrState.filter = "all"; syncFilters();
+    if(location.hash === "#screener") setScope("all"); else location.hash = "screener"; });
+}
+$("#gSector").onchange = e => { store.set("tt:gSec", e.target.value); renderGroups(); };
+$$("#gShow button").forEach(b=>b.onclick = ()=>{ gShow = b.dataset.n; renderGroups(); });
+
+/* ================= CHART WALL ================= */
+const WALL = {n:24, range: +store.get("tt:wRange") || 126, syms:[], title:"", from:""};
+const bundles = new Map();
+function getBundle(sym){
+  if(!bundles.has(sym)) bundles.set(sym, getJSON(`t/${encodeURIComponent(sym.replace(/=/g,"_"))}.json`).catch(()=>null));
+  if(bundles.size > 150) bundles.delete(bundles.keys().next().value);
+  return bundles.get(sym);
+}
+function openWall(syms, title){ WALL.syms = syms.slice(0, 300); WALL.title = title; WALL.from = location.hash || "#"; WALL.n = 24; location.hash = "wall"; }
+$("#bWall").onclick = () => { if(!order.length){ toast("This list is empty."); return; }
+  const t = scrState.scope === "watch" ? (LISTS ? activeList().name : "Watchlist") : scrState.scope === "etf" ? "ETFs" : "Screener";
+  openWall(order, t === "My watchlist" ? TX(t) : t); };
+$("#iWall").onclick = () => { const L = (IDEAS && IDEAS.ideas || []).filter(i=>ideaFilter==="all" || i.status===ideaFilter).map(i=>i.symbol); if(!L.length) return; openWall(L, TX("Trade ideas")); };
+$("#wBack").onclick = () => { location.hash = WALL.from && WALL.from !== "#wall" ? WALL.from : "watchlist"; };
+$$("#wRange button").forEach(b=>b.onclick = ()=>{ WALL.range = +b.dataset.r; store.set("tt:wRange", WALL.range); renderWall(); });
+$("#wMoreBtn").onclick = () => { WALL.n += 24; renderWall(); };
+let wallIO = null;
+function renderWall(){
+  if(!WALL.syms.length){ WALL.syms = getWL().slice(); WALL.title = TX("Watchlist"); }
+  if(!UNI){ loadUni().then(()=>{ if(!$("#vWall").hidden) renderWall(); }).catch(()=>{}); }
+  order = WALL.syms.slice();
+  $("#wTitle").textContent = `${TX("Chart wall")} · ${WALL.title}`;
+  $$("#wRange button").forEach(b=>b.classList.toggle("on", +b.dataset.r === WALL.range));
+  const show = WALL.syms.slice(0, WALL.n);
+  $("#wCount").textContent = TX(`${show.length} of ${WALL.syms.length} charts`);
+  $("#wMore").hidden = WALL.syms.length <= WALL.n;
+  $("#wGrid").innerHTML = show.map(s=>{ const r = rowOf(s) || {symbol:s}, b = r.base || {}, stc = STATUS_CLASS[b.status] || "";
+    return `<article class="wtile" data-s="${esc(s)}" tabindex="0"><header><span class="sym">${esc(s)}</span><span class="nm">${esc(r.name||"")}</span><span class="sp"></span>
+      ${r.rsRating!=null?`<span class="rsv ${r.rsRating>=80?'hot':''}" title="RS Rating">RS ${r.rsRating}</span>`:""}${r.comp!=null?`<span class="cmp" title="Composite Rating">Comp ${r.comp}</span>`:""}</header>
+      <div class="wq"><b>${fmtP(r.close)}</b> <span class="${(r.chgPct??0)<0?'neg':''}">${fmtPct(r.chgPct,2)}</span>${b.status?` <span class="chip ${stc}">${esc(b.status)}</span>`:""}${NOTES[s]?` <span class="wnote" title="${esc(NOTES[s])}">✎ ${esc(NOTES[s])}</span>`:""}</div>
+      <canvas class="wcv"></canvas></article>`; }).join("") || `<div class="empty">${esc(TX("This list is empty."))}</div>`;
+  $$("#wGrid .wtile").forEach(t=>t.onclick = ()=>{ location.hash = t.dataset.s; });
+  if(wallIO) wallIO.disconnect();
+  wallIO = new IntersectionObserver(es=>es.forEach(en=>{ if(!en.isIntersecting) return; wallIO.unobserve(en.target); const t = en.target;
+    getBundle(t.dataset.s).then(bd=>{ if(bd) drawMini(t.querySelector("canvas"), bd); else t.querySelector("canvas").replaceWith(Object.assign(document.createElement("div"), {className:"empty", textContent: TX("Loads after the next nightly update")})); }); }), {rootMargin:"300px"});
+  $$("#wGrid .wtile").forEach(t=>wallIO.observe(t));
+}
+function drawMini(cv, bd){
+  const dpr = devicePixelRatio || 1, W = cv.clientWidth || 300, H = cv.clientHeight || 200;
+  cv.width = W*dpr; cv.height = H*dpr; const g = cv.getContext("2d"); g.setTransform(dpr,0,0,dpr,0,0);
+  const px = bd.prices.map(([d,o,h,l,c,v])=>({t:iso(d),h,l,c,v})); if(px.length < 10) return;
+  const m50 = sma(px,50,b=>b.c), m200 = sma(px,200,b=>b.c);
+  const s0 = Math.max(0, px.length - WALL.range), P = px.slice(s0), n = P.length, R = 40, pH = Math.round(H*0.76), vT = pH + 3;
+  const piv = bd.base && bd.base.pivot;
+  let lo = Math.min(...P.map(b=>b.l)), hi = Math.max(...P.map(b=>b.h)); if(piv && piv < hi*1.25 && piv > lo*0.8){ hi = Math.max(hi, piv); lo = Math.min(lo, piv); }
+  const pad = (hi-lo)*0.05, y = v => 3 + (hi+pad - v)/((hi-lo)+2*pad) * (pH-6), x = i => 2 + (i+.5)/n*(W-R-4), bw = (W-R-4)/n;
+  g.strokeStyle = C.grid; g.setLineDash([1,3]); g.lineWidth = 1; g.fillStyle = C.ink2; g.font = `10px ${FONT_D}`; g.textBaseline = "middle";
+  linTicks(lo, hi, pH).filter((_,i,a)=>a.length < 5 || i % 2 === 0).forEach(v=>{ const yy = Math.round(y(v))+.5; g.beginPath(); g.moveTo(0,yy); g.lineTo(W-R,yy); g.stroke(); g.fillText(fmtP(v), W-R+3, yy); });
+  g.setLineDash([]);
+  if(piv){ g.strokeStyle = C.piv; g.setLineDash([4,3]); g.beginPath(); g.moveTo(0, Math.round(y(piv))+.5); g.lineTo(W-R, Math.round(y(piv))+.5); g.stroke(); g.setLineDash([]); }
+  const line = (arr, col) => { g.strokeStyle = col; g.lineWidth = 1.2; g.beginPath(); let on = false; for(let i=0;i<n;i++){ const v = arr[s0+i]; if(v==null){ on = false; continue; } on ? g.lineTo(x(i),y(v)) : g.moveTo(x(i),y(v)); on = true; } g.stroke(); };
+  g.save(); g.beginPath(); g.rect(0, 0, W-R, pH); g.clip();
+  line(m200, maCol(MAS.find(m=>m.k==="d200"))); line(m50, maCol(MAS.find(m=>m.k==="d50")));
+  const tk = Math.max(1, Math.min(3, bw*0.45)); g.lineWidth = bw > 3 ? 1.3 : 1;
+  P.forEach((b,i)=>{ const pc = s0+i>0 ? px[s0+i-1].c : b.c; g.strokeStyle = b.c >= pc ? C.up : C.down; const xx = Math.round(x(i))+.5;
+    g.beginPath(); g.moveTo(xx, y(b.h)); g.lineTo(xx, y(b.l)); g.moveTo(xx, y(b.c)); g.lineTo(xx+tk, y(b.c)); g.stroke(); });
+  g.restore();
+  const vm = Math.max(...P.map(b=>b.v||0)) || 1, vh = H - vT - 2;
+  P.forEach((b,i)=>{ const pc = s0+i>0 ? px[s0+i-1].c : b.c; g.fillStyle = b.c >= pc ? C.vup : C.vdown; const h = (b.v||0)/vm*vh; g.fillRect(Math.round(x(i)-bw*0.3), vT+vh-h, Math.max(1, bw*0.6), h); });
+  g.strokeStyle = C.ink; g.lineWidth = 1; g.strokeRect(.5,.5,W-R,pH); g.strokeRect(.5,vT+.5,W-R,vh);
+}
+let wallResize = 0; addEventListener("resize", ()=>{ clearTimeout(wallResize); wallResize = setTimeout(()=>{ if(!$("#vWall").hidden) $$("#wGrid .wtile").forEach(t=>{ const c = t.querySelector("canvas"); if(c) getBundle(t.dataset.s).then(bd=>bd && drawMini(c, bd)); }); }, 150); });
+
 /* ================= WELCOME PAGE ================= */
 $("#vWelcome").addEventListener("click", e=>{
   const b = e.target.closest("[data-w]"); if(!b) return;
@@ -2087,6 +2284,7 @@ addEventListener("scroll", ()=>{ if(TOUR_ON()) placeTour(); }, true);
   renderPulse();
   renderAcct();
   if(needsUni()) loadUni().catch(()=>{});
+  renderScreenBtns(); applyCols();
   if(auth.token) pullData(false);
   $("#scope").hidden = true;
   loadHome(); loadEarn().then(()=>{ if(!$("#vScreener").hidden) renderScreener(); if(S && !$("#vChart").hidden) setEarnChip(); });
