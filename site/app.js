@@ -1373,6 +1373,7 @@ $("#tBack").onclick = () => go(-1);
 $("#tSkip").onclick = endTour;
 $("#help").onclick = e => { e.stopPropagation(); startTour(); };
 document.addEventListener("click", e=>{ if(e.target.closest("[data-tour]")) startTour(); });
+{ const fy = document.getElementById("fYear"); if(fy) fy.textContent = String(new Date().getFullYear()); }
 document.addEventListener("keydown", e=>{
   if(!TOUR_ON()) return;
   if(e.key==="Escape") endTour();
