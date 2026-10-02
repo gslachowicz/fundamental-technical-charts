@@ -20,7 +20,7 @@
 <meta name="description" content="O'Neil-style daily charts, RS Ratings, industry group ranks and automatic base and pivot detection for every S&amp;P 1500 and Nasdaq-100 stock. Free.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&family=Archivo+Narrow:wght@400;600;700&family=Libre+Franklin:wght@600;800&family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&display=swap">
-<link rel="stylesheet" href="style.css?v=20261002d">
+<link rel="stylesheet" href="style.css?v=20261002e">
 </head>
 <body>
 <div class="sheet">
@@ -38,7 +38,7 @@
   </nav>
   <div class="banner" id="banner" hidden></div>
   <nav class="tabs" id="tabs" aria-label="Sections">
-    <a href="#" data-v="home">Home</a><a href="#watchlist" data-v="watch">Watchlist</a><a href="#screener" data-v="all">Screener</a><a href="#etfs" data-v="etf">ETFs</a>
+    <a href="#" data-v="home">Home</a><a href="#watchlist" data-v="watch">Watchlist</a><a href="#screener" data-v="all">Screener</a><a href="#etfs" data-v="etf">ETFs</a><a href="#heatmap" data-v="heat">Heatmap</a>
   </nav>
 
   <!-- ===================== HOME ===================== -->
@@ -69,6 +69,28 @@
       <div class="box"><h3><span>Biggest movers <small>today</small></span><span class="seg mini" id="hMovSeg"><button data-m="up" class="on">Gainers</button><button data-m="dn">Losers</button></span></h3><div class="tbl" id="hMov"></div></div>
     </section>
     <p class="fine">Top lists include stocks with at least $20M traded a day on average. Prices are delayed during the session. Data: Yahoo Finance.</p>
+  </main>
+
+  <!-- ===================== HEATMAP ===================== -->
+  <main id="vHeat" class="heatv" hidden>
+    <div class="bar hbar">
+      <div class="hsel"><span>Group</span><span class="seg" id="hmGroup"><button data-g="sp500" class="on">S&amp;P 500</button><button data-g="ndx">Nasdaq-100</button><button data-g="watch">Watchlist</button></span></div>
+      <div class="hsel"><span>Color by</span><span class="seg" id="hmColor"><button data-c="chgPct" class="on">1D</button><button data-c="perf1w">1W</button><button data-c="perf1m">1M</button><button data-c="perf3m">3M</button><button data-c="ytd">YTD</button><button data-c="rsRating">RS Rating</button></span></div>
+      <div class="hsel"><span>Size by</span><span class="seg" id="hmSize"><button data-z="mcap" class="on">Market cap</button><button data-z="eq">Equal</button></span></div>
+      <div class="hsel"><span>Colors</span><span class="seg" id="hmScheme"><button data-k="rg" class="on">Red / green</button><button data-k="site">Chart colors</button></span></div>
+    </div>
+    <section class="hmgrid">
+      <div class="box hmbox">
+        <h3><span id="hmTitle">S&amp;P 500 · 1-day change</span><small id="hmAsOf"></small></h3>
+        <div class="hmap" id="hmap" aria-label="Market heatmap"></div>
+        <div class="hmfoot"><span class="fine">Click a box to open its chart. Boxes are grouped by GICS sector.</span><span class="hmleg" id="hmLeg"></span></div>
+      </div>
+      <div class="box hmside">
+        <h3><span>Ranked</span><span class="seg mini" id="hmRankSeg"><button data-r="top" class="on">Best</button><button data-r="bot">Worst</button></span></h3>
+        <div class="tbl" id="hmRank"></div>
+      </div>
+    </section>
+    <div class="hmtip" id="hmTip" hidden></div>
   </main>
 
   <!-- ===================== WELCOME ===================== -->
@@ -290,6 +312,6 @@
   </div>
 </div>
 <div class="toast" id="toast" hidden></div>
-<script src="app.js?v=20261002d"></script>
+<script src="app.js?v=20261002e"></script>
 </body>
 </html>

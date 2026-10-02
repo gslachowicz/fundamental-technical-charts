@@ -785,6 +785,7 @@ function applyLive(){
   $("#asof").textContent = `Data as of ${fmtLong(iso(META.dataDate))} close · live prices ${liveTime()} ET (delayed) · RS vs ${META.universeSize} stocks`;
   if(!$("#vScreener").hidden) renderScreener();
   if(!$("#vHome").hidden) renderHome();
+  if(!$("#vHeat").hidden) renderHeat();
   if(S && !$("#vChart").hidden){ patchS(); renderPanels(); draw(); }
 }
 async function loadLive(){
@@ -881,10 +882,11 @@ function route(){
   const low = raw.toLowerCase();
   const isList = raw === low && LISTS[low];
   const isHome = raw === "" || raw === "home";
-  ["#vWelcome","#vHome","#vScreener","#vChart"].forEach(id=>$(id).hidden = true);
+  ["#vWelcome","#vHome","#vScreener","#vChart","#vHeat"].forEach(id=>$(id).hidden = true); $("#hmTip").hidden = true;
   document.body.classList.toggle("on-welcome", raw === "welcome");
   document.body.classList.toggle("on-home", isHome);
   if(raw === "welcome"){ $("#vWelcome").hidden = false; setTab(""); document.title = "Ticker&Tape · O'Neil-style charts, RS ratings and bases"; window.scrollTo(0,0); return; }
+  if(low === "heatmap"){ lastList = "heatmap"; $("#vHeat").hidden = false; setTab("heat"); document.title = "Heatmap · Ticker&Tape"; window.scrollTo(0,0); renderHeat(); return; }
   if(isHome){ lastList = ""; $("#vHome").hidden = false; setTab("home"); document.title = "Ticker&Tape · Market dashboard"; renderHome(); return; }
   if(isList){ lastList = raw; $("#vScreener").hidden = false; setTab(LISTS[low]); document.title = `${{watch:"Watchlist",all:"Screener",etf:"ETFs"}[LISTS[low]]} · Ticker&Tape`;
     if(LISTS[low] !== "all") scrState.sector = null;
@@ -1031,6 +1033,126 @@ function drawHomeChart(){
   $("#hSpyQ").innerHTML = `<b>${nf2.format(lb.c)}</b> <span class="${ch<0?'neg':''}">${fmtPct(ch,2)}</span>`;
 }
 addEventListener("resize", ()=>{ if(!$("#vHome").hidden) drawHomeChart(); });
+/* ================= HEATMAP ================= */
+// Squarified treemap: sectors, then stocks inside, sized by market cap and colored by the chosen measure.
+const HM = {g:"sp500", c:"chgPct", z:"mcap", k:"rg", rank:"top"};
+try{ Object.assign(HM, store.get("tt:heat") || {}); }catch(e){}
+const HM_SCALE = {chgPct:3, perf1w:6, perf1m:10, perf3m:20, ytd:30, rsRating:49};
+const HM_LABEL = {chgPct:"1-day change", perf1w:"1-week change", perf1m:"1-month change", perf3m:"3-month change", ytd:"year-to-date change", rsRating:"RS Rating"};
+const HM_GROUP = {sp500:"S&P 500", ndx:"Nasdaq-100", watch:"Your watchlist"};
+const SECTOR_SHORT = {"Information Technology":"Technology", "Communication Services":"Comm. Services", "Consumer Discretionary":"Discretionary",
+  "Consumer Staples":"Staples", "Health Care":"Health Care", "Real Estate":"Real Estate"};
+let hmTiles = [];
+function hmValue(r){
+  const k = HM.c; if(k === "rsRating") return r.rsRating;
+  if(k === "chgPct") return r.chgPct;
+  const v = r[k]; if(v == null) return null;
+  // intraday: carry the live move into the longer windows too
+  return (r.live && r._c0) ? ((1+v/100)*(r.close/r._c0)-1)*100 : v;
+}
+function hmRows(){
+  if(!UNI) return [];
+  if(HM.g === "watch"){ const wl = new Set(getWL()); return UNI.filter(r=>wl.has(r.symbol) && !r.etf); }
+  const bit = HM.g === "ndx" ? 2 : 1;
+  return UNI.filter(r=>!r.etf && (r.ix||0) & bit);
+}
+function hmColor(v){
+  if(v == null || !isFinite(v)) return "#8d929b";
+  const t = Math.max(-1, Math.min(1, (HM.c === "rsRating" ? v-50 : v) / HM_SCALE[HM.c]));
+  const site = HM.k === "site";
+  const neg = site ? [[224,51,127],[122,15,69]] : [[214,48,49],[110,12,18]];
+  const pos = site ? [[29,63,196],[11,34,99]] : [[46,160,67],[10,80,30]];
+  const mid = [141,146,155];
+  const [a, b] = t < 0 ? neg : pos, u = Math.abs(t);
+  // neutral -> bright at |t| = 0.6, bright -> deep at |t| = 1
+  const mix = (x,y,f)=>x.map((xv,i)=>Math.round(xv+(y[i]-xv)*f));
+  const c = u < 0.6 ? mix(mid, a, u/0.6) : mix(a, b, (u-0.6)/0.4);
+  return `rgb(${c[0]},${c[1]},${c[2]})`;
+}
+function squarify(items, x, y, w, h){
+  // items: [{v, ...}] sorted desc; returns [{item, x, y, w, h}]
+  const out = [], total = items.reduce((s,i)=>s+i.v, 0); if(!total || w<=0 || h<=0) return out;
+  const scale = w*h/total; let rest = items.map(i=>({...i, a:i.v*scale}));
+  while(rest.length){
+    const short = Math.min(w, h); let row = [], best = Infinity;
+    for(const it of rest){
+      const r2 = [...row, it], s = r2.reduce((a,b)=>a+b.a,0), mx = Math.max(...r2.map(z=>z.a)), mn = Math.min(...r2.map(z=>z.a));
+      const worst = Math.max(short*short*mx/(s*s), (s*s)/(short*short*mn));
+      if(worst > best) break; best = worst; row = r2;
+    }
+    const s = row.reduce((a,b)=>a+b.a,0);
+    if(w >= h){ const cw = s/h; let yy = y; row.forEach(it=>{ const ch = it.a/cw; out.push({item:it, x, y:yy, w:cw, h:ch}); yy += ch; }); x += cw; w -= cw; }
+    else { const ch = s/w; let xx = x; row.forEach(it=>{ const cw = it.a/ch; out.push({item:it, x:xx, y, w:cw, h:ch}); xx += cw; }); y += ch; h -= ch; }
+    rest = rest.slice(row.length);
+  }
+  return out;
+}
+function renderHeat(){
+  const box = $("#hmap"); if(!box || $("#vHeat").hidden) return;
+  ["#hmGroup button","#hmColor button","#hmSize button","#hmScheme button","#hmRankSeg button"].forEach((sel,i)=>{
+    const key = ["g","c","z","k","rank"][i], attr = ["g","c","z","k","r"][i];
+    $$(sel).forEach(b=>b.classList.toggle("on", b.dataset[attr] === HM[key])); });
+  $("#hmTitle").textContent = `${HM_GROUP[HM.g]} · ${HM_LABEL[HM.c]}`;
+  if(!UNI){ box.innerHTML = `<div class="empty">Loading…</div>`; loadUni().then(()=>{ if(!$("#vHeat").hidden) renderHeat(); }).catch(()=>{ box.innerHTML = `<div class="empty">Could not load the stock list.</div>`; }); return; }
+  const rows = hmRows();
+  if(!rows.length){ box.innerHTML = `<div class="empty">${HM.g==="watch" ? "Your watchlist is empty. Star a few tickers (☆ next to the symbol) and they show up here." : "The index list loads after the next nightly update."}</div>`; $("#hmRank").innerHTML = ""; return; }
+  const W = box.clientWidth, H = Math.max(420, Math.min(900, Math.round(innerHeight - box.getBoundingClientRect().top - 70 + scrollY), Math.round(W*0.62)));
+  box.style.height = H + "px";
+  const size = r => HM.z === "eq" ? 1 : Math.max(r.mcap || ((r.dollarVol50||0)/1e6*40) || 1000, 300);
+  const secs = new Map(); rows.forEach(r=>{ const k = r.sector || "Other"; if(!secs.has(k)) secs.set(k, []); secs.get(k).push(r); });
+  const secItems = [...secs].map(([name, rs])=>({name, rs, v: rs.reduce((s,r)=>s+size(r),0)})).sort((a,b)=>b.v-a.v);
+  const HD = 17, html = []; hmTiles = [];
+  squarify(secItems, 0, 0, W, H).forEach(({item:sec, x, y, w, h})=>{
+    const lbl = SECTOR_SHORT[sec.name] || sec.name, showHd = h > 40 && w > 46;
+    html.push(`<div class="hmsec" style="left:${x}px;top:${y}px;width:${w}px;height:${h}px">${showHd ? `<b>${esc(lbl)}</b>` : ""}</div>`);
+    const inner = squarify(sec.rs.map(r=>({r, v:size(r)})).sort((a,b)=>b.v-a.v), x+1, y+(showHd?HD:1), w-2, h-(showHd?HD:1)-1);
+    inner.forEach(({item, x:tx, y:ty, w:tw, h:th})=>{
+      const r = item.r, v = hmValue(r), i = hmTiles.length; hmTiles.push({r, v});
+      const fs = Math.max(8, Math.min(46, tw/(r.symbol.length*0.66+0.6), th/2.3));
+      const vtxt = HM.c === "rsRating" ? (v==null?"—":String(Math.round(v))) : fmtPct(v, 2);
+      const lab = tw > 22 && th > 13 ? `<span class="s" style="font-size:${fs.toFixed(1)}px">${esc(r.symbol)}</span>${th > fs*2.2 && tw > 34 ? `<span class="v" style="font-size:${Math.max(8, fs*0.5).toFixed(1)}px">${vtxt}</span>` : ""}` : "";
+      html.push(`<div class="hmt" data-i="${i}" style="left:${tx}px;top:${ty}px;width:${tw}px;height:${th}px;background:${hmColor(v)}">${lab}</div>`);
+    });
+  });
+  box.innerHTML = html.join("");
+  // legend
+  const sc = HM_SCALE[HM.c], steps = [-1,-.75,-.5,-.25,0,.25,.5,.75,1];
+  $("#hmLeg").innerHTML = steps.map(t=>{ const v = HM.c==="rsRating" ? 50+t*sc : t*sc;
+    return `<span style="background:${hmColor(v)}">${HM.c==="rsRating" ? Math.round(v) : (v>0?"+":"")+(+v.toFixed(2))+"%"}</span>`; }).join("");
+  $("#hmAsOf").textContent = LIVE ? `live ${liveTime()} ET (delayed)` : (META ? `as of ${fmtLong(iso(META.dataDate))} close` : "");
+  renderHeatRank();
+}
+function renderHeatRank(){
+  const list = hmTiles.filter(t=>t.v!=null).sort((a,b)=> HM.rank==="top" ? b.v-a.v : a.v-b.v).slice(0, Math.max(10, Math.min(40, Math.floor(($("#hmap").offsetHeight + 40) / 40))));
+  const vt = v => HM.c === "rsRating" ? Math.round(v) : fmtPct(v, 2);
+  $("#hmRank").innerHTML = `<table class="scr mini"><thead><tr><th class="l nosort">Stock</th><th class="nosort">Price</th><th class="nosort">${HM.c==="rsRating"?"RS":esc(HM_LABEL[HM.c].replace(" change",""))}</th></tr></thead><tbody>${
+    list.map(t=>`<tr data-s="${esc(t.r.symbol)}"><td class="l"><span class="sym">${esc(t.r.symbol)}</span><span class="nm">${esc(t.r.name)}</span></td><td>${fmtP(t.r.close)}</td><td class="big ${t.v<(HM.c==="rsRating"?50:0)?'neg':'up'}">${vt(t.v)}</td></tr>`).join("")}</tbody></table>`;
+  $$("#hmRank tr[data-s]").forEach(tr=>{ tr.onclick = ()=>{ location.hash = tr.dataset.s; };
+    tr.onmouseenter = ()=>{ const i = hmTiles.findIndex(t=>t.r.symbol===tr.dataset.s); const el = $(`#hmap .hmt[data-i="${i}"]`); if(el) el.classList.add("hl"); };
+    tr.onmouseleave = ()=>{ $$("#hmap .hmt.hl").forEach(e=>e.classList.remove("hl")); }; });
+}
+function hmTip(e){
+  const tip = $("#hmTip"), el = e.target.closest(".hmt");
+  if(!el){ tip.hidden = true; return; }
+  const t = hmTiles[+el.dataset.i]; if(!t) return; const r = t.r;
+  const cell = (l, v, cls="") => `<dt>${l}</dt><dd class="${cls}">${v}</dd>`;
+  const pc = v => v==null ? "—" : fmtPct(v, 2), neg = v => (v??0) < 0 ? "neg" : "";
+  tip.innerHTML = `<div class="th"><b>${esc(r.symbol)}</b> <span>${esc(r.name)}</span></div><div class="ts">${esc([SECTOR_SHORT[r.sector]||r.sector, r.group].filter(Boolean).join(" · "))}</div>
+    <canvas id="hmTipCv"></canvas>
+    <dl>${cell("Price", fmtP(r.close))}${cell("1D", pc(r.chgPct), neg(r.chgPct))}${cell("1W", pc(r.perf1w), neg(r.perf1w))}${cell("1M", pc(r.perf1m), neg(r.perf1m))}${cell("3M", pc(r.perf3m), neg(r.perf3m))}${cell("YTD", pc(r.ytd), neg(r.ytd))}${cell("RS Rating", r.rsRating ?? "—")}${cell("Mkt cap", r.mcap ? "$"+fmtBigM(r.mcap) : "—")}</dl>`;
+  tip.hidden = false; sparkline($("#hmTipCv"), r.spark);
+  const pw = tip.offsetWidth, ph = tip.offsetHeight; let x = e.clientX + 16, y = e.clientY + 16;
+  if(x + pw > innerWidth - 8) x = e.clientX - pw - 16; if(y + ph > innerHeight - 8) y = innerHeight - ph - 8;
+  tip.style.left = x + "px"; tip.style.top = y + "px";
+}
+const fmtBigM = m => m >= 1e6 ? (m/1e6).toFixed(2)+"T" : m >= 1e3 ? (m/1e3).toFixed(m>=1e5?0:1)+"B" : Math.round(m)+"M";
+$("#hmap").addEventListener("mousemove", hmTip);
+$("#hmap").addEventListener("mouseleave", ()=>{ $("#hmTip").hidden = true; });
+$("#hmap").addEventListener("click", e=>{ const el = e.target.closest(".hmt"); if(!el) return; $("#hmTip").hidden = true; const t = hmTiles[+el.dataset.i]; if(t) location.hash = t.r.symbol; });
+[["#hmGroup","g","g"],["#hmColor","c","c"],["#hmSize","z","z"],["#hmScheme","k","k"],["#hmRankSeg","rank","r"]].forEach(([sel,key,attr])=>
+  $$(sel+" button").forEach(b=>b.onclick = e=>{ e.stopPropagation(); HM[key] = b.dataset[attr]; store.set("tt:heat", HM); key === "rank" ? (renderHeatRank(), $$("#hmRankSeg button").forEach(x=>x.classList.toggle("on", x===b))) : renderHeat(); }));
+let hmResize = 0; addEventListener("resize", ()=>{ clearTimeout(hmResize); hmResize = setTimeout(()=>{ if(!$("#vHeat").hidden) renderHeat(); }, 120); });
+
 
 
 /* ================= ACCOUNTS & SYNC (api.tickerandtape.com) ================= */
@@ -1165,7 +1287,7 @@ $("#vWelcome").addEventListener("click", e=>{
 // v: "s" = screener, "c" = chart, "*" = any. up: highlight the whole button group.
 const TOUR = [
   {v:"h", sel:"#tabs", t:"Four rooms",
-   b:"Home is the market dashboard. Watchlist holds the stocks you starred. Screener lists every S&P 1500 and Nasdaq-100 stock, about 1,500 names rated every trading day. ETFs covers indexes, sectors, industries, commodities, bonds and countries."},
+   b:"Home is the market dashboard. Watchlist holds the stocks you starred. Screener lists every S&P 1500 and Nasdaq-100 stock, about 1,500 names rated every trading day. ETFs covers indexes, sectors, industries, commodities, bonds and countries. Heatmap shows the S&P 500, the Nasdaq-100 or your watchlist as a map of boxes sized by market cap and colored by performance or RS Rating."},
   {v:"h", sel:"#hSect", t:"Sector scoreboard",
    b:"The market ETFs and the eleven Select Sector SPDRs with their 1-day, 1-week, 3-month, 9-month and year-to-date change. Click a column to rank the sectors, a row to open its chart, or Components to see the stocks in that sector. Next to it, the commodities board shows metals, energy and grains futures on the same scale."},
   {v:"h", sel:".hlists", t:"What is leading",
