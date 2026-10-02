@@ -868,7 +868,7 @@ async function openChart(sym){
     const [bundle] = await Promise.all([getJSON(`t/${encodeURIComponent(sym.replace(/=/g,"_"))}.json`), BENCH ? null : getJSON("bench.json").then(b=>{ BENCH = b.prices.map(([d,c])=>({t:iso(d),c})); })]);
     S = { symbol: bundle.symbol, name: bundle.name, fund: bundle.fund||{}, stats: bundle.stats||{}, base: bundle.base,
       px: bundle.prices.map(([d,o,h,l,c,v])=>({t:iso(d),o,h,l,c,v})), marks: store.get(marksKey(bundle.symbol)) || [] };
-    CUR = S.symbol; updateStar(); patchS(); hover=-1; renderPanels(); draw(); renderDbox();
+    CUR = S.symbol; updateStar(); patchS(); hover=-1; renderPanels(); draw(); renderDbox(); setShare();
   }catch(e){
     S=null; draw(); $("#sym").textContent = sym; $("#cname").textContent = "";
     toast(inWL(sym) ? `${sym} is in your watchlist: its chart loads after the next nightly update.` : `No data for ${sym} yet. Tap ☆ to add it to your watchlist: it loads after the next nightly update.`);
@@ -882,10 +882,11 @@ function route(){
   const low = raw.toLowerCase();
   const isList = raw === low && LISTS[low];
   const isHome = raw === "" || raw === "home";
-  ["#vWelcome","#vHome","#vScreener","#vChart","#vHeat"].forEach(id=>$(id).hidden = true); $("#hmTip").hidden = true;
+  ["#vWelcome","#vHome","#vScreener","#vChart","#vHeat","#vIdeas"].forEach(id=>$(id).hidden = true); $("#hmTip").hidden = true;
   document.body.classList.toggle("on-welcome", raw === "welcome");
   document.body.classList.toggle("on-home", isHome);
   if(raw === "welcome"){ $("#vWelcome").hidden = false; setTab(""); document.title = "Ticker&Tape · O'Neil-style charts, RS ratings and bases"; window.scrollTo(0,0); return; }
+  if(low === "ideas"){ lastList = "ideas"; $("#vIdeas").hidden = false; setTab("ideas"); document.title = "Trade ideas · Ticker&Tape"; window.scrollTo(0,0); renderIdeas(); return; }
   if(low === "heatmap"){ lastList = "heatmap"; $("#vHeat").hidden = false; setTab("heat"); document.title = "Heatmap · Ticker&Tape"; window.scrollTo(0,0); renderHeat(); return; }
   if(isHome){ lastList = ""; $("#vHome").hidden = false; setTab("home"); document.title = "Ticker&Tape · Market dashboard"; renderHome(); return; }
   if(isList){ lastList = raw; $("#vScreener").hidden = false; setTab(LISTS[low]); document.title = `${{watch:"Watchlist",all:"Screener",etf:"ETFs"}[LISTS[low]]} · Ticker&Tape`;
@@ -1153,6 +1154,100 @@ $("#hmap").addEventListener("mouseleave", ()=>{ $("#hmTip").hidden = true; });
 $("#hmap").addEventListener("click", e=>{ const el = e.target.closest(".hmt"); if(!el) return; $("#hmTip").hidden = true; const t = hmTiles[+el.dataset.i]; if(t) location.hash = t.r.symbol; });
 [["#hmGroup","g","g"],["#hmColor","c","c"],["#hmSize","z","z"],["#hmScheme","k","k"],["#hmRankSeg","rank","r"]].forEach(([sel,key,attr])=>
   $$(sel+" button").forEach(b=>b.onclick = e=>{ e.stopPropagation(); HM[key] = b.dataset[attr]; store.set("tt:heat", HM); key === "rank" ? (renderHeatRank(), $$("#hmRankSeg button").forEach(x=>x.classList.toggle("on", x===b))) : renderHeat(); }));
+/* ================= NEWSLETTER SIGN-UP ================= */
+// switched on once the API's /subscribe endpoint and the email sender are live
+const NEWSLETTER_ON = false;
+if(!NEWSLETTER_ON) $$("form[data-nl]").forEach(f=>f.remove());
+$$("form[data-nl]").forEach(f=>f.addEventListener("submit", async e=>{
+  e.preventDefault();
+  const inp = f.querySelector("input"), btn = f.querySelector("button"), email = inp.value.trim();
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)){ toast("Enter a valid email address."); inp.focus(); return; }
+  btn.disabled = true;
+  try{
+    const r = await api("/subscribe", {method:"POST", body: JSON.stringify({email})});
+    inp.value = "";
+    toast(r.already ? "You are already subscribed. See you Friday." : `Almost done: check ${email} and click the confirmation link.`);
+  }catch(ex){ toast(ex.message); }
+  finally{ btn.disabled = false; }
+}));
+$$("form[data-nl] input").forEach(i=>i.addEventListener("focus", ()=>{ if(auth.email && !i.value) i.value = auth.email; }));
+
+/* ================= SHARE ON X ================= */
+function xShareUrl(sym, extra){
+  const text = `$${sym.replace(/=F$/,"")}${extra ? " · " + extra : ""}`;
+  return "https://x.com/intent/post?" + new URLSearchParams({text, url:`https://tickerandtape.com/#${sym}`, via:"Tickerandtape"}).toString();
+}
+function setShare(){
+  const a = $("#bShare"); if(!a || !S) return;
+  const b = S.base, st = S.stats || {}, bits = [];
+  if(st.rsRating != null) bits.push(`RS ${st.rsRating}`);
+  if(b && b.status && b.type !== "Deep correction") bits.push(`${b.type}, ${b.status.toLowerCase()} (pivot ${fmtP(b.pivot)})`);
+  a.href = xShareUrl(S.symbol, bits.join(" · ") + (bits.length ? " — " : "") + "daily chart on Ticker&Tape");
+}
+
+/* ================= TRADE IDEAS ================= */
+let IDEAS = null, ideasLoading = null, ideaFilter = "all";
+function loadIdeas(){
+  if(!ideasLoading) ideasLoading = getJSON("ideas.json").then(d=>{ IDEAS = d; }).catch(()=>{ IDEAS = {ideas:[], history:[], stats:{}}; });
+  return ideasLoading;
+}
+function ideaChart(cv, it){
+  const dpr = devicePixelRatio || 1, W = cv.clientWidth || 300, H = cv.clientHeight || 110;
+  cv.width = W*dpr; cv.height = H*dpr; const g = cv.getContext("2d"); g.setTransform(dpr,0,0,dpr,0,0);
+  const d = it.spark || []; if(d.length < 2) return;
+  const lo = Math.min(...d, it.stop), hi = Math.max(...d, it.buyZoneTop), pad = (hi-lo)*0.06;
+  const R = 46, y = v => 4 + (hi+pad - v)/((hi-lo)+2*pad)*(H-8), x = i => 2 + i/(d.length-1)*(W-R-6);
+  // buy zone band, pivot and stop
+  g.fillStyle = "rgba(29,63,196,.09)"; g.fillRect(0, y(it.buyZoneTop), W-R, y(it.pivot)-y(it.buyZoneTop));
+  const hl = (v, col, dash, lbl) => { g.strokeStyle = col; g.setLineDash(dash); g.lineWidth = 1; g.beginPath(); g.moveTo(0, Math.round(y(v))+.5); g.lineTo(W-R, Math.round(y(v))+.5); g.stroke(); g.setLineDash([]);
+    g.fillStyle = col; g.font = `600 10px ${FONT_L}`; g.textBaseline = "middle"; g.fillText(lbl, W-R+4, y(v)); };
+  hl(it.pivot, C.piv, [4,3], fmtP(it.pivot)); hl(it.stop, C.down, [2,3], "stop");
+  g.strokeStyle = C.ink; g.lineWidth = 1.4; g.beginPath(); d.forEach((v,i)=> i ? g.lineTo(x(i), y(v)) : g.moveTo(x(i), y(v))); g.stroke();
+  g.fillStyle = C.ink; g.beginPath(); g.arc(x(d.length-1), y(d[d.length-1]), 2.6, 0, 7); g.fill();
+}
+function renderIdeas(){
+  if(!IDEAS){ $("#iCards").innerHTML = `<div class="empty">Loading…</div>`; loadIdeas().then(()=>{ if(!$("#vIdeas").hidden) renderIdeas(); }); return; }
+  $$("#iFilter button").forEach(b=>b.classList.toggle("on", b.dataset.f === ideaFilter));
+  const R = IDEAS.rules || {}; if(R.minRs) $("#iRs").textContent = R.minRs;
+  const all = IDEAS.ideas || [], list = ideaFilter === "all" ? all : all.filter(i=>i.status === ideaFilter);
+  const signed = !!auth.token;
+  $("#iCount").textContent = IDEAS.date ? `${list.length} setup${list.length===1?"":"s"} · ${fmtLong(iso(IDEAS.date))} close` : "";
+  const st = IDEAS.stats || {};
+  $("#iStats").innerHTML = st.count ? `<div><b>${st.count}</b><span>ideas tracked</span></div><div><b>${st.winPct ?? "—"}%</b><span>in the green</span></div><div><b class="${(st.avgPct??0)<0?'neg':''}">${fmtPct(st.avgPct,1)}</b><span>average return</span></div><div><b>${fmtPct(st.avgMaxPct,1)}</b><span>average best gain</span></div>`
+    : `<div><b>${all.length}</b><span>setups today</span></div><div class="wide"><span>The track record fills in as ideas age: every one is followed for 8 weeks or until its stop.</span></div>`;
+  const pc = v => v==null || v==="" ? "—" : (typeof v === "number" ? fmtPct(v,1) : esc(v));
+  $("#iCards").innerHTML = list.length ? list.map((it,k)=>`
+    <article class="icard" data-s="${esc(it.symbol)}">
+      <header><div><span class="sym">${esc(it.symbol)}</span><span class="nm">${esc(it.name)}</span></div><span class="rsv hot" title="RS Rating">${it.rs ?? "—"}</span></header>
+      <div class="imeta"><span class="chip ${STATUS_CLASS[it.status]||""}">${esc(it.status)}</span><span>${esc(it.type||"")}${it.weeks?` · ${it.weeks} wks`:""}${it.depthPct!=null?` · ${it.depthPct}% deep`:""}</span></div>
+      <canvas class="icv" data-k="${k}"></canvas>
+      <dl class="ifacts">
+        <dt>Price</dt><dd>${fmtP(it.close)} <small class="${(it.chgPct??0)<0?'neg':'up'}">${fmtPct(it.chgPct,1)}</small></dd>
+        <dt>vs pivot</dt><dd class="${(it.distPct??0)<0?'neg':''}">${fmtPct(it.distPct,1)}</dd>
+        <dt>Group</dt><dd title="${esc(it.group)}">${esc(it.groupRank || "—")}</dd>
+        <dt>EPS / Sales</dt><dd>${pc(it.epsChg)} / ${pc(it.salesChg)}</dd>
+      </dl>
+      <div class="iplan ${signed ? "" : "locked"}">
+        <div><span>Buy point</span><b>${signed ? fmtP(it.pivot) : "000.00"}</b></div>
+        <div><span>Buy zone to</span><b>${signed ? fmtP(it.buyZoneTop) : "000.00"}</b></div>
+        <div><span>Stop (−7%)</span><b class="neg">${signed ? fmtP(it.stop) : "000.00"}</b></div>
+        ${signed ? "" : `<button class="btn on ilock" data-w="up">Free account: see the trade plan</button>`}
+      </div>
+      <footer><a href="#${esc(it.symbol)}" class="btn">Open chart →</a><a class="btn xshare" target="_blank" rel="noopener" href="${esc(xShareUrl(it.symbol, `RS ${it.rs} · ${it.type}, ${it.status.toLowerCase()} (pivot ${fmtP(it.pivot)}) — today's trade ideas on Ticker&Tape`))}">Share on X</a></footer>
+    </article>`).join("") : `<div class="empty">No stock passes every filter today${ideaFilter!=="all" ? " in this group" : ""}. In weak markets that is normal: fewer leaders set up.</div>`;
+  $$("#iCards canvas.icv").forEach(cv=>ideaChart(cv, list[+cv.dataset.k]));
+  $$("#iCards .icard").forEach(c=>c.onclick = e=>{ if(e.target.closest("a,button")) return; location.hash = c.dataset.s; });
+  $$("#iCards [data-w=up]").forEach(b=>b.onclick = e=>{ e.stopPropagation(); openAuth("up"); });
+  // track record
+  const H = (IDEAS.history || []).filter(h=>h.date < (IDEAS.date||"9")).slice(0, 60);
+  $("#iTrack").innerHTML = H.length ? `<table class="scr itr"><thead><tr><th class="l nosort">Stock</th><th class="nosort">Flagged</th><th class="l nosort">Setup</th><th class="nosort">Price then</th><th class="nosort">Last</th><th class="nosort">Return</th><th class="nosort">Best</th><th class="l nosort">Status</th></tr></thead><tbody>${
+    H.map(h=>`<tr data-s="${esc(h.symbol)}"><td class="l"><span class="sym">${esc(h.symbol)}</span><span class="nm">${esc(h.name||"")}</span></td><td>${fmtD(Date.parse(h.date))}</td><td class="l">${esc(h.status)}</td><td>${fmtP(h.price)}</td><td>${fmtP(h.last)}</td>
+      <td class="${h.retPct<0?'neg':'up'}"><b>${fmtPct(h.retPct,1)}</b></td><td>${fmtPct(h.maxPct,1)}</td><td class="l"><span class="res r-${esc(h.result.toLowerCase())}">${esc(h.result)}${h.closed?` · ${fmtD(Date.parse(h.closed))}`:""}</span></td></tr>`).join("")}</tbody></table>`
+    : `<div class="empty">The first ideas enter the track record after their first full trading day.</div>`;
+  $$("#iTrack tr[data-s]").forEach(tr=>tr.onclick = ()=>{ location.hash = tr.dataset.s; });
+}
+$$("#iFilter button").forEach(b=>b.onclick = ()=>{ ideaFilter = b.dataset.f; renderIdeas(); });
+let ideaResize = 0; addEventListener("resize", ()=>{ clearTimeout(ideaResize); ideaResize = setTimeout(()=>{ if(!$("#vIdeas").hidden && IDEAS) $$("#iCards canvas.icv").forEach(cv=>{ const all = IDEAS.ideas||[], list = ideaFilter==="all"?all:all.filter(i=>i.status===ideaFilter); ideaChart(cv, list[+cv.dataset.k]); }); }, 150); });
 let hmResize = 0; addEventListener("resize", ()=>{ clearTimeout(hmResize); hmResize = setTimeout(()=>{ if(!$("#vHeat").hidden) renderHeat(); }, 120); });
 
 
@@ -1194,7 +1289,7 @@ async function pullData(fresh){
 function signedOut(expired){
   auth.token = auth.email = null;
   try{ localStorage.removeItem("tt:token"); localStorage.removeItem("tt:email"); localStorage.removeItem("tt:wl"); localMarkKeys().forEach(k=>localStorage.removeItem(k)); }catch(e){}
-  WL = null; if(S){ S.marks = []; draw(); }
+  WL = null; if(S){ S.marks = []; draw(); } if(!$("#vIdeas").hidden) renderIdeas();
   renderAcct(); updateStar(); if(!$("#vScreener").hidden) renderScreener();
   if(expired) toast("Your session expired. Sign in again to sync your watchlist.");
 }
@@ -1248,7 +1343,7 @@ $("#authForm").addEventListener("submit", async e=>{
     } else {
       const r = await api(authMode==="up" ? "/auth/signup" : "/auth/login", {method:"POST", body: JSON.stringify({email, password: pw})});
       auth.token = r.token; auth.email = r.email; store.set("tt:token", r.token); store.set("tt:email", r.email);
-      closeAuth(); renderAcct();
+      closeAuth(); renderAcct(); if(!$("#vIdeas").hidden) renderIdeas();
       toast(authMode==="up" ? "Account created. Your watchlist now syncs to every device." : `Welcome back, ${r.email}.`);
       await pullData(true);
       store.set("tt:welcomed", true);
