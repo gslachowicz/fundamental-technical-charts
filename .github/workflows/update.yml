@@ -4,7 +4,11 @@ on:
   schedule:
     # Monday–Friday 22:20 UTC (after the US close, both in summer and winter time)
     - cron: "20 22 * * 1-5"
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      fund_batch:
+        description: "Fundamentals to refresh in this run (150 = daily rotation; 2000 = load everything now)"
+        default: "150"
   push:
     branches: [main]
     paths: ["watchlist.txt", "site/**", "scripts/**", ".github/workflows/update.yml"]
@@ -21,9 +25,10 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 180
     env:
       SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT }}
+      INK_FUND_BATCH: ${{ inputs.fund_batch || '150' }}
     steps:
       - uses: actions/checkout@v4
 
