@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Methodology: how Ticker&amp;Tape calculates its ratings</title>
+<link rel="canonical" href="https://tickerandtape.com/methodology/">
+<meta name="description" content="How Ticker&amp;Tape calculates the RS Rating, Composite Rating, SMR Rating, industry group rank, bases and pivots, market direction and breadth.">
+<meta property="og:type" content="website"><meta property="og:site_name" content="Ticker&amp;Tape"><meta property="og:title" content="Methodology: how Ticker&amp;Tape calculates its ratings">
+<meta property="og:description" content="How Ticker&amp;Tape calculates the RS Rating, Composite Rating, SMR Rating, industry group rank, bases and pivots, market direction and breadth."><meta property="og:url" content="https://tickerandtape.com/methodology/"><meta property="og:image" content="https://tickerandtape.com/og-image.png">
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@Tickerandtape">
+<link rel="icon" href="/favicon.ico" sizes="any"><link rel="icon" type="image/svg+xml" href="/img/logo.svg"><link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="theme-color" content="#1f3c6e">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&family=Archivo+Narrow:wght@400;600;700&family=Libre+Franklin:wght@600;800&display=swap">
+<link rel="stylesheet" href="/style.css?v=20261010a">
+<style>
+.legal{max-width:780px;margin:0 auto;padding:8px 0 40px;font:16px/1.65 var(--f-label);color:var(--ink)}
+.legal h1{font:800 34px/1.1 var(--f-head);color:var(--navy);margin:18px 0 4px}
+.legal .upd{color:var(--ink2);font-size:14px;margin:0 0 22px}
+.legal h2{font:700 14px var(--f-label);letter-spacing:.12em;text-transform:uppercase;color:var(--navy);margin:30px 0 6px;border-bottom:1px solid var(--rule);padding-bottom:4px;scroll-margin-top:12px}
+.legal h3{font:700 16px var(--f-label);color:var(--ink);margin:18px 0 4px}
+.legal p,.legal li{margin:0 0 10px}
+.legal a{color:var(--navy)}
+.legal code{font:14px var(--f-data);background:var(--soft);padding:0 4px}
+.legal table{border-collapse:collapse;width:100%;margin:6px 0 14px;font-size:15px}
+.legal th,.legal td{text-align:left;border-bottom:1px dotted var(--rule);padding:5px 8px 5px 0;vertical-align:top}
+.legal th{font:600 12px var(--f-label);letter-spacing:.08em;text-transform:uppercase;color:var(--ink2);border-bottom:1px solid var(--ink)}
+.legal .box{padding:12px 14px;background:#f4f6fb;border:1px solid var(--navy);margin:16px 0}
+.legal .toc{columns:2;gap:24px;padding-left:18px}
+.legal .log time{display:block;font:700 13px var(--f-data);color:var(--ink2);margin-top:22px}
+.legal .log h3{margin-top:2px}
+.ltop{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;border-bottom:3px double var(--ink);padding:14px 0}
+.lnav{display:flex;gap:14px;flex-wrap:wrap;align-items:center;font:600 13px var(--f-label);letter-spacing:.06em;text-transform:uppercase}
+.lnav a{color:var(--ink2);text-decoration:none}.lnav a:hover,.lnav a.on{color:var(--navy)}
+.lnav a.btn{color:var(--ink)}
+@media (max-width:640px){.legal .toc{columns:1}.legal h1{font-size:28px}}
+</style>
+</head>
+<body>
+<div class="sheet">
+<header class="ltop"><a href="/" class="brand"><img src="/img/logo.svg" alt="" width="34" height="34">Ticker&amp;Tape</a>
+<nav class="lnav" aria-label="About"><a href="/about/">About</a><a href="/methodology/" class="on">Methodology</a><a href="/changelog/">What's new</a><a class="btn" href="/">← Charts</a></nav></header>
+<main class="legal">
+<h1>Methodology</h1>
+<p class="upd">How every number on Ticker&amp;Tape is calculated · last updated October 2, 2026</p>
+<p>Everything on the site is calculated automatically from public data every trading day. The ratings follow the ideas popularized by William O'Neil and Investor's Business Daily, but they are our own formulas: they will not match IBD's numbers exactly.</p>
+<ul class="toc">
+<li><a href="#universe">Stock universe</a></li><li><a href="#rs">RS Rating and RS line</a></li><li><a href="#comp">Composite Rating</a></li><li><a href="#smr">SMR Rating</a></li>
+<li><a href="#groups">Industry group rank</a></li><li><a href="#bases">Bases, pivots and status</a></li><li><a href="#ants">Ants</a></li><li><a href="#market">Market direction</a></li>
+<li><a href="#breadth">Breadth indicators</a></li><li><a href="#ideas">Trade ideas</a></li><li><a href="#data">Data and timing</a></li>
+</ul>
+
+<h2 id="universe">Stock universe</h2>
+<p>Every member of the S&amp;P 500, S&amp;P MidCap 400, S&amp;P SmallCap 600 and Nasdaq-100, plus every other U.S.-listed common stock and ADR with a market value of at least $1 billion and a price of at least $5. Ratings are ranked against this group of stocks; ETFs and tickers added only because a user starred them are charted but left out of the rankings.</p>
+
+<h2 id="rs">RS Rating and RS line</h2>
+<p>The RS Rating measures a stock's price performance over the last 12 months against every other stock in the universe, on a scale of 1 (weakest) to 99 (strongest). The score weights the most recent quarter double:</p>
+<p><code>score = 40% × 3-month change + 20% × 6-month + 20% × 9-month + 20% × 12-month</code></p>
+<p>Scores are ranked into percentiles: an RS Rating of 90 means the stock outperformed about 90% of the universe. Stocks with less than three months of history get no rating. The <b>RS line</b> on the chart is the stock's price divided by the S&amp;P 500; a rising line means the stock is beating the market, and a new high in the RS line ahead of the price is a sign of leadership.</p>
+
+<h2 id="comp">Composite Rating</h2>
+<p>One number from 1 to 99 that combines the main fundamental and technical factors. Each factor is first ranked as a percentile across the universe, then averaged with these weights:</p>
+<table><thead><tr><th>Factor</th><th>Weight</th></tr></thead><tbody>
+<tr><td>EPS growth (latest quarter and annual, capped between −100% and +300%)</td><td>2</td></tr>
+<tr><td>RS Rating</td><td>1</td></tr><tr><td>Industry group rank</td><td>1</td></tr><tr><td>SMR Rating</td><td>1</td></tr>
+<tr><td>Distance from the 52-week high (closer is better)</td><td>1</td></tr></tbody></table>
+<p>The weighted average is ranked again into a 1–99 percentile. A stock needs at least three of the five factors to get a rating.</p>
+
+<h2 id="smr">SMR Rating</h2>
+<p>Grades <b>S</b>ales growth, profit <b>M</b>argins and <b>R</b>eturn on equity from A (best) to E. Each part earns 0 to 3 points:</p>
+<table><thead><tr><th>Part</th><th>3 points</th><th>2 points</th><th>1 point</th></tr></thead><tbody>
+<tr><td>Sales growth (average of the last 3 quarters, or the latest year)</td><td>25%+</td><td>15%+</td><td>5%+</td></tr>
+<tr><td>Pre-tax margin</td><td>25%+</td><td>15%+</td><td>8%+</td></tr>
+<tr><td>Return on equity</td><td>25%+</td><td>17%+</td><td>10%+</td></tr></tbody></table>
+<p>The average of the available parts gives the grade: A from 2.6, B from 2.0, C from 1.3, D from 0.6, E below. At least two parts are needed.</p>
+
+<h2 id="groups">Industry group rank</h2>
+<p>Stocks are grouped by GICS sub-industry. Each group is ranked by the average RS score of its members, so rank 1 is the group with the strongest price performance. The group page also shows how each rank moved over 1, 3 and 6 weeks, the equal-weight performance of the group and the share of its stocks above the 50-day line.</p>
+
+<h2 id="bases">Bases, pivots and status</h2>
+<p>The base is measured from the highest high of roughly the last 65 weeks (the left side) to today, and must be at least 5 weeks long. It is classified by its depth from that high:</p>
+<ul>
+<li><b>Flat base:</b> 15% deep or less.</li>
+<li><b>Cup with handle:</b> 15% to 50% deep, with a handle: after the right side gets back to within 15% of the high, a pullback of 2% to 15% that stays in the upper half of the base, lasting up to six weeks.</li>
+<li><b>Cup:</b> 15% to 50% deep, without a handle, trading within 10% of the high.</li>
+<li><b>Deep correction:</b> more than 50% deep. Not a buyable base.</li>
+</ul>
+<p>The <b>pivot</b> (buy point) is the high of the handle, or of the left side when there is no handle, plus $0.10. The status compares the last close with the pivot:</p>
+<table><thead><tr><th>Status</th><th>Meaning</th></tr></thead><tbody>
+<tr><td>Breakout</td><td>Recently closed above the pivot and is no more than 5% above it.</td></tr>
+<tr><td>In buy zone</td><td>Above the pivot by up to 5%.</td></tr>
+<tr><td>Near pivot</td><td>Up to 5% below the pivot.</td></tr>
+<tr><td>Below pivot</td><td>More than 5% below the pivot.</td></tr>
+<tr><td>Extended</td><td>More than 5% above the pivot: past the normal buy range.</td></tr>
+<tr><td>Failed breakout</td><td>Broke out, then closed more than 3% below the pivot.</td></tr>
+<tr><td>Correcting</td><td>In a deep correction.</td></tr></tbody></table>
+<p>Base detection is automatic and approximate. Use it as a starting point for your own reading of the chart.</p>
+
+<h2 id="ants">Ants</h2>
+<p>A pattern described by David Ryan: the stock closed up in at least 12 of the last 15 sessions with volume at least 20% above its 50-day average. The dots turn gold when the stock also gained 20% or more in those 15 days. It points to steady institutional buying.</p>
+
+<h2 id="market">Market direction</h2>
+<p>Read from the price and volume of the S&amp;P 500 and the Nasdaq Composite, following O'Neil's rules. It is our own automatic reading, not IBD's call.</p>
+<ul>
+<li><b>Distribution day:</b> the index falls 0.2% or more on higher volume than the day before. It counts for 25 sessions, or until the index rises 5% above that close.</li>
+<li><b>Rally attempt:</b> starts with the first up day after a low.</li>
+<li><b>Follow-through day:</b> on day 4 or later of a rally attempt, a gain of at least 1.25% on higher volume. It confirms a new uptrend.</li>
+<li><b>Uptrend under pressure:</b> 5 or more distribution days, or the index below its 50-day line.</li>
+<li><b>Correction:</b> the index is 8% off its peak, or has 6 distribution days while below its 50-day line.</li>
+</ul>
+
+<h2 id="breadth">Breadth indicators</h2>
+<ul>
+<li><b>% above moving averages:</b> the share of stocks closing above their 20-, 50- and 200-day moving averages.</li>
+<li><b>New highs and lows:</b> stocks at a new 52-week high or low, with the 10-day average of highs minus lows.</li>
+<li><b>Advance/decline line:</b> the running total of advancing minus declining stocks, with its 50-day average.</li>
+<li><b>McClellan oscillator:</b> the 19-day minus the 39-day average of ratio-adjusted net advances.</li>
+</ul>
+
+<h2 id="ideas">Trade ideas</h2>
+<p>A daily scan of the universe for leaders setting up: RS Rating of 80 or more, price of $10 or more, at least $20 million traded a day on average, trading above the 50- and 200-day lines, and with a status of Breakout, In buy zone or Near pivot. Each idea shows a stop 7% below the pivot, O'Neil's rule for cutting losses, and is tracked for 8 weeks so you can see how the ideas did.</p>
+
+<h2 id="data">Data and timing</h2>
+<ul>
+<li><b>Prices:</b> Yahoo Finance daily bars, about three years of history. The full update starts after the U.S. close every trading day. During the session, prices refresh every 15 minutes with a delay of about 15 minutes.</li>
+<li><b>Fundamentals:</b> quarterly EPS and sales from Yahoo Finance; up to 10 years of annual figures from company filings at the SEC (EDGAR). Watchlist stocks refresh daily; the rest of the universe refreshes in rotation, at least every 7 days.</li>
+<li><b>Earnings dates:</b> Nasdaq's public earnings calendar, with Yahoo Finance as a fallback.</li>
+<li><b>Index membership:</b> public lists of the S&amp;P and Nasdaq-100 constituents; market values and the broad stock list from Nasdaq's stock screener.</li>
+</ul>
+<div class="box"><b>Not investment advice.</b> All ratings and signals are calculated automatically and can be wrong or late. A number looks off? Write to <a href="mailto:contacto@tickerandtape.com">contacto@tickerandtape.com</a>.</div>
+</main>
+<footer class="foot"><p class="fdisc">Ticker&amp;Tape is a charting and research tool, not investment advice. · <a href="/about/">About</a> · <a href="/methodology/">Methodology</a> · <a href="/changelog/">What's new</a> · <a href="mailto:contacto@tickerandtape.com">contacto@tickerandtape.com</a> · <a href="/terms.html">Terms of Use</a> · <a href="/privacy.html">Privacy Policy</a></p></footer>
+</div>
+<script src="/i18n.js?v=20261010a"></script>
+</body>
+</html>
