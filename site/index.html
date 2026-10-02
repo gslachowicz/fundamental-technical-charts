@@ -23,13 +23,14 @@
 <meta name="description" content="O'Neil-style daily charts, RS Ratings, industry group ranks and automatic base and pivot detection for every S&amp;P 1500 and Nasdaq-100 stock. Free.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&family=Archivo+Narrow:wght@400;600;700&family=Libre+Franklin:wght@600;800&family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&display=swap">
-<link rel="stylesheet" href="style.css?v=20261005c">
+<link rel="stylesheet" href="style.css?v=20261006a">
 </head>
 <body>
 <div class="sheet">
   <nav class="topbar">
     <a href="#" class="brand"><img src="img/logo.svg" alt="" width="34" height="34">Ticker&amp;Tape</a>
     <span class="asof" id="asof"></span>
+    <a href="#breadth" class="mktchip" id="mktChip" title="Market direction · open Market breadth" hidden></a>
     <span class="sp"></span>
     <label class="jump"><span class="vh">Go to ticker</span><input id="jump" placeholder="Ticker…" maxlength="10" spellcheck="false" autocomplete="off" list="symlist"></label>
     <datalist id="symlist"></datalist>
@@ -116,7 +117,10 @@
       <h3><span id="bTitle">Breadth</span><small id="bAsOf"></small></h3>
       <div class="bcwrap"><canvas id="bcv" aria-label="Market breadth charts: index, percent of stocks above moving averages, new highs and lows, advance/decline line and McClellan oscillator"></canvas></div>
     </section>
-    <p class="fine">Market direction is worked out automatically from price and volume and is not IBD's call. Distribution day: the index falls 0.2% or more on higher volume than the day before; it counts for 25 sessions or until the index rises 5% above that close. A rally attempt starts with the first up day after a low; a follow-through day comes on day 4 or later with a gain of at least 1.25% on higher volume. Under pressure: 5 or more distribution days, or the index under its 50-day line. Correction: 8% off the peak, or 6 distribution days under the 50-day line. McClellan oscillator: 19-day minus 39-day average of ratio-adjusted net advances. Not investment advice.</p>
+    <details class="howto">
+      <summary>How the market direction is worked out</summary>
+      <p class="fine">Market direction is worked out automatically from price and volume and is not IBD's call. Distribution day: the index falls 0.2% or more on higher volume than the day before; it counts for 25 sessions or until the index rises 5% above that close. A rally attempt starts with the first up day after a low; a follow-through day comes on day 4 or later with a gain of at least 1.25% on higher volume. Under pressure: 5 or more distribution days, or the index under its 50-day line. Correction: 8% off the peak, or 6 distribution days under the 50-day line. McClellan oscillator: 19-day minus 39-day average of ratio-adjusted net advances. Not investment advice.</p>
+    </details>
   </main>
 
   <!-- ===================== TRADE IDEAS ===================== -->
@@ -278,8 +282,11 @@
       </table>
     </div>
     <div class="more" id="moreWrap" hidden><button class="btn" id="moreBtn">Show more</button></div>
-    <p class="cleg"><span>Colors follow your chart's up/down colors.</span><span><i class="t-up2">+32%</i> strong: EPS or sales +25% or more, U/D 1.5+, inside the buy zone, heavy volume on an up day</span><span><i class="t-dn2">−9%</i> weak: big drop, heavy volume on a down day, far below highs</span><span><i class="t-warn">+28%</i> extended: 25%+ over the 50-day or 5%+ past the pivot</span></p>
-    <p class="fine">RS Rating: each stock's 12-month performance (last quarter weighted double) ranked against the S&amp;P 1500 and Nasdaq-100 stocks, 1–99. All stocks: every S&amp;P 500, MidCap 400, SmallCap 600 and Nasdaq-100 member; their earnings and sales data refresh in rotation. Star any ticker to add it to your watchlist; tickers outside these indexes load after the next nightly update. Bases and pivots are detected automatically from daily bars and are a starting point for your own read of the chart. Data: Yahoo Finance via yfinance, end of day. <a href="#welcome">About Ticker&amp;Tape</a> · <button class="lnk" data-tour>Take the tour</button></p>
+    <details class="howto">
+      <summary>How to read this table</summary>
+      <p class="cleg"><span>Colors follow your chart's up/down colors.</span><span><i class="t-up2">+32%</i> strong: EPS or sales +25% or more, U/D 1.5+, inside the buy zone, heavy volume on an up day</span><span><i class="t-dn2">−9%</i> weak: big drop, heavy volume on a down day, far below highs</span><span><i class="t-warn">+28%</i> extended: 25%+ over the 50-day or 5%+ past the pivot</span></p>
+      <p class="fine">RS Rating: each stock's 12-month performance (last quarter weighted double) ranked against the S&amp;P 1500 and Nasdaq-100 stocks, 1–99. All stocks: every S&amp;P 500, MidCap 400, SmallCap 600 and Nasdaq-100 member; their earnings and sales data refresh in rotation. Star any ticker to add it to your watchlist; tickers outside these indexes load after the next nightly update. Bases and pivots are detected automatically from daily bars and are a starting point for your own read of the chart. Data: Yahoo Finance via yfinance, end of day. <a href="#welcome">About Ticker&amp;Tape</a> · <button class="lnk" data-tour>Take the tour</button></p>
+    </details>
   </main>
 
   <!-- ===================== CHART ===================== -->
@@ -447,7 +454,7 @@
   </div>
 </div>
 <div class="toast" id="toast" hidden></div>
-<script src="i18n.js?v=20261005c"></script>
-<script src="app.js?v=20261005c"></script>
+<script src="i18n.js?v=20261006a"></script>
+<script src="app.js?v=20261006a"></script>
 </body>
 </html>

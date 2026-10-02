@@ -97,7 +97,8 @@ const D = [
 ["% of stocks above moving averages","% de acciones sobre sus medias móviles","% de ações acima das médias móveis"],["% above MAs","% sobre medias","% acima das médias"],["New 52-week highs / lows","Nuevos máximos / mínimos de 52 semanas","Novas máximas / mínimas de 52 semanas"],["52-wk highs / lows","Máx. / mín. 52 sem.","Máx. / mín. 52 sem."],
 ["Advance / decline line","Línea de avance / descenso","Linha de avanço / declínio"],["A/D line","Línea A/D","Linha A/D"],["Cumulative","Acumulada","Acumulada"],["50-day avg","Prom. 50 días","Média 50 dias"],["Net, 10-day avg","Neto, prom. 10 días","Líquido, média 10 dias"],
 ["Highs","Máximos","Máximas"],["Lows","Mínimos","Mínimas"],["▼ distribution","▼ distribución","▼ distribuição"],["▲ follow-through","▲ follow-through","▲ follow-through"],["20-day","20 días","20 dias"],["50-day","50 días","50 dias"],["200-day","200 días","200 dias"],
-["Index","Índice","Índice"],["now","ahora","agora"],
+["Index","Índice","Índice"],["now","ahora","agora"],["How to read this table","Cómo leer esta tabla","Como ler esta tabela"],["How the market direction is worked out","Cómo se calcula la dirección del mercado","Como a direção do mercado é calculada"],
+["Market direction · open Market breadth","Dirección del mercado · abrir Amplitud de mercado","Direção do mercado · abrir Amplitude de mercado"],["Nasdaq","Nasdaq","Nasdaq"],
 // trade ideas
 ["Research · updated every trading day after the close","Investigación · actualizada cada día hábil tras el cierre","Pesquisa · atualizada a cada pregão após o fechamento"],
 ["Leaders setting up right now: RS Rating of","Líderes armando su base ahora mismo: RS Rating de","Líderes montando base agora: RS Rating de"],
@@ -385,7 +386,7 @@ const P = [
 [/^Pivot (.+)$/, v=>[`Pivot ${v}`, `Pivô ${v}`]],
 [/^Strong buy: (\d+)$/, n=>[`Compra fuerte: ${n}`, `Compra forte: ${n}`]], [/^Strong sell: (\d+)$/, n=>[`Venta fuerte: ${n}`, `Venda forte: ${n}`]],
 // "Label: value" where the label is a known phrase (Sector: Technology, Buy: 25, …)
-[/^([A-Z][A-Za-z /&.-]{1,30}): (.+)$/, (a,b)=> D_HAS(a) ? [`${tx(a)}: ${tx(b)}`, `${tx(a)}: ${tx(b)}`] : null],
+[/^([A-Z][A-Za-z /&.-]{1,30}): (.+)$/, (a,b)=> D_HAS(a) && !/[.!?]\s+[A-Z]/.test(b) ? [`${tx(a)}: ${tx(b)}`, `${tx(a)}: ${tx(b)}`] : null],
 ];
 const NOUN = {stocks:["acciones","ações"], tickers:["tickers","tickers"], ETFs:["ETFs","ETFs"]};
 
@@ -419,7 +420,7 @@ api.t = tx;
 
 /* ---------- applying it to the page ---------- */
 const SKIP = new Set(["SCRIPT","STYLE","TEXTAREA","CODE","PRE","OPTION"]);
-const ATTRS = ["title","placeholder","aria-label","alt"];
+const ATTRS = ["title","placeholder","aria-label","alt","data-l"];
 function doText(n){
   const v = n.nodeValue; if(!v || !/[A-Za-z]/.test(v)) return;
   const p = n.parentNode; if(!p || SKIP.has(p.nodeName) || (p.closest && p.closest("[data-noi18n],.hmt,.hmtip .th"))) return;

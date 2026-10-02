@@ -47,7 +47,7 @@ const MKT_CLASS = {"Uptrend":"st-up","Uptrend under pressure":"st-press","Rally 
 /* ---------- app state ---------- */
 let META=null, ROWS=[], UNI=null, BENCH=null, order=[];
 const PAGE = 100;
-const scrState = { key: store.get("ink:sortKey") || "rsRating", asc: !!store.get("ink:sortAsc"), filter: "all",
+const scrState = { key: store.get("ink:sortKey") || "rsRating", asc: !!store.get("ink:sortAsc"), filter: store.get("ink:filter") || "all",
   scope: "watch", limit: PAGE, sector: null };
 const list = () => scrState.scope==="all" && UNI ? UNI.filter(r=>!r.etf) : scrState.scope==="etf" && UNI ? UNI.filter(r=>r.etf) : watchRows();
 /* ---------- personal watchlist (default: the house list in watchlist.txt) ---------- */
@@ -109,6 +109,10 @@ function sparkline(cv, data){
   data.forEach((v,i)=>{ const x=1+i/(data.length-1)*(W-6); i? g.lineTo(x,y(v)) : g.moveTo(x,y(v)); }); g.stroke();
   g.fillStyle=g.strokeStyle; g.beginPath(); g.arc(W-5, y(data[data.length-1]), 2.2, 0, 7); g.fill();
 }
+// the header row sticks to the top of the window while scrolling, unless the table is wider than the screen
+function fitTable(){ const w = $("#vScreener .tablewrap"), t = $("#scr"); if(!w || !t || $("#vScreener").hidden) return;
+  w.classList.remove("fits"); w.classList.toggle("fits", t.scrollWidth <= w.clientWidth + 1); }
+addEventListener("resize", ()=>{ clearTimeout(fitTable.h); fitTable.h = setTimeout(fitTable, 120); });
 function renderScreener(){
   const rows = filtered();
   const k = scrState.key, dir = scrState.asc ? 1 : -1;
@@ -122,22 +126,22 @@ function renderScreener(){
   tb.innerHTML = shown.map(r => {
     const b = r.base || {};
     const rs = r.rsRating; const stc = STATUS_CLASS[b.status] || "";
-    return `<tr data-s="${esc(r.symbol)}" tabindex="0">
+    return `<tr data-s="${esc(r.symbol)}" tabindex="0"${b.type || b.status ? "" : ' class="nob"'}>
       <td class="l"><span class="sym">${esc(r.symbol)}</span>${scrState.scope!=="watch" && inWL(r.symbol)?'<span class="star" title="In your watchlist">★</span>':''}${earnBadge(r.symbol)}${r.stale?' <span class="stale">stale</span>':''}<span class="nm" title="${esc(r.name)}">${esc(r.name)}</span></td>
       <td class="spk">${r.pending?'<span class="pend">pending</span>':`<canvas data-spark="${esc(r.symbol)}"></canvas>`}</td>
       <td>${fmtP(r.close)}</td>
-      <td class="${TIER.chg(r.chgPct)}">${fmtPct(r.chgPct,2)}</td>
+      <td class="${TIER.chg(r.chgPct)}" data-l="Chg">${fmtPct(r.chgPct,2)}</td>
       <td><span class="rsv ${rs>=80?'hot':''}">${rs??"—"}</span></td>
       <td title="${esc(r.group)}">${r.etf ? `<span class="nm">${esc(r.tracks||r.group||"")}</span>` : esc(r.groupRank||"—")}</td>
-      <td class="${TIER.eps(pnum(r.epsChg))}">${esc(r.epsChg||"—")}</td>
-      <td class="${TIER.sales(pnum(r.salesChg))}">${esc(r.salesChg||"—")}</td>
+      <td class="${TIER.eps(pnum(r.epsChg))}" data-l="EPS Δ">${esc(r.epsChg||"—")}</td>
+      <td class="${TIER.sales(pnum(r.salesChg))}" data-l="Sales Δ">${esc(r.salesChg||"—")}</td>
       <td class="${TIER.high(r.offHighPct)}">${fmtPct(r.offHighPct)}</td>
       <td class="${TIER.vs50(r.vs50Pct)}" ${(r.vs50Pct??0)>=25?'title="25%+ above the 50-day line: extended"':''}>${fmtPct(r.vs50Pct)}</td>
       <td class="${TIER.vol(r.volVsAvgPct, r.chgPct)}">${fmtPct(r.volVsAvgPct,0)}</td>
       <td class="${TIER.ud(r.udRatio)}">${r.udRatio==null?"—":r.udRatio.toFixed(2)}</td>
       <td class="l">${b.type?`${esc(b.type)}<span class="nm">${b.weeks} wks · ${b.depthPct}% deep</span>`:"—"}</td>
       <td>${b.pivot?fmtP(b.pivot):"—"}</td>
-      <td class="${b.pivot ? TIER.pivot(b.distPct) : ""}">${b.pivot?fmtPct(b.distPct):"—"}</td>
+      <td class="${b.pivot ? TIER.pivot(b.distPct) : ""}" data-l="To pivot">${b.pivot?fmtPct(b.distPct):"—"}</td>
       <td class="l">${b.status?`<span class="chip ${stc}">${esc(b.status)}</span>`:"—"}</td>
     </tr>`; }).join("") || `<tr><td colspan="16" class="l" style="padding:18px">${scrState.scope==="watch" && !getWL().length ? "Your watchlist is empty. Open any ticker and tap the ☆ next to its symbol to add it." : "No tickers match this filter."}</td></tr>`;
   const bySym = new Map(shown.map(r=>[r.symbol,r]));
@@ -146,10 +150,18 @@ function renderScreener(){
   $("#count").textContent = total > shown.length ? `Showing ${shown.length} of ${total} · ${all.length} ${noun}` : `${total} of ${all.length} ${noun}`;
   const sc = $("#secChip"); sc.hidden = !scrState.sector;
   if(scrState.sector){ sc.innerHTML = `Sector: <b>${esc(scrState.sector)}</b> <button aria-label="Clear sector filter">×</button>`; sc.querySelector("button").onclick = ()=>{ scrState.sector=null; scrState.limit=PAGE; renderScreener(); }; }
+  fitTable();
   $("#moreWrap").hidden = total <= shown.length;
   if(total > shown.length) $("#moreBtn").textContent = `Show ${Math.min(PAGE, total-shown.length)} more`;
 }
+const MKT_SHORT = {"Uptrend":"Uptrend","Uptrend under pressure":"Under pressure","Rally attempt":"Rally attempt","Correction":"Correction"};
+function renderMktChip(){
+  const el = $("#mktChip"); if(!el) return;
+  const M = (META && META.market) || []; el.hidden = !M.length;
+  el.innerHTML = M.map(m=>`<span><i class="${MKT_CLASS[m.status]||''}"></i>${esc(m.name.replace(" Composite",""))} <b>${esc(MKT_SHORT[m.status]||m.status)}</b></span>`).join("");
+}
 function renderPulse(){
+  renderMktChip();
   const els = [$("#pulse"), $("#hPulse")].filter(Boolean);
   if(!META || !META.market || !META.market.length){ els.forEach(el=>el.innerHTML=""); return; }
   const html = META.market.map(m => `<div class="pcard">
@@ -165,7 +177,8 @@ $$("#scr th[data-k]").forEach(th=>{
     store.set("ink:sortKey",scrState.key); store.set("ink:sortAsc",scrState.asc); scrState.limit=PAGE; renderScreener(); };
   th.addEventListener("click", go); th.addEventListener("keydown", e=>{ if(e.key==="Enter") go(); });
 });
-$$("#filters button").forEach(b=>b.onclick=()=>{ scrState.filter=b.dataset.f; scrState.limit=PAGE; $$("#filters button").forEach(x=>x.classList.toggle("on",x===b)); renderScreener(); });
+$$("#filters button").forEach(b=>b.classList.toggle("on", b.dataset.f===scrState.filter));
+$$("#filters button").forEach(b=>b.onclick=()=>{ scrState.filter=b.dataset.f; store.set("ink:filter", scrState.filter); scrState.limit=PAGE; $$("#filters button").forEach(x=>x.classList.toggle("on",x===b)); renderScreener(); });
 async function setScope(s){
   scrState.scope = s; scrState.limit = PAGE;
   $$("#scope button").forEach(x=>x.classList.toggle("on", x.dataset.s===s));
@@ -922,7 +935,7 @@ function route(){
 }
 $("#bBack").onclick = () => { location.hash = lastList; };   // back to the list (or home) the chart was opened from
 $$("#tabs a").forEach(a=>a.addEventListener("click", ()=>{ if(a.dataset.v==="all") scrState.sector = null; }));
-document.addEventListener("click", e=>{ const b = e.target.closest("[data-sector]"); if(!b) return; e.preventDefault(); scrState.sector = b.dataset.sector; scrState.filter = "all";
+document.addEventListener("click", e=>{ const b = e.target.closest("[data-sector]"); if(!b) return; e.preventDefault(); scrState.sector = b.dataset.sector; scrState.filter = "all"; store.set("ink:filter", "all");
   $$("#filters button").forEach(x=>x.classList.toggle("on", x.dataset.f==="all")); if(location.hash === "#screener") setScope("all"); else location.hash = "screener"; });
 
 /* ================= HOME DASHBOARD ================= */
@@ -1183,7 +1196,7 @@ $("#hmap").addEventListener("click", e=>{ const el = e.target.closest(".hmt"); i
 [["#hmGroup","g","g"],["#hmColor","c","c"],["#hmSize","z","z"],["#hmScheme","k","k"],["#hmRankSeg","rank","r"]].forEach(([sel,key,attr])=>
   $$(sel+" button").forEach(b=>b.onclick = e=>{ e.stopPropagation(); HM[key] = b.dataset[attr]; store.set("tt:heat", HM); key === "rank" ? (renderHeatRank(), $$("#hmRankSeg button").forEach(x=>x.classList.toggle("on", x===b))) : renderHeat(); }));
 /* ================= EARNINGS CALENDAR ================= */
-let EARN = null, earnLoading = null, earnWeek = null, earnFilter = "all";
+let EARN = null, earnLoading = null, earnWeek = null, earnFilter = store.get("tt:earnF") || "all";
 const EARN_NEXT = new Map();   // symbol -> next upcoming report
 const etToday = () => new Date().toLocaleDateString("en-CA", {timeZone:"America/New_York"});
 function loadEarn(){
@@ -1266,7 +1279,7 @@ function renderEarn(){
   }).join("");
   $$("#eCal .etog").forEach(b=>b.onclick = ()=>{ const m = document.getElementById(b.dataset.t); m.hidden = false; b.remove(); });
 }
-$$("#eFilter button").forEach(b=>b.onclick = ()=>{ earnFilter = b.dataset.f; renderEarn(); });
+$$("#eFilter button").forEach(b=>b.onclick = ()=>{ earnFilter = b.dataset.f; store.set("tt:earnF", earnFilter); renderEarn(); });
 
 /* ================= NEWSLETTER SIGN-UP ================= */
 // switched on once the API's /subscribe endpoint and the email sender are live
@@ -1455,7 +1468,7 @@ $$("#bGroup button").forEach(b=>b.onclick = ()=>{ brState.g = b.dataset.g; store
 $$("#bRange button").forEach(b=>b.onclick = ()=>{ brState.r = +b.dataset.r; store.set("tt:brR", brState.r); renderBreadth(); });
 let brResize = 0; addEventListener("resize", ()=>{ clearTimeout(brResize); brResize = setTimeout(()=>{ if(!$("#vBreadth").hidden) drawBreadth(); }, 120); });
 
-let IDEAS = null, ideasLoading = null, ideaFilter = "all", ideaSmr = store.get("tt:ideaSmr") || "all";
+let IDEAS = null, ideasLoading = null, ideaFilter = store.get("tt:ideaF") || "all", ideaSmr = store.get("tt:ideaSmr") || "all";
 const ideaSmrOf = it => it.smr || (UNI && (UNI.find(r=>r.symbol===it.symbol)||{}).smr) || "";
 function loadIdeas(){
   if(!ideasLoading) ideasLoading = getJSON("ideas.json").then(d=>{ IDEAS = d; }).catch(()=>{ IDEAS = {ideas:[], history:[], stats:{}}; });
@@ -1521,7 +1534,7 @@ function renderIdeas(){
     : `<div class="empty">The first ideas enter the track record after their first full trading day.</div>`;
   $$("#iTrack tr[data-s]").forEach(tr=>tr.onclick = ()=>{ location.hash = tr.dataset.s; });
 }
-$$("#iFilter button").forEach(b=>b.onclick = ()=>{ ideaFilter = b.dataset.f; renderIdeas(); });
+$$("#iFilter button").forEach(b=>b.onclick = ()=>{ ideaFilter = b.dataset.f; store.set("tt:ideaF", ideaFilter); renderIdeas(); });
 $$("#iSmr button").forEach(b=>b.onclick = ()=>{ ideaSmr = b.dataset.q; store.set("tt:ideaSmr", ideaSmr); renderIdeas(); });
 let ideaResize = 0; addEventListener("resize", ()=>{ clearTimeout(ideaResize); ideaResize = setTimeout(()=>{ if(!$("#vIdeas").hidden && IDEAS) $$("#iCards canvas.icv").forEach(cv=>{ const all = IDEAS.ideas||[], list = ideaFilter==="all"?all:all.filter(i=>i.status===ideaFilter); ideaChart(cv, list[+cv.dataset.k]); }); }, 150); });
 let hmResize = 0; addEventListener("resize", ()=>{ clearTimeout(hmResize); hmResize = setTimeout(()=>{ if(!$("#vHeat").hidden) renderHeat(); }, 120); });
