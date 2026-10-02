@@ -1156,7 +1156,7 @@ $("#hmap").addEventListener("click", e=>{ const el = e.target.closest(".hmt"); i
   $$(sel+" button").forEach(b=>b.onclick = e=>{ e.stopPropagation(); HM[key] = b.dataset[attr]; store.set("tt:heat", HM); key === "rank" ? (renderHeatRank(), $$("#hmRankSeg button").forEach(x=>x.classList.toggle("on", x===b))) : renderHeat(); }));
 /* ================= NEWSLETTER SIGN-UP ================= */
 // switched on once the API's /subscribe endpoint and the email sender are live
-const NEWSLETTER_ON = false;
+const NEWSLETTER_ON = true;
 if(!NEWSLETTER_ON) $$("form[data-nl]").forEach(f=>f.remove());
 $$("form[data-nl]").forEach(f=>f.addEventListener("submit", async e=>{
   e.preventDefault();
