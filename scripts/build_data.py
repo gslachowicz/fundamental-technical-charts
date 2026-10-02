@@ -99,6 +99,25 @@ def yf_symbol(s: str) -> str:
     return s.strip().upper().replace(".", "-")
 
 
+USER_TICKERS_URL = "https://api.tickerandtape.com/tickers"
+USER_TICKERS_MAX = 400
+
+
+def fetch_user_tickers() -> list[str]:
+    """Tickers that site users starred (union of every account's watchlist), so the nightly build covers them."""
+    import os
+    import urllib.request
+    url = os.environ.get("TT_TICKERS_URL", USER_TICKERS_URL)
+    try:
+        with urllib.request.urlopen(urllib.request.Request(url, headers=UA), timeout=20) as r:
+            data = json.loads(r.read().decode())
+    except Exception as e:  # noqa: BLE001
+        log(f"user tickers: could not fetch ({e}), skipping")
+        return []
+    ok = [yf_symbol(s) for s in data if isinstance(s, str) and re.fullmatch(r"[A-Za-z0-9.\-^=]{1,15}", s)]
+    return list(dict.fromkeys(ok))[:USER_TICKERS_MAX]
+
+
 def read_list(path: Path) -> list[str]:
     if not path.exists():
         return []
@@ -1032,6 +1051,12 @@ def main():
         extra = read_list(ROOT / "universe_extra.txt")
         for s in extra:
             uni.setdefault(s, {"sector": "", "industry": ""})
+        # tickers starred by site users that the indexes and watchlist.txt do not cover: chart + rotation
+        # fundamentals like any universe stock, but kept out of the RS reference set and group ranks
+        user_extra = [s for s in fetch_user_tickers() if s not in uni and s not in watch]
+        for s in user_extra:
+            uni[s] = {"sector": "", "industry": "", "user": True}
+        log(f"user tickers: {len(user_extra)} added")
         log(f"universe: {len(uni)} stocks")
         symbols = list(dict.fromkeys(watch + list(INDEXES) + list(uni)))
         prices = download_prices(symbols, "3y")
@@ -1043,7 +1068,7 @@ def main():
 
     # RS ratings against the universe (plus watchlist so the scale is never empty)
     scores = {s: rs_score(df["Close"].to_numpy()) for s, df in prices.items() if not s.startswith("^")}
-    ref_syms = [s for s in uni if scores.get(s) is not None] or [s for s in scores if scores[s] is not None]
+    ref_syms = [s for s in uni if scores.get(s) is not None and not uni[s].get("user")] or [s for s in scores if scores[s] is not None]
     ref = np.sort(np.array([scores[s] for s in ref_syms]))
     log(f"RS reference set: {len(ref)} stocks")
 
