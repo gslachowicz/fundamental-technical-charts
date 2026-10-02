@@ -564,3 +564,15 @@ ul.news span{display:block;font-size:11.5px;color:var(--ink2);margin-top:2px}
 .cleg .t-up2{color:var(--up,var(--blue));background:color-mix(in srgb,var(--up,#1d3fc4) 11%,transparent)}
 .cleg .t-dn2{color:var(--down);background:color-mix(in srgb,var(--down) 11%,transparent)}
 .cleg .t-warn{color:var(--amber)}
+
+/* SMR grade on idea cards + colored EPS/Sales */
+.smrg{display:inline-block;min-width:18px;text-align:center;font:700 12px var(--f-data);padding:0 4px;border:1px solid currentColor}
+.smr-a{color:#fff;background:var(--up,var(--blue));border-color:var(--up,var(--blue))}
+.smr-b{color:var(--up,var(--blue))}
+.smr-c{color:var(--ink2)}
+.smr-d,.smr-e{color:var(--down)}
+.ifacts .t-up,.ifacts .t-up2{color:var(--up,var(--blue))}
+.ifacts .t-dn,.ifacts .t-dn2{color:var(--down)}
+.ifacts .t-up2,.ifacts .t-dn2{font-weight:700}
+.ifacts dd > span{font-weight:inherit}
+.npos{font:12px var(--f-data);color:var(--ink2);align-self:center;margin-left:6px;white-space:nowrap}

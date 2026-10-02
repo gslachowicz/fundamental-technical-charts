@@ -864,7 +864,12 @@ $("#pW").onclick=()=>{ view.weekly=true; $("#pW").classList.add("on"); $("#pD").
 $$("#rangeSeg button").forEach(b=>b.onclick=()=>{ view.months=+b.dataset.r; $$("#rangeSeg button").forEach(x=>x.classList.toggle("on",x===b)); draw(); });
 for(const [id,key] of [["#tBox","box"],["#tPiv","piv"],["#tBase","base"],["#tIdx","idx"],["#tRs","rsl"]]){
   $(id).onclick=()=>{ view[key]=!view[key]; $(id).classList.toggle("on",view[key]); $(id).setAttribute("aria-pressed",view[key]); draw(); renderDbox(); }; }
-function step(d){ if(!S) return; const L = order.length ? order : ROWS.map(r=>r.symbol); const i=L.indexOf(S.symbol); if(i<0) return; location.hash = L[(i+d+L.length)%L.length]; }
+function step(d){ const cur = CUR || (S && S.symbol); if(!cur) return; const L = order.length ? order : ROWS.map(r=>r.symbol); const i=L.indexOf(cur); if(i<0) return; location.hash = L[(i+d+L.length)%L.length]; }
+function setNavPos(){   // "3 of 30 · Trade ideas" next to the ‹ › arrows
+  const el = $("#bPos"); if(!el || !S) return; const L = order.length ? order : ROWS.map(r=>r.symbol); const i = L.indexOf(S.symbol);
+  const name = {ideas:"Trade ideas", heatmap:"Heatmap", earnings:"Earnings", watchlist:"Watchlist", screener:"Screener", etfs:"ETFs"}[lastList] || "";
+  el.textContent = i < 0 ? "" : `${i+1} of ${L.length}${name ? " · " + name : ""}`;
+}
 $("#bPrev").onclick=()=>step(-1); $("#bNext").onclick=()=>step(1);
 document.addEventListener("keydown", e=>{
   if(e.target.closest("input") || TOUR_ON()) return;
@@ -881,7 +886,7 @@ async function openChart(sym){
     const [bundle] = await Promise.all([getJSON(`t/${encodeURIComponent(sym.replace(/=/g,"_"))}.json`), BENCH ? null : getJSON("bench.json").then(b=>{ BENCH = b.prices.map(([d,c])=>({t:iso(d),c})); })]);
     S = { symbol: bundle.symbol, name: bundle.name, fund: bundle.fund||{}, stats: bundle.stats||{}, base: bundle.base,
       px: bundle.prices.map(([d,o,h,l,c,v])=>({t:iso(d),o,h,l,c,v})), marks: store.get(marksKey(bundle.symbol)) || [] };
-    CUR = S.symbol; updateStar(); patchS(); hover=-1; renderPanels(); draw(); renderDbox(); setShare(); setEarnChip();
+    CUR = S.symbol; updateStar(); patchS(); hover=-1; renderPanels(); draw(); renderDbox(); setShare(); setEarnChip(); setNavPos();
   }catch(e){
     S=null; draw(); $("#sym").textContent = sym; $("#cname").textContent = "";
     toast(inWL(sym) ? `${sym} is in your watchlist: its chart loads after the next nightly update.` : `No data for ${sym} yet. Tap ☆ to add it to your watchlist: it loads after the next nightly update.`);
@@ -1140,6 +1145,7 @@ function renderHeat(){
   renderHeatRank();
 }
 function renderHeatRank(){
+  order = hmTiles.filter(t=>t.v!=null).sort((a,b)=> HM.rank==="top" ? b.v-a.v : a.v-b.v).map(t=>t.r.symbol);
   const list = hmTiles.filter(t=>t.v!=null).sort((a,b)=> HM.rank==="top" ? b.v-a.v : a.v-b.v).slice(0, Math.max(10, Math.min(40, Math.floor(($("#hmap").offsetHeight + 40) / 40))));
   const vt = v => HM.c === "rsRating" ? Math.round(v) : fmtPct(v, 2);
   $("#hmRank").innerHTML = `<table class="scr mini"><thead><tr><th class="l nosort">Stock</th><th class="nosort">Price</th><th class="nosort">${HM.c==="rsRating"?"RS":esc(HM_LABEL[HM.c].replace(" change",""))}</th></tr></thead><tbody>${
@@ -1212,6 +1218,7 @@ function renderEarn(){
   const wl = new Set(getWL());
   const keep = e => earnFilter === "lead" ? (e.rs||0) >= 80 : earnFilter === "watch" ? wl.has(e.symbol) : true;
   const evs = (EARN.events||[]).filter(e=>days.includes(e.date) && keep(e));
+  order = [...new Set(days.flatMap(d=>["bmo","amc",""].flatMap(t=>evs.filter(e=>e.date===d && e.time===t).map(e=>e.symbol))))];
   const today = etToday();
   // stats
   const past = evs.filter(e=>e.epsAct!=null && e.surprise!=null), beat = past.filter(e=>e.surprise>0).length;
@@ -1276,7 +1283,8 @@ function setShare(){
 }
 
 /* ================= TRADE IDEAS ================= */
-let IDEAS = null, ideasLoading = null, ideaFilter = "all";
+let IDEAS = null, ideasLoading = null, ideaFilter = "all", ideaSmr = store.get("tt:ideaSmr") || "all";
+const ideaSmrOf = it => it.smr || (UNI && (UNI.find(r=>r.symbol===it.symbol)||{}).smr) || "";
 function loadIdeas(){
   if(!ideasLoading) ideasLoading = getJSON("ideas.json").then(d=>{ IDEAS = d; }).catch(()=>{ IDEAS = {ideas:[], history:[], stats:{}}; });
   return ideasLoading;
@@ -1299,7 +1307,10 @@ function renderIdeas(){
   if(!IDEAS){ $("#iCards").innerHTML = `<div class="empty">Loading…</div>`; loadIdeas().then(()=>{ if(!$("#vIdeas").hidden) renderIdeas(); }); return; }
   $$("#iFilter button").forEach(b=>b.classList.toggle("on", b.dataset.f === ideaFilter));
   const R = IDEAS.rules || {}; if(R.minRs) $("#iRs").textContent = R.minRs;
-  const all = IDEAS.ideas || [], list = ideaFilter === "all" ? all : all.filter(i=>i.status === ideaFilter);
+  $$("#iSmr button").forEach(b=>b.classList.toggle("on", b.dataset.q === ideaSmr));
+  if(!UNI && (IDEAS.ideas||[]).some(i=>!i.smr)) loadUni().then(()=>{ if(!$("#vIdeas").hidden) renderIdeas(); }).catch(()=>{});
+  const all = IDEAS.ideas || [], list = all.filter(i=>(ideaFilter === "all" || i.status === ideaFilter) && (ideaSmr === "all" || /^[AB]/.test(ideaSmrOf(i))));
+  order = list.map(i=>i.symbol);   // the chart's ‹ › arrows step through these ideas
   const signed = !!auth.token;
   $("#iCount").textContent = IDEAS.date ? `${list.length} setup${list.length===1?"":"s"} · ${fmtLong(iso(IDEAS.date))} close` : "";
   const st = IDEAS.stats || {};
@@ -1315,7 +1326,9 @@ function renderIdeas(){
         <dt>Price</dt><dd>${fmtP(it.close)} <small class="${(it.chgPct??0)<0?'neg':'up'}">${fmtPct(it.chgPct,1)}</small></dd>
         <dt>vs pivot</dt><dd class="${(it.distPct??0)<0?'neg':''}">${fmtPct(it.distPct,1)}</dd>
         <dt>Group</dt><dd title="${esc(it.group)}">${esc(it.groupRank || "—")}</dd>
-        <dt>EPS / Sales</dt><dd>${pc(it.epsChg)} / ${pc(it.salesChg)}</dd>
+        <dt>EPS / Sales</dt><dd><span class="${TIER.eps(pnum(it.epsChg))}">${pc(it.epsChg)}</span> / <span class="${TIER.sales(pnum(it.salesChg))}">${pc(it.salesChg)}</span></dd>
+        <dt title="Sales growth, profit margins and return on equity, A (best) to E">SMR</dt><dd>${(()=>{ const g = ideaSmrOf(it); return g ? `<span class="smrg smr-${esc(g[0].toLowerCase())}">${esc(g)}</span>` : "—"; })()}</dd>
+        <dt>RS</dt><dd>${it.rs ?? "—"}</dd>
       </dl>
       <div class="iplan ${signed ? "" : "locked"}">
         <div><span>Buy point</span><b>${signed ? fmtP(it.pivot) : "000.00"}</b></div>
@@ -1337,6 +1350,7 @@ function renderIdeas(){
   $$("#iTrack tr[data-s]").forEach(tr=>tr.onclick = ()=>{ location.hash = tr.dataset.s; });
 }
 $$("#iFilter button").forEach(b=>b.onclick = ()=>{ ideaFilter = b.dataset.f; renderIdeas(); });
+$$("#iSmr button").forEach(b=>b.onclick = ()=>{ ideaSmr = b.dataset.q; store.set("tt:ideaSmr", ideaSmr); renderIdeas(); });
 let ideaResize = 0; addEventListener("resize", ()=>{ clearTimeout(ideaResize); ideaResize = setTimeout(()=>{ if(!$("#vIdeas").hidden && IDEAS) $$("#iCards canvas.icv").forEach(cv=>{ const all = IDEAS.ideas||[], list = ideaFilter==="all"?all:all.filter(i=>i.status===ideaFilter); ideaChart(cv, list[+cv.dataset.k]); }); }, 150); });
 let hmResize = 0; addEventListener("resize", ()=>{ clearTimeout(hmResize); hmResize = setTimeout(()=>{ if(!$("#vHeat").hidden) renderHeat(); }, 120); });
 

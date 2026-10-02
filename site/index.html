@@ -23,7 +23,7 @@
 <meta name="description" content="O'Neil-style daily charts, RS Ratings, industry group ranks and automatic base and pivot detection for every S&amp;P 1500 and Nasdaq-100 stock. Free.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&family=Archivo+Narrow:wght@400;600;700&family=Libre+Franklin:wght@600;800&family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&display=swap">
-<link rel="stylesheet" href="style.css?v=20261003e">
+<link rel="stylesheet" href="style.css?v=20261003f">
 </head>
 <body>
 <div class="sheet">
@@ -112,6 +112,10 @@
         <button data-f="Breakout">Breakouts</button>
         <button data-f="In buy zone">In buy zone</button>
         <button data-f="Near pivot">Near pivot</button>
+      </div>
+      <div class="seg" role="group" aria-label="Quality" id="iSmr">
+        <button data-q="all" class="on">Any SMR</button>
+        <button data-q="ab" title="SMR Rating A or B: top sales growth, margins and return on equity">SMR A–B only</button>
       </div>
       <span class="count" id="iCount"></span>
     </div>
@@ -277,6 +281,7 @@
       <button class="btn" id="bBack">← Back</button>
       <button class="btn" id="bPrev" title="Previous ticker (←)">‹</button>
       <button class="btn" id="bNext" title="Next ticker (→)">›</button>
+      <span class="npos" id="bPos"></span>
       <div class="seg" role="group" aria-label="Period">
         <button id="pD" class="on">Daily</button><button id="pW">Weekly</button>
       </div>
@@ -415,6 +420,6 @@
   </div>
 </div>
 <div class="toast" id="toast" hidden></div>
-<script src="app.js?v=20261003e"></script>
+<script src="app.js?v=20261003f"></script>
 </body>
 </html>
