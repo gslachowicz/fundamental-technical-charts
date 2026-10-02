@@ -1622,6 +1622,32 @@ let hmResize = 0; addEventListener("resize", ()=>{ clearTimeout(hmResize); hmRes
 /* ================= ACCOUNTS & SYNC (api.tickerandtape.com) ================= */
 const API = /^(localhost|127\.0\.0\.1)$/.test(location.hostname) ? "http://127.0.0.1:8787" : "https://api.tickerandtape.com";
 const auth = { token: store.get("tt:token"), email: store.get("tt:email") };
+// sessions on this device: sign in again after closing the site (no open tab for 3 minutes) and every 2 hours
+const SESSION_MAX = 2*60*60*1000, CLOSED_AFTER = 3*60*1000;
+function sessionEnd(onLoad){
+  if(!auth.token) return "";
+  const now = Date.now(), at = +store.get("tt:loginAt") || 0, alive = +store.get("tt:alive") || 0;
+  if(!at || now - at > SESSION_MAX) return "Your session ended after 2 hours. Sign in again to continue.";
+  if(onLoad && alive && now - alive > CLOSED_AFTER) return "Welcome back. Sign in to continue.";
+  return "";
+}
+let SESSION_MSG = sessionEnd(true);
+if(SESSION_MSG){   // ended while the site was closed: drop the token before anything loads
+  const tk = auth.token;
+  fetch((/^(localhost|127\.0\.0\.1)$/.test(location.hostname) ? "http://127.0.0.1:8787" : "https://api.tickerandtape.com") + "/auth/logout",
+    {method:"POST", headers:{"Content-Type":"application/json", Authorization:"Bearer " + tk}}).catch(()=>{});
+  auth.token = auth.email = null;
+  try{ ["tt:token","tt:email","tt:wl","tt:lists","tt:notes","tt:notifSeen","tt:loginAt"].forEach(k=>localStorage.removeItem(k)); }catch(e){}
+}
+const beat = () => store.set("tt:alive", Date.now());
+let ending = false;
+function checkSession(){
+  const m = sessionEnd(false); if(!m || ending) return; ending = true;
+  api("/auth/logout", {method:"POST"}).catch(()=>{}).finally(()=>{ ending = false; signedOut(); toast(TX(m)); openAuth("in"); });
+}
+beat(); setInterval(()=>{ checkSession(); beat(); }, 30*1000);
+addEventListener("pagehide", beat);
+document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState === "visible") checkSession(); beat(); });
 async function api(path, opts={}){
   const headers = {"Content-Type":"application/json"}; if(auth.token) headers.Authorization = "Bearer " + auth.token;
   let r; try{ r = await fetch(API + path, {...opts, headers}); }catch(e){ throw new Error("Could not reach the server. Check your connection."); }
@@ -1660,7 +1686,7 @@ async function pullData(fresh, isNew){
 }
 function signedOut(expired){
   auth.token = auth.email = null;
-  try{ ["tt:token","tt:email","tt:wl","tt:lists","tt:notes","tt:notifSeen"].forEach(k=>localStorage.removeItem(k)); localMarkKeys().forEach(k=>localStorage.removeItem(k)); }catch(e){}
+  try{ ["tt:token","tt:email","tt:wl","tt:lists","tt:notes","tt:notifSeen","tt:loginAt"].forEach(k=>localStorage.removeItem(k)); localMarkKeys().forEach(k=>localStorage.removeItem(k)); }catch(e){}
   WL = null; LISTS = null; NOTES = {}; ALERTS = []; NOTIF = {items:[], unread:0}; clearInterval(notifTimer); $("#vBar").hidden = true; renderBell(); if(S) renderTkNote(); if(S){ S.marks = []; draw(); } if(!$("#vIdeas").hidden) renderIdeas();
   renderAcct(); updateStar(); if(!$("#vScreener").hidden) renderScreener();
   if(expired) toast("Your session expired. Sign in again to sync your watchlist.");
@@ -1725,7 +1751,7 @@ $("#authForm").addEventListener("submit", async e=>{
     } else if(authMode==="reset"){
       const r = await api("/auth/reset", {method:"POST", body: JSON.stringify({token: resetToken, password: pw})});
       resetToken = null;
-      auth.token = r.token; auth.email = r.email; store.set("tt:token", r.token); store.set("tt:email", r.email);
+      auth.token = r.token; auth.email = r.email; store.set("tt:token", r.token); store.set("tt:email", r.email); store.set("tt:loginAt", Date.now());
       closeAuth(); renderAcct(); toast("Password updated. You are signed in.");
       await pullData(true); store.set("tt:welcomed", true);
     } else if(authMode==="pw"){
@@ -1733,7 +1759,7 @@ $("#authForm").addEventListener("submit", async e=>{
       closeAuth(); toast("Password changed.");
     } else {
       const r = await api(authMode==="up" ? "/auth/signup" : "/auth/login", {method:"POST", body: JSON.stringify({email, password: pw})});
-      auth.token = r.token; auth.email = r.email; store.set("tt:token", r.token); store.set("tt:email", r.email);
+      auth.token = r.token; auth.email = r.email; store.set("tt:token", r.token); store.set("tt:email", r.email); store.set("tt:loginAt", Date.now());
       closeAuth(); renderAcct(); if(!$("#vIdeas").hidden) renderIdeas();
       toast(authMode==="up" ? "Account created. Your watchlist now syncs to every device." : `Welcome back, ${r.email}.`);
       await pullData(true, authMode==="up");
@@ -2709,6 +2735,7 @@ addEventListener("scroll", ()=>{ if(TOUR_ON()) placeTour(); }, true);
   setTimeout(()=>loadUni().catch(()=>{}), 400);   // background: full list for the ticker search
 
   window.addEventListener("hashchange", route); window.addEventListener("popstate", route);
+  if(SESSION_MSG) setTimeout(()=>{ toast(TX(SESSION_MSG)); openAuth("in"); }, 400);
   // in-site links navigate without reloading the page
   document.addEventListener("click", e=>{
     if(e.defaultPrevented || e.button || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
