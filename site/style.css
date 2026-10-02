@@ -404,3 +404,14 @@ ul.news span{display:block;font-size:11.5px;color:var(--ink2);margin-top:2px}
 .hside{align-self:start}
 .sect tr.grp{background:var(--soft)}
 .sect tr.grp td{background:transparent!important;width:auto;max-width:none}
+/* home: market & sectors next to the commodities board (no empty band on wide screens) */
+.hboards{display:grid;grid-template-columns:minmax(0,1.08fr) minmax(0,1fr);gap:12px;align-items:stretch}
+.hboards .box{display:flex;flex-direction:column}
+.hboards .tbl{flex:1}
+.hboards .sect td,.hboards .sect th{padding:4px 5px}
+.hboards .sect td:first-child,.hboards .sect th:first-child{padding-left:8px}
+.hboards .sect td:last-child,.hboards .sect th:last-child{padding-right:8px}
+.hboards .sect canvas{width:88px;height:26px}
+.hboards .sect .nm{max-width:180px}
+.hboards .sect .comp{font-size:11px}
+@media (max-width:1240px){.hboards{grid-template-columns:1fr}.hboards .sect canvas{width:110px;height:28px}}

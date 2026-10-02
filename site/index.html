@@ -20,7 +20,7 @@
 <meta name="description" content="O'Neil-style daily charts, RS Ratings, industry group ranks and automatic base and pivot detection for every S&amp;P 1500 and Nasdaq-100 stock. Free.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&family=Archivo+Narrow:wght@400;600;700&family=Libre+Franklin:wght@600;800&family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&display=swap">
-<link rel="stylesheet" href="style.css?v=20261002c">
+<link rel="stylesheet" href="style.css?v=20261002d">
 </head>
 <body>
 <div class="sheet">
@@ -45,17 +45,23 @@
   <main id="vHome" class="home" hidden>
     <section class="hgrid">
       <div class="box hchart">
-        <h3><span>S&amp;P 500 · SPY <small id="hSpyQ"></small></span><a href="#SPY" class="h3link">Full chart →</a></h3>
-        <div class="hcwrap"><canvas id="hcv" aria-label="SPY daily chart"></canvas></div>
+        <h3><span><span id="hcTitle">S&amp;P 500 futures · ES</span> <small id="hSpyQ"></small></span><a href="#ES=F" id="hcLink" class="h3link">Full chart →</a></h3>
+        <div class="hcwrap"><canvas id="hcv" aria-label="S&amp;P 500 E-mini futures daily chart"></canvas></div>
       </div>
       <div class="hside">
         <section class="pulse" id="hPulse" aria-label="Market pulse"></section>
         <div class="box hnews"><h3>Market news <small>latest headlines</small></h3><div class="in" id="hNews"></div></div>
       </div>
     </section>
-    <section class="box">
-      <h3><span>Market &amp; sectors <small>Select Sector SPDR ETFs · click a row for its chart</small></span><small id="hAsOf"></small></h3>
-      <div class="tbl" id="hSect"></div>
+    <section class="hboards">
+      <div class="box">
+        <h3><span>Market &amp; sectors <small>Select Sector SPDR ETFs · click a row for its chart</small></span><small id="hAsOf"></small></h3>
+        <div class="tbl" id="hSect"></div>
+      </div>
+      <div class="box">
+        <h3><span>Commodities <small>front-month futures · click a row for its chart</small></span><small id="hComAsOf"></small></h3>
+        <div class="tbl" id="hCom"></div>
+      </div>
     </section>
     <section class="hlists">
       <div class="box"><h3>Top RS Rating <small>price leaders</small></h3><div class="tbl" id="hRS"></div></div>
@@ -284,6 +290,6 @@
   </div>
 </div>
 <div class="toast" id="toast" hidden></div>
-<script src="app.js?v=20261002c"></script>
+<script src="app.js?v=20261002d"></script>
 </body>
 </html>

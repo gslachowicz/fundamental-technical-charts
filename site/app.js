@@ -864,7 +864,7 @@ async function openChart(sym){
   CUR = sym; updateStar();
   window.scrollTo(0,0);
   try{
-    const [bundle] = await Promise.all([getJSON(`t/${encodeURIComponent(sym)}.json`), BENCH ? null : getJSON("bench.json").then(b=>{ BENCH = b.prices.map(([d,c])=>({t:iso(d),c})); })]);
+    const [bundle] = await Promise.all([getJSON(`t/${encodeURIComponent(sym.replace(/=/g,"_"))}.json`), BENCH ? null : getJSON("bench.json").then(b=>{ BENCH = b.prices.map(([d,c])=>({t:iso(d),c})); })]);
     S = { symbol: bundle.symbol, name: bundle.name, fund: bundle.fund||{}, stats: bundle.stats||{}, base: bundle.base,
       px: bundle.prices.map(([d,o,h,l,c,v])=>({t:iso(d),o,h,l,c,v})), marks: store.get(marksKey(bundle.symbol)) || [] };
     CUR = S.symbol; updateStar(); patchS(); hover=-1; renderPanels(); draw(); renderDbox();
@@ -898,10 +898,13 @@ document.addEventListener("click", e=>{ const b = e.target.closest("[data-sector
 
 /* ================= HOME DASHBOARD ================= */
 let HOME = null, homeLoading = null, SPYB = null, movMode = "up";
+// home chart: S&P 500 E-mini futures (falls back to SPY until the futures file exists)
+const HC = {symbol:"ES=F", file:"ES_F", title:"S&amp;P 500 futures · ES"};
 function loadHome(){
   if(!homeLoading) homeLoading = Promise.all([
-    getJSON("home.json").then(h=>{ HOME = h; }).catch(()=>{ HOME = {market:[], sectors:[], news:[]}; }),
-    getJSON("t/SPY.json").then(b=>{ SPYB = b; }).catch(()=>{})
+    getJSON("home.json").then(h=>{ HOME = h; }).catch(()=>{ HOME = {market:[], sectors:[], commodities:[], news:[]}; }),
+    getJSON(`t/${HC.file}.json`).catch(()=>{ Object.assign(HC, {symbol:"SPY", file:"SPY", title:"S&amp;P 500 · SPY"}); return getJSON("t/SPY.json"); })
+      .then(b=>{ SPYB = b; $("#hcTitle").innerHTML = HC.title; $("#hcLink").setAttribute("href", "#"+HC.symbol); }).catch(()=>{})
   ]);
   return homeLoading;
 }
@@ -911,7 +914,9 @@ function heat(v, scale){
   return v >= 0 ? `background:rgba(29,63,196,${a.toFixed(3)})` : `background:rgba(224,51,127,${a.toFixed(3)})`;
 }
 const PERF = [["d1","1D",2.5],["w1","1W",5],["m3","3M",12],["m9","9M",22],["ytd","YTD",22]];
-let sectSort = {k:"m3", asc:false};
+let sectSort = {k:"m3", asc:false}, comSort = {k:null, asc:false};
+const COM_GROUPS = ["Metals","Energy","Agriculture"];
+const fmtC = v => v==null||!isFinite(v) ? "—" : v < 20 ? v.toFixed(3) : fmtP(v);   // natural gas, copper: 3 decimals
 function renderHome(){
   renderPulse();
   if(!HOME){ $("#hSect").innerHTML = `<div class="empty">Loading…</div>`; loadHome().then(()=>{ if(!$("#vHome").hidden) renderHome(); }); return; }
@@ -933,6 +938,7 @@ function renderHome(){
   $$("#hSect th[data-hk]").forEach(th=>th.onclick=()=>{ const k=th.dataset.hk; sectSort = {k, asc: sectSort.k===k ? !sectSort.asc : false}; renderHome(); });
   $$("#hSect tr[data-s]").forEach(tr=>tr.onclick=e=>{ if(e.target.closest("[data-sector]")) return; location.hash = tr.dataset.s; });
   $("#hAsOf").textContent = LIVE ? `1D live, ${liveTime()} ET (delayed)` : (Sx[0] ? `as of ${fmtLong(iso(Sx[0].date))} close` : "");
+  renderCommodities(live);
   // news
   const N = HOME.news || [];
   const ago = d => { const t = Date.parse(d && d.length<=19 ? d+"Z" : d); if(!isFinite(t)) return ""; const h=(Date.now()-t)/36e5;
@@ -940,6 +946,22 @@ function renderHome(){
   $("#hNews").innerHTML = N.length ? `<ul class="news">${N.slice(0,9).map(n=>`<li><a href="${esc(n.url)}" target="_blank" rel="noopener">${esc(n.title)}</a><span>${esc(n.pub||"")}${n.date?` · ${ago(n.date)}`:""}</span></li>`).join("")}</ul>` : `<div class="empty">No headlines right now.</div>`;
   renderHomeLists();
   drawHomeChart();
+}
+function renderCommodities(live){
+  const Cx = (HOME.commodities||[]).map(live), box = $("#hCom");
+  if(!Cx.length){ box.innerHTML = `<div class="empty">Commodity prices load after the next nightly update.</div>`; $("#hComAsOf").textContent = ""; return; }
+  const k = comSort.k, dir = comSort.asc ? 1 : -1;
+  const row = r => `<tr data-s="${esc(r.symbol)}"><td class="l"><span class="sym">${esc(r.name)}</span><span class="nm">${esc(r.symbol.replace("=F",""))} · ${esc(r.unit||"")}</span></td>
+      <td>${fmtC(r.px ?? r.close)}</td>${PERF.map(([k,,sc])=>`<td style="${heat(r[k],sc*1.6)}" class="${(r[k]??0)<0?'neg':''}">${fmtPct(r[k],1)}</td>`).join("")}
+      <td class="spk"><canvas data-cspark="${esc(r.symbol)}"></canvas></td></tr>`;
+  const groups = COM_GROUPS.map(g=>[g, Cx.filter(r=>r.grp===g)]).filter(([,rs])=>rs.length);
+  if(k) groups.forEach(([,rs])=>rs.sort((a,b)=>((a[k]??-1e9)-(b[k]??-1e9))*dir));
+  box.innerHTML = `<table class="scr sect com"><thead><tr><th class="l nosort">Commodity</th><th class="nosort">Last</th>${PERF.map(([k,l])=>`<th data-ck="${k}" class="${comSort.k===k?'sorted'+(comSort.asc?' asc':''):''}">${l}</th>`).join("")}<th class="nosort spk">3 months</th></tr></thead>
+    <tbody>${groups.map(([g,rs],i)=>`<tr class="grp"><td colspan="${PERF.length+3}">${g}${i===0?' <small>click a column to rank within each group</small>':''}</td></tr>${rs.map(row).join("")}`).join("")}</tbody></table>`;
+  $$("canvas[data-cspark]").forEach(cv=>{ const r = Cx.find(x=>x.symbol===cv.dataset.cspark); sparkline(cv, r && r.spark); });
+  $$("#hCom th[data-ck]").forEach(th=>th.onclick=()=>{ const k=th.dataset.ck; comSort = {k, asc: comSort.k===k ? !comSort.asc : false}; renderCommodities(live); });
+  $$("#hCom tr[data-s]").forEach(tr=>tr.onclick=()=>{ location.hash = tr.dataset.s; });
+  $("#hComAsOf").textContent = Cx.some(r=>r.live) ? `1D live, ${liveTime()} ET (delayed)` : `as of ${fmtLong(iso(Cx[0].date))} settle`;
 }
 function renderHomeLists(){
   if(!UNI){ ["#hRS","#hUD","#hMov"].forEach(id=>$(id).innerHTML = `<div class="empty">Loading…</div>`); loadUni().then(()=>{ if(!$("#vHome").hidden) renderHomeLists(); }).catch(()=>{}); return; }
@@ -956,7 +978,7 @@ function renderHomeLists(){
 }
 $$("#hMovSeg button").forEach(b=>b.onclick=e=>{ e.stopPropagation(); movMode = b.dataset.m; $$("#hMovSeg button").forEach(x=>x.classList.toggle("on", x===b)); renderHomeLists(); });
 
-// compact SPY chart: 9 months of daily O'Neil bars, 50/200-day lines and volume, in the user's colors
+// compact S&P 500 futures chart (ES=F): 9 months of daily O'Neil bars, 50/200-day lines and volume, in the user's colors
 function drawHomeChart(){
   const c = $("#hcv"); if(!c || $("#vHome").hidden) return;
   const W = c.clientWidth; if(!W) return;
@@ -967,7 +989,7 @@ function drawHomeChart(){
   const g = c.getContext("2d"); g.setTransform(dpr,0,0,dpr,0,0); g.fillStyle = C.plate; g.fillRect(0,0,W,H);
   if(!SPYB){ g.fillStyle = C.ink2; g.font = `13px ${FONT_D}`; g.fillText("Loading…", 12, 24); return; }
   let px = SPYB.prices.map(([d,o,h,l,cl,v])=>({t:iso(d),o,h,l,c:cl,v}));
-  const q = LIVE && LIVE.q["SPY"];
+  const q = LIVE && LIVE.q[HC.symbol];
   if(q && LIVE.date){ const lt = iso(LIVE.date), last = px[px.length-1];
     if(lt > last.t) px = [...px, {t:lt, o:q[0], h:q[1], l:q[2], c:q[3], v:q[4]||0}];
     else if(lt === last.t) px[px.length-1] = {...last, h:Math.max(last.h,q[1]), l:Math.min(last.l,q[2]), c:q[3]}; }
@@ -1006,7 +1028,7 @@ function drawHomeChart(){
   g.font = `600 11px ${FONT_L}`; g.textBaseline = "top"; g.textAlign = "left";
   [[mc("d50"),"50-day"],[mc("d200"),"200-day"]].forEach(([col,l],k)=>{ g.fillStyle = col; g.fillRect(L+8+k*70, T+9, 14, 3); g.fillStyle = C.ink2; g.fillText(l, L+26+k*70, T+5); });
   const prevC = px[px.length-2] ? px[px.length-2].c : lb.c, ch = (lb.c/prevC-1)*100;
-  $("#hSpyQ").innerHTML = `<b>${fmtP(lb.c)}</b> <span class="${ch<0?'neg':''}">${fmtPct(ch,2)}</span>`;
+  $("#hSpyQ").innerHTML = `<b>${nf2.format(lb.c)}</b> <span class="${ch<0?'neg':''}">${fmtPct(ch,2)}</span>`;
 }
 addEventListener("resize", ()=>{ if(!$("#vHome").hidden) drawHomeChart(); });
 
@@ -1145,7 +1167,7 @@ const TOUR = [
   {v:"h", sel:"#tabs", t:"Four rooms",
    b:"Home is the market dashboard. Watchlist holds the stocks you starred. Screener lists every S&P 1500 and Nasdaq-100 stock, about 1,500 names rated every trading day. ETFs covers indexes, sectors, industries, commodities, bonds and countries."},
   {v:"h", sel:"#hSect", t:"Sector scoreboard",
-   b:"The market ETFs and the eleven Select Sector SPDRs with their 1-day, 1-week, 3-month, 9-month and year-to-date change. Click a column to rank the sectors, a row to open its chart, or Components to see the stocks in that sector."},
+   b:"The market ETFs and the eleven Select Sector SPDRs with their 1-day, 1-week, 3-month, 9-month and year-to-date change. Click a column to rank the sectors, a row to open its chart, or Components to see the stocks in that sector. Next to it, the commodities board shows metals, energy and grains futures on the same scale."},
   {v:"h", sel:".hlists", t:"What is leading",
    b:"The five highest RS Ratings, the strongest accumulation by up/down volume and the biggest movers of the day, among stocks with real liquidity."},
   {v:"h", sel:"#hPulse", t:"Market pulse",
