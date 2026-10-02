@@ -1265,6 +1265,92 @@ def has_fund_data(f: dict | None) -> bool:
 
 
 # ---------------------------------------------------------------- main
+# ---------------------------------------------------------------- trade ideas
+IDEA_STATUSES = ("Breakout", "In buy zone", "Near pivot")
+IDEA_MIN_RS, IDEA_MIN_DVOL, IDEA_MIN_PX = 80, 2e7, 10
+IDEA_STOP_PCT = 0.07       # O'Neil rule: cut losses 7% below the buy point
+IDEA_MAX_DAYS = 40         # a flagged idea is tracked for 8 weeks
+IDEA_MAX = 30
+IDEAS_URL = "https://tickerandtape.com/data/ideas.json"
+
+
+def idea_ok(r: dict) -> bool:
+    b = r.get("base") or {}
+    return bool(
+        not r.get("etf") and (r.get("rsRating") or 0) >= IDEA_MIN_RS and b.get("status") in IDEA_STATUSES
+        and b.get("type") != "Deep correction" and (r.get("dollarVol50") or 0) >= IDEA_MIN_DVOL
+        and (r.get("close") or 0) >= IDEA_MIN_PX
+        and (r.get("vs50Pct") is None or r["vs50Pct"] > 0) and (r.get("vs200Pct") is None or r["vs200Pct"] > 0))
+
+
+def build_ideas(out: Path, rows: list[dict], prices: dict, day: str, now_iso: str) -> None:
+    """ideas.json: today's setups (RS >= 80 near or just above a pivot) and how every flagged idea did since."""
+    order = {s: i for i, s in enumerate(IDEA_STATUSES)}
+    picks = sorted((r for r in rows if idea_ok(r)), key=lambda r: (order[r["base"]["status"]], -(r.get("rsRating") or 0)))[:IDEA_MAX]
+    ideas = []
+    for r in picks:
+        b = r["base"]
+        buy = b["pivot"]   # the buy point is the pivot; the stop sits 7% under it
+        ideas.append({
+            "symbol": r["symbol"], "name": r.get("name", ""), "group": r.get("group", ""), "sector": r.get("sector", ""),
+            "groupRank": r.get("groupRank", ""), "rs": r.get("rsRating"), "close": r.get("close"), "chgPct": r.get("chgPct"),
+            "status": b["status"], "type": b.get("type"), "weeks": b.get("weeks"), "depthPct": b.get("depthPct"),
+            "pivot": b["pivot"], "buyZoneTop": b.get("buyZoneTop") or round(b["pivot"] * 1.05, 2),
+            "stop": round(buy * (1 - IDEA_STOP_PCT), 2), "distPct": b.get("distPct"),
+            "breakoutDate": b.get("breakoutDate"), "breakoutVolPct": b.get("breakoutVolPct"),
+            "epsChg": r.get("epsChg", ""), "salesChg": r.get("salesChg", ""), "volVsAvgPct": r.get("volVsAvgPct"),
+            "offHighPct": r.get("offHighPct"), "spark": r.get("spark"),
+        })
+
+    # track record: kept in the build cache; if the cache was lost, start from the published file
+    hist_path = CACHE / "ideas_history.json"
+    hist: dict = {}
+    if hist_path.exists():
+        hist = json.loads(hist_path.read_text())
+    else:
+        try:
+            import requests
+            hist = {h["key"]: h for h in requests.get(IDEAS_URL, headers=UA, timeout=30).json().get("history", [])}
+        except Exception:  # noqa: BLE001
+            hist = {}
+    active = {h["symbol"] for h in hist.values() if h.get("result") == "Active"}
+    for i in ideas:   # newly flagged
+        if i["symbol"] in active:
+            continue
+        key = f'{i["symbol"]}:{day}'
+        hist[key] = {"key": key, "symbol": i["symbol"], "name": i["name"], "date": day, "status": i["status"],
+                     "price": i["close"], "pivot": i["pivot"], "stop": round(min(i["pivot"], i["close"]) * (1 - IDEA_STOP_PCT), 2),
+                     "last": i["close"], "maxPct": 0.0, "retPct": 0.0, "result": "Active", "closed": None}
+    for h in hist.values():   # mark to market
+        if h.get("result") != "Active":
+            continue
+        df = prices.get(h["symbol"])
+        if df is None:
+            continue
+        seg = df[df.index > pd.Timestamp(h["date"])]
+        for d, bar in seg.iterrows():
+            ret = (float(bar["Close"]) / h["price"] - 1) * 100
+            h["maxPct"] = round(max(h["maxPct"], (float(bar["High"]) / h["price"] - 1) * 100), 1)
+            h["last"], h["retPct"] = round(float(bar["Close"]), 2), round(ret, 1)
+            if float(bar["Close"]) < h["stop"]:
+                h["result"], h["closed"] = "Stopped", d.strftime("%Y-%m-%d")
+                break
+        if h["result"] == "Active" and len(seg) >= IDEA_MAX_DAYS:
+            h["result"], h["closed"] = "Expired", seg.index[IDEA_MAX_DAYS - 1].strftime("%Y-%m-%d")
+    hist = dict(sorted(hist.items(), key=lambda kv: kv[1]["date"], reverse=True)[:400])
+    hist_path.write_text(jdumps(hist))
+    done = [h for h in hist.values() if h["date"] < day]
+    stats = {"count": len(done), "active": sum(h["result"] == "Active" for h in done),
+             "winPct": round(100 * sum(h["retPct"] > 0 for h in done) / len(done)) if done else None,
+             "avgPct": round(float(np.mean([h["retPct"] for h in done])), 1) if done else None,
+             "avgMaxPct": round(float(np.mean([h["maxPct"] for h in done])), 1) if done else None}
+    rules = {"minRs": IDEA_MIN_RS, "minDollarVol": IDEA_MIN_DVOL, "minPrice": IDEA_MIN_PX, "stopPct": IDEA_STOP_PCT * 100,
+             "trackDays": IDEA_MAX_DAYS}
+    (out / "ideas.json").write_text(jdumps({"updated": now_iso, "date": day, "rules": rules, "ideas": ideas,
+                                             "history": list(hist.values())[:150], "stats": stats}, separators=(",", ":")))
+    log(f"ideas: {len(ideas)} setups today, {len(hist)} in the track record")
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--demo", action="store_true", help="synthetic data, no internet")
@@ -1394,7 +1480,8 @@ def main():
                 "atrPct", "perf3m", "perf12m", "rsLineNewHigh", "dollarVol50", "date")},
             "epsChg": q0.get("epsChg", ""), "salesChg": q0.get("salesChg", ""),
             "smr": smr_rating(fund), "epsGrowth": fund.get("epsGrowth", ""),
-            "base": None if not base else {k: base[k] for k in ("type", "pivot", "distPct", "status", "weeks", "depthPct")},
+            "base": None if not base else {k: base.get(k) for k in ("type", "pivot", "distPct", "status", "weeks", "depthPct",
+                                                                   "buyZoneTop", "breakoutDate", "breakoutVolPct")},
             "spark": [round(float(x), 2) for x in df["Close"].to_numpy()[-90:]],
             **heat_fields(df, fund, gi),
         }
@@ -1536,6 +1623,13 @@ def main():
         "market": market, "errors": errors,
     }
     (out / "meta.json").write_text(jdumps(meta, indent=1))
+
+    # ---------- trade ideas: automatic setups + track record
+    try:
+        build_ideas(out, uni_rows, prices, bench.index[-1].strftime("%Y-%m-%d"), now_iso)
+    except Exception as e:  # noqa: BLE001
+        traceback.print_exc()
+        log(f"ideas failed: {e}")
 
     # ---------- home page: market and sector ETFs performance + market headlines
     def perf_row(sym):
