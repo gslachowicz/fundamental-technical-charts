@@ -1444,7 +1444,7 @@ def build_ideas(out: Path, rows: list[dict], prices: dict, day: str, now_iso: st
             "stop": round(buy * (1 - IDEA_STOP_PCT), 2), "distPct": b.get("distPct"),
             "breakoutDate": b.get("breakoutDate"), "breakoutVolPct": b.get("breakoutVolPct"),
             "epsChg": r.get("epsChg", ""), "salesChg": r.get("salesChg", ""), "volVsAvgPct": r.get("volVsAvgPct"),
-            "offHighPct": r.get("offHighPct"), "spark": r.get("spark"),
+            "offHighPct": r.get("offHighPct"), "spark": r.get("spark"), "smr": r.get("smr", ""),
         })
 
     # track record: kept in the build cache; if the cache was lost, start from the published file
