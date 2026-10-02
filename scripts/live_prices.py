@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Ink Charts — intraday prices.
+Ticker&Tape — intraday prices.
 
 Runs every 15 minutes during US market hours (see .github/workflows/live.yml) and writes live.json:
 today's open / high / low / last / volume for every stock on the site, plus the two market indexes.

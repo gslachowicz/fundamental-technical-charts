@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Ink Charts — data builder.
+Ticker&Tape — data builder.
 
 Downloads end-of-day prices and fundamentals from Yahoo Finance (via yfinance),
 computes O'Neil-style analytics and writes static JSON files for the website:
@@ -35,7 +35,7 @@ OUT_DEFAULT = ROOT / "site" / "data"
 CACHE = ROOT / "cache"
 BENCH = "^GSPC"
 INDEXES = {"^GSPC": "S&P 500", "^IXIC": "Nasdaq Composite"}
-UA = {"User-Agent": "Mozilla/5.0 (ink-charts data builder; +https://github.com)"}
+UA = {"User-Agent": "Mozilla/5.0 (Ticker&Tape data builder; +https://tickerandtape.com)"}
 
 # ETFs shown on the site: symbol -> (group, short name, GICS sector it tracks or "")
 ETFS = {
@@ -734,7 +734,7 @@ def price_stats(df: pd.DataFrame, bench: pd.Series | None):
 
 # ---------------------------------------------------------------- SEC EDGAR (10+ years of annual data)
 SEC_UA = __import__("os").environ.get(
-    "SEC_USER_AGENT", "Ink Charts personal research gslachowicz@users.noreply.github.com")
+    "SEC_USER_AGENT", "Ticker&Tape research contacto@tickerandtape.com")
 _sec_map: dict | None = None
 REV_TAGS = ["Revenues", "RevenueFromContractWithCustomerExcludingAssessedTax", "SalesRevenueNet",
             "RevenueFromContractWithCustomerIncludingAssessedTax", "SalesRevenueGoodsNet", "RevenuesNetOfInterestExpense"]
@@ -1872,19 +1872,101 @@ def build_share_cards(out: Path, prices: dict, all_rows: list[dict], day: str) -
             (root / "c" / fs).mkdir(exist_ok=True)
             (root / "c" / fs / "index.html").write_text(f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1"><title>{E(title)}</title>
-<meta name="description" content="{E(desc)}"><link rel="canonical" href="https://tickerandtape.com/c/{E(fs)}/">
+<meta name="description" content="{E(desc)}"><link rel="canonical" href="https://tickerandtape.com/chart/{E(s)}/">
 <meta property="og:type" content="website"><meta property="og:site_name" content="Ticker&amp;Tape"><meta property="og:title" content="{E(title)}">
 <meta property="og:description" content="{E(desc)}"><meta property="og:url" content="https://tickerandtape.com/c/{E(fs)}/">
 <meta property="og:image" content="https://tickerandtape.com/og/{E(fs)}.png?d={day}"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@Tickerandtape"><meta name="twitter:image" content="https://tickerandtape.com/og/{E(fs)}.png?d={day}">
-<link rel="icon" href="/favicon.ico"><script>location.replace("/?via=card#" + {jdumps(s)});</script></head>
+<link rel="icon" href="/favicon.ico"><script>location.replace("/chart/" + {jdumps(s)} + "/?via=card");</script></head>
 <body style="font:16px Arial,sans-serif;background:#f3f1ea;color:#15171c;padding:24px"><h1 style="color:#1f3c6e">{E(s)} · {E(str(r.get('name') or ''))}</h1>
-<p>{E(desc)}</p><p><a href="/#{E(s)}">Open the interactive chart on Ticker&amp;Tape →</a></p><img src="/og/{E(fs)}.png" alt="{E(s)} daily chart" width="600"></body></html>""")
+<p>{E(desc)}</p><p><a href="/chart/{E(s)}/">Open the interactive chart on Ticker&amp;Tape →</a></p><img src="/og/{E(fs)}.png" alt="{E(s)} daily chart" width="600"></body></html>""")
             made += 1
         except Exception as e:  # noqa: BLE001
             log(f"{s}: share card failed: {e}")
     plt.close(fig)
     log(f"share cards: {made} in {time.time() - t0:.0f}s")
+
+
+SITE_URL = "https://tickerandtape.com"
+# every section of the app gets its own page (title, description, link preview) so search engines can index it
+SECTION_PAGES = {
+    "watchlist": ("Watchlist · Ticker&Tape", "Your watchlist with RS Ratings, EPS and sales growth, bases, pivots and buy-zone status, updated every trading day.", True),
+    "screener": ("Stock screener: RS Rating, Composite, bases and pivots · Ticker&Tape", "Screen every U.S. stock and ADR worth $1 billion or more by RS Rating, Composite Rating, EPS and sales growth, distance from the high and base status.", True),
+    "etfs": ("ETF screener: sectors, industries, bonds, commodities · Ticker&Tape", "Sector, industry, factor, bond, commodity and country ETFs ranked by relative strength and performance, with O'Neil-style charts.", True),
+    "groups": ("Industry group rankings · Ticker&Tape", "Every GICS sub-industry ranked by the relative strength of its stocks, with rank changes over 1, 3 and 6 weeks and the leaders of each group.", True),
+    "heatmap": ("Stock market heatmap · Ticker&Tape", "S&P 500 and Nasdaq-100 heatmap by sector, colored by daily, weekly, monthly or year-to-date change or by RS Rating.", True),
+    "breadth": ("Market breadth and market direction · Ticker&Tape", "Market direction read the O'Neil way, with distribution and follow-through days, stocks above their moving averages, new highs and lows, the A/D line and the McClellan oscillator.", True),
+    "compare": ("Comparative charts: SPY vs RSP vs MAGS and ratios · Ticker&Tape", "Stack several tickers on one timeline or chart ratios like RSP:SPY to see who leads the market. Custom moving averages and performance view.", True),
+    "ideas": ("Trade ideas: leaders near a buy point · Ticker&Tape", "Stocks with an RS Rating of 80 or more near a pivot, in the buy zone or just out of a base, found automatically every trading day.", True),
+    "earnings": ("Earnings calendar · Ticker&Tape", "This week's and next week's earnings reports with RS Ratings, expected EPS and the stocks' chart setups.", True),
+    "wall": ("Chart wall · Ticker&Tape", "", False),
+    "welcome": ("Ticker&Tape · O'Neil-style charts, RS ratings and bases", "", False),
+}
+STATIC_PAGES = ["about/", "methodology/", "changelog/", "privacy.html", "terms.html"]
+
+
+def build_pages(root: Path, all_rows: list[dict], day: str) -> None:
+    """Static copies of the app page with their own title, description, link preview and canonical URL:
+    one per section (/breadth/, /compare/ …) and one per ticker (/chart/NVDA/), plus 404.html and sitemap.xml.
+    The app reads the path and opens the right view, so each URL works on its own and can be indexed."""
+    import html as _h
+    E = _h.escape
+    tpl = (root / "index.html").read_text()
+
+    def page(path: str, title: str, desc: str, image: str | None = None, index: bool = True) -> str:
+        url = SITE_URL + path
+        t = tpl
+        t = re.sub(r"<title>.*?</title>", f"<title>{E(title)}</title>\n<link rel=\"canonical\" href=\"{E(url)}\">" +
+                   ("" if index else '\n<meta name="robots" content="noindex">'), t, count=1, flags=re.S)
+        if desc:
+            t = re.sub(r'(<meta name="description" content=")[^"]*', lambda m: m.group(1) + E(desc), t, count=1)
+            t = re.sub(r'(<meta property="og:description" content=")[^"]*', lambda m: m.group(1) + E(desc), t, count=1)
+        t = re.sub(r'(<meta property="og:title" content=")[^"]*', lambda m: m.group(1) + E(title), t, count=1)
+        t = re.sub(r'(<meta property="og:url" content=")[^"]*', lambda m: m.group(1) + E(url), t, count=1)
+        if image:
+            t = re.sub(r'(<meta property="og:image" content=")[^"]*', lambda m: m.group(1) + E(image), t, count=1)
+        return t
+
+    def write(rel: str, txt: str) -> None:
+        d = root / rel
+        d.mkdir(parents=True, exist_ok=True)
+        (d / "index.html").write_text(txt)
+
+    urls = [(SITE_URL + "/", "daily", "1.0")]
+    for key, (title, desc, idx) in SECTION_PAGES.items():
+        write(key, page(f"/{key}/", title, desc, index=idx))
+        if idx:
+            urls.append((f"{SITE_URL}/{key}/", "daily", "0.8"))
+    seen = set()
+    for r in all_rows:
+        s = r.get("symbol")
+        if not s or s in seen or s.startswith("^") or "/" in s:
+            continue
+        seen.add(s)
+        name = str(r.get("name") or "")
+        bits = []
+        if r.get("rsRating") is not None: bits.append(f"RS Rating {r['rsRating']}")
+        if r.get("comp") is not None: bits.append(f"Composite {r['comp']}")
+        b = r.get("base") or {}
+        if b.get("type") and b.get("status") and b.get("type") != "Deep correction":
+            bits.append(f"{b['type'].lower()}, {b['status'].lower()}" + (f", pivot {b['pivot']:,.2f}" if b.get("pivot") else ""))
+        if r.get("epsChg") and r.get("salesChg"): bits.append(f"EPS {r['epsChg']} and sales {r['salesChg']} last quarter")
+        title = f"{s} stock chart" + (f": {name}" if name else "") + " · Ticker&Tape"
+        desc = (f"{name} ({s}): " if name else f"{s}: ") + "O'Neil-style daily chart with RS line, moving averages, volume and automatic base and pivot detection" + \
+            ("".join(f"; {x}" for x in bits)) + ". Free on Ticker&Tape."
+        fs = file_symbol(s)
+        img = f"{SITE_URL}/og/{fs}.png?d={day}" if (root / "og" / f"{fs}.png").exists() else None
+        write(f"chart/{s}", page(f"/chart/{s}/", title, desc, img))
+        urls.append((f"{SITE_URL}/chart/{s}/", "daily", "0.6" if not r.get("etf") else "0.5"))
+    (root / "404.html").write_text(page("/404.html", "Ticker&Tape", "", index=False))
+    for sp in STATIC_PAGES:
+        if (root / sp.rstrip("/")).exists() or (root / sp).exists():
+            urls.append((f"{SITE_URL}/{sp}", "monthly", "0.4"))
+    sm = ['<?xml version="1.0" encoding="UTF-8"?>', '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
+    sm += [f"<url><loc>{E(u)}</loc><lastmod>{day}</lastmod><changefreq>{f}</changefreq><priority>{p}</priority></url>" for u, f, p in urls]
+    sm.append("</urlset>")
+    (root / "sitemap.xml").write_text("\n".join(sm))
+    log(f"pages: {len(SECTION_PAGES)} sections, {len(seen)} charts, sitemap with {len(urls)} URLs")
 
 
 def main():
@@ -2215,6 +2297,11 @@ def main():
     except Exception as e:  # noqa: BLE001
         traceback.print_exc()
         log(f"share cards failed: {e}")
+    try:
+        build_pages(out.parent, rows + uni_rows, day)
+    except Exception as e:  # noqa: BLE001
+        traceback.print_exc()
+        log(f"pages failed: {e}")
     meta = {
         "updated": now_iso,
         "dataDate": bench.index[-1].strftime("%Y-%m-%d"),
