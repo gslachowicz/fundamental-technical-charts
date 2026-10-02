@@ -354,6 +354,135 @@ def market_pulse(df: pd.DataFrame | None, name: str):
     }
 
 
+# ---------------------------------------------------------------- market breadth
+BREADTH_DAYS = 504          # two years of daily history in breadth.json
+BREADTH_GROUPS = {"all": ("S&P 1500 + Nasdaq-100", 0), "sp500": ("S&P 500", 1), "ndx": ("Nasdaq-100", 2)}
+STATUS_CODE = {"Uptrend": "U", "Uptrend under pressure": "P", "Correction": "C", "Rally attempt": "R"}
+
+
+def market_state(df: pd.DataFrame) -> dict | None:
+    """O'Neil-style market direction, replayed day by day over the whole history (a heuristic, not IBD's call).
+
+    - Distribution day: index down 0.2%+ on higher volume than the day before. It counts for 25 sessions,
+      or until the index closes 5% above that day's close. The count restarts at every follow-through day.
+    - Uptrend -> under pressure: 5+ distribution days, or a close under the 50-day line.
+    - -> Correction: 8% off the uptrend's peak close, or 6+ distribution days while under the 50-day line.
+    - Rally attempt: first up close after the correction low. A new low (undercut) restarts it.
+    - Follow-through day: day 4 or later of the attempt, index up 1.25%+ on higher volume -> confirmed uptrend.
+    """
+    if df is None or len(df) < 260:
+        return None
+    df = df.dropna(subset=["Close"])
+    c, v = df["Close"].to_numpy(float), df["Volume"].fillna(0).to_numpy(float)
+    lo = df["Low"].fillna(df["Close"]).to_numpy(float)
+    ma50 = pd.Series(c).rolling(50).mean().to_numpy()
+    dates = [d.strftime("%Y-%m-%d") for d in df.index]
+    start = 200
+    state = "Uptrend" if c[start] > ma50[start] else "Correction"
+    peak, low_px, low_i, rally_day, ftd_i = c[start], lo[start], start, 0, None
+    dd: list[int] = []
+    codes = []
+    for i in range(start + 1, len(c)):
+        chg = c[i] / c[i - 1] - 1
+        if chg <= -0.002 and v[i] > v[i - 1] > 0:
+            dd.append(i)
+        dd = [k for k in dd if i - k < 25 and c[i] < c[k] * 1.05]
+        if state in ("Uptrend", "Uptrend under pressure"):
+            peak = max(peak, c[i])
+            if c[i] <= peak * 0.92 or (c[i] < ma50[i] and len(dd) >= 6):
+                state, low_px, low_i, rally_day = "Correction", lo[i], i, 0
+            elif len(dd) >= 5 or c[i] < ma50[i]:
+                state = "Uptrend under pressure"
+            else:
+                state = "Uptrend"
+        else:
+            if lo[i] < low_px:                       # new low: the rally attempt (if any) failed
+                low_px, low_i, rally_day, state = lo[i], i, 0, "Correction"
+                if chg > 0:                          # reversal day off a new low counts as day 1
+                    rally_day, state = 1, "Rally attempt"
+            elif rally_day == 0:
+                if chg > 0:
+                    rally_day, state = 1, "Rally attempt"
+            else:
+                rally_day += 1
+                if rally_day >= 4 and chg >= 0.0125 and v[i] > v[i - 1] > 0:
+                    state, peak, ftd_i, rally_day, dd = "Uptrend", c[i], i, 0, []
+                elif rally_day >= 30 and c[i] > ma50[i]:   # long grind higher without a textbook FTD
+                    state, peak, rally_day, dd = "Uptrend", c[i], 0, []
+        codes.append(STATUS_CODE[state])
+    return {
+        "status": state, "distDays": len(dd), "distDates": [dates[k] for k in dd],
+        "rallyDay": rally_day if state == "Rally attempt" else None,
+        "lowDate": dates[low_i] if state in ("Correction", "Rally attempt") else None,
+        "ftdDate": dates[ftd_i] if ftd_i is not None and state != "Correction" and state != "Rally attempt" else None,
+        "dates": dates[start + 1:], "codes": "".join(codes),
+    }
+
+
+def build_breadth(out: Path, prices: dict, uni: dict, ref_syms: list[str], now_iso: str) -> dict:
+    """breadth.json: % of stocks above their 20/50/200-day lines, 52-week highs and lows, advances and
+    declines (A/D line, McClellan oscillator) for three groups, plus the O'Neil market state of both indexes."""
+    bench = prices[BENCH]
+    idx = bench.index
+    syms = [s for s in ref_syms if s in prices]
+    close = pd.DataFrame({s: prices[s]["Close"] for s in syms}).reindex(idx)
+    high = pd.DataFrame({s: prices[s]["High"] for s in syms}).reindex(idx)
+    low = pd.DataFrame({s: prices[s]["Low"] for s in syms}).reindex(idx)
+    close = close.ffill(limit=3)
+    n = min(BREADTH_DAYS, len(idx) - 1)
+    keep = idx[-n:]
+
+    def pct(mask, valid):
+        cnt = valid.sum(axis=1)
+        return (mask.sum(axis=1) / cnt.where(cnt > 0) * 100).round(1)
+
+    groups = {}
+    for key, (label, bit) in BREADTH_GROUPS.items():
+        cols = [s for s in syms if not bit or (uni.get(s, {}).get("ix", 0) & bit)]
+        if len(cols) < 20:
+            continue
+        cl, hi, lw = close[cols], high[cols], low[cols]
+        ser = {}
+        for p in (20, 50, 200):
+            ma = cl.rolling(p, min_periods=p).mean()
+            ser[f"a{p}"] = pct(cl > ma, ma.notna() & cl.notna())
+        hh = hi.rolling(252, min_periods=240).max()
+        ll = lw.rolling(252, min_periods=240).min()
+        ser["nh"] = ((hi >= hh) & hh.notna()).sum(axis=1)
+        ser["nl"] = ((lw <= ll) & ll.notna()).sum(axis=1)
+        d = cl.diff()
+        adv, dec = (d > 0).sum(axis=1), (d < 0).sum(axis=1)
+        ser["adv"], ser["dec"] = adv, dec
+        # ratio-adjusted net advances, so the oscillator does not drift with the number of stocks
+        rana = ((adv - dec) / (adv + dec).where(adv + dec > 0) * 1000).fillna(0)
+        ser["mco"] = (rana.ewm(span=19, adjust=False).mean() - rana.ewm(span=39, adjust=False).mean()).round(1)
+        frame = pd.DataFrame(ser).loc[keep]
+        frame["ad"] = (frame["adv"] - frame["dec"]).cumsum()
+        groups[key] = {"label": label, "count": len(cols),
+                       **{k: [None if pd.isna(x) else (round(float(x), 1) if k in ("a20", "a50", "a200", "mco") else int(x))
+                              for x in frame[k].to_numpy()] for k in frame.columns}}
+
+    indexes = {}
+    for sym, name in INDEXES.items():
+        df = prices.get(sym)
+        st = market_state(df)
+        if not st:
+            continue
+        cmap = dict(zip(st.pop("dates"), st.pop("codes")))
+        c = df["Close"].reindex(keep)
+        st.update({"symbol": sym, "name": name,
+                   "close": [None if pd.isna(x) else round(float(x), 2) for x in c.to_numpy()],
+                   "codes": "".join(cmap.get(d.strftime("%Y-%m-%d"), "-") for d in keep)})
+        indexes[sym] = st
+
+    data = {"updated": now_iso, "dates": [d.strftime("%Y-%m-%d") for d in keep], "groups": groups, "indexes": indexes}
+    (out / "breadth.json").write_text(jdumps(data, separators=(",", ":")))
+    g = groups.get("all")
+    if g:
+        log(f"breadth: {g['count']} stocks, {g['a50'][-1]}% above 50-day, NH {g['nh'][-1]} / NL {g['nl'][-1]}")
+    return indexes
+
+
 def detect_base(df: pd.DataFrame):
     """Heuristic base / pivot detection on daily bars. Returns a dict or None.
 
@@ -1573,7 +1702,19 @@ def main():
         p = rank / total
         return "A" if p <= 0.2 else "B" if p <= 0.4 else "C" if p <= 0.6 else "D" if p <= 0.8 else "E"
 
-    market = [m for m in (market_pulse(prices.get(k), v) for k, v in INDEXES.items()) if m]
+    market = [dict(m, symbol=k) for k, v in INDEXES.items() if (m := market_pulse(prices.get(k), v))]
+
+    # ---------- market breadth + O'Neil market state (the state also drives the market pulse cards)
+    try:
+        states = build_breadth(out, prices, uni, ref_syms, dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%MZ"))
+        for m in market:
+            st = states.get(m["symbol"])
+            if st:
+                m.update({"status": st["status"], "distDays": st["distDays"], "distDates": st["distDates"],
+                          "rallyDay": st["rallyDay"], "ftdDate": st["ftdDate"]})
+    except Exception as e:  # noqa: BLE001
+        traceback.print_exc()
+        log(f"breadth failed: {e}")
 
     # benchmark file
     bjson = {"name": "S&P 500", "symbol": BENCH,
