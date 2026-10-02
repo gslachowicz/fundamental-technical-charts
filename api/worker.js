@@ -92,7 +92,7 @@ function confirmEmail(email, token) {
 
 async function weeklyHtml(unsubLink) {
   const get = async f => { try { const r = await fetch(`${SITE}/data/${f}?t=${Date.now()}`); return r.ok ? await r.json() : null; } catch { return null; } };
-  const [meta, home, ideas] = await Promise.all([get("meta.json"), get("home.json"), get("ideas.json")]);
+  const [meta, home, ideas, earn] = await Promise.all([get("meta.json"), get("home.json"), get("ideas.json"), get("earnings.json")]);
   if (!meta || !home) throw new Error("site data unavailable");
   const date = new Date(meta.dataDate + "T12:00:00Z").toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
   const C = { ink: "#15171c", ink2: "#5a5d66", navy: "#1f3c6e", up: "#1d3fc4", down: "#e0337f", rule: "#d9d6cc" };
@@ -113,6 +113,23 @@ ${rows.map(r => `<tr>${r.map((c, i) => `<td style="text-align:${i ? "right" : "l
   const ideaRows = I.map(i => [link(i.symbol) + `<br><span style="color:${C.ink2};font-size:12px">${escH(i.status)} · ${escH(i.type || "")}</span>`,
     `<b>${i.rs ?? "—"}</b>`, px(i.pivot), px(i.buyZoneTop), `<span style="color:${C.down}">${px(i.stop)}</span>`]);
   const st = ideas && ideas.stats || {};
+  // coming week's reports: leaders (RS >= 80) first, then the biggest companies
+  const wk = earn && (earn.weeks || []).find(w => w.start > meta.dataDate);
+  let E = [];
+  if (wk) {
+    const endD = new Date(wk.start + "T12:00:00Z"); endD.setUTCDate(endD.getUTCDate() + 4);
+    const inWk = (earn.events || []).filter(e => e.date >= wk.start && e.date <= endD.toISOString().slice(0, 10));
+    const leaders = inWk.filter(e => (e.rs || 0) >= 80).sort((a, b) => (b.mcap || 0) - (a.mcap || 0));
+    const big = inWk.filter(e => (e.rs || 0) < 80).sort((a, b) => (b.mcap || 0) - (a.mcap || 0));
+    E = [...leaders.slice(0, 10), ...big.slice(0, Math.max(0, 14 - Math.min(10, leaders.length)))]
+      .sort((a, b) => a.date.localeCompare(b.date) || (a.time === "bmo" ? -1 : 1));
+  }
+  const day = d => new Date(d + "T12:00:00Z").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: "UTC" });
+  const earnRows = E.map(e => [link(e.symbol) + `<br><span style="color:${C.ink2};font-size:12px">${escH(e.name || "")}</span>`,
+    `${day(e.date)}<br><span style="color:${C.ink2};font-size:12px">${e.time === "bmo" ? "before open" : e.time === "amc" ? "after close" : "time n/a"}</span>`,
+    (e.rs || 0) >= 80 ? `<b style="color:${C.navy}">${e.rs}</b>` : String(e.rs ?? "—"),
+    e.epsEst != null ? "$" + Number(e.epsEst).toFixed(2) : "—",
+    e.epsEst != null && e.epsLY ? pcell((e.epsEst - e.epsLY) / Math.abs(e.epsLY) * 100) : "—"]);
   return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body style="margin:0;background:#f3f1ea"><table width="100%" cellpadding="0" cellspacing="0" style="background:#f3f1ea"><tr><td align="center" style="padding:20px 10px">
 <table width="640" cellpadding="0" cellspacing="0" style="max-width:640px;width:100%;background:#fff;border:1px solid ${C.ink};padding:0 22px 22px">
 <tr><td style="padding:20px 0 10px;border-bottom:3px double ${C.ink}"><a href="${SITE}" style="font:800 26px Arial,sans-serif;color:${C.navy};text-decoration:none">Ticker&amp;Tape</a>
@@ -123,6 +140,8 @@ ${home.commodities && home.commodities.length ? h3("Commodities · biggest mover
 ${h3(`Trade ideas · ${I.length} setup${I.length === 1 ? "" : "s"}`)}
 ${I.length ? table(["Stock", "RS", "Buy point", "Zone to", "Stop"], ideaRows) : `<tr><td style="padding:10px 0;font:14px Arial,sans-serif">No stock passes every filter this week. In weak markets fewer leaders set up.</td></tr>`}
 ${st.count ? `<tr><td style="padding:10px 0 0;font:13px Arial,sans-serif;color:${C.ink2}">Track record: ${st.count} ideas, ${st.winPct}% in the green, average ${pct(st.avgPct)} (best gain on average ${pct(st.avgMaxPct)}).</td></tr>` : ""}
+${E.length ? h3("Next week's earnings · leaders first") + table(["Stock", "Reports", "RS", "EPS est.", "Growth"], earnRows)
+  + `<tr><td style="padding:8px 0 0;font:13px Arial,sans-serif"><a href="${SITE}/#earnings" style="color:${C.navy};font-weight:700">Full earnings calendar →</a></td></tr>` : ""}
 <tr><td style="padding:22px 0 4px"><a href="${SITE}/#ideas" style="display:inline-block;background:${C.navy};color:#fff;padding:10px 16px;font:700 14px Arial,sans-serif;text-decoration:none">See every chart on Ticker&amp;Tape →</a></td></tr>
 <tr><td style="padding:18px 0 0;border-top:1px solid ${C.rule};font:12px/1.5 Arial,sans-serif;color:${C.ink2}">
 Ideas come from an automatic scan and are not investment advice or a recommendation to buy or sell. Buy point = pivot, zone = up to 5% above it, stop = 7% under the buy point. Data: Yahoo Finance.<br>
