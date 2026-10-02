@@ -896,7 +896,9 @@ const LISTS = {watchlist:"watch", screener:"all", etfs:"etf"};
 let lastList = "";
 function setTab(v){ $$("#tabs a").forEach(a=>a.classList.toggle("on", a.dataset.v===v)); }
 function route(){
-  const raw = decodeURIComponent(location.hash.slice(1)).trim();
+  let raw = decodeURIComponent(location.hash.slice(1)).trim();
+  if(/^reset=[0-9a-f]{48}$/.test(raw)){   // link from the password reset email
+    resetToken = raw.slice(6); history.replaceState(null, "", location.pathname); openAuth("reset"); raw = ""; }
   const low = raw.toLowerCase();
   const isList = raw === low && LISTS[low];
   const isHome = raw === "" || raw === "home";
@@ -1427,30 +1429,44 @@ let authMode = "in";
 const AUTH_TXT = {
   in:  {t:"Sign in", go:"Sign in", sw:"New here?", tg:"Create a free account", pw:"Password", ac:"current-password"},
   up:  {t:"Create your account", go:"Create account", sw:"Already have an account?", tg:"Sign in", pw:"Password (8+ characters)", ac:"new-password"},
-  pw:  {t:"Change password", go:"Save new password", pw:"New password (8+ characters)", ac:"new-password"}};
+  pw:  {t:"Change password", go:"Save new password", pw:"New password (8+ characters)", ac:"new-password"},
+  forgot: {t:"Reset your password", go:"Email me a reset link", sw:"Remembered it?", tg:"Sign in", pw:"", ac:"off"},
+  reset:  {t:"Choose a new password", go:"Save and sign in", pw:"New password (8+ characters)", ac:"new-password"}};
+let resetToken = null;
 function openAuth(mode){
   authMode = mode; const T = AUTH_TXT[mode];
   $("#authTitle").textContent = T.t; $("#aGo").textContent = T.go; $("#aPwLbl").textContent = T.pw; $("#aPw").autocomplete = T.ac;
-  $("#fEmail").hidden = mode==="pw"; $("#fCur").hidden = mode!=="pw"; $("#aSwitch").hidden = mode==="pw";
-  $("#authSub").hidden = mode==="pw";
+  $("#fEmail").hidden = mode==="pw" || mode==="reset"; $("#fCur").hidden = mode!=="pw"; $("#aSwitch").hidden = mode==="pw" || mode==="reset";
+  $("#fPw").hidden = mode==="forgot"; $("#aForgot").hidden = mode!=="in"; $("#aLegal").hidden = mode!=="up";
+  $("#authSub").hidden = mode!=="in" && mode!=="up";
   if(T.sw){ $("#aSwTxt").textContent = T.sw; $("#aToggle").textContent = T.tg; }
   $("#aErr").hidden = true; $("#aPw").value = ""; $("#aCur").value = "";
-  $("#authModal").hidden = false; setTimeout(()=>(mode==="pw" ? $("#aCur") : $("#aEmail").value ? $("#aPw") : $("#aEmail")).focus(), 30);
+  $("#authModal").hidden = false; setTimeout(()=>(mode==="pw" ? $("#aCur") : mode==="reset" ? $("#aPw") : mode==="forgot" ? $("#aEmail") : $("#aEmail").value ? $("#aPw") : $("#aEmail")).focus(), 30);
 }
 const closeAuth = () => { $("#authModal").hidden = true; };
 $("#authClose").onclick = closeAuth;
 $("#authModal").addEventListener("mousedown", e=>{ if(e.target.id==="authModal") closeAuth(); });
 document.addEventListener("keydown", e=>{ if(e.key==="Escape" && !$("#authModal").hidden) closeAuth(); });
 $("#aToggle").onclick = () => openAuth(authMode==="in" ? "up" : "in");
+$("#aForgotBtn").onclick = () => openAuth("forgot");
 $("#authForm").addEventListener("submit", async e=>{
   e.preventDefault();
   const email = $("#aEmail").value.trim(), pw = $("#aPw").value, err = $("#aErr"), go = $("#aGo");
   err.hidden = true;
-  if(authMode!=="pw" && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)){ err.textContent = "Enter a valid email address."; err.hidden = false; return; }
-  if(pw.length < 8 && authMode!=="in"){ err.textContent = "Use a password of at least 8 characters."; err.hidden = false; return; }
+  if(authMode!=="pw" && authMode!=="reset" && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)){ err.textContent = "Enter a valid email address."; err.hidden = false; return; }
+  if(pw.length < 8 && authMode!=="in" && authMode!=="forgot"){ err.textContent = "Use a password of at least 8 characters."; err.hidden = false; return; }
   go.disabled = true;
   try{
-    if(authMode==="pw"){
+    if(authMode==="forgot"){
+      await api("/auth/forgot", {method:"POST", body: JSON.stringify({email})});
+      closeAuth(); toast(`If ${email} has an account, a reset link is on its way. It works for one hour.`);
+    } else if(authMode==="reset"){
+      const r = await api("/auth/reset", {method:"POST", body: JSON.stringify({token: resetToken, password: pw})});
+      resetToken = null;
+      auth.token = r.token; auth.email = r.email; store.set("tt:token", r.token); store.set("tt:email", r.email);
+      closeAuth(); renderAcct(); toast("Password updated. You are signed in.");
+      await pullData(true); store.set("tt:welcomed", true);
+    } else if(authMode==="pw"){
       await api("/auth/password", {method:"POST", body: JSON.stringify({current: $("#aCur").value, password: pw})});
       closeAuth(); toast("Password changed.");
     } else {

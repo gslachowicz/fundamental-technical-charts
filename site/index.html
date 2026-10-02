@@ -23,7 +23,7 @@
 <meta name="description" content="O'Neil-style daily charts, RS Ratings, industry group ranks and automatic base and pivot detection for every S&amp;P 1500 and Nasdaq-100 stock. Free.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&family=Archivo+Narrow:wght@400;600;700&family=Libre+Franklin:wght@600;800&family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&display=swap">
-<link rel="stylesheet" href="style.css?v=20261003g">
+<link rel="stylesheet" href="style.css?v=20261004a">
 </head>
 <body>
 <div class="sheet">
@@ -121,7 +121,7 @@
     </div>
     <section class="icards" id="iCards"></section>
     <form class="nlform nlideas" data-nl novalidate>
-      <div class="nltxt"><b>The Ticker&amp;Tape weekly</b><span>Sectors, commodities, RS leaders and the week's trade ideas with buy points and stops. Every Friday after the close. Free.</span></div>
+      <div class="nltxt"><b>The Ticker&amp;Tape weekly</b><span>Sectors, commodities, RS leaders and the week's trade ideas with buy points and stops. Every Friday after the close. Free. <a href="/privacy.html">Privacy</a>.</span></div>
       <div class="nlin"><input type="email" name="email" placeholder="you@email.com" autocomplete="email" spellcheck="false" aria-label="Email address" required><button class="btn on" type="submit">Subscribe</button></div>
     </form>
     <section class="box itrack">
@@ -360,7 +360,7 @@
   <!-- ===================== FOOTER (every page) ===================== -->
   <footer class="foot" aria-label="Site footer">
     <form class="nlform" data-nl novalidate>
-      <div class="nltxt"><b>The Ticker&amp;Tape weekly</b><span>Sectors, commodities, RS leaders and the week's trade ideas with buy points and stops. Every Friday after the close. Free.</span></div>
+      <div class="nltxt"><b>The Ticker&amp;Tape weekly</b><span>Sectors, commodities, RS leaders and the week's trade ideas with buy points and stops. Every Friday after the close. Free. <a href="/privacy.html">Privacy</a>.</span></div>
       <div class="nlin"><input type="email" name="email" placeholder="you@email.com" autocomplete="email" spellcheck="false" aria-label="Email address" required><button class="btn on" type="submit">Subscribe</button></div>
     </form>
     <div class="fcols">
@@ -392,6 +392,8 @@
           <li><button class="lnk" data-tour>Take the tour</button></li>
           <li><a href="#welcome">About Ticker&amp;Tape</a></li>
           <li><a href="mailto:contacto@tickerandtape.com?subject=Ticker%26Tape%20feedback">Report a bug or suggest a feature</a></li>
+          <li><a href="/terms.html">Terms of Use</a></li>
+          <li><a href="/privacy.html">Privacy Policy</a></li>
         </ul>
       </div>
     </div>
@@ -404,9 +406,11 @@
     <p class="msub" id="authSub">Keep your watchlist, chart settings and drawings on any device.</p>
     <label class="fld" id="fEmail"><span>Email</span><input type="email" id="aEmail" autocomplete="email" spellcheck="false"></label>
     <label class="fld" id="fCur" hidden><span>Current password</span><input type="password" id="aCur" autocomplete="current-password"></label>
-    <label class="fld"><span id="aPwLbl">Password</span><input type="password" id="aPw" autocomplete="current-password"></label>
+    <label class="fld" id="fPw"><span id="aPwLbl">Password</span><input type="password" id="aPw" autocomplete="current-password"></label>
     <div class="aerr" id="aErr" hidden></div>
     <button class="btn on wide" id="aGo" type="submit">Sign in</button>
+    <p class="aforgot" id="aForgot"><button type="button" class="lnk" id="aForgotBtn">Forgot your password?</button></p>
+    <p class="alegal" id="aLegal" hidden>By creating an account you agree to the <a href="/terms.html" target="_blank">Terms of Use</a> and the <a href="/privacy.html" target="_blank">Privacy Policy</a>.</p>
     <p class="aswitch" id="aSwitch"><span id="aSwTxt">New here?</span> <button type="button" class="lnk" id="aToggle">Create a free account</button></p>
   </form>
 </div>
@@ -420,6 +424,6 @@
   </div>
 </div>
 <div class="toast" id="toast" hidden></div>
-<script src="app.js?v=20261003g"></script>
+<script src="app.js?v=20261004a"></script>
 </body>
 </html>
