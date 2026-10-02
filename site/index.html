@@ -23,7 +23,8 @@
 <meta name="description" content="O'Neil-style daily charts, RS Ratings, industry group ranks and automatic base and pivot detection for every S&amp;P 1500 and Nasdaq-100 stock. Free.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&family=Archivo+Narrow:wght@400;600;700&family=Libre+Franklin:wght@600;800&family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&display=swap">
-<link rel="stylesheet" href="style.css?v=20261007a">
+<link rel="stylesheet" href="style.css?v=20261008a">
+<style id="colcss"></style>
 </head>
 <body>
 <div class="sheet">
@@ -44,7 +45,7 @@
   <div class="banner" id="banner" hidden></div>
   <div class="vbar" id="vBar" hidden></div>
   <nav class="tabs" id="tabs" aria-label="Sections">
-    <a href="#" data-v="home">Home</a><a href="#watchlist" data-v="watch">Watchlist</a><a href="#screener" data-v="all">Screener</a><a href="#etfs" data-v="etf">ETFs</a><a href="#heatmap" data-v="heat">Heatmap</a><a href="#breadth" data-v="breadth">Breadth</a><a href="#ideas" data-v="ideas">Trade ideas</a><a href="#earnings" data-v="earn">Earnings</a><a href="#breadth" class="mktchip" id="mktChip" title="Market direction · open Market breadth" hidden></a>
+    <a href="#" data-v="home">Home</a><a href="#watchlist" data-v="watch">Watchlist</a><a href="#screener" data-v="all">Screener</a><a href="#etfs" data-v="etf">ETFs</a><a href="#groups" data-v="groups">Groups</a><a href="#heatmap" data-v="heat">Heatmap</a><a href="#breadth" data-v="breadth">Breadth</a><a href="#ideas" data-v="ideas">Trade ideas</a><a href="#earnings" data-v="earn">Earnings</a><a href="#breadth" class="mktchip" id="mktChip" title="Market direction · open Market breadth" hidden></a>
   </nav>
 
   <!-- ===================== HOME ===================== -->
@@ -99,6 +100,38 @@
     <div class="hmtip" id="hmTip" hidden></div>
   </main>
 
+  <!-- ===================== INDUSTRY GROUPS ===================== -->
+  <main id="vGroups" class="groupsv" hidden>
+    <section class="ihead">
+      <div>
+        <p class="kicker">Research · industry groups, updated every trading day after the close</p>
+        <h2>Industry groups</h2>
+        <p class="lede">Most big winners come from the strongest groups. Every GICS sub-industry in the S&amp;P&nbsp;1500 and the Nasdaq-100, ranked by the average relative strength of its stocks, with how the rank moved over 1, 3 and 6 weeks, equal-weight performance, the share of members above the 50-day line and the three strongest stocks in each group.</p>
+      </div>
+      <div class="istats" id="gStats"></div>
+    </section>
+    <div class="bar">
+      <label class="gsel"><span class="vh">Sector</span><select id="gSector" aria-label="Sector"></select></label>
+      <div class="seg" role="group" aria-label="Show" id="gShow"><button data-n="all" class="on">All groups</button><button data-n="top">Top 40</button><button data-n="up">Climbers</button></div>
+      <span class="sp"></span><span class="count" id="gCount"></span>
+    </div>
+    <section class="box"><div class="tbl" id="gTbl"></div></section>
+    <p class="fine">Rank = position by the average 12-month relative strength score of the group's stocks (last quarter weighted double). Arrows compare with the rank 1, 3 and 6 weeks ago. Performance is the simple average of the members. Click a group to see its stocks in the screener, or a ticker to open its chart. Not investment advice.</p>
+  </main>
+
+  <!-- ===================== CHART WALL ===================== -->
+  <main id="vWall" class="wallv" hidden>
+    <div class="bar">
+      <button class="btn" id="wBack">← Back</button>
+      <h2 class="wtitle" id="wTitle">Chart wall</h2>
+      <div class="seg" role="group" aria-label="Range" id="wRange"><button data-r="63">3M</button><button data-r="126" class="on">6M</button><button data-r="252">1Y</button></div>
+      <span class="sp"></span><span class="count" id="wCount"></span>
+    </div>
+    <section class="wgrid" id="wGrid"></section>
+    <div class="more" id="wMore" hidden><button class="btn" id="wMoreBtn">Show more</button></div>
+    <p class="fine">Daily bars with the 50- and 200-day lines, volume and the pivot (dashed). Click a chart to open it; the ‹ › arrows on the chart page step through this list.</p>
+  </main>
+
   <!-- ===================== MARKET BREADTH ===================== -->
   <main id="vBreadth" class="breadthv" hidden>
     <section class="ihead">
@@ -147,6 +180,7 @@
         <button data-q="ab" title="SMR Rating A or B: top sales growth, margins and return on equity">SMR A–B only</button>
       </div>
       <span class="count" id="iCount"></span>
+      <button class="btn ghost" id="iWall" title="See every chart in this list as a grid">▦ Chart wall</button>
     </div>
     <section class="icards" id="iCards"></section>
     <form class="nlform nlideas" data-nl novalidate>
@@ -256,9 +290,12 @@
         <button data-f="trend">Above 50-day</button>
         <button data-f="liquid" title="Average dollar volume of at least $20M a day">Liquid</button>
       </div>
+      <button class="btn ghost" id="bScreen" title="Build and save your own screen">＋ Screen</button>
       <span class="secchip" id="secChip" hidden></span>
       <span class="sp"></span>
       <span class="count" id="count"></span>
+      <button class="btn ghost" id="bWall" title="See every chart in this list as a grid">▦ Chart wall</button>
+      <span class="colwrap"><button class="btn ghost" id="bCols" aria-haspopup="true" aria-expanded="false" title="Choose the columns">Columns ▾</button><span class="acctmenu colmenu" id="colMenu" hidden></span></span>
     </div>
 
     <div class="tablewrap">
@@ -269,6 +306,7 @@
           <th data-k="close">Price</th>
           <th data-k="chgPct">Chg</th>
           <th data-k="rsRating" title="IBD-style relative strength rating 1–99 vs S&amp;P 1500 + Nasdaq-100 stocks">RS</th>
+          <th data-k="comp" title="Composite Rating 1–99: EPS growth (double weight), RS Rating, group rank, SMR and distance from the 52-week high">Comp</th>
           <th data-k="grp" title="Industry group rank (GICS sub-industry, by average RS)">Group</th>
           <th data-k="eps" title="Latest quarter EPS change vs year ago">EPS Δ</th>
           <th data-k="sales" title="Latest quarter sales change vs year ago">Sales Δ</th>
@@ -468,7 +506,7 @@
   </div>
 </div>
 <div class="toast" id="toast" hidden></div>
-<script src="i18n.js?v=20261007a"></script>
-<script src="app.js?v=20261007a"></script>
+<script src="i18n.js?v=20261008a"></script>
+<script src="app.js?v=20261008a"></script>
 </body>
 </html>
