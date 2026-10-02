@@ -55,6 +55,20 @@ jobs:
           path: cache
           key: ink-cache-${{ github.run_id }}
 
+      # screenshots of each tool for the rotating showcase on the welcome page (a failure never blocks the deploy)
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Screenshots for the welcome page
+        continue-on-error: true
+        timeout-minutes: 12
+        run: |
+          npm install --no-save --no-audit --no-fund playwright@1.48.2
+          npx playwright install --with-deps chromium
+          (cd site && python -m http.server 8000 >/dev/null 2>&1 &)
+          sleep 2
+          node scripts/showcase.mjs site http://127.0.0.1:8000
+
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
