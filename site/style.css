@@ -683,3 +683,11 @@ details.howto > p{margin:8px 0 0}
   .mktchip{order:5;font-size:11px;gap:8px}
 }
 @media (max-width:640px){ #scr tbody tr.nob td:nth-child(13),#scr tbody tr.nob td:nth-child(16){display:none} }
+
+/* watchlist: clear button and empty state */
+.btn.ghost{background:transparent;border-color:var(--rule);color:var(--ink2);font-size:12px}
+.btn.ghost:hover{border-color:var(--down);color:var(--down);background:transparent}
+.wlgo{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.tabs .mktchip{margin:0 0 4px auto;align-self:center;text-transform:none;letter-spacing:0;font:12px var(--f-label);color:var(--ink2);padding:3px 9px;border:1px solid var(--rule)}
+@media (max-width:1440px){.tabs .mktchip b{display:none}}
+@media (max-width:1150px){.tabs .mktchip{display:none}}

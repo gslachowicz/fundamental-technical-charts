@@ -97,7 +97,9 @@ const D = [
 ["% of stocks above moving averages","% de acciones sobre sus medias móviles","% de ações acima das médias móveis"],["% above MAs","% sobre medias","% acima das médias"],["New 52-week highs / lows","Nuevos máximos / mínimos de 52 semanas","Novas máximas / mínimas de 52 semanas"],["52-wk highs / lows","Máx. / mín. 52 sem.","Máx. / mín. 52 sem."],
 ["Advance / decline line","Línea de avance / descenso","Linha de avanço / declínio"],["A/D line","Línea A/D","Linha A/D"],["Cumulative","Acumulada","Acumulada"],["50-day avg","Prom. 50 días","Média 50 dias"],["Net, 10-day avg","Neto, prom. 10 días","Líquido, média 10 dias"],
 ["Highs","Máximos","Máximas"],["Lows","Mínimos","Mínimas"],["▼ distribution","▼ distribución","▼ distribuição"],["▲ follow-through","▲ follow-through","▲ follow-through"],["20-day","20 días","20 dias"],["50-day","50 días","50 dias"],["200-day","200 días","200 dias"],
-["Index","Índice","Índice"],["now","ahora","agora"],["How to read this table","Cómo leer esta tabla","Como ler esta tabela"],["How the market direction is worked out","Cómo se calcula la dirección del mercado","Como a direção do mercado é calculada"],
+["Index","Índice","Índice"],["now","ahora","agora"],["Clear watchlist","Vaciar watchlist","Esvaziar watchlist"],["Remove every ticker from your watchlist","Quitar todos los tickers de tu watchlist","Remover todos os tickers da sua watchlist"],
+["Your watchlist is empty now.","Tu watchlist quedó vacía.","Sua watchlist está vazia agora."],["Browse the screener →","Ver el screener →","Ver o screener →"],["See trade ideas →","Ver ideas de trading →","Ver ideias de trade →"],["Open the heatmap →","Abrir el mapa de calor →","Abrir o mapa de calor →"],
+["Your watchlist is empty. Open any ticker and tap the ☆ next to its symbol to add it.","Tu watchlist está vacía. Abre cualquier ticker y toca la ☆ junto a su símbolo para sumarlo.","Sua watchlist está vazia. Abra qualquer ticker e toque na ☆ ao lado do símbolo para adicioná-lo."],["How to read this table","Cómo leer esta tabla","Como ler esta tabela"],["How the market direction is worked out","Cómo se calcula la dirección del mercado","Como a direção do mercado é calculada"],
 ["Market direction · open Market breadth","Dirección del mercado · abrir Amplitud de mercado","Direção do mercado · abrir Amplitude de mercado"],["Nasdaq","Nasdaq","Nasdaq"],
 // trade ideas
 ["Research · updated every trading day after the close","Investigación · actualizada cada día hábil tras el cierre","Pesquisa · atualizada a cada pregão após o fechamento"],
@@ -178,7 +180,6 @@ const D = [
 ["Data: Yahoo Finance via yfinance, end of day.","Datos: Yahoo Finance vía yfinance, cierre diario.","Dados: Yahoo Finance via yfinance, fechamento diário."],
 ["In your watchlist","En tu watchlist","Na sua watchlist"],["25%+ above the 50-day line: extended","25%+ sobre la media de 50 días: extendida","25%+ acima da média de 50 dias: estendida"],
 ["No tickers match this filter.","Ningún ticker cumple este filtro.","Nenhum ticker passa neste filtro."],["Clear sector filter","Quitar filtro de sector","Limpar filtro de setor"],["(filtered)","(filtrado)","(filtrado)"],
-["Your watchlist is empty. Open any ticker and tap the ☆ next to its symbol to add it.","Tu watchlist está vacía. Abre cualquier ticker y toca la ☆ junto a su símbolo para sumarlo.","Sua watchlist está vazia. Abra qualquer ticker e toque na ☆ ao lado do símbolo para adicioná-lo."],
 ["Loading ETFs…","Cargando ETFs…","Carregando ETFs…"],["Loading all stocks…","Cargando todas las acciones…","Carregando todas as ações…"],
 ["Could not load the full stock list. It appears after the next data update.","No se pudo cargar la lista completa de acciones. Aparece tras la próxima actualización de datos.","Não foi possível carregar a lista completa de ações. Ela aparece após a próxima atualização de dados."],
 // statuses and bases
@@ -373,6 +374,7 @@ const P = [
 [/^If (.+) has an account, a reset link is on its way\.$/, e=>[`Si ${e} tiene una cuenta, el enlace ya está en camino.`, `Se ${e} tiver uma conta, o link já está a caminho.`]],
 [/^Welcome back, (.+)\.$/, e=>[`Hola de nuevo, ${e}.`, `Bem-vindo de volta, ${e}.`]],
 [/^Could not save to your account: (.*)$/, m=>[`No se pudo guardar en tu cuenta: ${tx(m)}`, `Não foi possível salvar na sua conta: ${tx(m)}`]],
+[/^Remove all (\d+) tickers from your watchlist\? This cannot be undone\.$/, n=>[`¿Quitar los ${n} tickers de tu watchlist? No se puede deshacer.`, `Remover os ${n} tickers da sua watchlist? Não dá para desfazer.`]],
 [/^Signed in as (.+)$/, e=>[`Sesión iniciada como ${e}`, `Conectado como ${e}`]],
 [/^See the (.+) stocks →$/, s=>[`Ver las acciones de ${tx(s)} →`, `Ver as ações de ${tx(s)} →`]],
 [/^Last update had problems with: (.+)$/, s=>[`La última actualización tuvo problemas con: ${s}`, `A última atualização teve problemas com: ${s}`]],

@@ -23,14 +23,13 @@
 <meta name="description" content="O'Neil-style daily charts, RS Ratings, industry group ranks and automatic base and pivot detection for every S&amp;P 1500 and Nasdaq-100 stock. Free.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&family=Archivo+Narrow:wght@400;600;700&family=Libre+Franklin:wght@600;800&family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&display=swap">
-<link rel="stylesheet" href="style.css?v=20261006a">
+<link rel="stylesheet" href="style.css?v=20261006b">
 </head>
 <body>
 <div class="sheet">
   <nav class="topbar">
     <a href="#" class="brand"><img src="img/logo.svg" alt="" width="34" height="34">Ticker&amp;Tape</a>
     <span class="asof" id="asof"></span>
-    <a href="#breadth" class="mktchip" id="mktChip" title="Market direction · open Market breadth" hidden></a>
     <span class="sp"></span>
     <label class="jump"><span class="vh">Go to ticker</span><input id="jump" placeholder="Ticker…" maxlength="10" spellcheck="false" autocomplete="off" list="symlist"></label>
     <datalist id="symlist"></datalist>
@@ -42,7 +41,7 @@
   </nav>
   <div class="banner" id="banner" hidden></div>
   <nav class="tabs" id="tabs" aria-label="Sections">
-    <a href="#" data-v="home">Home</a><a href="#watchlist" data-v="watch">Watchlist</a><a href="#screener" data-v="all">Screener</a><a href="#etfs" data-v="etf">ETFs</a><a href="#heatmap" data-v="heat">Heatmap</a><a href="#breadth" data-v="breadth">Breadth</a><a href="#ideas" data-v="ideas">Trade ideas</a><a href="#earnings" data-v="earn">Earnings</a>
+    <a href="#" data-v="home">Home</a><a href="#watchlist" data-v="watch">Watchlist</a><a href="#screener" data-v="all">Screener</a><a href="#etfs" data-v="etf">ETFs</a><a href="#heatmap" data-v="heat">Heatmap</a><a href="#breadth" data-v="breadth">Breadth</a><a href="#ideas" data-v="ideas">Trade ideas</a><a href="#earnings" data-v="earn">Earnings</a><a href="#breadth" class="mktchip" id="mktChip" title="Market direction · open Market breadth" hidden></a>
   </nav>
 
   <!-- ===================== HOME ===================== -->
@@ -245,6 +244,7 @@
         <button data-s="watch" class="on">Watchlist</button>
         <button data-s="all">All stocks</button>
       </div>
+      <button class="btn ghost" id="wlClear" hidden title="Remove every ticker from your watchlist">Clear watchlist</button>
       <div class="seg" role="group" aria-label="Filter" id="filters">
         <button data-f="all" class="on">All</button>
         <button data-f="setup">Breakout / buy zone</button>
@@ -454,7 +454,7 @@
   </div>
 </div>
 <div class="toast" id="toast" hidden></div>
-<script src="i18n.js?v=20261006a"></script>
-<script src="app.js?v=20261006a"></script>
+<script src="i18n.js?v=20261006b"></script>
+<script src="app.js?v=20261006b"></script>
 </body>
 </html>

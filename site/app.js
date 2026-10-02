@@ -143,7 +143,7 @@ function renderScreener(){
       <td>${b.pivot?fmtP(b.pivot):"—"}</td>
       <td class="${b.pivot ? TIER.pivot(b.distPct) : ""}" data-l="To pivot">${b.pivot?fmtPct(b.distPct):"—"}</td>
       <td class="l">${b.status?`<span class="chip ${stc}">${esc(b.status)}</span>`:"—"}</td>
-    </tr>`; }).join("") || `<tr><td colspan="16" class="l" style="padding:18px">${scrState.scope==="watch" && !getWL().length ? "Your watchlist is empty. Open any ticker and tap the ☆ next to its symbol to add it." : "No tickers match this filter."}</td></tr>`;
+    </tr>`; }).join("") || `<tr><td colspan="16" class="l" style="padding:18px">${scrState.scope==="watch" && !getWL().length ? `Your watchlist is empty. Open any ticker and tap the ☆ next to its symbol to add it.<span class="wlgo"><a class="btn" href="#screener">Browse the screener →</a><a class="btn" href="#ideas">See trade ideas →</a><a class="btn" href="#heatmap">Open the heatmap →</a></span>` : "No tickers match this filter."}</td></tr>`;
   const bySym = new Map(shown.map(r=>[r.symbol,r]));
   $$("canvas[data-spark]").forEach(cv=>{ const r = bySym.get(cv.dataset.spark); sparkline(cv, r && r.spark); });
   const noun = {all:"stocks", etf:"ETFs", watch:"tickers"}[scrState.scope];
@@ -151,6 +151,7 @@ function renderScreener(){
   const sc = $("#secChip"); sc.hidden = !scrState.sector;
   if(scrState.sector){ sc.innerHTML = `Sector: <b>${esc(scrState.sector)}</b> <button aria-label="Clear sector filter">×</button>`; sc.querySelector("button").onclick = ()=>{ scrState.sector=null; scrState.limit=PAGE; renderScreener(); }; }
   fitTable();
+  $("#wlClear").hidden = scrState.scope !== "watch" || !getWL().length;
   $("#moreWrap").hidden = total <= shown.length;
   if(total > shown.length) $("#moreBtn").textContent = `Show ${Math.min(PAGE, total-shown.length)} more`;
 }
@@ -158,7 +159,7 @@ const MKT_SHORT = {"Uptrend":"Uptrend","Uptrend under pressure":"Under pressure"
 function renderMktChip(){
   const el = $("#mktChip"); if(!el) return;
   const M = (META && META.market) || []; el.hidden = !M.length;
-  el.innerHTML = M.map(m=>`<span><i class="${MKT_CLASS[m.status]||''}"></i>${esc(m.name.replace(" Composite",""))} <b>${esc(MKT_SHORT[m.status]||m.status)}</b></span>`).join("");
+  el.innerHTML = M.map(m=>`<span title="${esc(m.name)}: ${esc(TX(m.status))}"><i class="${MKT_CLASS[m.status]||''}"></i>${esc(m.name.replace(" Composite",""))} <b>${esc(MKT_SHORT[m.status]||m.status)}</b></span>`).join("");
 }
 function renderPulse(){
   renderMktChip();
@@ -1564,7 +1565,7 @@ async function pullData(fresh){
   // fresh = just signed in / signed up: anything only on this device goes up to the account
   let d; try{ d = await api("/data"); }catch(e){ return; }
   if(Array.isArray(d.watchlist)){ WL = d.watchlist; store.set("tt:wl", WL); }
-  else if(fresh){ WL = getWL().slice(); store.set("tt:wl", WL); push("watchlist", WL); }
+  else if(fresh){ WL = WL ? WL.slice() : []; store.set("tt:wl", WL); push("watchlist", WL); }   // new accounts start empty; the sample list is only for visitors
   if(d.cfg && typeof d.cfg==="object"){ cfg = normCfg(d.cfg); store.set("ink:cfg", cfg); redrawAll();
     if(cfg.lang && cfg.lang !== I18N.lang && I18N.setLang) I18N.setLang(cfg.lang); }
   else if(fresh){ push("cfg", cfg); }
@@ -1664,7 +1665,7 @@ function updateStar(){
   b.title = on ? "Remove from your watchlist" : "Add to your watchlist"; b.hidden = !CUR;
 }
 $("#star").onclick = () => {
-  if(!CUR) return; const L = getWL().slice(); const i = L.indexOf(CUR);
+  if(!CUR) return; const L = WL ? WL.slice() : inWL(CUR) ? getWL().slice() : []; const i = L.indexOf(CUR);
   if(i >= 0){ L.splice(i,1); toast(`${CUR} removed from your watchlist.`); }
   else {
     if(L.length >= 300){ toast("Your watchlist is full (300 tickers)."); return; }
@@ -1673,6 +1674,12 @@ $("#star").onclick = () => {
     toast(!hasData ? `${CUR} added. Its data loads after the next nightly update.` : auth.token ? `${CUR} added to your watchlist.` : `${CUR} added. Sign in or create a free account to keep it on every device.`);
   }
   WL = L; store.set("tt:wl", WL); push("watchlist", WL); updateStar();
+};
+
+$("#wlClear").onclick = () => {
+  const n = getWL().length; if(!n) return;
+  if(!confirm(TX(`Remove all ${n} tickers from your watchlist? This cannot be undone.`))) return;
+  WL = []; store.set("tt:wl", WL); push("watchlist", WL); updateStar(); scrState.limit = PAGE; renderScreener(); toast("Your watchlist is empty now.");
 };
 
 /* ================= WELCOME PAGE ================= */
