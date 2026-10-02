@@ -1,0 +1,20 @@
+# Ticker&Tape API: deployment settings for Cloudflare Workers Builds.
+# Once the Worker is connected to this GitHub repo (Worker > Settings > Builds, root directory "api"),
+# every push that changes this folder deploys worker.js automatically. Secrets (RESEND_API_KEY, ADMIN_KEY)
+# stay in the dashboard and are not touched by deploys.
+name = "tickerandtape-api"
+main = "worker.js"
+compatibility_date = "2024-09-23"
+keep_vars = true
+workers_dev = true
+preview_urls = false
+routes = [{ pattern = "api.tickerandtape.com", custom_domain = true }]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "tickerandtape"
+database_id = "37faf162-285d-446a-bd8a-f9437d520613"
+
+[triggers]
+# Saturday 02:00 UTC: the weekly newsletter. Every 15 minutes in US market hours, Monday to Friday: price alerts.
+crons = ["0 2 * * SAT", "5,20,35,50 13-21 * * MON-FRI"]

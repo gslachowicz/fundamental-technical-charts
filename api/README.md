@@ -15,3 +15,10 @@ Endpoints: POST /auth/signup, /auth/login, /auth/logout, /auth/password; GET /me
 - Endpoints: POST /subscribe {email} (sends a confirmation email), GET /confirm?t=, GET|POST /unsubscribe?t=,
   GET /newsletter/preview?key=ADMIN_KEY (HTML of this week's email), /newsletter/test?key= (sends it to contacto@), /newsletter/stats?key=.
 - The site shows the sign-up forms when `NEWSLETTER_ON = true` in `site/app.js`.
+
+## Automatic deploys (Cloudflare Workers Builds)
+
+`wrangler.toml` holds the Worker's settings (D1 binding, custom domain, cron triggers). Connect the Worker to this repo
+once: Worker > Settings > Builds > Connect, repository `gslachowicz/fundamental-technical-charts`, branch `main`,
+root directory `api`, deploy command `npx wrangler deploy`. From then on every change pushed to `api/` is deployed
+automatically; database changes (SQL migrations) are still run by hand in the D1 console.
