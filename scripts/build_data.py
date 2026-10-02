@@ -1888,17 +1888,18 @@ def build_share_cards(out: Path, prices: dict, all_rows: list[dict], day: str) -
 
 
 SITE_URL = "https://tickerandtape.com"
-# every section of the app gets its own page (title, description, link preview) so search engines can index it
+# every section of the app gets its own page (title, description, link preview). Sections need an account, so only the
+# home page (welcome for visitors) and the chart pages are offered to search engines
 SECTION_PAGES = {
-    "watchlist": ("Watchlist · Ticker&Tape", "Your watchlist with RS Ratings, EPS and sales growth, bases, pivots and buy-zone status, updated every trading day.", True),
-    "screener": ("Stock screener: RS Rating, Composite, bases and pivots · Ticker&Tape", "Screen every U.S. stock and ADR worth $1 billion or more by RS Rating, Composite Rating, EPS and sales growth, distance from the high and base status.", True),
-    "etfs": ("ETF screener: sectors, industries, bonds, commodities · Ticker&Tape", "Sector, industry, factor, bond, commodity and country ETFs ranked by relative strength and performance, with O'Neil-style charts.", True),
-    "groups": ("Industry group rankings · Ticker&Tape", "Every GICS sub-industry ranked by the relative strength of its stocks, with rank changes over 1, 3 and 6 weeks and the leaders of each group.", True),
-    "heatmap": ("Stock market heatmap · Ticker&Tape", "S&P 500 and Nasdaq-100 heatmap by sector, colored by daily, weekly, monthly or year-to-date change or by RS Rating.", True),
-    "breadth": ("Market breadth and market direction · Ticker&Tape", "Market direction read the O'Neil way, with distribution and follow-through days, stocks above their moving averages, new highs and lows, the A/D line and the McClellan oscillator.", True),
-    "compare": ("Comparative charts: SPY vs RSP vs MAGS and ratios · Ticker&Tape", "Stack several tickers on one timeline or chart ratios like RSP:SPY to see who leads the market. Custom moving averages and performance view.", True),
-    "ideas": ("Trade ideas: leaders near a buy point · Ticker&Tape", "Stocks with an RS Rating of 80 or more near a pivot, in the buy zone or just out of a base, found automatically every trading day.", True),
-    "earnings": ("Earnings calendar · Ticker&Tape", "This week's and next week's earnings reports with RS Ratings, expected EPS and the stocks' chart setups.", True),
+    "watchlist": ("Watchlist · Ticker&Tape", "Your watchlist with RS Ratings, EPS and sales growth, bases, pivots and buy-zone status, updated every trading day.", False),
+    "screener": ("Stock screener: RS Rating, Composite, bases and pivots · Ticker&Tape", "Screen every U.S. stock and ADR worth $1 billion or more by RS Rating, Composite Rating, EPS and sales growth, distance from the high and base status.", False),
+    "etfs": ("ETF screener: sectors, industries, bonds, commodities · Ticker&Tape", "Sector, industry, factor, bond, commodity and country ETFs ranked by relative strength and performance, with O'Neil-style charts.", False),
+    "groups": ("Industry group rankings · Ticker&Tape", "Every GICS sub-industry ranked by the relative strength of its stocks, with rank changes over 1, 3 and 6 weeks and the leaders of each group.", False),
+    "heatmap": ("Stock market heatmap · Ticker&Tape", "S&P 500 and Nasdaq-100 heatmap by sector, colored by daily, weekly, monthly or year-to-date change or by RS Rating.", False),
+    "breadth": ("Market breadth and market direction · Ticker&Tape", "Market direction read the O'Neil way, with distribution and follow-through days, stocks above their moving averages, new highs and lows, the A/D line and the McClellan oscillator.", False),
+    "compare": ("Comparative charts: SPY vs RSP vs MAGS and ratios · Ticker&Tape", "Stack several tickers on one timeline or chart ratios like RSP:SPY to see who leads the market. Custom moving averages and performance view.", False),
+    "ideas": ("Trade ideas: leaders near a buy point · Ticker&Tape", "Stocks with an RS Rating of 80 or more near a pivot, in the buy zone or just out of a base, found automatically every trading day.", False),
+    "earnings": ("Earnings calendar · Ticker&Tape", "This week's and next week's earnings reports with RS Ratings, expected EPS and the stocks' chart setups.", False),
     "wall": ("Chart wall · Ticker&Tape", "", False),
     "welcome": ("Ticker&Tape · O'Neil-style charts, RS ratings and bases", "", False),
 }
