@@ -248,13 +248,13 @@ function settingsHTML(){
     </div></div>
     <div class="setft"><button class="btn" id="setReset">Reset to defaults</button></div>`;
 }
-function redrawAll(){ applyColors(); if(S && !$("#vChart").hidden){ renderPanels(); draw(); } if(!$("#vHome").hidden) drawHomeChart(); if(!$("#vScreener").hidden) renderScreener(); }
+function redrawAll(){ applyColors(); if(S && !$("#vChart").hidden){ renderPanels(); draw(); } if(!$("#vHome").hidden) drawHomeChart(); if(!$("#vScreener").hidden) renderScreener(); if(!$("#vCmp").hidden){ CMP = normCmp(cfg.cmp); renderCmp(); } }
 function applyCfg(){ store.set("ink:cfg", cfg); push("cfg", cfg); $("#settings").innerHTML = settingsHTML(); bindSettings(); redrawAll(); }
 function bindSettings(){
   $$("#settings [data-cfg]").forEach(b=>b.onclick=()=>{ cfg[b.dataset.cfg]=b.dataset.v; applyCfg(); });
   $$("#settings [data-lang]").forEach(b=>b.onclick=()=>{ const l = b.dataset.lang; if(l === I18N.lang) return; cfg.lang = l; store.set("ink:cfg", cfg); push("cfg", cfg); setTimeout(()=>I18N.setLang && I18N.setLang(l), 250); });
   $$("#settings [data-ma]").forEach(c=>c.onchange=()=>{ cfg.ma[c.dataset.ma]=c.checked; applyCfg(); });
-  $("#setReset").onclick=()=>{ const keep = {screens: cfg.screens, cols: cfg.cols, lang: cfg.lang}; cfg = normCfg({...JSON.parse(JSON.stringify(DEF_CFG)), ...keep}); applyCfg(); };
+  $("#setReset").onclick=()=>{ const keep = {screens: cfg.screens, cols: cfg.cols, lang: cfg.lang, cmp: cfg.cmp}; cfg = normCfg({...JSON.parse(JSON.stringify(DEF_CFG)), ...keep}); applyCfg(); };
   // colors: live preview while dragging, save when the picker closes
   const setCol = (el, v) => { if(el.dataset.col) cfg.colors[el.dataset.col] = v; else cfg.colors.ma[el.dataset.macol] = v; };
   $$("#settings input[type=color]").forEach(el=>{
@@ -826,6 +826,7 @@ function applyLive(){
   if(!$("#vHome").hidden) renderHome();
   if(!$("#vHeat").hidden) renderHeat();
   if(S && !$("#vChart").hidden){ patchS(); renderPanels(); draw(); }
+  if(!$("#vCmp").hidden) renderCmp();
 }
 async function loadLive(){
   if(!LIVE_URL || !META) return;
@@ -946,9 +947,9 @@ function route(){
   if(raw.toLowerCase() === "alerts"){ history.replaceState(null, "", location.pathname); raw = ""; setTimeout(()=>{ if(auth.token) loadAlerts().then(openAlertsList); else openAuth("in"); }, 300); }
   const low = raw.toLowerCase();
   const isList = raw === low && ROUTES[low];
-  track(low === "" || low === "home" ? "home" : isList ? low : ["groups","heatmap","breadth","ideas","earnings","wall","welcome"].includes(low) ? low : "chart", raw.toUpperCase());
+  track(low === "" || low === "home" ? "home" : isList ? low : ["groups","heatmap","breadth","ideas","earnings","wall","welcome"].includes(low) ? low : low === "compare" || low.startsWith("compare/") ? "compare" : "chart", raw.toUpperCase());
   const isHome = raw === "" || raw === "home";
-  ["#vWelcome","#vHome","#vScreener","#vChart","#vHeat","#vIdeas","#vEarn","#vBreadth","#vGroups","#vWall"].forEach(id=>$(id).hidden = true); $("#hmTip").hidden = true;
+  ["#vWelcome","#vHome","#vScreener","#vChart","#vHeat","#vIdeas","#vEarn","#vBreadth","#vGroups","#vWall","#vCmp"].forEach(id=>$(id).hidden = true); $("#hmTip").hidden = true;
   document.body.classList.toggle("on-welcome", raw === "welcome");
   document.body.classList.toggle("on-home", isHome);
   if(raw === "welcome"){ $("#vWelcome").hidden = false; setTab(""); document.title = "Ticker&Tape · O'Neil-style charts, RS ratings and bases"; window.scrollTo(0,0); return; }
@@ -957,6 +958,7 @@ function route(){
   if(low === "groups"){ lastList = "groups"; $("#vGroups").hidden = false; setTab("groups"); document.title = "Industry groups · Ticker&Tape"; window.scrollTo(0,0); renderGroups(); return; }
   if(low === "wall"){ lastList = "wall"; $("#vWall").hidden = false; setTab(""); document.title = "Chart wall · Ticker&Tape"; window.scrollTo(0,0); renderWall(); return; }
   if(low === "breadth"){ lastList = "breadth"; $("#vBreadth").hidden = false; setTab("breadth"); document.title = "Market breadth · Ticker&Tape"; window.scrollTo(0,0); renderBreadth(); return; }
+  if(low === "compare" || low.startsWith("compare/")){ lastList = "compare"; $("#vCmp").hidden = false; setTab("cmp"); document.title = "Comparative charts · Ticker&Tape"; window.scrollTo(0,0); openCmp(raw.slice(8)); return; }
   if(low === "heatmap"){ lastList = "heatmap"; $("#vHeat").hidden = false; setTab("heat"); document.title = "Heatmap · Ticker&Tape"; window.scrollTo(0,0); renderHeat(); return; }
   if(isHome){ lastList = ""; $("#vHome").hidden = false; setTab("home"); document.title = "Ticker&Tape · Market dashboard"; renderHome(); return; }
   if(isList){ lastList = raw; $("#vScreener").hidden = false; setTab(ROUTES[low]); document.title = `${{watch:"Watchlist",all:"Screener",etf:"ETFs"}[ROUTES[low]]} · Ticker&Tape`;
@@ -2180,6 +2182,327 @@ function drawMini(cv, bd){
   g.strokeStyle = C.ink; g.lineWidth = 1; g.strokeRect(.5,.5,W-R,pH); g.strokeRect(.5,vT+.5,W-R,vh);
 }
 let wallResize = 0; addEventListener("resize", ()=>{ clearTimeout(wallResize); wallResize = setTimeout(()=>{ if(!$("#vWall").hidden) $$("#wGrid .wtile").forEach(t=>{ const c = t.querySelector("canvas"); if(c) getBundle(t.dataset.s).then(bd=>bd && drawMini(c, bd)); }); }, 150); });
+
+/* ================= COMPARATIVE CHARTS ================= */
+// Several tickers stacked on one timeline (StockCharts style) or on one performance chart.
+// "A:B" charts the ratio of two tickers. Settings live in cfg.cmp, so they follow the account.
+const CMP_PAL = ["#15171c","#1f3c6e","#2f6b2f","#8a5a00","#0f7c86","#6b3f99","#a0306a","#5a5d66"];
+const CMP_MA_PAL = ["#d23a2a","#e07b1f","#1d3fc4","#5fa35a"];
+const CMP_SYM = /^[A-Z0-9.\-^=]{1,15}(:[A-Z0-9.\-^=]{1,15})?$/;
+const CMP_MAX = 8, CMP_MAX_IND = 4;
+const CMP_RANGES = {63:"3M", 126:"6M", 252:"1Y", 504:"2Y", 756:"3Y"};
+const CMP_PRESETS = [
+  {name:"Market breadth", hint:"cap weight, equal weight and the Magnificent Seven", s:["SPY","RSP","MAGS"]},
+  {name:"Size", hint:"large, mid and small caps", s:["SPY","QQQ","MDY","IWM"]},
+  {name:"Equal vs cap weight", hint:"ratios: rising = the average stock leads", s:["RSP:SPY","QQQE:QQQ"]},
+  {name:"Risk appetite", hint:"ratios: rising = risk on", s:["XLY:XLP","SPHB:SPLV","HYG:IEF"]},
+  {name:"Growth vs value", hint:"Russell 1000 growth and value", s:["IWF","IWD","IWF:IWD"]},
+  {name:"Cross-asset", hint:"stocks, bonds, gold and the dollar", s:["SPY","TLT","GLD","UUP"]}];
+const CMP_DEF = {items:[{s:"SPY",c:CMP_PAL[0]},{s:"RSP",c:CMP_PAL[1]},{s:"MAGS",c:CMP_PAL[2]}], ind:[{t:"sma",n:50,c:CMP_MA_PAL[0]}]};
+function normCmp(c){
+  c = c && typeof c === "object" ? c : {};
+  const items = Array.isArray(c.items) ? c.items.filter(x=>x && CMP_SYM.test(x.s||"")).slice(0, CMP_MAX).map((x,i)=>({s:x.s, c: HEX.test(x.c||"") ? x.c : CMP_PAL[i % CMP_PAL.length]})) : null;
+  const ind = Array.isArray(c.ind) ? c.ind.filter(m=>m && (m.t==="sma" || m.t==="ema") && m.n>=2 && m.n<=400).slice(0, CMP_MAX_IND)
+    .map((m,i)=>({t:m.t, n:Math.round(m.n), c: HEX.test(m.c||"") ? m.c : CMP_MA_PAL[i % CMP_MA_PAL.length]})) : null;
+  return {items: items || CMP_DEF.items.map(x=>({...x})), ind: ind || CMP_DEF.ind.map(m=>({...m})),
+    range: CMP_RANGES[c.range] ? +c.range : 252, mode: c.mode === "perf" ? "perf" : "panels", style: c.style === "line" ? "line" : "bars",
+    color: c.color === "ud" ? "ud" : "sym", scale: c.scale === "linear" ? "linear" : c.scale === "log" ? "log" : (cfg.scale === "linear" ? "linear" : "log")};
+}
+let CMP = normCmp(cfg.cmp), CM = null, cmpTok = 0, cmpHover = -1, cmpY = -1;
+function saveCmp(){ cfg.cmp = JSON.parse(JSON.stringify(CMP)); saveCfg(); }
+const cmpNextColor = () => CMP_PAL.find(c=>!CMP.items.some(x=>x.c===c)) || CMP_PAL[CMP.items.length % CMP_PAL.length];
+const maLabel = m => `${m.t.toUpperCase()}(${m.n})`;
+function cmpPx(bd, sym){
+  const px = bd.prices.map(([d,o,h,l,c,v])=>({t:iso(d),o,h,l,c,v}));
+  const q = LIVE && LIVE.q[sym];   // delayed intraday price for today's bar
+  if(q && px.length){ const t = iso(LIVE.date), last = px[px.length-1], bar = {t, o:q[0], h:q[1], l:q[2], c:q[3], v:q[4]||0};
+    if(t > last.t) px.push(bar); else if(t === last.t) px[px.length-1] = bar; }
+  return px;
+}
+
+function renderCmpCtl(){
+  $("#cChips").innerHTML = CMP.items.map((it,i)=>{ const ratio = it.s.includes(":");
+    return `<span class="cchip" style="--c:${it.c}"><input type="color" class="swatch" data-ccol="${i}" value="${it.c}" title="Color" aria-label="${esc(it.s)} color">`
+      + (ratio ? `<b>${esc(it.s)}</b>` : `<a href="#${esc(it.s)}" title="Open chart">${esc(it.s)}</a>`)
+      + `<button class="cmv" data-cmv="${i}" title="Move up" aria-label="Move ${esc(it.s)} up" ${i?"":"disabled"}>↑</button><button class="cx" data-cdel="${i}" title="Remove" aria-label="Remove ${esc(it.s)}">×</button></span>`; }).join("")
+    || `<span class="fine">${esc(TX("Add a ticker to start comparing."))}</span>`;
+  $("#cInd").innerHTML = CMP.ind.map((m,i)=>`<span class="cma" style="--c:${m.c}">
+      <select data-it="${i}" aria-label="Type"><option value="sma" ${m.t==="sma"?"selected":""}>SMA</option><option value="ema" ${m.t==="ema"?"selected":""}>EMA</option></select>
+      <input type="number" min="2" max="400" step="1" data-in="${i}" value="${m.n}" aria-label="Length (days)">
+      <input type="color" class="swatch" data-ic="${i}" value="${m.c}" title="Color" aria-label="Color"><button class="cx" data-idel="${i}" title="Remove" aria-label="Remove">×</button></span>`).join("")
+    + (CMP.ind.length < CMP_MAX_IND ? `<button class="btn sm" id="cIndAdd">＋ ${esc(TX("Add moving average"))}</button>` : "");
+  $$("#cMode button").forEach(b=>b.classList.toggle("on", b.dataset.m === CMP.mode));
+  $$("#cRange button").forEach(b=>b.classList.toggle("on", +b.dataset.r === CMP.range));
+  $$("#cScale button").forEach(b=>b.classList.toggle("on", b.dataset.s === CMP.scale));
+  $$("#cStyle button").forEach(b=>b.classList.toggle("on", b.dataset.s === CMP.style));
+  $$("#cColor button").forEach(b=>b.classList.toggle("on", b.dataset.c === CMP.color));
+  const perf = CMP.mode === "perf";
+  ["#cScale","#cStyle","#cColor"].forEach(s=>$(s).hidden = perf);
+  $("#cIndRow").classList.toggle("off", perf);
+  $("#cIndNote").hidden = !perf;
+  $("#cPre").innerHTML = CMP_PRESETS.map((p,i)=>`<button class="cpre" data-pre="${i}"><b>${esc(TX(p.name))}</b><span>${esc(p.s.join(" · "))}</span><small>${esc(TX(p.hint))}</small></button>`).join("");
+  $("#cTitle").textContent = CMP.items.length ? CMP.items.map(x=>x.s).join(" · ") : TX("Comparative charts");
+}
+
+async function renderCmp(){
+  renderCmpCtl();
+  const tok = ++cmpTok;
+  if(!CM) drawCmp();
+  if(!UNI) loadUni().then(()=>{ if(!$("#vCmp").hidden) renderCmpTable(); }).catch(()=>{});
+  const rows = await Promise.all(CMP.items.map(async it=>{
+    const [a, b] = it.s.split(":"), [A, B] = await Promise.all([getBundle(a), b ? getBundle(b) : null]);
+    let px = A ? cmpPx(A, a) : null;
+    if(b){ if(px && B){ const m = new Map(cmpPx(B, b).map(x=>[x.t, x.c]));
+        px = px.filter(x=>m.get(x.t)).map(x=>{ const c = x.c / m.get(x.t); return {t:x.t, o:c, h:c, l:c, c}; }); } else px = null; }
+    if(px && !px.length) px = null;
+    return {s:it.s, color:it.c, ratio:!!b, a, b, px, name: b ? `${a} ÷ ${b}` : ((rowOf(a)||{}).name || (A && A.name) || ""),
+      missing: px ? [] : [a, b].filter((s,i)=>s && !(i ? B : A))};
+  }));
+  if(tok !== cmpTok) return;
+  const all = new Set(); rows.forEach(r=>r.px && r.px.forEach(b=>all.add(b.t)));
+  const D = [...all].sort((p,q)=>p-q), pos = new Map(D.map((t,i)=>[t,i]));
+  rows.forEach(r=>{ if(!r.px) return;
+    r.px.forEach((b,j)=>{ b.pc = j ? r.px[j-1].c : b.c; });
+    r.bars = new Array(D.length).fill(null); r.px.forEach(b=>{ r.bars[pos.get(b.t)] = b; });
+    r.mas = CMP.ind.map(m=>{ const v = m.t === "ema" ? ema(r.px, m.n, b=>b.c) : sma(r.px, m.n, b=>b.c), out = new Array(D.length).fill(null);
+      r.px.forEach((b,j)=>{ out[pos.get(b.t)] = v[j]; }); return out; }); });
+  CM = {D, rows}; cmpHover = -1;
+  const last = D.length ? D[D.length-1] : null;
+  $("#cAsOf").textContent = last ? TX("as of") + " " + fmtLong(last) + (LIVE && iso(LIVE.date) === last ? ` · ${TX("live")} ${liveTime()} ET` : "") : "";
+  drawCmp(); renderCmpTable();
+}
+
+function cmpWindow(){
+  const D = CM.D, n = Math.min(CMP.range, D.length);
+  return {n, s0: D.length - n};
+}
+function lastIdx(arr, s0, upto){ for(let i=upto; i>=s0; i--) if(arr[i]!=null) return i; return -1; }
+
+function drawCmp(){
+  const c = $("#ccv"); if(!c || $("#vCmp").hidden) return;
+  const W = c.clientWidth; if(!W) return;
+  const narrow = W < 600, dpr = devicePixelRatio || 1, perf = CMP.mode === "perf";
+  const rows = CM ? CM.rows : [], k = rows.length;
+  const Lm = 4, R = narrow ? 58 : 70, T0 = 4, B = 22, gap = 6;
+  const nP = perf ? 1 : Math.max(1, k);
+  const pH = perf ? (narrow ? 380 : 560) : narrow ? 200 : k <= 1 ? 460 : k === 2 ? 330 : k === 3 ? 270 : k === 4 ? 230 : 200;
+  const H = T0 + nP*pH + (nP-1)*gap + B;
+  c.style.height = H + "px"; c.width = Math.round(W*dpr); c.height = Math.round(H*dpr);
+  const g = c.getContext("2d"); g.setTransform(dpr,0,0,dpr,0,0); g.fillStyle = C.plate; g.fillRect(0,0,W,H);
+  const say = (t, yy=18) => { g.fillStyle = C.ink2; g.font = `14px ${FONT_L}`; g.textAlign = "left"; g.textBaseline = "top"; g.fillText(t, 14, yy); };
+  c._cx = null;
+  if(!CM){ say(TX("Loading…")); return; }
+  if(!k){ say(TX("Add a ticker to start comparing.")); return; }
+  if(!CM.D.length){ say(TX("No data for these tickers yet.")); return; }
+  const D = CM.D, {n, s0} = cmpWindow(), plotW = W - Lm - R, bw = plotW / n, x = i => Lm + (i + .5) * bw;
+  const hv = cmpHover >= 0 && cmpHover < n ? cmpHover : -1, at = s0 + (hv >= 0 ? hv : n - 1);
+  const dash = GRID_DASH[cfg.grid];
+  const P = []; for(let p=0; p<nP; p++) P.push({top: T0 + p*(pH + gap), h: pH});
+  g.lineWidth = 1;
+
+  // month grid and labels
+  const monthPx = plotW / (n / 21), mStep = monthPx >= 40 ? 1 : monthPx*3 >= 40 ? 3 : 6;
+  g.font = `11px ${FONT_D}`; g.textAlign = "center"; g.textBaseline = "alphabetic";
+  let lastM = -1;
+  for(let i=0;i<n;i++){ const dt = new Date(D[s0+i]), m = dt.getUTCMonth();
+    if(m !== lastM && i > 0 && m % mStep === 0){ const xx = Math.round(x(i)) + .5;
+      if(dash){ g.strokeStyle = C.grid; g.setLineDash(dash); P.forEach(p=>{ g.beginPath(); g.moveTo(xx, p.top); g.lineTo(xx, p.top + p.h); g.stroke(); }); g.setLineDash([]); }
+      g.fillStyle = m === 0 ? C.ink : C.ink2; g.fillText(m === 0 ? String(dt.getUTCFullYear()) : MON[m], xx, H - 6); }
+    lastM = m; }
+
+  const tickFmt = ticks => { let st = Infinity; for(let i=1;i<ticks.length;i++) st = Math.min(st, Math.abs(ticks[i]-ticks[i-1]));
+    if(!isFinite(st)) st = Math.abs(ticks[0]||1);
+    const dec = st >= 1 ? (Number.isInteger(+st.toFixed(6)) ? 0 : 1) : Math.min(5, (String(+st.toFixed(6)).split(".")[1] || "").length);
+    return v => v.toLocaleString("en-US", {minimumFractionDigits:dec, maximumFractionDigits:dec}); };
+  const valFmt = (v, small) => small ? v.toFixed(v < 0.1 ? 5 : v < 10 ? 4 : 3) : fmtP(v);
+  const lineOf = (get, y, col, w) => { g.strokeStyle = col; g.lineWidth = w; g.beginPath(); let st = false;
+    for(let i=0;i<n;i++){ const v = get(s0+i); if(v == null) continue; const yy = y(v); st ? g.lineTo(x(i), yy) : g.moveTo(x(i), yy); st = true; } g.stroke(); };
+  const tagsAt = (p, tags) => {   // value tags on the right axis, pushed apart so they never overlap
+    tags = tags.filter(t=>t.y != null && isFinite(t.y)).map(t=>({...t, y: Math.min(Math.max(t.y, p.top + 8), p.top + p.h - 8)})).sort((a,b)=>a.y-b.y);
+    for(let i=1;i<tags.length;i++) if(tags[i].y - tags[i-1].y < 15) tags[i].y = tags[i-1].y + 15;
+    const over = tags.length ? tags[tags.length-1].y - (p.top + p.h - 8) : 0; if(over > 0) tags.forEach(t=>t.y -= over);
+    g.font = `700 11px ${FONT_D}`; g.textAlign = "left"; g.textBaseline = "middle";
+    tags.forEach(t=>{ g.fillStyle = t.col; g.fillRect(Lm + plotW + 1, t.y - 7, R - 2, 14); g.fillStyle = "#fff"; g.fillText(t.txt, Lm + plotW + 4, t.y + .5); }); };
+  const legend = (p, parts) => {   // [color|null, text, bold?]
+    g.textBaseline = "top"; g.textAlign = "left"; let xx = Lm + 6, yy = p.top + 4; const maxX = Lm + plotW - 6;
+    const meas = parts.map(([col, t, bold])=>{ g.font = `${bold ? "700 13px" : "12px"} ${bold ? FONT_D : FONT_L}`; return g.measureText(t).width + (col && !bold ? 14 : 0) + 10; });
+    let lines = 1, run = 0; meas.forEach(w=>{ if(run + w > plotW - 12 && run > 0){ lines++; run = 0; } run += w; });
+    g.fillStyle = "rgba(255,255,255,.88)"; g.fillRect(Lm + 1, p.top + 1, Math.min(plotW - 2, lines > 1 ? plotW - 2 : run + 8), 17*lines + 3);
+    parts.forEach(([col, t, bold], i)=>{ if(xx + meas[i] > maxX && xx > Lm + 6){ xx = Lm + 6; yy += 17; }
+      g.font = `${bold ? "700 13px" : "12px"} ${bold ? FONT_D : FONT_L}`;
+      if(col && !bold){ g.fillStyle = col; g.fillRect(xx, yy + 6, 10, 3); xx += 14; }
+      g.fillStyle = bold && col ? col : C.ink; g.fillText(t, xx, yy + 1); xx += meas[i] - (col && !bold ? 14 : 0); });
+    return yy - p.top + 18; };
+  const hGrid = (p, ticks, y, fmt, inT, inB) => {
+    g.font = `11px ${FONT_D}`; g.textAlign = "left"; g.textBaseline = "middle"; g.fillStyle = C.ink2;
+    ticks.forEach(v=>{ const yy = Math.round(y(v)) + .5; if(yy < inT - 2 || yy > inB + 2) return;
+      if(dash){ g.strokeStyle = C.grid; g.setLineDash(dash); g.beginPath(); g.moveTo(Lm, yy); g.lineTo(Lm + plotW, yy); g.stroke(); g.setLineDash([]); }
+      g.fillText(fmt(v), Lm + plotW + 5, yy); }); };
+
+  if(perf){
+    const p = P[0], inT = p.top + 8, inB = p.top + p.h - 8;
+    rows.forEach(r=>{ r.base = null; if(!r.bars) return; for(let i=s0;i<s0+n;i++) if(r.bars[i]){ r.base = r.bars[i].c; break; } });
+    const pv = (r, i) => { const b = r.bars && r.bars[i]; return b && r.base ? (b.c / r.base - 1) * 100 : null; };
+    let lo = 0, hi = 0; rows.forEach(r=>{ for(let i=s0;i<s0+n;i++){ const v = pv(r, i); if(v != null){ lo = Math.min(lo, v); hi = Math.max(hi, v); } } });
+    const pad = (hi - lo) * .07 || 1, a = lo - pad, z = hi + pad, y = v => inT + (z - v) / (z - a) * (inB - inT);
+    const ticks = linTicks(a, z, inB - inT), tf = tickFmt(ticks);
+    hGrid(p, ticks, y, v=>(v > 0 ? "+" : "") + tf(v) + "%", inT, inB);
+    g.strokeStyle = C.ink2; g.lineWidth = 1; g.beginPath(); g.moveTo(Lm, Math.round(y(0)) + .5); g.lineTo(Lm + plotW, Math.round(y(0)) + .5); g.stroke();
+    g.save(); g.beginPath(); g.rect(Lm, p.top, plotW, p.h); g.clip();
+    rows.forEach(r=>{ if(r.bars) lineOf(i=>pv(r, i), y, r.color, 1.8); });
+    g.restore();
+    legend(p, rows.flatMap(r=>{ if(!r.bars) return [[r.color, `${r.s} ${TX("no data")}`]]; const j = lastIdx(r.bars, s0, at), v = j >= 0 ? pv(r, j) : null;
+      return [[r.color, `${r.s} ${fmtPct(v, 1)}`]]; }));
+    tagsAt(p, rows.filter(r=>r.bars).map(r=>{ const j = lastIdx(r.bars, s0, s0 + n - 1), v = j >= 0 ? pv(r, j) : null;
+      return {y: v == null ? null : y(v), col: r.color, txt: (v > 0 ? "+" : "") + (v == null ? "" : v.toFixed(1)) + "%"}; }));
+    p.inv = yy => a + (inB - yy) / (inB - inT) * (z - a); p.fmt = v => (v > 0 ? "+" : "") + v.toFixed(2) + "%";
+  } else rows.forEach((r, pi)=>{
+    const p = P[pi], inT = p.top + 26, inB = p.top + p.h - 6;
+    if(!r.bars){ legend(p, [[r.color, r.s, true]]);
+      say(r.missing.length ? `${TX("No data for")} ${r.missing.join(", ")} ${TX("yet. Add it to a watchlist with ☆ and it loads after the next nightly update.")}` : TX("No data yet."), p.top + 30);
+      g.strokeStyle = C.ink; g.lineWidth = 1; g.strokeRect(Lm + .5, p.top + .5, plotW, p.h); return; }
+    const useLine = r.ratio || CMP.style === "line";
+    let lo = Infinity, hi = -Infinity;
+    for(let i=s0;i<s0+n;i++){ const b = r.bars[i]; if(b){ lo = Math.min(lo, useLine ? b.c : b.l); hi = Math.max(hi, useLine ? b.c : b.h); }
+      r.mas.forEach(m=>{ const v = m[i]; if(v != null){ lo = Math.min(lo, v); hi = Math.max(hi, v); } }); }
+    if(!isFinite(lo)){ legend(p, [[r.color, r.s, true]]); say(TX("No data in this range."), p.top + 30); g.strokeStyle = C.ink; g.strokeRect(Lm + .5, p.top + .5, plotW, p.h); return; }
+    if(hi === lo){ hi *= 1.01; lo *= .99; }
+    const log = CMP.scale === "log" && lo > 0;
+    let y, inv, ticks;
+    if(log){ const pad = (Math.log(hi) - Math.log(lo)) * .05, a = Math.log(lo) - pad, z = Math.log(hi) + pad;
+      y = v => inT + (z - Math.log(v)) / (z - a) * (inB - inT); inv = yy => Math.exp(a + (inB - yy) / (inB - inT) * (z - a)); ticks = logTicks(Math.exp(a), Math.exp(z), inB - inT); }
+    else { const pad = (hi - lo) * .05, a = lo - pad, z = hi + pad;
+      y = v => inT + (z - v) / (z - a) * (inB - inT); inv = yy => a + (inB - yy) / (inB - inT) * (z - a); ticks = linTicks(a, z, inB - inT); }
+    const small = hi < 20 && r.ratio || hi < 1;
+    hGrid(p, ticks, y, tickFmt(ticks), inT, inB);
+    g.save(); g.beginPath(); g.rect(Lm, p.top, plotW, p.h); g.clip();
+    r.mas.forEach((m, k)=>lineOf(i=>m[i], y, CMP.ind[k].c, 1.4));
+    if(useLine) lineOf(i=>r.bars[i] && r.bars[i].c, y, r.color, 1.6);
+    else {
+      const lw = cfg.weight === "thin" ? 1 : cfg.weight === "normal" ? 1.3 : 1.8, tk = Math.max(1, Math.min(4, bw * .4));
+      g.lineWidth = bw > 4 ? lw : Math.min(lw, 1.2);
+      for(let i=0;i<n;i++){ const b = r.bars[s0+i]; if(!b) continue;
+        const col = CMP.color === "ud" ? (b.c >= b.pc ? C.up : C.down) : r.color, xx = Math.round(x(i)) + .5;
+        g.strokeStyle = col; g.fillStyle = col;
+        if(cfg.bars === "candle"){ const t = y(Math.max(b.o, b.c)), bt = y(Math.min(b.o, b.c)), w = Math.max(1, bw * .62);
+          g.beginPath(); g.moveTo(xx, y(b.h)); g.lineTo(xx, t); g.moveTo(xx, bt); g.lineTo(xx, y(b.l)); g.stroke();
+          if(b.c >= b.o){ g.fillStyle = C.plate; g.fillRect(xx - w/2, t, w, Math.max(1, bt - t)); g.strokeRect(xx - w/2, t, w, Math.max(1, bt - t)); }
+          else g.fillRect(xx - w/2, t, w, Math.max(1, bt - t)); }
+        else { g.beginPath(); g.moveTo(xx, y(b.h)); g.lineTo(xx, y(b.l)); g.moveTo(xx, y(b.c)); g.lineTo(xx + tk, y(b.c));
+          if(cfg.bars === "ohlc"){ g.moveTo(xx - tk, y(b.o)); g.lineTo(xx, y(b.o)); } g.stroke(); } }
+    }
+    g.restore();
+    // legend: ticker, close and change at the hovered (or last) bar, then each moving average
+    const j = lastIdx(r.bars, s0, at), b = j >= 0 ? r.bars[j] : null;
+    const parts = [[r.color, r.s, true]];
+    if(r.name && !narrow && !r.ratio) parts.push([null, r.name]);
+    if(b){ parts.push([null, `${hv >= 0 ? fmtD(D[j]) + "  " : ""}${valFmt(b.c, small)}  ${fmtPct((b.c / b.pc - 1) * 100, 2)}`]); }
+    r.mas.forEach((m, k)=>{ const v = j >= 0 ? m[j] : null; parts.push([CMP.ind[k].c, `${maLabel(CMP.ind[k])} ${v == null ? "—" : valFmt(v, small)}`]); });
+    legend(p, parts);
+    const jl = lastIdx(r.bars, s0, s0 + n - 1);
+    tagsAt(p, [{y: y(r.bars[jl].c), col: r.color, txt: valFmt(r.bars[jl].c, small)},
+      ...r.mas.map((m, k)=>{ const v = m[jl]; return {y: v == null ? null : y(v), col: CMP.ind[k].c, txt: v == null ? "" : valFmt(v, small)}; })]);
+    p.inv = inv; p.fmt = v => valFmt(v, small);
+    g.strokeStyle = C.ink; g.lineWidth = 1; g.strokeRect(Lm + .5, p.top + .5, plotW, p.h);
+  });
+  if(perf){ g.strokeStyle = C.ink; g.lineWidth = 1; g.strokeRect(Lm + .5, P[0].top + .5, plotW, P[0].h); }
+
+  // crosshair: date across every panel, price in the panel under the pointer
+  if(hv >= 0){
+    const xx = Math.round(x(hv)) + .5; g.strokeStyle = "rgba(21,23,28,.45)"; g.setLineDash([3,3]); g.lineWidth = 1;
+    g.beginPath(); g.moveTo(xx, T0); g.lineTo(xx, H - B); g.stroke();
+    const p = P.find(q=>cmpY >= q.top && cmpY <= q.top + q.h);
+    if(p && p.inv){ const yy = Math.round(cmpY) + .5; g.beginPath(); g.moveTo(Lm, yy); g.lineTo(Lm + plotW, yy); g.stroke(); g.setLineDash([]);
+      g.fillStyle = C.ink; g.fillRect(Lm + plotW + 1, yy - 7, R - 2, 14); g.fillStyle = "#fff"; g.font = `700 11px ${FONT_D}`; g.textAlign = "left"; g.textBaseline = "middle";
+      g.fillText(p.fmt(p.inv(yy)), Lm + plotW + 4, yy + .5); }
+    g.setLineDash([]);
+    const t = fmtLong(D[s0 + hv]); g.font = `700 11px ${FONT_D}`; const tw = g.measureText(t).width + 10, tx = Math.min(Math.max(xx - tw/2, Lm), Lm + plotW - tw);
+    g.fillStyle = C.ink; g.fillRect(tx, H - B + 2, tw, 16); g.fillStyle = "#fff"; g.textAlign = "left"; g.textBaseline = "middle"; g.fillText(t, tx + 5, H - B + 10);
+  }
+  c._cx = {Lm, plotW, n, P, rows};
+}
+
+function renderCmpTable(){
+  const el = $("#cTbl"); if(!el) return;
+  if(!CM || !CM.rows.length || !CM.D.length){ el.innerHTML = ""; return; }
+  const {n, s0} = cmpWindow(), rl = CMP_RANGES[CMP.range];
+  const head = `<tr><th>${esc(TX("Ticker"))}</th><th class="nm">${esc(TX("Name"))}</th><th>${esc(TX("Last"))}</th><th>${esc(TX("Day"))}</th><th>${esc(rl)}</th>`
+    + CMP.ind.map(m=>`<th title="${esc(TX("Distance from the moving average"))}">vs ${maLabel(m)}</th>`).join("") + `<th title="${esc(TX("Distance from the highest close in the range"))}">${esc(TX("Off high"))}</th></tr>`;
+  const cell = v => `<td class="${v == null ? "" : v < 0 ? "neg" : "pos"}">${fmtPct(v, 1)}</td>`;
+  const body = CM.rows.map(r=>{
+    if(!r.bars) return `<tr><td><span class="csw" style="--c:${r.color}"></span>${esc(r.s)}</td><td class="nm" colspan="${5 + CMP.ind.length}">${esc(TX("No data yet."))}</td></tr>`;
+    const j = lastIdx(r.bars, s0, s0 + n - 1); if(j < 0) return "";
+    const b = r.bars[j]; let base = null, hi = -Infinity;
+    for(let i=s0;i<=j;i++){ const x = r.bars[i]; if(!x) continue; if(base == null) base = x.c; hi = Math.max(hi, x.c); }
+    const small = r.ratio || b.c < 1;
+    return `<tr ${r.ratio ? "" : `data-go="${esc(r.s)}" tabindex="0"`}><td><span class="csw" style="--c:${r.color}"></span><b>${esc(r.s)}</b></td><td class="nm">${esc(r.name)}</td>
+      <td>${small ? b.c.toFixed(4) : fmtP(b.c)}</td>${cell((b.c / b.pc - 1) * 100)}${cell(base ? (b.c / base - 1) * 100 : null)}
+      ${r.mas.map(m=>cell(m[j] ? (b.c / m[j] - 1) * 100 : null)).join("")}${cell(isFinite(hi) ? (b.c / hi - 1) * 100 : null)}</tr>`; }).join("");
+  el.innerHTML = `<table class="tbl ctbl"><thead>${head}</thead><tbody>${body}</tbody></table>`;
+}
+
+// controls
+function cmpAdd(raw){
+  const v = String(raw || "").toUpperCase().replace(/\s+/g, "").replace(/[\/÷]/g, ":");
+  if(!v) return;
+  if(!CMP_SYM.test(v)){ toast(TX("Invalid ticker.")); return; }
+  if(CMP.items.some(x=>x.s === v)){ toast(`${v} ${TX("is already on the chart.")}`); return; }
+  if(CMP.items.length >= CMP_MAX){ toast(TX("Up to 8 tickers. Remove one first.")); return; }
+  CMP.items.push({s:v, c:cmpNextColor()}); saveCmp(); renderCmp();
+}
+$("#cAdd").addEventListener("submit", e=>{ e.preventDefault(); const i = $("#cIn"); cmpAdd(i.value); i.value = ""; });
+$("#vCmp").addEventListener("click", e=>{
+  const t = e.target.closest("button,[data-go]"); if(!t || !$("#vCmp").contains(t)) return;
+  const d = t.dataset;
+  if(d.cdel != null){ CMP.items.splice(+d.cdel, 1); saveCmp(); renderCmp(); return; }
+  if(d.cmv != null){ const i = +d.cmv; if(i > 0){ const [it] = CMP.items.splice(i, 1); CMP.items.splice(i - 1, 0, it); saveCmp(); renderCmp(); } return; }
+  if(d.idel != null){ CMP.ind.splice(+d.idel, 1); saveCmp(); renderCmp(); return; }
+  if(t.id === "cIndAdd"){ const opts = [{t:"sma",n:200},{t:"ema",n:21},{t:"sma",n:10},{t:"sma",n:150},{t:"sma",n:50}];
+    const nx = opts.find(o=>!CMP.ind.some(m=>m.t === o.t && m.n === o.n)) || {t:"sma", n:100};
+    CMP.ind.push({...nx, c: CMP_MA_PAL.find(c=>!CMP.ind.some(m=>m.c === c)) || CMP_MA_PAL[0]}); saveCmp(); renderCmp(); return; }
+  if(d.pre != null){ const p = CMP_PRESETS[+d.pre]; CMP.items = p.s.map((s,i)=>({s, c:CMP_PAL[i]})); saveCmp(); renderCmp(); window.scrollTo({top:0, behavior:"smooth"}); return; }
+  if(d.m){ CMP.mode = d.m; saveCmp(); renderCmpCtl(); drawCmp(); return; }
+  if(d.r){ CMP.range = +d.r; saveCmp(); renderCmpCtl(); drawCmp(); renderCmpTable(); return; }
+  if(t.closest("#cScale")){ CMP.scale = d.s; saveCmp(); renderCmpCtl(); drawCmp(); return; }
+  if(t.closest("#cStyle")){ CMP.style = d.s; saveCmp(); renderCmpCtl(); drawCmp(); return; }
+  if(t.closest("#cColor")){ CMP.color = d.c; saveCmp(); renderCmpCtl(); drawCmp(); return; }
+  if(t.id === "cLink"){ const url = location.origin + location.pathname + "#compare/" + CMP.items.map(x=>x.s).join(",");
+    (navigator.clipboard ? navigator.clipboard.writeText(url) : Promise.reject()).then(()=>toast(TX("Link copied."))).catch(()=>prompt(TX("Copy this link:"), url)); return; }
+  if(t.id === "cReset"){ CMP = normCmp({range: CMP.range, mode: CMP.mode}); saveCmp(); renderCmp(); return; }
+  if(d.go){ location.hash = d.go; }
+});
+$("#vCmp").addEventListener("keydown", e=>{ const r = e.target.closest("[data-go]"); if(r && e.key === "Enter") location.hash = r.dataset.go; });
+$("#vCmp").addEventListener("change", e=>{
+  const t = e.target, d = t.dataset;
+  if(d.it != null){ CMP.ind[+d.it].t = t.value; saveCmp(); renderCmp(); }
+  if(d.in != null){ const v = Math.round(+t.value); if(!(v >= 2 && v <= 400)){ toast(TX("Use a length between 2 and 400 days.")); t.value = CMP.ind[+d.in].n; return; }
+    CMP.ind[+d.in].n = v; saveCmp(); renderCmp(); }
+  if(d.ic != null){ CMP.ind[+d.ic].c = t.value; saveCmp(); renderCmpCtl(); drawCmp(); }
+  if(d.ccol != null){ CMP.items[+d.ccol].c = t.value; saveCmp(); renderCmpCtl(); if(CM) CM.rows.forEach((r,i)=>{ if(CMP.items[i]) r.color = CMP.items[i].c; }); drawCmp(); renderCmpTable(); }
+});
+$("#vCmp").addEventListener("input", e=>{   // live color preview while the picker is open
+  const t = e.target, d = t.dataset; if(t.type !== "color") return;
+  if(d.ic != null){ CMP.ind[+d.ic].c = t.value; drawCmp(); }
+  if(d.ccol != null && CM && CM.rows[+d.ccol]){ CM.rows[+d.ccol].color = t.value; drawCmp(); }
+});
+(()=>{
+  const c = $("#ccv"); if(!c) return;
+  const at = e => { const b = c._cx; if(!b) return -1; const r = c.getBoundingClientRect(), pt = e.touches ? e.touches[0] : e, px = pt.clientX - r.left;
+    cmpY = pt.clientY - r.top; if(px < b.Lm || px > b.Lm + b.plotW) return -1; return Math.min(b.n - 1, Math.max(0, Math.floor((px - b.Lm) / b.plotW * b.n))); };
+  let raf = 0; const mv = e => { cmpHover = at(e); cancelAnimationFrame(raf); raf = requestAnimationFrame(drawCmp); };
+  c.addEventListener("mousemove", mv); c.addEventListener("touchmove", mv, {passive:true});
+  c.addEventListener("mouseleave", ()=>{ cmpHover = -1; cmpY = -1; drawCmp(); });
+  c.addEventListener("dblclick", ()=>{ const b = c._cx; if(!b || CMP.mode === "perf") return; const i = b.P.findIndex(p=>cmpY >= p.top && cmpY <= p.top + p.h), r = b.rows[i];
+    if(r && !r.ratio) location.hash = r.s; });
+})();
+let cmpResize = 0; addEventListener("resize", ()=>{ clearTimeout(cmpResize); cmpResize = setTimeout(()=>{ if(!$("#vCmp").hidden) drawCmp(); }, 120); });
+function openCmp(spec){
+  CMP = normCmp(cfg.cmp);
+  if(spec){ const syms = [...new Set(spec.toUpperCase().split(/[,\s]+/).map(s=>s.replace(/[\/÷]/g, ":")).filter(s=>CMP_SYM.test(s)))].slice(0, CMP_MAX);
+    if(syms.length){ CMP.items = syms.map((s,i)=>({s, c: (CMP.items.find(x=>x.s === s) || {}).c || CMP_PAL[i % CMP_PAL.length]})); saveCmp(); }
+    history.replaceState(null, "", location.pathname + location.search + "#compare"); }
+  renderCmp();
+}
 
 /* ================= WELCOME PAGE ================= */
 $("#vWelcome").addEventListener("click", e=>{
