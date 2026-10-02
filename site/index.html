@@ -17,6 +17,8 @@
     <span class="sp"></span>
     <label class="jump"><span class="vh">Go to ticker</span><input id="jump" placeholder="Ticker…" maxlength="10" spellcheck="false" autocomplete="off" list="symlist"></label>
     <datalist id="symlist"></datalist>
+    <button class="btn acct" id="acct" aria-haspopup="true">Sign in</button>
+    <div class="acctmenu" id="acctMenu" hidden role="menu"></div>
     <button class="gear" id="gear" title="Chart settings" aria-label="Chart settings" aria-expanded="false" aria-controls="settings"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M19.4 13a7.5 7.5 0 0 0 0-2l2.1-1.6-2-3.5-2.5 1a7.6 7.6 0 0 0-1.7-1L15 3.3h-4l-.4 2.6a7.6 7.6 0 0 0-1.7 1l-2.5-1-2 3.5L6.6 11a7.5 7.5 0 0 0 0 2l-2.1 1.6 2 3.5 2.5-1c.5.4 1.1.7 1.7 1l.4 2.6h4l.4-2.6c.6-.3 1.2-.6 1.7-1l2.5 1 2-3.5zM13 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z" transform="translate(-1 0)"/></svg></button>
     <div class="settings" id="settings" hidden role="dialog" aria-label="Chart settings"></div>
   </nav>
@@ -67,7 +69,7 @@
       </table>
     </div>
     <div class="more" id="moreWrap" hidden><button class="btn" id="moreBtn">Show more</button></div>
-    <p class="fine">RS Rating: each stock's 12-month performance (last quarter weighted double) ranked against the S&amp;P 1500 and Nasdaq-100 stocks, 1–99. All stocks: every S&amp;P 500, MidCap 400, SmallCap 600 and Nasdaq-100 member; their earnings and sales data refresh in rotation, so a few may show — until their turn comes. Bases and pivots are detected automatically from daily bars and are a starting point for your own read of the chart. Data: Yahoo Finance via yfinance, end of day.</p>
+    <p class="fine">RS Rating: each stock's 12-month performance (last quarter weighted double) ranked against the S&amp;P 1500 and Nasdaq-100 stocks, 1–99. All stocks: every S&amp;P 500, MidCap 400, SmallCap 600 and Nasdaq-100 member; their earnings and sales data refresh in rotation. Star any ticker to add it to your watchlist; tickers outside these indexes load after the next nightly update. Bases and pivots are detected automatically from daily bars and are a starting point for your own read of the chart. Data: Yahoo Finance via yfinance, end of day.</p>
   </main>
 
   <!-- ===================== CHART ===================== -->
@@ -75,6 +77,7 @@
     <header class="mast">
       <div class="tick">
         <h1 id="sym">—</h1>
+        <button class="starbtn" id="star" aria-pressed="false" title="Add to your watchlist">☆</button>
         <span id="cname" class="cname"></span>
         <span id="baseChip" class="chip"></span>
       </div>
@@ -149,6 +152,18 @@
       </div>
     </section>
   </main>
+</div>
+<div class="modal" id="authModal" hidden>
+  <form class="mbox" id="authForm" role="dialog" aria-modal="true" aria-labelledby="authTitle" novalidate>
+    <div class="sethd"><b id="authTitle">Sign in</b><button type="button" class="x" id="authClose" aria-label="Close">×</button></div>
+    <p class="msub" id="authSub">Keep your watchlist, chart settings and drawings on any device.</p>
+    <label class="fld" id="fEmail"><span>Email</span><input type="email" id="aEmail" autocomplete="email" spellcheck="false"></label>
+    <label class="fld" id="fCur" hidden><span>Current password</span><input type="password" id="aCur" autocomplete="current-password"></label>
+    <label class="fld"><span id="aPwLbl">Password</span><input type="password" id="aPw" autocomplete="current-password"></label>
+    <div class="aerr" id="aErr" hidden></div>
+    <button class="btn on wide" id="aGo" type="submit">Sign in</button>
+    <p class="aswitch" id="aSwitch"><span id="aSwTxt">New here?</span> <button type="button" class="lnk" id="aToggle">Create a free account</button></p>
+  </form>
 </div>
 <div class="toast" id="toast" hidden></div>
 <script src="app.js"></script>

@@ -36,11 +36,24 @@ let META=null, ROWS=[], UNI=null, BENCH=null, order=[];
 const PAGE = 100;
 const scrState = { key: store.get("ink:sortKey") || "rsRating", asc: !!store.get("ink:sortAsc"), filter: "all",
   scope: store.get("ink:scope")==="all" ? "all" : "watch", limit: PAGE };
-const list = () => scrState.scope==="all" && UNI ? UNI : ROWS;
+const list = () => scrState.scope==="all" && UNI ? UNI : watchRows();
+/* ---------- personal watchlist (default: the house list in watchlist.txt) ---------- */
+const SYM_OK = /^[A-Z0-9.\-^=]{1,15}$/;
+let WL = Array.isArray(store.get("tt:wl")) ? store.get("tt:wl") : null;   // null = house list
+let CUR = null;                                                         // ticker on screen
+const getWL = () => WL || ROWS.map(r=>r.symbol);
+const inWL = s => getWL().includes(s);
+function watchRows(){
+  if(!WL) return ROWS;
+  const by = new Map(ROWS.map(r=>[r.symbol,r]));
+  if(UNI) UNI.forEach(r=>{ if(!by.has(r.symbol)) by.set(r.symbol,r); });
+  return WL.map(s => by.get(s) || {symbol:s, name: UNI ? "Loads after the next nightly update" : "Loading…", pending:true});
+}
+const needsUni = () => WL && WL.some(s=>!ROWS.some(r=>r.symbol===s));
 let uniLoading = null;
 function loadUni(){
   if(UNI) return Promise.resolve(UNI);
-  if(!uniLoading) uniLoading = getJSON("universe.json").then(u=>{ UNI=u; if(LIVE) UNI.forEach(patchRow); fillSymlist(); return u; }).catch(e=>{ uniLoading=null; throw e; });
+  if(!uniLoading) uniLoading = getJSON("universe.json").then(u=>{ UNI=u; if(LIVE) UNI.forEach(patchRow); fillSymlist(); if(needsUni() && !$("#vScreener").hidden) renderScreener(); return u; }).catch(e=>{ uniLoading=null; throw e; });
   return uniLoading;
 }
 function fillSymlist(){
@@ -96,8 +109,8 @@ function renderScreener(){
     const b = r.base || {};
     const rs = r.rsRating; const stc = STATUS_CLASS[b.status] || "";
     return `<tr data-s="${esc(r.symbol)}" tabindex="0">
-      <td class="l"><span class="sym">${esc(r.symbol)}</span>${r.w && scrState.scope==="all"?'<span class="star" title="In your watchlist">★</span>':''}${r.stale?' <span class="stale">stale</span>':''}<span class="nm" title="${esc(r.name)}">${esc(r.name)}</span></td>
-      <td class="spk"><canvas data-spark="${esc(r.symbol)}"></canvas></td>
+      <td class="l"><span class="sym">${esc(r.symbol)}</span>${scrState.scope==="all" && inWL(r.symbol)?'<span class="star" title="In your watchlist">★</span>':''}${r.stale?' <span class="stale">stale</span>':''}<span class="nm" title="${esc(r.name)}">${esc(r.name)}</span></td>
+      <td class="spk">${r.pending?'<span class="pend">pending</span>':`<canvas data-spark="${esc(r.symbol)}"></canvas>`}</td>
       <td>${fmtP(r.close)}</td>
       <td class="${r.chgPct<0?'neg':''}">${fmtPct(r.chgPct,2)}</td>
       <td><span class="rsv ${rs>=80?'hot':''}">${rs??"—"}</span></td>
@@ -112,7 +125,7 @@ function renderScreener(){
       <td>${b.pivot?fmtP(b.pivot):"—"}</td>
       <td class="${(b.distPct??0)<0?'neg':''}">${b.pivot?fmtPct(b.distPct):"—"}</td>
       <td class="l">${b.status?`<span class="chip ${stc}">${esc(b.status)}</span>`:"—"}</td>
-    </tr>`; }).join("") || `<tr><td colspan="16" class="l" style="padding:18px">No tickers match this filter.</td></tr>`;
+    </tr>`; }).join("") || `<tr><td colspan="16" class="l" style="padding:18px">${scrState.scope==="watch" && !getWL().length ? "Your watchlist is empty. Open any ticker and tap the ☆ next to its symbol to add it." : "No tickers match this filter."}</td></tr>`;
   const bySym = new Map(shown.map(r=>[r.symbol,r]));
   $$("canvas[data-spark]").forEach(cv=>{ const r = bySym.get(cv.dataset.spark); sparkline(cv, r && r.spark); });
   $("#count").textContent = total > shown.length ? `Showing ${shown.length} of ${total} · ${all.length} ${scrState.scope==="all"?"stocks":"tickers"}` : `${total} of ${all.length} ${scrState.scope==="all"?"stocks":"tickers"}`;
@@ -148,9 +161,9 @@ $$("#scope button").forEach(b=>b.onclick=()=>setScope(b.dataset.s));
 $("#moreBtn").onclick=()=>{ scrState.limit += PAGE; renderScreener(); };
 $("#scr tbody").addEventListener("click", e=>{ const tr=e.target.closest("tr[data-s]"); if(tr) location.hash = tr.dataset.s; });
 $("#scr tbody").addEventListener("keydown", e=>{ const tr=e.target.closest("tr[data-s]"); if(tr && e.key==="Enter") location.hash = tr.dataset.s; });
-$("#jump").addEventListener("change", e=>{ const v=e.target.value.trim().toUpperCase(); if(!v) return; e.target.value="";
+$("#jump").addEventListener("change", e=>{ const v=e.target.value.trim().toUpperCase().replace(/\./g,"-"); if(!v) return; e.target.value="";
   const known = ROWS.some(r=>r.symbol===v) || (UNI && UNI.some(r=>r.symbol===v));
-  if(known || !UNI) location.hash = v; else toast(`${v} is not in the S&P 1500 or Nasdaq-100. Add it to watchlist.txt and it will appear after the next update.`); });
+  if(known || !UNI || SYM_OK.test(v)) location.hash = v; else toast(`${v} is not a valid ticker.`); });
 
 /* ================= SETTINGS ================= */
 const MAS = [
@@ -176,7 +189,7 @@ function settingsHTML(){
     <div class="setrow col"><span>Moving averages</span><div class="checks">${MAS.map(m=>`<label><input type="checkbox" data-ma="${m.k}" ${cfg.ma[m.k]?'checked':''}><i style="border-color:${m.color}"></i>${m.d}${m.wl?` <small>(${m.wl} on weekly)</small>`:` <small>(daily only)</small>`}</label>`).join("")}</div></div>
     <div class="setft"><button class="btn" id="setReset">Reset to defaults</button></div>`;
 }
-function applyCfg(){ store.set("ink:cfg", cfg); $("#settings").innerHTML = settingsHTML(); bindSettings(); if(S){ renderPanels(); draw(); } }
+function applyCfg(){ store.set("ink:cfg", cfg); push("cfg", cfg); $("#settings").innerHTML = settingsHTML(); bindSettings(); if(S){ renderPanels(); draw(); } }
 function bindSettings(){
   $$("#settings [data-cfg]").forEach(b=>b.onclick=()=>{ cfg[b.dataset.cfg]=b.dataset.v; applyCfg(); });
   $$("#settings [data-ma]").forEach(c=>c.onchange=()=>{ cfg.ma[c.dataset.ma]=c.checked; applyCfg(); });
@@ -507,7 +520,7 @@ function draw(){
 /* ---------- drawing tools ---------- */
 function idxAt(x){ if(!geo) return -1; const i=Math.floor((x-geo.L)/geo.bw); return i<0||i>=geo.n ? -1 : i; }
 function snapPrice(i,y){ const b=geo.vis[i]; let p=geo.pOf(y); for(const v of [b.h,b.l,b.c]){ if(Math.abs(geo.yOf(v)-y)<8){ p=v; break; } } return p; }
-function saveMarks(){ if(S) store.set(marksKey(S.symbol), S.marks); }
+function saveMarks(){ if(S){ store.set(marksKey(S.symbol), S.marks); push("marks:"+S.symbol, S.marks); } }
 cv.addEventListener("pointermove", e=>{ if(!S) return;
   const r=cv.getBoundingClientRect(); const x=e.clientX-r.left; hover=idxAt(x);
   if(drag && geo){ const i=Math.max(0,Math.min(geo.n-1,Math.floor((x-geo.L)/geo.bw))); const a=drag.i0;
@@ -562,7 +575,7 @@ function renderPanels(){
       nx && nx.q ? `<tr class="next"><td class="l">${esc(nx.q)}<span class="dt">${nx.date?"due "+fmtD(iso(nx.date)):""}</span></td><td class="g0">due</td><td>${d(nx.epsEst)}</td><td></td><td></td><td class="g0">due</td><td>${d(nx.salesEst)}</td><td></td><td></td><td></td></tr>` : ""}${
       Q.map(q=>`<tr><td class="l">${esc(q.q)}<span class="dt">${q.date?fmtD(iso(q.date)):""}</span></td><td class="g0">${d(q.eps)}</td><td>${d(q.epsEst)}</td><td class="${sign(q.surprise)}">${d(q.surprise)}</td><td class="${sign(q.epsChg)}">${d(q.epsChg)}</td><td class="g0">${d(q.sales)}</td><td>${d(q.salesEst)}</td><td class="${sign(q.salesSurprise)}">${d(q.salesSurprise)}</td><td class="${sign(q.salesChg)}">${d(q.salesChg)}</td><td>${d(q.margin)}</td></tr>`).join("")}</tbody></table>
       <p class="tnote">EPS is adjusted (as reported to analysts). Sales estimates are recorded before each report, so they fill in quarter by quarter from now on.</p>`
-    : `<div class="empty">${F.pending ? "Earnings and sales for this stock are still loading: the site fetches them for a batch of stocks each day, so they appear within the next few updates. Add it to watchlist.txt to get them on the next update." : "Yahoo did not return quarterly earnings for this ticker."}</div>`;
+    : `<div class="empty">${F.pending ? "Earnings and sales for this stock are still loading: the site fetches them for a batch of stocks each day, so they appear within the next few updates." : "Yahoo did not return quarterly earnings for this ticker."}</div>`;
   const A = (F.annual||[]).filter(a=>a.y||a.eps).slice(0,10);
   $("#annualN").textContent = A.length ? `last ${A.length} years` : "";
   $("#annual").innerHTML = A.length ? `<table><thead><tr><th class="l">Year</th><th>EPS</th><th>% chg</th><th>Sales</th><th>% chg</th><th>Net mgn</th></tr></thead><tbody>${A.map(a=>`<tr><td class="l">${esc(a.y)}</td><td>${esc(a.eps)||"–"}</td><td class="${sign(a.chg)}">${esc(a.chg)||"–"}</td><td>${esc(a.sales)||"–"}</td><td class="${sign(a.salesChg)}">${esc(a.salesChg)||"–"}</td><td>${esc(a.netMgn)||"–"}</td></tr>`).join("")}</tbody></table>`
@@ -748,15 +761,16 @@ document.addEventListener("keydown", e=>{
 
 async function openChart(sym){
   $("#vScreener").hidden = true; $("#vChart").hidden = false; $("#loading").hidden = false;
+  CUR = sym; updateStar();
   window.scrollTo(0,0);
   try{
     const [bundle] = await Promise.all([getJSON(`t/${encodeURIComponent(sym)}.json`), BENCH ? null : getJSON("bench.json").then(b=>{ BENCH = b.prices.map(([d,c])=>({t:iso(d),c})); })]);
     S = { symbol: bundle.symbol, name: bundle.name, fund: bundle.fund||{}, stats: bundle.stats||{}, base: bundle.base,
       px: bundle.prices.map(([d,o,h,l,c,v])=>({t:iso(d),o,h,l,c,v})), marks: store.get(marksKey(bundle.symbol)) || [] };
-    patchS(); hover=-1; renderPanels(); draw(); renderDbox();
+    CUR = S.symbol; updateStar(); patchS(); hover=-1; renderPanels(); draw(); renderDbox();
   }catch(e){
     S=null; draw(); $("#sym").textContent = sym; $("#cname").textContent = "";
-    toast(`Could not load ${sym}. It is not in the S&P 1500 / Nasdaq-100 or your watchlist yet.`);
+    toast(inWL(sym) ? `${sym} is in your watchlist: its chart loads after the next nightly update.` : `No data for ${sym} yet. Tap ☆ to add it to your watchlist: it loads after the next nightly update.`);
   }finally{ $("#loading").hidden = true; }
 }
 function route(){
@@ -764,6 +778,124 @@ function route(){
   if(sym){ openChart(sym); }
   else { $("#vChart").hidden = true; $("#vScreener").hidden = false; document.title = "Ticker&Tape"; renderScreener(); }
 }
+
+
+/* ================= ACCOUNTS & SYNC (api.tickerandtape.com) ================= */
+const API = /^(localhost|127\.0\.0\.1)$/.test(location.hostname) ? "http://127.0.0.1:8787" : "https://api.tickerandtape.com";
+const auth = { token: store.get("tt:token"), email: store.get("tt:email") };
+async function api(path, opts={}){
+  const headers = {"Content-Type":"application/json"}; if(auth.token) headers.Authorization = "Bearer " + auth.token;
+  let r; try{ r = await fetch(API + path, {...opts, headers}); }catch(e){ throw new Error("Could not reach the server. Check your connection."); }
+  const j = await r.json().catch(()=>({}));
+  if(r.status===401 && auth.token && !path.startsWith("/auth/")){ signedOut(true); }
+  if(!r.ok) throw new Error(j.error || "Something went wrong. Try again.");
+  return j;
+}
+const pushT = {};
+function push(key, value){
+  if(!auth.token) return;
+  clearTimeout(pushT[key]);
+  pushT[key] = setTimeout(()=>api("/data/" + encodeURIComponent(key), {method:"PUT", body: JSON.stringify({value})})
+    .catch(e=>toast("Could not save to your account: " + e.message)), 500);
+}
+function localMarkKeys(){ const out=[]; try{ for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(k && k.startsWith("ink:marks:")) out.push(k); } }catch(e){} return out; }
+async function pullData(fresh){
+  // fresh = just signed in / signed up: anything only on this device goes up to the account
+  let d; try{ d = await api("/data"); }catch(e){ return; }
+  if(Array.isArray(d.watchlist)){ WL = d.watchlist; store.set("tt:wl", WL); }
+  else if(fresh){ WL = getWL().slice(); store.set("tt:wl", WL); push("watchlist", WL); }
+  if(d.cfg && typeof d.cfg==="object"){ cfg = {...DEF_CFG, ...d.cfg, ma:{...DEF_CFG.ma, ...(d.cfg.ma||{})}}; store.set("ink:cfg", cfg); }
+  else if(fresh){ push("cfg", cfg); }
+  const remote = new Set();
+  for(const [k,v] of Object.entries(d)){ if(k.startsWith("marks:")){ remote.add(k); store.set("ink:" + k, v); } }
+  if(fresh) localMarkKeys().forEach(k=>{ const key = k.slice(4); const v = store.get(k); if(!remote.has(key) && Array.isArray(v) && v.length) push(key, v); });
+  if(needsUni()) loadUni().catch(()=>{});
+  if(S){ S.marks = store.get(marksKey(S.symbol)) || []; draw(); renderDbox(); }
+  updateStar();
+  if(!$("#vScreener").hidden) renderScreener();
+}
+function signedOut(expired){
+  auth.token = auth.email = null;
+  try{ localStorage.removeItem("tt:token"); localStorage.removeItem("tt:email"); localStorage.removeItem("tt:wl"); localMarkKeys().forEach(k=>localStorage.removeItem(k)); }catch(e){}
+  WL = null; if(S){ S.marks = []; draw(); }
+  renderAcct(); updateStar(); if(!$("#vScreener").hidden) renderScreener();
+  if(expired) toast("Your session expired. Sign in again to sync your watchlist.");
+}
+function renderAcct(){
+  const b = $("#acct"); b.textContent = auth.email ? auth.email.split("@")[0] : "Sign in";
+  b.title = auth.email ? `Signed in as ${auth.email}` : "Sign in or create a free account";
+  b.classList.toggle("on", !!auth.email);
+}
+function toggleMenu(on){
+  const m = $("#acctMenu"); on = on==null ? m.hidden : on; m.hidden = !on; $("#acct").setAttribute("aria-expanded", on);
+  if(on) m.innerHTML = `<div class="who">Signed in as<br><b>${esc(auth.email)}</b></div><button data-a="pw" role="menuitem">Change password</button><button data-a="out" role="menuitem">Sign out</button>`;
+}
+$("#acct").onclick = e => { e.stopPropagation(); if(auth.token) toggleMenu(); else openAuth("in"); };
+$("#acctMenu").addEventListener("click", async e=>{
+  const a = e.target.closest("button[data-a]"); if(!a) return; toggleMenu(false);
+  if(a.dataset.a==="pw") openAuth("pw");
+  if(a.dataset.a==="out"){ try{ await api("/auth/logout", {method:"POST"}); }catch(err){} signedOut(); toast("Signed out."); }
+});
+document.addEventListener("click", e=>{ const m=$("#acctMenu"); if(!m.hidden && !e.composedPath().includes(m)) toggleMenu(false); });
+
+let authMode = "in";
+const AUTH_TXT = {
+  in:  {t:"Sign in", go:"Sign in", sw:"New here?", tg:"Create a free account", pw:"Password", ac:"current-password"},
+  up:  {t:"Create your account", go:"Create account", sw:"Already have an account?", tg:"Sign in", pw:"Password (8+ characters)", ac:"new-password"},
+  pw:  {t:"Change password", go:"Save new password", pw:"New password (8+ characters)", ac:"new-password"}};
+function openAuth(mode){
+  authMode = mode; const T = AUTH_TXT[mode];
+  $("#authTitle").textContent = T.t; $("#aGo").textContent = T.go; $("#aPwLbl").textContent = T.pw; $("#aPw").autocomplete = T.ac;
+  $("#fEmail").hidden = mode==="pw"; $("#fCur").hidden = mode!=="pw"; $("#aSwitch").hidden = mode==="pw";
+  $("#authSub").hidden = mode==="pw";
+  if(T.sw){ $("#aSwTxt").textContent = T.sw; $("#aToggle").textContent = T.tg; }
+  $("#aErr").hidden = true; $("#aPw").value = ""; $("#aCur").value = "";
+  $("#authModal").hidden = false; setTimeout(()=>(mode==="pw" ? $("#aCur") : $("#aEmail").value ? $("#aPw") : $("#aEmail")).focus(), 30);
+}
+const closeAuth = () => { $("#authModal").hidden = true; };
+$("#authClose").onclick = closeAuth;
+$("#authModal").addEventListener("mousedown", e=>{ if(e.target.id==="authModal") closeAuth(); });
+document.addEventListener("keydown", e=>{ if(e.key==="Escape" && !$("#authModal").hidden) closeAuth(); });
+$("#aToggle").onclick = () => openAuth(authMode==="in" ? "up" : "in");
+$("#authForm").addEventListener("submit", async e=>{
+  e.preventDefault();
+  const email = $("#aEmail").value.trim(), pw = $("#aPw").value, err = $("#aErr"), go = $("#aGo");
+  err.hidden = true;
+  if(authMode!=="pw" && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)){ err.textContent = "Enter a valid email address."; err.hidden = false; return; }
+  if(pw.length < 8 && authMode!=="in"){ err.textContent = "Use a password of at least 8 characters."; err.hidden = false; return; }
+  go.disabled = true;
+  try{
+    if(authMode==="pw"){
+      await api("/auth/password", {method:"POST", body: JSON.stringify({current: $("#aCur").value, password: pw})});
+      closeAuth(); toast("Password changed.");
+    } else {
+      const r = await api(authMode==="up" ? "/auth/signup" : "/auth/login", {method:"POST", body: JSON.stringify({email, password: pw})});
+      auth.token = r.token; auth.email = r.email; store.set("tt:token", r.token); store.set("tt:email", r.email);
+      closeAuth(); renderAcct();
+      toast(authMode==="up" ? "Account created. Your watchlist now syncs to every device." : `Welcome back, ${r.email}.`);
+      await pullData(true);
+    }
+  }catch(ex){ err.textContent = ex.message; err.hidden = false; }
+  finally{ go.disabled = false; }
+});
+
+/* ---------- star on the chart page ---------- */
+function updateStar(){
+  const b = $("#star"); if(!b) return; const on = !!CUR && inWL(CUR);
+  b.textContent = on ? "★" : "☆"; b.classList.toggle("on", on); b.setAttribute("aria-pressed", on);
+  b.title = on ? "Remove from your watchlist" : "Add to your watchlist"; b.hidden = !CUR;
+}
+$("#star").onclick = () => {
+  if(!CUR) return; const L = getWL().slice(); const i = L.indexOf(CUR);
+  if(i >= 0){ L.splice(i,1); toast(`${CUR} removed from your watchlist.`); }
+  else {
+    if(L.length >= 300){ toast("Your watchlist is full (300 tickers)."); return; }
+    L.push(CUR);
+    const hasData = ROWS.some(r=>r.symbol===CUR) || (UNI && UNI.some(r=>r.symbol===CUR));
+    toast(!hasData ? `${CUR} added. Its data loads after the next nightly update.` : auth.token ? `${CUR} added to your watchlist.` : `${CUR} added. Sign in or create a free account to keep it on every device.`);
+  }
+  WL = L; store.set("tt:wl", WL); push("watchlist", WL); updateStar();
+};
 
 /* ---------- boot ---------- */
 (async function boot(){
@@ -782,6 +914,9 @@ function route(){
   }
   fillSymlist();
   renderPulse();
+  renderAcct();
+  if(needsUni()) loadUni().catch(()=>{});
+  if(auth.token) pullData(false);
   if(scrState.scope==="all") await setScope("all"); else renderScreener();
   if(META && META.allStocks){ $("#scope button[data-s=all]").textContent = `All stocks (${META.allStocks.toLocaleString("en-US")})`; }
   else { $("#scope").hidden = true; }

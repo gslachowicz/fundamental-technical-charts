@@ -224,3 +224,27 @@ ul.news li{padding:6px 0;border-bottom:1px dotted var(--rule);line-height:1.35}
 ul.news a{color:var(--ink);text-decoration:none;font-family:var(--f-serif);font-size:14px}
 ul.news a:hover{color:var(--navy);text-decoration:underline}
 ul.news span{display:block;font-size:11.5px;color:var(--ink2);margin-top:2px}
+
+/* ---------- accounts & watchlist star ---------- */
+.acct{max-width:14em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;height:34px}
+.acctmenu{position:absolute;right:44px;top:calc(100% + 6px);z-index:50;min-width:220px;background:var(--plate);border:1px solid var(--ink);box-shadow:4px 4px 0 rgba(21,23,28,.12);font-family:var(--f-label);padding:6px 0}
+.acctmenu .who{padding:6px 14px 8px;color:var(--ink2);font-size:12px;border-bottom:1px solid var(--rule);margin-bottom:4px;word-break:break-all}
+.acctmenu button{display:block;width:100%;text-align:left;background:none;border:0;padding:8px 14px;font:600 13px var(--f-label);letter-spacing:.04em;text-transform:uppercase;color:var(--ink);cursor:pointer}
+.acctmenu button:hover{background:var(--soft)}
+.starbtn{background:none;border:0;padding:0 4px;margin:0 2px 0 -2px;font-size:30px;line-height:1;color:var(--ink2);cursor:pointer;align-self:center}
+.starbtn:hover{color:var(--amber)}
+.starbtn.on{color:var(--amber)}
+.starbtn:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.scr td .pend{font-family:var(--f-data);font-size:12px;color:var(--ink2)}
+.modal{position:fixed;inset:0;z-index:100;background:rgba(21,23,28,.38);display:grid;place-items:center;padding:16px}
+.mbox{width:min(400px,100%);background:var(--plate);border:1px solid var(--ink);box-shadow:6px 6px 0 rgba(21,23,28,.18);font-family:var(--f-label);padding-bottom:16px}
+.mbox .sethd{padding:12px 16px}
+.msub{margin:0 16px 12px;color:var(--ink2);font-size:13px;line-height:1.45}
+.fld{display:grid;gap:4px;margin:0 16px 10px}
+.fld span{font-weight:600;font-size:12px;letter-spacing:.04em;text-transform:uppercase}
+.fld input{font-family:var(--f-data);font-size:15px;border:1px solid var(--ink);background:var(--plate);padding:8px 10px;color:var(--ink);width:100%}
+.aerr{margin:0 16px 10px;color:var(--down);font-size:13px}
+.btn.wide{display:block;width:calc(100% - 32px);margin:4px 16px 0;padding:9px 10px;text-align:center}
+.btn[disabled]{opacity:.6;cursor:wait}
+.aswitch{margin:12px 16px 0;font-size:13px;color:var(--ink2)}
+.lnk{background:none;border:0;padding:0;color:var(--navy);font:inherit;text-decoration:underline;cursor:pointer}
