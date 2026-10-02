@@ -35,8 +35,8 @@ const MKT_CLASS = {"Uptrend":"st-up","Uptrend under pressure":"st-press","Correc
 let META=null, ROWS=[], UNI=null, BENCH=null, order=[];
 const PAGE = 100;
 const scrState = { key: store.get("ink:sortKey") || "rsRating", asc: !!store.get("ink:sortAsc"), filter: "all",
-  scope: store.get("ink:scope")==="all" ? "all" : "watch", limit: PAGE };
-const list = () => scrState.scope==="all" && UNI ? UNI : watchRows();
+  scope: "watch", limit: PAGE, sector: null };
+const list = () => scrState.scope==="all" && UNI ? UNI.filter(r=>!r.etf) : scrState.scope==="etf" && UNI ? UNI.filter(r=>r.etf) : watchRows();
 /* ---------- personal watchlist (default: the house list in watchlist.txt) ---------- */
 const SYM_OK = /^[A-Z0-9.\-^=]{1,15}$/;
 let WL = Array.isArray(store.get("tt:wl")) ? store.get("tt:wl") : null;   // null = house list
@@ -75,8 +75,9 @@ function rowVal(r, k){
   }
 }
 function filtered(){
-  const f = scrState.filter;
+  const f = scrState.filter, sec = scrState.sector;
   return list().filter(r => {
+    if(sec && r.sector !== sec) return false;
     const st = r.base && r.base.status;
     if(f==="setup") return st==="Breakout" || st==="In buy zone";
     if(f==="near") return st==="Near pivot" || st==="In buy zone" || st==="Breakout";
@@ -109,12 +110,12 @@ function renderScreener(){
     const b = r.base || {};
     const rs = r.rsRating; const stc = STATUS_CLASS[b.status] || "";
     return `<tr data-s="${esc(r.symbol)}" tabindex="0">
-      <td class="l"><span class="sym">${esc(r.symbol)}</span>${scrState.scope==="all" && inWL(r.symbol)?'<span class="star" title="In your watchlist">★</span>':''}${r.stale?' <span class="stale">stale</span>':''}<span class="nm" title="${esc(r.name)}">${esc(r.name)}</span></td>
+      <td class="l"><span class="sym">${esc(r.symbol)}</span>${scrState.scope!=="watch" && inWL(r.symbol)?'<span class="star" title="In your watchlist">★</span>':''}${r.stale?' <span class="stale">stale</span>':''}<span class="nm" title="${esc(r.name)}">${esc(r.name)}</span></td>
       <td class="spk">${r.pending?'<span class="pend">pending</span>':`<canvas data-spark="${esc(r.symbol)}"></canvas>`}</td>
       <td>${fmtP(r.close)}</td>
       <td class="${r.chgPct<0?'neg':''}">${fmtPct(r.chgPct,2)}</td>
       <td><span class="rsv ${rs>=80?'hot':''}">${rs??"—"}</span></td>
-      <td title="${esc(r.group)}">${esc(r.groupRank||"—")}</td>
+      <td title="${esc(r.group)}">${r.etf ? `<span class="nm">${esc(r.tracks||r.group||"")}</span>` : esc(r.groupRank||"—")}</td>
       <td class="${sign(r.epsChg)}">${esc(r.epsChg||"—")}</td>
       <td class="${sign(r.salesChg)}">${esc(r.salesChg||"—")}</td>
       <td class="${(r.offHighPct??0)<-15?'neg':''}">${fmtPct(r.offHighPct)}</td>
@@ -128,19 +129,23 @@ function renderScreener(){
     </tr>`; }).join("") || `<tr><td colspan="16" class="l" style="padding:18px">${scrState.scope==="watch" && !getWL().length ? "Your watchlist is empty. Open any ticker and tap the ☆ next to its symbol to add it." : "No tickers match this filter."}</td></tr>`;
   const bySym = new Map(shown.map(r=>[r.symbol,r]));
   $$("canvas[data-spark]").forEach(cv=>{ const r = bySym.get(cv.dataset.spark); sparkline(cv, r && r.spark); });
-  $("#count").textContent = total > shown.length ? `Showing ${shown.length} of ${total} · ${all.length} ${scrState.scope==="all"?"stocks":"tickers"}` : `${total} of ${all.length} ${scrState.scope==="all"?"stocks":"tickers"}`;
+  const noun = {all:"stocks", etf:"ETFs", watch:"tickers"}[scrState.scope];
+  $("#count").textContent = total > shown.length ? `Showing ${shown.length} of ${total} · ${all.length} ${noun}` : `${total} of ${all.length} ${noun}`;
+  const sc = $("#secChip"); sc.hidden = !scrState.sector;
+  if(scrState.sector){ sc.innerHTML = `Sector: <b>${esc(scrState.sector)}</b> <button aria-label="Clear sector filter">×</button>`; sc.querySelector("button").onclick = ()=>{ scrState.sector=null; scrState.limit=PAGE; renderScreener(); }; }
   $("#moreWrap").hidden = total <= shown.length;
   if(total > shown.length) $("#moreBtn").textContent = `Show ${Math.min(PAGE, total-shown.length)} more`;
 }
 function renderPulse(){
-  const el = $("#pulse");
-  if(!META || !META.market || !META.market.length){ el.innerHTML=""; return; }
-  el.innerHTML = META.market.map(m => `<div class="pcard">
+  const els = [$("#pulse"), $("#hPulse")];
+  if(!META || !META.market || !META.market.length){ els.forEach(el=>el.innerHTML=""); return; }
+  const html = META.market.map(m => `<div class="pcard">
       <div class="top"><span class="nm">${esc(m.name)}</span><span class="px">${fmtP(m.close)}</span><span class="${m.chgPct<0?'neg':''}" style="font-family:var(--f-data)">${fmtPct(m.chgPct,2)}</span>
         <span class="sp"></span><span class="chip ${MKT_CLASS[m.status]||''}">${esc(m.status)}</span></div>
       <div class="flags"><span class="flag ${m.above21?'ok':'no'}">${m.above21?'Above':'Below'} 21-day</span><span class="flag ${m.above50?'ok':'no'}">${m.above50?'Above':'Below'} 50-day</span><span class="flag ${m.above200?'ok':'no'}">${m.above200?'Above':'Below'} 200-day</span></div>
       <div class="dd" title="Distribution days in the last 25 sessions: index down 0.2% or more on higher volume">${Array.from({length:8},(_,i)=>`<i class="${i<m.distDays?'on':''}"></i>`).join("")}<span>${m.distDays} distribution day${m.distDays===1?'':'s'} (25 sessions)</span></div>
     </div>`).join("");
+  els.forEach(el=>el.innerHTML = html);
 }
 $$("#scr th[data-k]").forEach(th=>{
   const go = ()=>{ const k=th.dataset.k; if(scrState.key===k) scrState.asc=!scrState.asc; else { scrState.key=k; scrState.asc = ["symbol","baseType","status","grp","distPct"].includes(k) ? true : false; }
@@ -149,10 +154,10 @@ $$("#scr th[data-k]").forEach(th=>{
 });
 $$("#filters button").forEach(b=>b.onclick=()=>{ scrState.filter=b.dataset.f; scrState.limit=PAGE; $$("#filters button").forEach(x=>x.classList.toggle("on",x===b)); renderScreener(); });
 async function setScope(s){
-  scrState.scope = s; scrState.limit = PAGE; store.set("ink:scope", s);
+  scrState.scope = s; scrState.limit = PAGE;
   $$("#scope button").forEach(x=>x.classList.toggle("on", x.dataset.s===s));
-  if(s==="all" && !UNI){
-    $("#count").textContent = "Loading all stocks…";
+  if((s==="all" || s==="etf") && !UNI){
+    $("#count").textContent = s==="etf" ? "Loading ETFs…" : "Loading all stocks…";
     try{ await loadUni(); }catch(e){ toast("Could not load the full stock list. It appears after the next data update."); scrState.scope="watch"; $$("#scope button").forEach(x=>x.classList.toggle("on", x.dataset.s==="watch")); }
   }
   renderScreener();
@@ -172,8 +177,20 @@ const MAS = [
   {k:"d50",  n:50,  w:10,   ema:false, color:"#d23a2a", d:"50-day MA",  wl:"10-week MA"},
   {k:"d150", n:150, w:30,   ema:false, color:"#7b4bb3", d:"150-day MA", wl:"30-week MA"},
   {k:"d200", n:200, w:40,   ema:false, color:"#15171c", d:"200-day MA", wl:"40-week MA"}];
-const DEF_CFG = {scale:"log", bars:"hlc", weight:"bold", grid:"dotted", ants:"on", ma:{d10:false,e21:false,d50:true,d150:false,d200:true}};
-let cfg = (()=>{ const c = store.get("ink:cfg") || {}; return {...DEF_CFG, ...c, ma:{...DEF_CFG.ma, ...(c.ma||{})}}; })();
+const DEF_COLORS = {up:"#1d3fc4", down:"#e0337f", vup:"#1d3fc4", vdown:"#e0337f", ma:Object.fromEntries(MAS.map(m=>[m.k, m.color]))};
+const DEF_CFG = {scale:"log", bars:"hlc", weight:"bold", grid:"dotted", ants:"on", ma:{d10:false,e21:false,d50:true,d150:false,d200:true}, colors:DEF_COLORS};
+const HEX = /^#[0-9a-f]{6}$/i;
+function normCfg(c){
+  c = c || {}; const col = c.colors || {};
+  const pick = (v, d) => HEX.test(v||"") ? v : d;
+  return {...DEF_CFG, ...c, ma:{...DEF_CFG.ma, ...(c.ma||{})},
+    colors:{up:pick(col.up,DEF_COLORS.up), down:pick(col.down,DEF_COLORS.down), vup:pick(col.vup,DEF_COLORS.vup), vdown:pick(col.vdown,DEF_COLORS.vdown),
+      ma:Object.fromEntries(MAS.map(m=>[m.k, pick((col.ma||{})[m.k], DEF_COLORS.ma[m.k])]))}};
+}
+let cfg = normCfg(store.get("ink:cfg"));
+const maCol = m => (cfg.colors.ma||{})[m.k] || m.color;
+function applyColors(){ C.up = cfg.colors.up; C.down = cfg.colors.down; C.vup = cfg.colors.vup; C.vdown = cfg.colors.vdown; }
+applyColors();
 const GRID_DASH = {dotted:[1,3], dashed:[5,4], solid:[]};
 function niceStep(x){ const m=Math.pow(10,Math.floor(Math.log10(x))); for(const k of [1,2,2.5,5,10]) if(k*m>=x) return k*m; return 10*m; }
 function linTicks(lo, hi, pxH){ const step=niceStep((hi-lo)/Math.max(2,Math.floor(pxH/38))); const out=[]; for(let v=Math.ceil(lo/step)*step; v<=hi; v+=step) out.push(+v.toFixed(6)); return out; }
@@ -186,14 +203,28 @@ function settingsHTML(){
     <div class="setrow"><span>Bar weight</span>${seg("weight",[["thin","Thin"],["normal","Normal"],["bold","Bold"]])}</div>
     <div class="setrow"><span title="David Ryan's Ants: up at least 12 of the last 15 sessions with volume 20%+ above its 50-day average. Gold when the stock also gained 20%+ in those 15 days.">Ants</span>${seg("ants",[["on","Show"],["off","Hide"]])}</div>
     <div class="setrow"><span>Grid lines</span>${seg("grid",[["dotted","Dotted"],["dashed","Dashed"],["solid","Solid"],["none","None"]])}</div>
-    <div class="setrow col"><span>Moving averages</span><div class="checks">${MAS.map(m=>`<label><input type="checkbox" data-ma="${m.k}" ${cfg.ma[m.k]?'checked':''}><i style="border-color:${m.color}"></i>${m.d}${m.wl?` <small>(${m.wl} on weekly)</small>`:` <small>(daily only)</small>`}</label>`).join("")}</div></div>
+    <div class="setrow col"><span>Moving averages <small class="hint">tap a swatch to change its color</small></span><div class="checks">${MAS.map(m=>`<label class="macheck"><input type="checkbox" data-ma="${m.k}" ${cfg.ma[m.k]?'checked':''}><input type="color" class="swatch" data-macol="${m.k}" value="${maCol(m)}" title="${m.d} color" aria-label="${m.d} color">${m.d}${m.wl?` <small>(${m.wl} on weekly)</small>`:` <small>(daily only)</small>`}</label>`).join("")}</div></div>
+    <div class="setrow col"><span>Colors</span><div class="colgrid">
+      <label><input type="color" class="swatch" data-col="up" value="${cfg.colors.up}">Up bars</label>
+      <label><input type="color" class="swatch" data-col="down" value="${cfg.colors.down}">Down bars</label>
+      <label><input type="color" class="swatch" data-col="vup" value="${cfg.colors.vup}">Up volume</label>
+      <label><input type="color" class="swatch" data-col="vdown" value="${cfg.colors.vdown}">Down volume</label>
+    </div></div>
     <div class="setft"><button class="btn" id="setReset">Reset to defaults</button></div>`;
 }
-function applyCfg(){ store.set("ink:cfg", cfg); push("cfg", cfg); $("#settings").innerHTML = settingsHTML(); bindSettings(); if(S){ renderPanels(); draw(); } }
+function redrawAll(){ applyColors(); if(S && !$("#vChart").hidden){ renderPanels(); draw(); } if(!$("#vHome").hidden) drawHomeChart(); if(!$("#vScreener").hidden) renderScreener(); }
+function applyCfg(){ store.set("ink:cfg", cfg); push("cfg", cfg); $("#settings").innerHTML = settingsHTML(); bindSettings(); redrawAll(); }
 function bindSettings(){
   $$("#settings [data-cfg]").forEach(b=>b.onclick=()=>{ cfg[b.dataset.cfg]=b.dataset.v; applyCfg(); });
   $$("#settings [data-ma]").forEach(c=>c.onchange=()=>{ cfg.ma[c.dataset.ma]=c.checked; applyCfg(); });
-  $("#setReset").onclick=()=>{ cfg = JSON.parse(JSON.stringify(DEF_CFG)); applyCfg(); };
+  $("#setReset").onclick=()=>{ cfg = normCfg(JSON.parse(JSON.stringify(DEF_CFG))); applyCfg(); };
+  // colors: live preview while dragging, save when the picker closes
+  const setCol = (el, v) => { if(el.dataset.col) cfg.colors[el.dataset.col] = v; else cfg.colors.ma[el.dataset.macol] = v; };
+  $$("#settings input[type=color]").forEach(el=>{
+    el.addEventListener("click", e=>e.stopPropagation());
+    el.addEventListener("input", ()=>{ setCol(el, el.value); redrawAll(); });
+    el.addEventListener("change", ()=>{ setCol(el, el.value); store.set("ink:cfg", cfg); push("cfg", cfg); redrawAll(); });
+  });
   $("#setClose").onclick=()=>toggleSettings(false);
 }
 function toggleSettings(on){ const p=$("#settings"); on = on==null ? p.hidden : on; p.hidden=!on; $("#gear").setAttribute("aria-expanded", on);
@@ -256,7 +287,7 @@ function logTicks(lo, hi, pxH){
 function series(){
   const base = view.weekly ? toWeekly(S.px) : S.px;
   const mas = MAS.filter(m=>cfg.ma[m.k] && (!view.weekly || m.w)).map(m=>{ const n = view.weekly ? m.w : m.n;
-    return {...m, data: m.ema ? ema(base, n, b=>b.c) : sma(base, n, b=>b.c)}; });
+    return {...m, color: maCol(m), data: m.ema ? ema(base, n, b=>b.c) : sma(base, n, b=>b.c)}; });
   const vma = sma(base, view.weekly?10:50, b=>b.v);
   const bA = alignBench(base);
   const rs = bA ? base.map((b,i)=> bA[i] ? b.c/bA[i] : null) : null;
@@ -285,7 +316,7 @@ function draw(){
   const rowH = narrow?11:13, stripRows = Q.length ? (narrow? 3 : (hasMargin?4:3)) : 0;
   const stripH = stripRows*rowH + (stripRows?4:0);
   const totalH = H-T-B-stripH-(stripH?4:0);
-  const priceH = Math.round(totalH*0.79), volH = totalH-priceH-4;
+  const priceH = Math.round(totalH*0.72), volH = totalH-priceH-4;
   const pTop=T, pBot=T+priceH, vTop=pBot+4, vBot=vTop+volH, sTop=vBot+4, sBot=sTop+stripH;
   const hasIdx = !!bA;
   const prTop = pTop + (hasIdx ? priceH*0.13 : 12), prBot = rs ? pTop + priceH*0.86 : pBot - 24;
@@ -466,7 +497,7 @@ function draw(){
   // volume
   ctx.save(); ctx.beginPath(); ctx.rect(L,vTop,plotW,volH); ctx.clip();
   for(let i=0;i<n;i++){ const b=vis[i]; const prev = s0+i>0 ? base[s0+i-1].c : b.o; const x=xOf(i);
-    ctx.fillStyle = b.c<prev ? C.down : C.up; const w=Math.max(1,Math.round(bw*0.62)); const y=Math.round(vY(b.v)); ctx.fillRect(Math.round(x-w/2), y, w, vBot-y); }
+    ctx.fillStyle = b.c<prev ? C.vdown : C.vup; const w=Math.max(1,Math.round(bw*0.62)); const y=Math.round(vY(b.v)); ctx.fillRect(Math.round(x-w/2), y, w, vBot-y); }
   ctx.strokeStyle=C.vavg; ctx.lineWidth=1; ctx.beginPath(); let on=false;
   for(let i=0;i<n;i++){ const v=vma[s0+i]; if(v==null){on=false;continue;} on?ctx.lineTo(xOf(i),vY(v)):ctx.moveTo(xOf(i),vY(v)); on=true; } ctx.stroke();
   if(volH>60){ ctx.font=`${narrow?9:10}px ${FONT_D}`; ctx.textAlign="center"; ctx.textBaseline="bottom"; let lastX=-999; const win = view.weekly?4:8;
@@ -570,16 +601,43 @@ function renderPanels(){
   const Q = (F.quarters||[]).filter(q=>q.q||q.eps);
   const nx = F.nextQ;
   const d = v => esc(v)||'<span class="na">–</span>';
+  // growth: blue = 25%+ (strong), plain = 0–25%, pink = decline. surprise: blue = beat, pink = miss. ▲ = faster than the quarter before
+  const gc = v => { const x = pnum(v); return x==null ? "" : x < 0 ? "dn" : x >= 25 ? "up" : ""; };
+  const sc = v => { const x = pnum(v); return x==null ? "" : x < 0 ? "dn" : x > 0 ? "beat" : ""; };
+  const acc = (cur, prev) => { const a = pnum(cur), b = pnum(prev); return a!=null && b!=null && a > b + 0.5 && a > 0 ? '<i class="acc" title="Faster growth than the prior quarter">▲</i>' : ""; };
+  const g = (q, k, i) => `<td class="${gc(q[k])}">${acc(q[k], (Q[i+1]||{})[k])}${d(q[k])}</td>`;
+  if(F.etf){
+    $("#qtrsH").innerHTML = `Top holdings <small>${F.etf.holdings && F.etf.holdings.length ? "by weight" : ""}</small>`;
+    const Hd = F.etf.holdings || [];
+    const mx = Math.max(1, ...Hd.map(h=>h.pct||0));
+    $("#qtrs").innerHTML = Hd.length ? `<table class="hold"><thead><tr><th class="l">Symbol</th><th class="l">Name</th><th>Weight</th></tr></thead><tbody>${
+      Hd.map(h=>`<tr data-s="${esc(h.symbol)}"><td class="l"><span class="sym">${esc(h.symbol)}</span></td><td class="l nmc">${esc(h.name)}</td><td class="wcell"><span class="wbar" style="width:${(h.pct/mx*100).toFixed(0)}%"></span><b>${(h.pct||0).toFixed(2)}%</b></td></tr>`).join("")}</tbody></table>
+      <p class="tnote">Click a holding to open its chart.</p>`
+      : `<div class="empty">${F.pending ? "Holdings load with the fundamentals rotation in the next updates." : "Yahoo does not publish holdings for this fund."}</div>`;
+    $$("#qtrs tr[data-s]").forEach(tr=>tr.onclick=()=>{ location.hash = tr.dataset.s; });
+  } else {
+  $("#qtrsH").innerHTML = `Quarterly earnings &amp; sales <small>reported vs. expected · y/y growth</small>`;
   $("#qtrs").innerHTML = Q.length ? `<table class="qt"><thead><tr><th class="l" rowspan="2">Qtr</th><th colspan="4" class="hgrp">EPS</th><th colspan="4" class="hgrp">Sales</th><th rowspan="2">Op.<br>mgn</th></tr>
       <tr><th class="g0">Actual</th><th>Est.</th><th>Surp.</th><th>Y/Y</th><th class="g0">Actual</th><th>Est.</th><th>Surp.</th><th>Y/Y</th></tr></thead><tbody>${
-      nx && nx.q ? `<tr class="next"><td class="l">${esc(nx.q)}<span class="dt">${nx.date?"due "+fmtD(iso(nx.date)):""}</span></td><td class="g0">due</td><td>${d(nx.epsEst)}</td><td></td><td></td><td class="g0">due</td><td>${d(nx.salesEst)}</td><td></td><td></td><td></td></tr>` : ""}${
-      Q.map(q=>`<tr><td class="l">${esc(q.q)}<span class="dt">${q.date?fmtD(iso(q.date)):""}</span></td><td class="g0">${d(q.eps)}</td><td>${d(q.epsEst)}</td><td class="${sign(q.surprise)}">${d(q.surprise)}</td><td class="${sign(q.epsChg)}">${d(q.epsChg)}</td><td class="g0">${d(q.sales)}</td><td>${d(q.salesEst)}</td><td class="${sign(q.salesSurprise)}">${d(q.salesSurprise)}</td><td class="${sign(q.salesChg)}">${d(q.salesChg)}</td><td>${d(q.margin)}</td></tr>`).join("")}</tbody></table>
-      <p class="tnote">EPS is adjusted (as reported to analysts). Sales estimates are recorded before each report, so they fill in quarter by quarter from now on.</p>`
+      nx && nx.q ? `<tr class="next"><td class="l"><span class="nxt">Next</span>${esc(nx.q)}<span class="dt">${nx.date?"reports "+fmtD(iso(nx.date)):""}</span></td><td class="g0"><span class="na">–</span></td><td class="est">${d(nx.epsEst)}</td><td></td><td></td><td class="g0"><span class="na">–</span></td><td class="est">${d(nx.salesEst)}</td><td></td><td></td><td></td></tr>` : ""}${
+      Q.map((q,i)=>`<tr><td class="l">${esc(q.q)}<span class="dt">${q.date?fmtD(iso(q.date)):""}</span></td><td class="g0 act">${d(q.eps)}</td><td class="est">${d(q.epsEst)}</td><td class="${sc(q.surprise)}">${d(q.surprise)}</td>${g(q,"epsChg",i)}<td class="g0 act">${d(q.sales)}</td><td class="est">${d(q.salesEst)}</td><td class="${sc(q.salesSurprise)}">${d(q.salesSurprise)}</td>${g(q,"salesChg",i)}<td>${d(q.margin)}</td></tr>`).join("")}</tbody></table>
+      <p class="tnote qleg"><span><i class="k up"></i>Growth 25%+ or beat</span><span><i class="k dn"></i>Decline or miss</span><span><i class="acc">▲</i> Faster growth than the quarter before</span><span>EPS adjusted, as reported to analysts</span></p>`
     : `<div class="empty">${F.pending ? "Earnings and sales for this stock are still loading: the site fetches them for a batch of stocks each day, so they appear within the next few updates." : "Yahoo did not return quarterly earnings for this ticker."}</div>`;
+  }
   const A = (F.annual||[]).filter(a=>a.y||a.eps).slice(0,10);
-  $("#annualN").textContent = A.length ? `last ${A.length} years` : "";
-  $("#annual").innerHTML = A.length ? `<table><thead><tr><th class="l">Year</th><th>EPS</th><th>% chg</th><th>Sales</th><th>% chg</th><th>Net mgn</th></tr></thead><tbody>${A.map(a=>`<tr><td class="l">${esc(a.y)}</td><td>${esc(a.eps)||"–"}</td><td class="${sign(a.chg)}">${esc(a.chg)||"–"}</td><td>${esc(a.sales)||"–"}</td><td class="${sign(a.salesChg)}">${esc(a.salesChg)||"–"}</td><td>${esc(a.netMgn)||"–"}</td></tr>`).join("")}</tbody></table>`
+  if(F.etf){
+    const E = F.etf, SW = E.sectors || [];
+    $("#annualH").innerHTML = `Fund profile <small>${esc(E.family||"")}</small>`;
+    const prof = [["Tracks", E.tracks], ["Category", E.category], ["Assets", E.aum], ["Expense ratio", E.expense], ["Yield", E.yield], ["Since", E.inception]].filter(r=>r[1]);
+    $("#annual").innerHTML = `<dl class="kv in">${prof.map(([k,v])=>`<dt>${k}</dt><dd>${esc(v)}</dd>`).join("")}</dl>` +
+      (SW.length ? `<div class="in"><div class="swh">Sector weights</div>${SW.slice(0,11).map(x=>`<div class="swrow"><span>${esc(x.name)}</span><i style="width:${Math.min(100,x.pct)}%"></i><b>${x.pct.toFixed(1)}%</b></div>`).join("")}</div>` : "") +
+      (E.gics ? `<div class="in"><a class="btn" href="#screener" data-sector="${esc(E.gics)}">See the ${esc(E.gics)} stocks →</a></div>` : "");
+  } else {
+  $("#annualH").innerHTML = `Annual earnings &amp; sales <small id="annualN">${A.length ? `last ${A.length} years` : ""}</small>`;
+  $("#annual").innerHTML = A.length ? `<table class="qt ann"><thead><tr><th class="l">Year</th><th>EPS</th><th>% chg</th><th>Sales</th><th>% chg</th><th>Net mgn</th></tr></thead><tbody>${A.map(a=>`<tr><td class="l">${esc(a.y)}</td><td class="act">${esc(a.eps)||"–"}</td><td class="${gc(a.chg)}">${esc(a.chg)||"–"}</td><td class="act">${esc(a.sales)||"–"}</td><td class="${gc(a.salesChg)}">${esc(a.salesChg)||"–"}</td><td>${esc(a.netMgn)||"–"}</td></tr>`).join("")}</tbody></table>`
     : `<div class="empty">${F.pending ? "Annual figures load with the fundamentals rotation in the next updates." : "No annual data."}</div>`;
+  }
+  renderOwnership();
 
   $("#aboutSec").textContent = F.group || F.sector || "";
   const ab = $("#about"); ab.classList.toggle("muted", !F.about);
@@ -588,9 +646,10 @@ function renderPanels(){
     ab.innerHTML = esc(short) + (short.length < F.about.length - 20 ? ` <button class="more-link" id="aboutMore">Full description</button>` : "");
     const mb = $("#aboutMore"); if(mb) mb.onclick = () => { ab.textContent = F.about; }; }
   const site = /^https?:\/\//i.test(F.website||"") ? `<a href="${esc(F.website)}" target="_blank" rel="noopener">${esc(F.website.replace(/^https?:\/\/(www\.)?/,"").replace(/\/$/,""))}</a>` : "";
-  const K = [["Market cap",F.mktCap],["Float",F.float],["Shares out",F.shares],["Institutional",F.inst],["ROE",F.roe],["Pretax margin",F.pretax],
+  const K = F.etf ? [["Assets",F.etf.aum],["Expense ratio",F.etf.expense],["Yield",F.etf.yield],["Category",F.etf.category],["Fund family",F.etf.family],["Exchange",F.exchange]].filter(r=>r[1]) : [["Market cap",F.mktCap],["Float",F.float],["Shares out",F.shares],["Institutional",F.inst],["ROE",F.roe],["Pretax margin",F.pretax],
     ["Debt / equity",F.debt],["EPS growth (3y)",F.epsGrowth],["EPS surprises (8q)",F.epsSurprise],["Next earnings",F.nextEarn],["Next qtr EPS est.",F.epsDue],
     ["Group rank",F.groupRank],["Employees",F.employees],["Headquarters",F.hq],["Exchange",F.exchange]].filter(r=>r[1]);
+  $("#aboutSec").textContent = F.etf ? (F.etf.tracks || "ETF") : (F.group || F.sector || "");
   $("#keydata").innerHTML = K.map(([k,v])=>`<div><dt>${k}</dt><dd>${esc(v)}</dd></div>`).join("") + (site?`<div><dt>Website</dt><dd>${site}</dd></div>`:"");
 
   $("#baseBox").innerHTML = b ? `<p class="basebig">${esc(b.type)}</p>
@@ -604,10 +663,10 @@ function renderPanels(){
     : `<div class="empty">No base detected. The stock is either trending at new highs without a 5-week consolidation, or has too little history.</div>`;
 
   const nm = view.weekly? ["10-week","40-week","10-week"] : ["50-day","200-day","50-day"];
-  $("#legend").innerHTML = MAS.filter(m=>cfg.ma[m.k] && (!view.weekly || m.w)).map(m=>`<span><span class="sw" style="border-color:${m.color}"></span><b>${view.weekly?m.wl:m.d}</b></span>`).join("") +
+  $("#legend").innerHTML = MAS.filter(m=>cfg.ma[m.k] && (!view.weekly || m.w)).map(m=>`<span><span class="sw" style="border-color:${maCol(m)}"></span><b>${view.weekly?m.wl:m.d}</b></span>`).join("") +
     `<span><span class="sw" style="border-color:${C.rs}"></span><b>RS line</b> vs S&amp;P 500</span><span><span class="sw" style="border-color:${C.idx};border-top-width:1px"></span><b>S&amp;P 500</b></span>` +
     `<span><span class="sw" style="border-color:${C.vavg}"></span><b>${nm[2]} avg volume</b></span><span><span class="sw" style="border-color:${C.piv};border-top-style:dotted"></span><b>Unbroken swing</b></span>` +
-    `<span><span class="sw" style="border-color:${C.navy};border-top-style:dashed"></span><b>Pivot · buy zone</b></span>${cfg.ants!=="off"&&!view.weekly?`<span><b style="color:#2f9e44">●</b><b style="color:#c99a06">●</b> <b>Ants</b> 12/15 up days on rising volume</span>`:""}<span><b style="color:${C.up}">Blue</b> / <b style="color:${C.down}">pink</b>: close above / below prior close · ${cfg.scale==="linear"?"linear":"log"} scale</span>`;
+    `<span><span class="sw" style="border-color:${C.navy};border-top-style:dashed"></span><b>Pivot · buy zone</b></span>${cfg.ants!=="off"&&!view.weekly?`<span><b style="color:#2f9e44">●</b><b style="color:#c99a06">●</b> <b>Ants</b> 12/15 up days on rising volume</span>`:""}<span><b style="color:${C.up}">Up</b> / <b style="color:${C.down}">down</b> bars: close above / below prior close · ${cfg.scale==="linear"?"linear":"log"} scale</span>`;
   renderDbox();
 }
 // The first one or two sentences of Yahoo's business summary: what the company does, without the history and legal boilerplate
@@ -621,6 +680,36 @@ function shortAbout(t){
   let out = ss[0]; if(out.length < 170 && ss[1] && out.length + ss[1].length < 360) out += " " + ss[1];
   if(out.length > 380){ out = out.slice(0, 370).replace(/[,;:]?\s+\S*$/,"") + "…"; }
   return out;
+}
+
+/* ---------- insiders & institutions ---------- */
+function renderOwnership(){
+  const F = S.fund||{}, O = F.own, sec = $("#ownSec");
+  sec.hidden = !!F.etf; if(F.etf) return;
+  const wait = `<div class="empty">${F.pending || !O ? "Ownership data loads with the fundamentals rotation in the next updates." : "Not available."}</div>`;
+  if(!O){ $("#insiders").innerHTML = wait; $("#institutions").innerHTML = wait; return; }
+  const num = v => v==null ? "–" : fmtV(Math.abs(v));
+  const s6 = O.insider6m || {};
+  const net = s6.netShares;
+  const tiles = `<div class="otiles">
+      <div><span>Buys, 6 mo</span><b class="obuy">${s6.buyTrans??"–"}</b><small>${s6.buyShares!=null?num(s6.buyShares)+" sh":""}</small></div>
+      <div><span>Sells, 6 mo</span><b class="osell">${s6.sellTrans??"–"}</b><small>${s6.sellShares!=null?num(s6.sellShares)+" sh":""}</small></div>
+      <div><span>Net shares</span><b class="${net==null?"":net<0?"osell":"obuy"}">${net==null?"–":(net<0?"−":"+")+num(net)}</b><small>${s6.netPct!=null?fmtPct(s6.netPct,1)+" of holdings":""}</small></div>
+      <div><span>Insiders own</span><b>${O.insidersPct!=null?O.insidersPct.toFixed(1)+"%":"–"}</b><small>of shares</small></div>
+    </div>`;
+  const T = O.insiders || [];
+  $("#insiders").innerHTML = tiles + (T.length ? `<div class="tbl"><table class="otab"><thead><tr><th class="l">Date</th><th class="l">Insider</th><th class="l">Type</th><th>Shares</th><th>Value</th></tr></thead><tbody>${
+      T.map(t=>`<tr><td class="l">${t.date?fmtD(iso(t.date)):""}</td><td class="l"><span class="who">${esc(t.who)}</span><span class="nm">${esc(t.pos)}</span></td><td class="l"><span class="ttag t-${esc(t.type.toLowerCase())}">${esc(t.type)}</span></td><td>${esc(t.shares)||"–"}</td><td>${t.value?"$"+esc(t.value):"–"}</td></tr>`).join("")}</tbody></table></div>
+      <p class="tnote">Open-market buys and sells are what matter: awards and option exercises are pay, not a view on the stock.</p>`
+    : `<div class="empty">No insider transactions reported recently.</div>`);
+  const H = O.holders || [];
+  $("#institutions").innerHTML = `<div class="otiles">
+      <div><span>Institutions own</span><b>${O.instPct!=null?O.instPct.toFixed(1)+"%":"–"}</b><small>of shares</small></div>
+      <div><span>Of the float</span><b>${O.instFloatPct!=null?O.instFloatPct.toFixed(1)+"%":"–"}</b><small>&nbsp;</small></div>
+      <div><span>Institutions</span><b>${O.instCount!=null?O.instCount.toLocaleString("en-US"):"–"}</b><small>holders</small></div>
+    </div>` + (H.length ? `<div class="tbl"><table class="otab"><thead><tr><th class="l">Top holders</th><th>% held</th><th>Value</th><th title="Change in the position since the previous quarter">Q/Q chg</th></tr></thead><tbody>${
+      H.map(h=>`<tr><td class="l"><span class="who">${esc(h.holder)}</span>${h.date?`<span class="nm">as of ${fmtD(iso(h.date))}</span>`:""}</td><td>${h.pct!=null?h.pct.toFixed(2)+"%":"–"}</td><td>${h.value?"$"+esc(h.value):"–"}</td><td class="${h.chg==null?"":h.chg<0?"dn":"up"}">${h.chg==null?"–":fmtPct(h.chg,1)}</td></tr>`).join("")}</tbody></table></div>
+      <p class="tnote">Positions from the latest 13F filings, reported up to 45 days after each quarter ends.</p>` : `<div class="empty">No institutional holders reported.</div>`);
 }
 /* ---------- analysts & news ---------- */
 function renderAnalysts(){
@@ -695,6 +784,7 @@ function applyLive(){
     META.market.forEach(m=>patchRow(Object.assign(m, {symbol: sym[m.name], date: m.date || META.dataDate}))); renderPulse(); }
   $("#asof").textContent = `Data as of ${fmtLong(iso(META.dataDate))} close · live prices ${liveTime()} ET (delayed) · RS vs ${META.universeSize} stocks`;
   if(!$("#vScreener").hidden) renderScreener();
+  if(!$("#vHome").hidden) renderHome();
   if(S && !$("#vChart").hidden){ patchS(); renderPanels(); draw(); }
 }
 async function loadLive(){
@@ -729,6 +819,16 @@ function smrRating(F){
 }
 function renderDbox(){
   const box=$("#dbox"); if(!S) return; const F=S.fund||{}, st=S.stats||{};
+  if(F.etf){
+    const show = view.box && !(geo && geo.narrow); box.hidden = !show; if(!show) return;
+    const E = F.etf, H = (E.holdings||[]).slice(0,7);
+    const rows = [["RS Rating",F.rs],["U/D Vol Ratio",st.udRatio!=null?st.udRatio.toFixed(2):""],["% vs 52w High",fmtPct(st.offHighPct)],["Assets",E.aum],["Expense",E.expense],["Yield",E.yield]];
+    const v = x => x==null||x===""||x==="—" ? `<span class="na">–</span>` : esc(x);
+    box.innerHTML = `<div class="hd"><b>${esc(S.symbol)}</b> · ${esc(S.name||F.name||"")}</div><div class="sec">${esc(E.tracks||E.category||"ETF")}</div>
+      <div class="cols">${H.length ? `<table><thead><tr><th class="l">Top holdings</th><th>Wt</th></tr></thead><tbody>${H.map(h=>`<tr><td class="l">${esc(h.symbol)}</td><td>${(h.pct||0).toFixed(1)}%</td></tr>`).join("")}</tbody></table>` : `<div class="pend">Holdings load<br>in the next updates</div>`}
+      <dl>${rows.map(([k,x])=>`<dt>${k}</dt><dd class="${/^-/.test(x||"")?'neg':''}">${v(x)}</dd>`).join("")}</dl></div>`;
+    return;
+  }
   const A=(F.annual||[]).filter(a=>a.y||a.eps).slice(0,7).reverse();
   const smr = smrRating(F);
   const rows = [["RS Rating",F.rs],["Group Rank",F.groupRank],["SMR Rating",smr],["U/D Vol Ratio",st.udRatio!=null?st.udRatio.toFixed(2):""],
@@ -760,7 +860,7 @@ document.addEventListener("keydown", e=>{
 });
 
 async function openChart(sym){
-  $("#vScreener").hidden = true; $("#vChart").hidden = false; $("#loading").hidden = false;
+  $("#vScreener").hidden = true; $("#vHome").hidden = true; $("#vChart").hidden = false; $("#loading").hidden = false;
   CUR = sym; updateStar();
   window.scrollTo(0,0);
   try{
@@ -773,13 +873,142 @@ async function openChart(sym){
     toast(inWL(sym) ? `${sym} is in your watchlist: its chart loads after the next nightly update.` : `No data for ${sym} yet. Tap ☆ to add it to your watchlist: it loads after the next nightly update.`);
   }finally{ $("#loading").hidden = true; }
 }
+const LISTS = {watchlist:"watch", screener:"all", etfs:"etf"};
+let lastList = "";
+function setTab(v){ $$("#tabs a").forEach(a=>a.classList.toggle("on", a.dataset.v===v)); }
 function route(){
-  const sym = decodeURIComponent(location.hash.slice(1)).toUpperCase();
-  $("#vWelcome").hidden = sym !== "WELCOME"; document.body.classList.toggle("on-welcome", sym === "WELCOME");
-  if(sym === "WELCOME"){ $("#vChart").hidden = true; $("#vScreener").hidden = true; document.title = "Ticker&Tape · O'Neil-style charts, RS ratings and bases"; window.scrollTo(0,0); return; }
-  if(sym){ openChart(sym); }
-  else { $("#vChart").hidden = true; $("#vScreener").hidden = false; document.title = "Ticker&Tape"; renderScreener(); }
+  const raw = decodeURIComponent(location.hash.slice(1)).trim();
+  const low = raw.toLowerCase();
+  const isList = raw === low && LISTS[low];
+  const isHome = raw === "" || raw === "home";
+  ["#vWelcome","#vHome","#vScreener","#vChart"].forEach(id=>$(id).hidden = true);
+  document.body.classList.toggle("on-welcome", raw === "welcome");
+  document.body.classList.toggle("on-home", isHome);
+  if(raw === "welcome"){ $("#vWelcome").hidden = false; setTab(""); document.title = "Ticker&Tape · O'Neil-style charts, RS ratings and bases"; window.scrollTo(0,0); return; }
+  if(isHome){ lastList = ""; $("#vHome").hidden = false; setTab("home"); document.title = "Ticker&Tape · Market dashboard"; renderHome(); return; }
+  if(isList){ lastList = raw; $("#vScreener").hidden = false; setTab(LISTS[low]); document.title = `${{watch:"Watchlist",all:"Screener",etf:"ETFs"}[LISTS[low]]} · Ticker&Tape`;
+    if(LISTS[low] !== "all") scrState.sector = null;
+    setScope(LISTS[low]); return; }
+  setTab(""); openChart(raw.toUpperCase());
 }
+$("#bBack").onclick = () => { location.hash = lastList; };   // back to the list (or home) the chart was opened from
+$$("#tabs a").forEach(a=>a.addEventListener("click", ()=>{ if(a.dataset.v==="all") scrState.sector = null; }));
+document.addEventListener("click", e=>{ const b = e.target.closest("[data-sector]"); if(!b) return; e.preventDefault(); scrState.sector = b.dataset.sector; scrState.filter = "all";
+  $$("#filters button").forEach(x=>x.classList.toggle("on", x.dataset.f==="all")); if(location.hash === "#screener") setScope("all"); else location.hash = "screener"; });
+
+/* ================= HOME DASHBOARD ================= */
+let HOME = null, homeLoading = null, SPYB = null, movMode = "up";
+function loadHome(){
+  if(!homeLoading) homeLoading = Promise.all([
+    getJSON("home.json").then(h=>{ HOME = h; }).catch(()=>{ HOME = {market:[], sectors:[], news:[]}; }),
+    getJSON("t/SPY.json").then(b=>{ SPYB = b; }).catch(()=>{})
+  ]);
+  return homeLoading;
+}
+function heat(v, scale){
+  if(v==null) return "";
+  const a = Math.min(1, Math.abs(v)/scale) * 0.32;
+  return v >= 0 ? `background:rgba(29,63,196,${a.toFixed(3)})` : `background:rgba(224,51,127,${a.toFixed(3)})`;
+}
+const PERF = [["d1","1D",2.5],["w1","1W",5],["m3","3M",12],["m9","9M",22],["ytd","YTD",22]];
+let sectSort = {k:"m3", asc:false};
+function renderHome(){
+  renderPulse();
+  if(!HOME){ $("#hSect").innerHTML = `<div class="empty">Loading…</div>`; loadHome().then(()=>{ if(!$("#vHome").hidden) renderHome(); }); return; }
+  // live 1-day change for the ETFs
+  const live = r => { const q = LIVE && LIVE.q[r.symbol]; if(!q || !LIVE.date || LIVE.date < r.date) return r;
+    const prev = LIVE.date > r.date ? r.close : r.close/(1+(r.d1||0)/100); return {...r, px:q[3], d1:(q[3]/prev-1)*100, live:true}; };
+  const M = (HOME.market||[]).map(live), Sx = (HOME.sectors||[]).map(live);
+  const k = sectSort.k, dir = sectSort.asc ? 1 : -1;
+  Sx.sort((a,b)=>((a[k]??-1e9)-(b[k]??-1e9))*dir);
+  const row = (r, sector) => `<tr data-s="${esc(r.symbol)}"><td class="l"><span class="sym">${esc(r.symbol)}</span><span class="nm">${esc(r.name)}</span></td>
+      <td>${fmtP(r.px ?? r.close)}</td>${PERF.map(([k,,sc])=>`<td style="${heat(r[k],sc)}" class="${(r[k]??0)<0?'neg':''}">${fmtPct(r[k],1)}</td>`).join("")}
+      <td class="spk"><canvas data-hspark="${esc(r.symbol)}"></canvas></td>
+      <td class="l">${sector && r.gics ? `<a href="#screener" class="comp" data-sector="${esc(r.gics)}">Components →</a>` : ""}</td></tr>`;
+  $("#hSect").innerHTML = `<table class="scr sect"><thead><tr><th class="l nosort">ETF</th><th class="nosort">Price</th>${PERF.map(([k,l])=>`<th data-hk="${k}" class="${sectSort.k===k?'sorted'+(sectSort.asc?' asc':''):''}">${l}</th>`).join("")}<th class="nosort spk">3 months</th><th class="nosort"></th></tr></thead>
+    <tbody><tr class="grp"><td colspan="${PERF.length+4}">Market</td></tr>${M.map(r=>row(r,false)).join("")}
+    <tr class="grp"><td colspan="${PERF.length+4}">Sectors <small>click a column to rank them</small></td></tr>${Sx.map(r=>row(r,true)).join("")}</tbody></table>`;
+  const all = [...M, ...Sx];
+  $$("canvas[data-hspark]").forEach(cv=>{ const r = all.find(x=>x.symbol===cv.dataset.hspark); sparkline(cv, r && r.spark); });
+  $$("#hSect th[data-hk]").forEach(th=>th.onclick=()=>{ const k=th.dataset.hk; sectSort = {k, asc: sectSort.k===k ? !sectSort.asc : false}; renderHome(); });
+  $$("#hSect tr[data-s]").forEach(tr=>tr.onclick=e=>{ if(e.target.closest("[data-sector]")) return; location.hash = tr.dataset.s; });
+  $("#hAsOf").textContent = LIVE ? `1D live, ${liveTime()} ET (delayed)` : (Sx[0] ? `as of ${fmtLong(iso(Sx[0].date))} close` : "");
+  // news
+  const N = HOME.news || [];
+  const ago = d => { const t = Date.parse(d && d.length<=19 ? d+"Z" : d); if(!isFinite(t)) return ""; const h=(Date.now()-t)/36e5;
+    return h<1 ? "now" : h<24 ? Math.round(h)+"h ago" : h<24*7 ? Math.round(h/24)+"d ago" : fmtD(t); };
+  $("#hNews").innerHTML = N.length ? `<ul class="news">${N.slice(0,9).map(n=>`<li><a href="${esc(n.url)}" target="_blank" rel="noopener">${esc(n.title)}</a><span>${esc(n.pub||"")}${n.date?` · ${ago(n.date)}`:""}</span></li>`).join("")}</ul>` : `<div class="empty">No headlines right now.</div>`;
+  renderHomeLists();
+  drawHomeChart();
+}
+function renderHomeLists(){
+  if(!UNI){ ["#hRS","#hUD","#hMov"].forEach(id=>$(id).innerHTML = `<div class="empty">Loading…</div>`); loadUni().then(()=>{ if(!$("#vHome").hidden) renderHomeLists(); }).catch(()=>{}); return; }
+  const pool = UNI.filter(r=>!r.etf && (r.dollarVol50||0) >= 2e7 && r.close);
+  const top = (arr, key, desc=true) => arr.filter(r=>r[key]!=null).sort((a,b)=>desc ? b[key]-a[key] : a[key]-b[key]).slice(0,5);
+  const li = (r, val, cls="", mid) => `<tr data-s="${esc(r.symbol)}"><td class="l"><span class="sym">${esc(r.symbol)}</span><span class="nm">${esc(r.name)}</span></td><td>${fmtP(r.close)}</td>${mid!==undefined ? mid : `<td class="${(r.chgPct??0)<0?'neg':''}">${fmtPct(r.chgPct,2)}</td>`}<td class="big ${cls}">${val}</td></tr>`;
+  const tbl = (rows, head, midHead="Chg") => `<table class="scr mini"><thead><tr><th class="l nosort">Stock</th><th class="nosort">Price</th><th class="nosort">${midHead}</th><th class="nosort">${head}</th></tr></thead><tbody>${rows}</tbody></table>`;
+  const rs = pool.filter(r=>r.rsRating!=null).sort((a,b)=>(b.rsRating-a.rsRating) || ((b.perf3m||0)-(a.perf3m||0))).slice(0,5);
+  $("#hRS").innerHTML = tbl(rs.map(r=>li(r, `<span class="rsv hot">${r.rsRating}</span>`)).join(""), "RS");
+  $("#hUD").innerHTML = tbl(top(pool, "udRatio").map(r=>li(r, r.udRatio.toFixed(2))).join(""), "U/D");
+  const mv = top(pool, "chgPct", movMode==="up");
+  $("#hMov").innerHTML = tbl(mv.map(r=>li(r, fmtPct(r.chgPct,1), r.chgPct<0?'neg':'up', `<td class="${(r.volVsAvgPct??0)>=40?'up':''}" title="Volume vs 50-day average">${fmtPct(r.volVsAvgPct,0)}</td>`)).join(""), "Chg", "Vol Δ");
+  $$("#vHome .hlists tr[data-s]").forEach(tr=>tr.onclick=()=>{ location.hash = tr.dataset.s; });
+}
+$$("#hMovSeg button").forEach(b=>b.onclick=e=>{ e.stopPropagation(); movMode = b.dataset.m; $$("#hMovSeg button").forEach(x=>x.classList.toggle("on", x===b)); renderHomeLists(); });
+
+// compact SPY chart: 9 months of daily O'Neil bars, 50/200-day lines and volume, in the user's colors
+function drawHomeChart(){
+  const c = $("#hcv"); if(!c || $("#vHome").hidden) return;
+  const W = c.clientWidth; if(!W) return;
+  const side = $(".hside"), twoCol = side && side.getBoundingClientRect().left > c.getBoundingClientRect().right - 5;
+  const H = W < 600 ? 300 : twoCol ? Math.round(Math.min(620, Math.max(340, side.offsetHeight - 44))) : Math.round(Math.min(440, Math.max(320, W*0.46)));
+  c.style.height = H + "px";
+  const dpr = devicePixelRatio || 1; c.width = Math.round(W*dpr); c.height = Math.round(H*dpr);
+  const g = c.getContext("2d"); g.setTransform(dpr,0,0,dpr,0,0); g.fillStyle = C.plate; g.fillRect(0,0,W,H);
+  if(!SPYB){ g.fillStyle = C.ink2; g.font = `13px ${FONT_D}`; g.fillText("Loading…", 12, 24); return; }
+  let px = SPYB.prices.map(([d,o,h,l,cl,v])=>({t:iso(d),o,h,l,c:cl,v}));
+  const q = LIVE && LIVE.q["SPY"];
+  if(q && LIVE.date){ const lt = iso(LIVE.date), last = px[px.length-1];
+    if(lt > last.t) px = [...px, {t:lt, o:q[0], h:q[1], l:q[2], c:q[3], v:q[4]||0}];
+    else if(lt === last.t) px[px.length-1] = {...last, h:Math.max(last.h,q[1]), l:Math.min(last.l,q[2]), c:q[3]}; }
+  const ma = (n) => px.map((_,i)=> i<n-1 ? null : px.slice(i-n+1,i+1).reduce((s,b)=>s+b.c,0)/n);
+  const m50 = ma(50), m200 = ma(200);
+  const N = Math.min(px.length, 190), s0 = px.length - N, vis = px.slice(s0);
+  const R = 58, L = 4, T = 10, B = 18, volH = Math.round((H-T-B)*0.24), pH = H-T-B-volH-6;
+  const plotW = W-L-R, bw = plotW/N, x = i => L + (i+0.5)*bw;
+  let lo = Infinity, hi = -Infinity; vis.forEach(b=>{ lo=Math.min(lo,b.l); hi=Math.max(hi,b.h); });
+  [m50, m200].forEach(m=>m.slice(s0).forEach(v=>{ if(v!=null){ lo=Math.min(lo,v); hi=Math.max(hi,v); } }));
+  const pad = (hi-lo)*0.06; lo -= pad; hi += pad;
+  const y = v => T + (hi - v)/(hi - lo)*pH;
+  // grid + axis
+  g.strokeStyle = C.grid; g.setLineDash([1,3]); g.lineWidth = 1; g.fillStyle = C.ink2; g.font = `11px ${FONT_D}`; g.textBaseline = "middle";
+  const step = niceStep((hi-lo)/6);
+  for(let v = Math.ceil(lo/step)*step; v <= hi; v += step){ const yy = Math.round(y(v))+.5; g.beginPath(); g.moveTo(L,yy); g.lineTo(L+plotW,yy); g.stroke(); g.fillText(fmtP(v), L+plotW+6, yy); }
+  g.setLineDash([]);
+  // month labels
+  g.textBaseline = "alphabetic"; g.textAlign = "center";
+  let lastM = -1; vis.forEach((b,i)=>{ const d = new Date(b.t), m = d.getUTCMonth(); if(m!==lastM && i>2){ const xx = Math.round(x(i))+.5; g.strokeStyle = C.grid; g.beginPath(); g.moveTo(xx,T); g.lineTo(xx,T+pH+6+volH); g.stroke(); g.fillText(m===0 ? String(d.getUTCFullYear()) : MON[m], xx, H-5); } lastM = m; });
+  // moving averages
+  const line = (arr, col, w) => { g.strokeStyle = col; g.lineWidth = w; g.beginPath(); let st=false; arr.slice(s0).forEach((v,i)=>{ if(v==null) return; st ? g.lineTo(x(i),y(v)) : g.moveTo(x(i),y(v)); st=true; }); g.stroke(); };
+  const mc = k => (cfg.colors.ma||{})[k] || DEF_COLORS.ma[k];
+  line(m200, mc("d200"), 1.4); line(m50, mc("d50"), 1.4);
+  // bars
+  const lw = bw > 4 ? 2 : 1, tk = Math.max(2, Math.min(5, Math.floor(bw*0.5)));
+  vis.forEach((b,i)=>{ const prev = s0+i>0 ? px[s0+i-1].c : b.o; g.strokeStyle = b.c >= prev ? C.up : C.down; g.lineWidth = lw;
+    const xx = Math.round(x(i))+.5; g.beginPath(); g.moveTo(xx, y(b.h)); g.lineTo(xx, y(b.l)); g.moveTo(xx, y(b.c)); g.lineTo(xx+tk, y(b.c)); g.stroke(); });
+  // last price tag
+  const lb = vis[N-1], ly = y(lb.c); g.fillStyle = C.ink; g.fillRect(L+plotW+1, ly-9, R-2, 18); g.fillStyle = "#fff"; g.font = `700 11px ${FONT_D}`; g.textAlign = "left"; g.textBaseline = "middle"; g.fillText(fmtP(lb.c), L+plotW+5, ly+1);
+  // volume
+  const vT = T+pH+6, vMax = Math.max(...vis.map(b=>b.v||0)) || 1;
+  g.strokeStyle = C.ink; g.lineWidth = 1; g.strokeRect(L+.5, T+.5, plotW, pH); g.strokeRect(L+.5, vT+.5, plotW, volH);
+  vis.forEach((b,i)=>{ const prev = s0+i>0 ? px[s0+i-1].c : b.o; g.fillStyle = b.c < prev ? C.vdown : C.vup; const h = (b.v||0)/vMax*(volH-4); const w = Math.max(1, Math.round(bw*0.62)); g.fillRect(Math.round(x(i)-w/2), vT+volH-h, w, h); });
+  // legend + quote
+  g.font = `600 11px ${FONT_L}`; g.textBaseline = "top"; g.textAlign = "left";
+  [[mc("d50"),"50-day"],[mc("d200"),"200-day"]].forEach(([col,l],k)=>{ g.fillStyle = col; g.fillRect(L+8+k*70, T+9, 14, 3); g.fillStyle = C.ink2; g.fillText(l, L+26+k*70, T+5); });
+  const prevC = px[px.length-2] ? px[px.length-2].c : lb.c, ch = (lb.c/prevC-1)*100;
+  $("#hSpyQ").innerHTML = `<b>${fmtP(lb.c)}</b> <span class="${ch<0?'neg':''}">${fmtPct(ch,2)}</span>`;
+}
+addEventListener("resize", ()=>{ if(!$("#vHome").hidden) drawHomeChart(); });
 
 
 /* ================= ACCOUNTS & SYNC (api.tickerandtape.com) ================= */
@@ -806,7 +1035,7 @@ async function pullData(fresh){
   let d; try{ d = await api("/data"); }catch(e){ return; }
   if(Array.isArray(d.watchlist)){ WL = d.watchlist; store.set("tt:wl", WL); }
   else if(fresh){ WL = getWL().slice(); store.set("tt:wl", WL); push("watchlist", WL); }
-  if(d.cfg && typeof d.cfg==="object"){ cfg = {...DEF_CFG, ...d.cfg, ma:{...DEF_CFG.ma, ...(d.cfg.ma||{})}}; store.set("ink:cfg", cfg); }
+  if(d.cfg && typeof d.cfg==="object"){ cfg = normCfg(d.cfg); store.set("ink:cfg", cfg); redrawAll(); }
   else if(fresh){ push("cfg", cfg); }
   const remote = new Set();
   for(const [k,v] of Object.entries(d)){ if(k.startsWith("marks:")){ remote.add(k); store.set("ink:" + k, v); } }
@@ -913,32 +1142,34 @@ $("#vWelcome").addEventListener("click", e=>{
 /* ================= GUIDED TOUR ================= */
 // v: "s" = screener, "c" = chart, "*" = any. up: highlight the whole button group.
 const TOUR = [
-  {v:"s", sel:"#scope", t:"Your watchlist and all stocks",
-   b:"Watchlist shows the tickers you starred. All stocks shows every S&P 1500 and Nasdaq-100 member, about 1,500 names, rated every trading day."},
+  {v:"h", sel:"#tabs", t:"Four rooms",
+   b:"Home is the market dashboard. Watchlist holds the stocks you starred. Screener lists every S&P 1500 and Nasdaq-100 stock, about 1,500 names rated every trading day. ETFs covers indexes, sectors, industries, commodities, bonds and countries."},
+  {v:"h", sel:"#hSect", t:"Sector scoreboard",
+   b:"The market ETFs and the eleven Select Sector SPDRs with their 1-day, 1-week, 3-month, 9-month and year-to-date change. Click a column to rank the sectors, a row to open its chart, or Components to see the stocks in that sector."},
+  {v:"h", sel:".hlists", t:"What is leading",
+   b:"The five highest RS Ratings, the strongest accumulation by up/down volume and the biggest movers of the day, among stocks with real liquidity."},
+  {v:"h", sel:"#hPulse", t:"Market pulse",
+   b:"The S&P 500 and the Nasdaq against their 21, 50 and 200-day lines, plus distribution days (heavy-volume declines) in the last 25 sessions. Most stocks follow the market's direction."},
   {v:"s", sel:"#filters", t:"Filter for setups",
    b:"Breakout / buy zone: up to 5% above the pivot. Near pivot: within 5% below it. RS ≥ 80: the strongest fifth of the market. Liquid: $20M or more traded a day."},
   {v:"s", sel:'#scr th[data-k="rsRating"]', t:"RS Rating",
    b:"Relative strength from 1 to 99: twelve-month price performance, with the last quarter counted double, ranked against about 1,500 stocks. 80 and up is leadership territory. Click any column header to sort by it."},
   {v:"s", sel:'#scr th[data-k="baseType"]', t:"Base, pivot and status",
    b:"The base the stock is building (cup, cup with handle, flat base), its pivot or buy point, how far price is from it, and the status: Near pivot, Breakout, In buy zone, Extended."},
-  {v:"s", sel:"#pulse", t:"Market pulse",
-   b:"The S&P 500 and the Nasdaq against their 21, 50 and 200-day lines, plus distribution days (heavy-volume declines) in the last 25 sessions. Three out of four stocks follow the market's direction."},
   {v:"s", sel:"#jump", t:"Jump to any ticker",
    b:"Type a symbol and press Enter to open its chart. Tickers outside the indexes work too: star them and they load after the next nightly update."},
   {v:"c", sel:"#star", t:"Star it",
    b:"Tap the star next to the symbol to add the stock to your watchlist, or tap again to remove it."},
   {v:"c", sel:"#chartbox", t:"Reading the chart",
-   b:"Blue bars closed higher than the day before, pink bars closed lower. Red line: 50-day average. Black: 200-day. The dark line under the price is the RS line against the S&P 500, with the RS Rating at its end. The dashed line marks the pivot, and each E is an earnings report."},
+   b:"Up bars closed higher than the day before, down bars closed lower. The colored lines are the moving averages. The dark line under the price is the RS line against the S&P 500, with the RS Rating at its end. The dashed line marks the pivot, and each E is an earnings report. Volume sits underneath."},
   {v:"c", sel:"#pD", up:true, t:"Daily or weekly",
    b:"Switch between daily and weekly bars, and pick the time range next to it: 6 months to 3 years."},
-  {v:"c", sel:"#tBox", up:true, t:"Overlays",
-   b:"Turn the data box, pivots, base outline, S&P 500 line and RS line on or off."},
   {v:"c", sel:"#bLine", up:true, t:"Draw and take notes",
    b:"Line: drag across the chart to draw a trendline. Note: click a bar and type. Your drawings stay with the chart, and sync to your account when you are signed in."},
   {v:"c", sel:".boxes", t:"Fundamentals under the chart",
-   b:"Scroll down for peers in the same group, chart statistics, quarterly and annual earnings and sales, the base analysis, analyst targets and the latest news."},
+   b:"Peers, chart statistics, annual and quarterly earnings and sales, the base analysis, analysts and news. Further down: insider buying and selling, and the largest institutional holders."},
   {v:"*", sel:"#gear", t:"Make the chart yours",
-   b:"Log or linear scale, O'Neil bars, OHLC or candles, bar weight, moving averages and grid lines."},
+   b:"Log or linear scale, O'Neil bars, OHLC or candles, bar weight, moving averages, grid lines, and the colors of the bars, the volume and every moving average."},
   {v:"*", sel:"#acct", t:"Your account",
    b:"Sign in to keep your watchlist, chart settings and drawings on every device. You can replay this tour anytime with the ? button."}
 ];
@@ -953,14 +1184,15 @@ function startTour(){
 }
 function endTour(){ tourI = -1; tourEl = null; $("#tour").hidden = true; }
 async function ensureView(v){
-  if(v==="s" && $("#vScreener").hidden){ location.hash = ""; await waitFor(()=>!$("#vScreener").hidden); }
-  if(v==="c" && ($("#vChart").hidden || !S)){
-    const have = r => r && !r.pending;
+  if(v==="h" && $("#vHome").hidden){ location.hash = ""; await waitFor(()=>!$("#vHome").hidden && HOME); await sleep(150); }
+  if(v==="s" && $("#vScreener").hidden){ location.hash = "watchlist"; await waitFor(()=>!$("#vScreener").hidden); }
+  if(v==="c" && ($("#vChart").hidden || !S || (S.fund||{}).etf)){
+    const have = r => r && !r.pending && !r.etf;
     const pick = (watchRows().find(have) || ROWS[0] || {symbol:"NVDA"}).symbol;
     location.hash = pick;
     await waitFor(()=>!$("#vChart").hidden && S && $("#loading").hidden);
   }
-  if(v==="*" && !$("#vWelcome").hidden){ location.hash = ""; await waitFor(()=>!$("#vScreener").hidden); }
+  if(v==="*" && !$("#vWelcome").hidden){ location.hash = ""; await waitFor(()=>!$("#vHome").hidden); }
 }
 async function showStep(){
   const i = tourI, st = TOUR[i];
@@ -1024,9 +1256,8 @@ addEventListener("scroll", ()=>{ if(TOUR_ON()) placeTour(); }, true);
   renderAcct();
   if(needsUni()) loadUni().catch(()=>{});
   if(auth.token) pullData(false);
-  if(scrState.scope==="all") await setScope("all"); else renderScreener();
-  if(META && META.allStocks){ $("#scope button[data-s=all]").textContent = `All stocks (${META.allStocks.toLocaleString("en-US")})`; }
-  else { $("#scope").hidden = true; }
+  $("#scope").hidden = true;
+  loadHome();
   setTimeout(()=>loadUni().catch(()=>{}), 400);   // background: full list for the ticker search
   if(!auth.token && !store.get("tt:welcomed") && !location.hash) history.replaceState(null, "", "#welcome");
   window.addEventListener("hashchange", route); route();
