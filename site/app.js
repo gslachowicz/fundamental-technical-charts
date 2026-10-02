@@ -66,7 +66,9 @@ const needsUni = () => WL && WL.some(s=>!ROWS.some(r=>r.symbol===s));
 let uniLoading = null;
 function loadUni(){
   if(UNI) return Promise.resolve(UNI);
-  if(!uniLoading) uniLoading = getJSON("universe.json").then(u=>{ UNI=u; if(LIVE) UNI.forEach(patchRow); fillSymlist(); if(needsUni() && !$("#vScreener").hidden) renderScreener(); return u; }).catch(e=>{ uniLoading=null; throw e; });
+  if(!uniLoading) uniLoading = getJSON("universe.json").then(u=>{ UNI=u; if(LIVE) UNI.forEach(patchRow); fillSymlist();
+    // the 90-day sparklines come in a second, separate file so the table shows up faster
+    getJSON("spark.json").then(SP=>{ UNI.forEach(r=>{ if(!r.spark && SP[r.symbol]) r.spark = SP[r.symbol]; }); if(!$("#vScreener").hidden) renderScreener(); }).catch(()=>{}); if(needsUni() && !$("#vScreener").hidden) renderScreener(); return u; }).catch(e=>{ uniLoading=null; throw e; });
   return uniLoading;
 }
 function fillSymlist(){
@@ -780,7 +782,7 @@ function renderPeers(){
     udRatio: st.udRatio, epsChg: q0.epsChg || (self && self.epsChg), salesChg: q0.salesChg || (self && self.salesChg), epsGrowth: F.epsGrowth || (self && self.epsGrowth), me:true};
   let peers = grp ? UNI.filter(r=>r.group===grp && r.symbol!==me) : [];
   $("#peersSub").textContent = grp ? `${grp}${F.groupRank?` · rank ${F.groupRank}`:""}` : "same industry group";
-  if(!peers.length){ box.innerHTML = `<div class="empty">No other stocks from this industry group in the S&amp;P 1500 / Nasdaq-100.</div>`; return; }
+  if(!peers.length){ box.innerHTML = `<div class="empty">No other stocks from this industry group on the site.</div>`; return; }
   peers.sort((a,b)=>(b.rsRating||0)-(a.rsRating||0));
   const rows = [meRow, ...peers.slice(0, 9)].sort((a,b)=>(b.rsRating||0)-(a.rsRating||0));
   const n = v => v==null||v===""||v==="—" ? `<span class="na">–</span>` : esc(v);
@@ -1997,6 +1999,8 @@ function matchScreen(r, c){
   if(has(c.dvol) && (r.dollarVol50 || 0) < c.dvol * 1e6) return false;
   if(c.sector && r.sector !== c.sector) return false;
   if(c.smrAB && !/^[AB]/.test(r.smr || "")) return false;
+  if(c.listing === "adr" && !r.adr) return false;
+  if(c.listing === "us" && r.adr) return false;
   if(c.st && c.st.length && !(r.base && c.st.includes(r.base.status))) return false;
   if(has(c.pmin) || has(c.pmax)){ const d = r.base && r.base.pivot ? r.base.distPct : null; if(d == null) return false;
     if(has(c.pmin) && d < c.pmin) return false; if(has(c.pmax) && d > c.pmax) return false; }
@@ -2010,6 +2014,7 @@ function openScreen(id){
     <label class="fld"><span>${esc(TX("Name"))}</span><input id="sName" maxlength="24" value="${esc(cur.name)}" placeholder="${esc(TX("e.g. CAN SLIM leaders"))}"></label>
     <div class="fgrid">${num("rs","RS Rating at least")}${num("comp","Composite at least")}${num("eps","EPS growth at least (%)")}${num("sales","Sales growth at least (%)")}
       ${num("offHigh","At most % off the high")}${num("dvol","Traded a day at least ($M)")}${num("pmin","To pivot from (%)","-5")}${num("pmax","To pivot up to (%)","5")}</div>
+    <label class="fld"><span>${esc(TX("Listing"))}</span><select id="sList">${[["","All stocks"],["us","U.S. companies"],["adr","ADRs only"]].map(([v,l])=>`<option value="${v}" ${(cur.listing||"")===v?"selected":""}>${esc(TX(l))}</option>`).join("")}</select></label>
     <label class="fld"><span>${esc(TX("Sector"))}</span><select id="sSec"><option value="">${esc(TX("All sectors"))}</option>${secs.map(s=>`<option value="${esc(s)}" ${cur.sector===s?"selected":""}>${esc(TX(s))}</option>`).join("")}</select></label>
     <div class="chks"><label class="chk"><input type="checkbox" data-c="a50" ${cur.a50?"checked":""}> ${esc(TX("Above the 50-day line"))}</label><label class="chk"><input type="checkbox" data-c="a200" ${cur.a200?"checked":""}> ${esc(TX("Above the 200-day line"))}</label>
       <label class="chk"><input type="checkbox" data-c="smrAB" ${cur.smrAB?"checked":""}> ${esc(TX("SMR A or B"))}</label></div>
@@ -2020,7 +2025,7 @@ function openScreen(id){
     const read = () => { const c = {id: id || "s"+Date.now().toString(36), name: B.querySelector("#sName").value.trim().slice(0,24)};
       B.querySelectorAll("[data-k]").forEach(i=>{ c[i.dataset.k] = i.value === "" ? null : +i.value; });
       B.querySelectorAll("[data-c]").forEach(i=>{ c[i.dataset.c] = i.checked; });
-      c.sector = B.querySelector("#sSec").value; c.st = [...B.querySelectorAll("[data-st]:checked")].map(i=>i.dataset.st); return c; };
+      c.sector = B.querySelector("#sSec").value; c.listing = B.querySelector("#sList").value; c.st = [...B.querySelectorAll("[data-st]:checked")].map(i=>i.dataset.st); return c; };
     const prev = () => { const c = read(), pool = (UNI ? UNI.filter(r=>!r.etf) : ROWS); B.querySelector("#sPrev").textContent = TX(`${pool.filter(r=>matchScreen(r,c)).length} of ${pool.length} stocks pass today`); };
     B.querySelectorAll("input,select").forEach(i=>i.addEventListener("input", prev)); prev();
     B.querySelector("#sOk").onclick = () => { const c = read(); if(!c.name){ B.querySelector("#sName").focus(); return; }
@@ -2171,7 +2176,7 @@ $("#vWelcome").addEventListener("click", e=>{
 // v: "s" = screener, "c" = chart, "*" = any. up: highlight the whole button group.
 const TOUR = [
   {v:"h", sel:"#tabs", t:"Four rooms",
-   b:"Home is the market dashboard. Watchlist holds the stocks you starred. Screener lists every S&P 1500 and Nasdaq-100 stock, about 1,500 names rated every trading day. ETFs covers indexes, sectors, industries, commodities, bonds and countries. Heatmap shows the S&P 500, the Nasdaq-100 or your watchlist as a map of boxes sized by market cap and colored by performance or RS Rating."},
+   b:"Home is the market dashboard. Watchlist holds the stocks you starred. Screener lists every U.S. stock and ADR worth $1 billion or more, over 2,500 names rated every trading day. ETFs covers indexes, sectors, industries, commodities, bonds and countries. Heatmap shows the S&P 500, the Nasdaq-100 or your watchlist as a map of boxes sized by market cap and colored by performance or RS Rating."},
   {v:"h", sel:"#hSect", t:"Sector scoreboard",
    b:"The market ETFs and the eleven Select Sector SPDRs with their 1-day, 1-week, 3-month, 9-month and year-to-date change. Click a column to rank the sectors, a row to open its chart, or Components to see the stocks in that sector. Next to it, the commodities board shows metals, energy and grains futures on the same scale."},
   {v:"h", sel:".hlists", t:"What is leading",
@@ -2181,7 +2186,7 @@ const TOUR = [
   {v:"s", sel:"#filters", t:"Filter for setups",
    b:"Breakout / buy zone: up to 5% above the pivot. Near pivot: within 5% below it. RS ≥ 80: the strongest fifth of the market. Liquid: $20M or more traded a day."},
   {v:"s", sel:'#scr th[data-k="rsRating"]', t:"RS Rating",
-   b:"Relative strength from 1 to 99: twelve-month price performance, with the last quarter counted double, ranked against about 1,500 stocks. 80 and up is leadership territory. Click any column header to sort by it."},
+   b:"Relative strength from 1 to 99: twelve-month price performance, with the last quarter counted double, ranked against every stock on the site. 80 and up is leadership territory. Click any column header to sort by it."},
   {v:"s", sel:'#scr th[data-k="baseType"]', t:"Base, pivot and status",
    b:"The base the stock is building (cup, cup with handle, flat base), its pivot or buy point, how far price is from it, and the status: Near pivot, Breakout, In buy zone, Extended."},
   {v:"s", sel:"#jump", t:"Jump to any ticker",
