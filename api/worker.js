@@ -4,7 +4,7 @@ const ORIGINS = ["https://tickerandtape.com", "https://www.tickerandtape.com", "
 const SESSION_DAYS = 90;
 const PBKDF2_ITER = 100000;
 const MAX_VALUE = 64 * 1024;
-const KEY_RE = /^(watchlist|cfg|marks:[A-Z0-9.\-^=]{1,15})$/;
+const KEY_RE = /^(watchlist|lists|notes|cfg|marks:[A-Z0-9.\-^=]{1,15})$/;
 const SYM_RE = /^[A-Z0-9.\-^=]{1,15}$/;
 const EMAIL_RE = /^[^\s@]{1,64}@[^\s@]{1,190}\.[^\s@]{2,}$/;
 
@@ -48,10 +48,131 @@ async function newSession(env, userId) {
 async function currentUser(req, env) {
   const m = (req.headers.get("Authorization") || "").match(/^Bearer ([0-9a-f]{64})$/);
   if (!m) return null;
-  return await env.DB.prepare("SELECT u.id, u.email FROM sessions s JOIN users u ON u.id = s.user_id WHERE s.token_hash = ? AND s.expires > ?")
+  return await env.DB.prepare("SELECT u.id, u.email, u.verified, u.verify_sent FROM sessions s JOIN users u ON u.id = s.user_id WHERE s.token_hash = ? AND s.expires > ?")
     .bind(await sha256(m[1]), now()).first();
 }
 const cleanEmail = e => String(e || "").trim().toLowerCase();
+
+/* ================= EMAIL VERIFICATION ================= */
+async function sendVerify(env, userId, email) {
+  const token = hex(crypto.getRandomValues(new Uint8Array(24)));
+  await env.DB.prepare("UPDATE users SET verify_token = ? WHERE id = ?").bind(await sha256(token), userId).run();
+  const link = `${API_BASE}/verify?t=${token}`;
+  await sendEmails(env, [{ from: FROM, to: [email], reply_to: REPLY_TO, subject: "Confirm your Ticker&Tape email",
+    html: `<div style="font:16px/1.5 Arial,sans-serif;color:#15171c;max-width:520px"><h2 style="color:#1f3c6e">Welcome to Ticker&amp;Tape</h2>
+<p>Confirm this address so your price alerts can reach you by email.</p>
+<p><a href="${link}" style="display:inline-block;background:#1f3c6e;color:#fff;padding:10px 16px;text-decoration:none;font-weight:700">Confirm my email</a></p>
+<p style="color:#5a5d66;font-size:13px">If you did not create an account, ignore this email.</p></div>`,
+    text: `Confirm your Ticker&Tape email: ${link}` }]);
+  await env.DB.prepare("UPDATE users SET verify_sent = ? WHERE id = ?").bind(now(), userId).run();   // only once the email went out
+}
+
+/* ================= ALERTS =================
+   Tables "alerts" and "notifications" (schema.sql). A Cron Trigger every 15 minutes in US market hours runs checkAlerts:
+   it reads the delayed intraday prices (live.json) and the nightly reference levels (alertref.json), fires every alert
+   whose condition is met (once: a fired alert stays in the history), leaves a notification on the site and emails it
+   to verified users. */
+const LIVE_JSON = "https://raw.githubusercontent.com/gslachowicz/fundamental-technical-charts/live/live.json";
+const ALERT_MAX = 50;                 // active alerts per user
+const EMAIL_USER_DAY = 25;            // alert emails per user per day
+const EMAIL_ALL_DAY = 80;             // all alert emails per day (Resend free plan: 100/day, the rest is for the weekly and resets)
+const MA_IDX = { e21: 0, d50: 1, d200: 2 };
+const MA_NAME = { en: { e21: "21-day EMA", d50: "50-day line", d200: "200-day line" },
+  es: { e21: "EMA de 21 días", d50: "media de 50 días", d200: "media de 200 días" }, pt: { e21: "MME de 21 dias", d50: "média de 50 dias", d200: "média de 200 dias" } };
+function etClock(d = new Date()) {
+  const p = Object.fromEntries(new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit",
+    hour: "2-digit", minute: "2-digit", hour12: false }).formatToParts(d).map(x => [x.type, x.value]));
+  return { date: `${p.year}-${p.month}-${p.day}`, min: (+p.hour % 24) * 60 + +p.minute };
+}
+function alertText(a, lang) {
+  const L = lang === "es" || lang === "pt" ? lang : "en", lv = px(a.fired_level ?? a.level), last = px(a.fired_px);
+  const up = a.dir === "above";
+  if (a.kind === "ma") return { en: `${a.symbol} crossed ${up ? "above" : "below"} its ${MA_NAME.en[a.ma]} (${lv}) · last ${last}`,
+    es: `${a.symbol} cruzó ${up ? "por encima de" : "por debajo de"} su ${MA_NAME.es[a.ma]} (${lv}) · último ${last}`,
+    pt: `${a.symbol} cruzou ${up ? "acima da" : "abaixo da"} sua ${MA_NAME.pt[a.ma]} (${lv}) · último ${last}` }[L];
+  if (a.kind === "pivot") return { en: `${a.symbol} broke out above its ${lv} pivot · last ${last}`,
+    es: `${a.symbol} rompió sobre su pivot de ${lv} · último ${last}`, pt: `${a.symbol} rompeu acima do pivô de ${lv} · último ${last}` }[L];
+  return { en: `${a.symbol} ${up ? "rose above" : "fell below"} ${lv} · last ${last}`,
+    es: `${a.symbol} ${up ? "subió por encima de" : "bajó por debajo de"} ${lv} · último ${last}`,
+    pt: `${a.symbol} ${up ? "subiu acima de" : "caiu abaixo de"} ${lv} · último ${last}` }[L];
+}
+function alertEmail(to, lang, fired) {
+  const L = lang === "es" || lang === "pt" ? lang : "en";
+  const T = { en: ["Alert", "alerts", "triggered", "Prices are delayed about 15 minutes. Each alert fires once; set it again from the chart if you need it.", "Open chart", "Manage your alerts"],
+    es: ["Alarma", "alarmas", "activadas", "Los precios tienen unos 15 minutos de demora. Cada alarma suena una sola vez; vuelve a crearla desde el gráfico si la necesitas.", "Abrir gráfico", "Administrar tus alarmas"],
+    pt: ["Alerta", "alertas", "disparados", "Os preços têm cerca de 15 minutos de atraso. Cada alerta dispara uma vez; crie de novo no gráfico se precisar.", "Abrir gráfico", "Gerenciar seus alertas"] }[L];
+  const subject = fired.length === 1 ? `${T[0]}: ${alertText(fired[0], L)}` : `Ticker&Tape: ${fired.length} ${T[1]} ${T[2]}`;
+  const rows = fired.map(a => `<tr><td style="padding:10px 0;border-bottom:1px solid #d9d6cc"><b style="font:800 16px Arial,sans-serif;color:#1f3c6e">${escH(a.symbol)}</b><br>
+<span style="font:15px Arial,sans-serif">${escH(alertText(a, L))}</span>${a.note ? `<br><i style="color:#5a5d66;font-size:13px">${escH(a.note)}</i>` : ""}<br>
+<a href="${SITE}/#${encodeURIComponent(a.symbol)}" style="font:700 13px Arial,sans-serif;color:#1f3c6e">${T[4]} →</a></td></tr>`).join("");
+  return { from: "Ticker&Tape alerts <alerts@tickerandtape.com>", to: [to], reply_to: REPLY_TO, subject,
+    html: `<div style="font:16px/1.5 Arial,sans-serif;color:#15171c;max-width:560px"><table style="width:100%;border-collapse:collapse">${rows}</table>
+<p style="color:#5a5d66;font-size:12px">${T[3]} <a href="${SITE}/#alerts" style="color:#1f3c6e">${T[5]}</a></p></div>`,
+    text: fired.map(a => alertText(a, L) + `  ${SITE}/#${a.symbol}`).join("\n") };
+}
+async function checkAlerts(env) {
+  const { results: active } = await env.DB.prepare(
+    "SELECT a.*, u.email AS uemail, u.verified FROM alerts a JOIN users u ON u.id = a.user_id WHERE a.fired IS NULL").all();
+  if (!active.length) return { checked: 0, fired: 0 };
+  const [live, ref] = await Promise.all([
+    fetch(`${LIVE_JSON}?t=${Date.now()}`, { cf: { cacheTtl: 0 } }).then(r => r.ok ? r.json() : null).catch(() => null),
+    fetch(`${SITE}/data/alertref.json?t=${Math.floor(Date.now() / 3.6e6)}`).then(r => r.ok ? r.json() : null).catch(() => null)]);
+  if (!live || !live.q) return { checked: 0, fired: 0, note: "no live prices" };
+  const et = etClock();
+  // only fresh prices for today's session (live.json is refreshed every 15 minutes while the market is open)
+  if (live.date !== et.date || Date.now() - Date.parse(live.updated) > 50 * 60 * 1000) return { checked: 0, fired: 0, note: "stale prices" };
+  const frac = Math.min(1, Math.max(0.08, (et.min - 570) / 390));   // share of the session elapsed, for the volume pace
+  const fired = [];
+  for (const a of active) {
+    const q = live.q[a.symbol]; if (!q) continue;
+    const last = q[3], vol = q[4], R = ref && ref.s ? ref.s[a.symbol] : null;
+    let level = a.level;
+    if (a.kind === "ma") { level = R ? R[MA_IDX[a.ma]] : null; if (level == null) continue; }
+    if (level == null || !isFinite(last)) continue;
+    let hit = a.dir === "above" ? last >= level : last <= level;
+    if (hit && a.kind === "pivot" && R && R[4]) hit = vol / frac >= 1.4 * R[4];   // breakout needs volume running 40%+ above average
+    if (hit) fired.push({ ...a, fired_px: last, fired_level: level });
+  }
+  if (!fired.length) return { checked: active.length, fired: 0 };
+  const t = now(), dayStart = t - (t % 86400);
+  const sent = await env.DB.prepare("SELECT COUNT(*) AS n FROM notifications WHERE emailed = 1 AND created >= ?").bind(dayStart).first();
+  let budget = EMAIL_ALL_DAY - ((sent && sent.n) || 0);
+  const byUser = new Map();
+  const stmts = [];
+  for (const a of fired) {
+    stmts.push(env.DB.prepare("UPDATE alerts SET fired = ?, fired_px = ?, fired_level = ? WHERE id = ? AND fired IS NULL").bind(t, a.fired_px, a.fired_level, a.id));
+    const msg = JSON.stringify({ k: a.kind, s: a.symbol, d: a.dir, lv: a.fired_level, px: a.fired_px, ma: a.ma || null, n: a.note || null });
+    const wantMail = a.email && a.verified;
+    if (wantMail) { if (!byUser.has(a.user_id)) byUser.set(a.user_id, { to: a.uemail, list: [] }); byUser.get(a.user_id).list.push(a); }
+    a._msg = msg;
+  }
+  // per-user daily caps and the shared daily budget decide which users get an email this run
+  const mailUsers = new Set(), mails = [];
+  for (const [uid, u] of byUser) {
+    if (budget <= 0) break;
+    const c = await env.DB.prepare("SELECT COUNT(*) AS n FROM notifications WHERE user_id = ? AND emailed = 1 AND created >= ?").bind(uid, dayStart).first();
+    if (((c && c.n) || 0) >= EMAIL_USER_DAY) continue;
+    let lang = "en";
+    try { const cf = await env.DB.prepare("SELECT value FROM user_data WHERE user_id = ? AND key = 'cfg'").bind(uid).first(); if (cf) lang = JSON.parse(cf.value).lang || "en"; } catch {}
+    mails.push(alertEmail(u.to, lang, u.list)); mailUsers.add(uid); budget--;
+  }
+  for (const a of fired)
+    stmts.push(env.DB.prepare("INSERT INTO notifications (user_id, alert_id, symbol, msg, created, read, emailed) VALUES (?, ?, ?, ?, ?, 0, ?)")
+      .bind(a.user_id, a.id, a.symbol, a._msg, t, mailUsers.has(a.user_id) ? 1 : 0));
+  await env.DB.batch(stmts);
+  if (mails.length) { try { await sendEmails(env, mails); } catch (e) { console.log("alert emails failed:", e.message); } }
+  return { checked: active.length, fired: fired.length, emailed: mails.length };
+}
+function validAlert(b) {
+  const sym = String(b.symbol || "").toUpperCase();
+  if (!SYM_RE.test(sym)) return "Invalid ticker.";
+  if (!["price", "ma", "pivot"].includes(b.kind)) return "Unknown alert type.";
+  if (!["above", "below"].includes(b.dir)) return "Choose above or below.";
+  if (b.kind === "ma" && !MA_IDX.hasOwnProperty(b.ma)) return "Choose a moving average.";
+  if (b.kind !== "ma" && !(typeof b.level === "number" && isFinite(b.level) && b.level > 0 && b.level < 1e7)) return "Enter a valid price.";
+  if (b.note != null && (typeof b.note !== "string" || b.note.length > 140)) return "Keep the note under 140 characters.";
+  return null;
+}
 
 /* ================= NEWSLETTER =================
    Needs: D1 table "subscribers" (schema.sql), Worker secret RESEND_API_KEY (resend.com, domain tickerandtape.com verified),
@@ -206,14 +327,25 @@ export default {
       if (path.startsWith("/newsletter/") && env.ADMIN_KEY && url.searchParams.get("key") === env.ADMIN_KEY) {
         if (path === "/newsletter/preview") return new Response(await weeklyHtml("#"), { headers: { "Content-Type": "text/html; charset=utf-8" } });
         if (path === "/newsletter/test") return json(req, { sent: await sendWeekly(env, REPLY_TO) });
+        if (path === "/newsletter/alerts") return json(req, await checkAlerts(env));
         if (path === "/newsletter/stats") return json(req, await env.DB.prepare(
           "SELECT SUM(confirmed = 1 AND unsub = 0) AS active, SUM(confirmed = 0) AS pending, SUM(unsub = 1) AS unsubscribed FROM subscribers").first());
       }
+      if (path === "/verify" && req.method === "GET") {
+        const t = url.searchParams.get("t") || "";
+        const r = /^[0-9a-f]{48}$/.test(t) && await env.DB.prepare("UPDATE users SET verified = 1, verify_token = NULL WHERE verify_token = ?").bind(await sha256(t)).run();
+        return r && r.meta.changes ? page("Email confirmed", "Thanks. Your alerts can now reach you by email.")
+          : page("Link expired", "This confirmation link is no longer valid. Ask for a new one from the banner on the site.");
+      }
       if (path === "/tickers" && req.method === "GET") {
         // every ticker anyone has in a watchlist: the nightly data build adds the ones it does not cover yet
-        const { results } = await env.DB.prepare("SELECT value FROM user_data WHERE key = 'watchlist'").all();
+        const { results } = await env.DB.prepare("SELECT key, value FROM user_data WHERE key IN ('watchlist', 'lists')").all();
         const set = new Set();
-        for (const r of results) { try { for (const s of JSON.parse(r.value)) if (SYM_RE.test(s)) set.add(s); } catch {} }
+        for (const r of results) { try { const v = JSON.parse(r.value);
+          const all = r.key === "lists" ? (v.lists || []).flatMap(l => l.t || []) : v;
+          for (const s of all) if (SYM_RE.test(s)) set.add(s); } catch {} }
+        try { const { results: al } = await env.DB.prepare("SELECT DISTINCT symbol FROM alerts WHERE fired IS NULL").all();
+          for (const r of al) if (SYM_RE.test(r.symbol)) set.add(r.symbol); } catch {}
         return json(req, [...set].sort(), 200, { "Cache-Control": "public, max-age=600" });
       }
 
@@ -230,7 +362,8 @@ export default {
         const r = await env.DB.prepare("INSERT INTO users (email, pw_hash, pw_salt, created) VALUES (?, ?, ?, ?)")
           .bind(em, hash, salt, new Date().toISOString()).run();
         const id = r.meta.last_row_id;
-        return json(req, { token: await newSession(env, id), email: em, isNew: true });
+        try { await sendVerify(env, id, em); } catch (e) { console.log("verify email failed:", e.message); }
+        return json(req, { token: await newSession(env, id), email: em, isNew: true, verified: false });
       }
       if (path === "/auth/login" && req.method === "POST") {
         const { email, password } = await body(req);
@@ -307,7 +440,50 @@ export default {
         await env.DB.prepare("UPDATE users SET pw_hash = ?, pw_salt = ? WHERE id = ?").bind(n.hash, n.salt, user.id).run();
         return json(req, { ok: true });
       }
-      if (path === "/me" && req.method === "GET") return json(req, { email: user.email });
+      if (path === "/me" && req.method === "GET") return json(req, { email: user.email, verified: !!user.verified });
+      if (path === "/auth/verify" && req.method === "POST") {
+        if (user.verified) return json(req, { ok: true, verified: true });
+        if (user.verify_sent > now() - 5 * 60) return fail(req, "We just sent you a link. Check your inbox and spam folder.", 429);
+        await sendVerify(env, user.id, user.email);
+        return json(req, { ok: true });
+      }
+      if (path === "/auth/delete" && req.method === "POST") {
+        const { password } = await body(req);
+        const u = await env.DB.prepare("SELECT pw_hash, pw_salt FROM users WHERE id = ?").bind(user.id).first();
+        const { hash } = await hashPassword(String(password || ""), u.pw_salt);
+        if (!safeEqual(hash, u.pw_hash)) return fail(req, "Your current password is not correct.", 401);
+        await env.DB.batch(["sessions", "user_data", "alerts", "notifications", "password_resets"].map(tb =>
+          env.DB.prepare(`DELETE FROM ${tb} WHERE user_id = ?`).bind(user.id)).concat([env.DB.prepare("DELETE FROM users WHERE id = ?").bind(user.id)]));
+        return json(req, { ok: true });
+      }
+      // ---------- alerts
+      if (path === "/alerts" && req.method === "GET") {
+        const { results } = await env.DB.prepare("SELECT id, symbol, kind, level, ma, dir, note, email, created, fired, fired_px, fired_level FROM alerts " +
+          "WHERE user_id = ? AND (fired IS NULL OR fired > ?) ORDER BY fired IS NOT NULL, created DESC LIMIT 200").bind(user.id, now() - 30 * 86400).all();
+        return json(req, { alerts: results, verified: !!user.verified });
+      }
+      if (path === "/alerts" && req.method === "POST") {
+        const b = await body(req); const err = validAlert(b); if (err) return fail(req, err);
+        const c = await env.DB.prepare("SELECT COUNT(*) AS n FROM alerts WHERE user_id = ? AND fired IS NULL").bind(user.id).first();
+        if (c && c.n >= ALERT_MAX) return fail(req, `You can have up to ${ALERT_MAX} active alerts. Delete one to add another.`);
+        const r = await env.DB.prepare("INSERT INTO alerts (user_id, symbol, kind, level, ma, dir, note, email, created) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")
+          .bind(user.id, String(b.symbol).toUpperCase(), b.kind, b.kind === "ma" ? null : b.level, b.kind === "ma" ? b.ma : null, b.dir,
+            b.note ? String(b.note).trim() : null, b.email === false ? 0 : 1, now()).run();
+        return json(req, { ok: true, id: r.meta.last_row_id });
+      }
+      const am = path.match(/^\/alerts\/(\d+)$/);
+      if (am && req.method === "DELETE") {
+        await env.DB.prepare("DELETE FROM alerts WHERE id = ? AND user_id = ?").bind(+am[1], user.id).run();
+        return json(req, { ok: true });
+      }
+      if (path === "/notifications" && req.method === "GET") {
+        const { results } = await env.DB.prepare("SELECT id, symbol, msg, created, read FROM notifications WHERE user_id = ? ORDER BY created DESC LIMIT 40").bind(user.id).all();
+        return json(req, { items: results, unread: results.filter(r => !r.read).length });
+      }
+      if (path === "/notifications/read" && req.method === "POST") {
+        await env.DB.prepare("UPDATE notifications SET read = 1 WHERE user_id = ? AND read = 0").bind(user.id).run();
+        return json(req, { ok: true });
+      }
 
       if (path === "/data" && req.method === "GET") {
         const { results } = await env.DB.prepare("SELECT key, value FROM user_data WHERE user_id = ?").bind(user.id).all();
@@ -329,6 +505,16 @@ export default {
             if (!Array.isArray(value) || value.length > 300 || !value.every(s => typeof s === "string" && SYM_RE.test(s)))
               return fail(req, "Invalid watchlist (max 300 tickers).");
           }
+          if (key === "lists") {
+            const L = value && Array.isArray(value.lists) ? value.lists : null;
+            if (!L || L.length > 20 || !L.every(l => l && typeof l.name === "string" && l.name.length <= 40 && Array.isArray(l.t) && l.t.length <= 300 && l.t.every(s => typeof s === "string" && SYM_RE.test(s))))
+              return fail(req, "Invalid lists (up to 20 lists of 300 tickers).");
+          }
+          if (key === "notes") {
+            if (!value || typeof value !== "object" || Array.isArray(value) || Object.keys(value).length > 500 ||
+                !Object.entries(value).every(([k, v]) => SYM_RE.test(k) && typeof v === "string" && v.length <= 280))
+              return fail(req, "Invalid notes (up to 500 notes of 280 characters).");
+          }
           const txt = JSON.stringify(value ?? null);
           if (txt.length > MAX_VALUE) return fail(req, "Too much data for one setting.", 413);
           await env.DB.prepare("INSERT INTO user_data (user_id, key, value, updated) VALUES (?, ?, ?, ?) " +
@@ -342,8 +528,10 @@ export default {
       return fail(req, "Server error. Try again in a moment.", 500);
     }
   },
-  // Cron Trigger (Fridays after the nightly build): send the weekly to every confirmed subscriber
+  // Cron Triggers: "0 2 * * SAT" sends the weekly (Friday night, after the nightly build);
+  // "5,20,35,50 13-21 * * MON-FRI" checks the price alerts every 15 minutes during US market hours.
   async scheduled(event, env, ctx) {
-    ctx.waitUntil(sendWeekly(env).catch(e => console.log("weekly failed:", e.message)));
+    if (event.cron && event.cron.includes("13-21")) ctx.waitUntil(checkAlerts(env).then(r => console.log("alerts:", JSON.stringify(r))).catch(e => console.log("alerts failed:", e.message)));
+    else ctx.waitUntil(sendWeekly(env).catch(e => console.log("weekly failed:", e.message)));
   },
 };
