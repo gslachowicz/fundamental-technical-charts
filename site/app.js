@@ -110,7 +110,7 @@ function renderScreener(){
     const b = r.base || {};
     const rs = r.rsRating; const stc = STATUS_CLASS[b.status] || "";
     return `<tr data-s="${esc(r.symbol)}" tabindex="0">
-      <td class="l"><span class="sym">${esc(r.symbol)}</span>${scrState.scope!=="watch" && inWL(r.symbol)?'<span class="star" title="In your watchlist">★</span>':''}${r.stale?' <span class="stale">stale</span>':''}<span class="nm" title="${esc(r.name)}">${esc(r.name)}</span></td>
+      <td class="l"><span class="sym">${esc(r.symbol)}</span>${scrState.scope!=="watch" && inWL(r.symbol)?'<span class="star" title="In your watchlist">★</span>':''}${earnBadge(r.symbol)}${r.stale?' <span class="stale">stale</span>':''}<span class="nm" title="${esc(r.name)}">${esc(r.name)}</span></td>
       <td class="spk">${r.pending?'<span class="pend">pending</span>':`<canvas data-spark="${esc(r.symbol)}"></canvas>`}</td>
       <td>${fmtP(r.close)}</td>
       <td class="${r.chgPct<0?'neg':''}">${fmtPct(r.chgPct,2)}</td>
@@ -868,7 +868,7 @@ async function openChart(sym){
     const [bundle] = await Promise.all([getJSON(`t/${encodeURIComponent(sym.replace(/=/g,"_"))}.json`), BENCH ? null : getJSON("bench.json").then(b=>{ BENCH = b.prices.map(([d,c])=>({t:iso(d),c})); })]);
     S = { symbol: bundle.symbol, name: bundle.name, fund: bundle.fund||{}, stats: bundle.stats||{}, base: bundle.base,
       px: bundle.prices.map(([d,o,h,l,c,v])=>({t:iso(d),o,h,l,c,v})), marks: store.get(marksKey(bundle.symbol)) || [] };
-    CUR = S.symbol; updateStar(); patchS(); hover=-1; renderPanels(); draw(); renderDbox(); setShare();
+    CUR = S.symbol; updateStar(); patchS(); hover=-1; renderPanels(); draw(); renderDbox(); setShare(); setEarnChip();
   }catch(e){
     S=null; draw(); $("#sym").textContent = sym; $("#cname").textContent = "";
     toast(inWL(sym) ? `${sym} is in your watchlist: its chart loads after the next nightly update.` : `No data for ${sym} yet. Tap ☆ to add it to your watchlist: it loads after the next nightly update.`);
@@ -882,10 +882,11 @@ function route(){
   const low = raw.toLowerCase();
   const isList = raw === low && LISTS[low];
   const isHome = raw === "" || raw === "home";
-  ["#vWelcome","#vHome","#vScreener","#vChart","#vHeat","#vIdeas"].forEach(id=>$(id).hidden = true); $("#hmTip").hidden = true;
+  ["#vWelcome","#vHome","#vScreener","#vChart","#vHeat","#vIdeas","#vEarn"].forEach(id=>$(id).hidden = true); $("#hmTip").hidden = true;
   document.body.classList.toggle("on-welcome", raw === "welcome");
   document.body.classList.toggle("on-home", isHome);
   if(raw === "welcome"){ $("#vWelcome").hidden = false; setTab(""); document.title = "Ticker&Tape · O'Neil-style charts, RS ratings and bases"; window.scrollTo(0,0); return; }
+  if(low === "earnings"){ lastList = "earnings"; $("#vEarn").hidden = false; setTab("earn"); document.title = "Earnings calendar · Ticker&Tape"; window.scrollTo(0,0); renderEarn(); return; }
   if(low === "ideas"){ lastList = "ideas"; $("#vIdeas").hidden = false; setTab("ideas"); document.title = "Trade ideas · Ticker&Tape"; window.scrollTo(0,0); renderIdeas(); return; }
   if(low === "heatmap"){ lastList = "heatmap"; $("#vHeat").hidden = false; setTab("heat"); document.title = "Heatmap · Ticker&Tape"; window.scrollTo(0,0); renderHeat(); return; }
   if(isHome){ lastList = ""; $("#vHome").hidden = false; setTab("home"); document.title = "Ticker&Tape · Market dashboard"; renderHome(); return; }
@@ -1154,6 +1155,82 @@ $("#hmap").addEventListener("mouseleave", ()=>{ $("#hmTip").hidden = true; });
 $("#hmap").addEventListener("click", e=>{ const el = e.target.closest(".hmt"); if(!el) return; $("#hmTip").hidden = true; const t = hmTiles[+el.dataset.i]; if(t) location.hash = t.r.symbol; });
 [["#hmGroup","g","g"],["#hmColor","c","c"],["#hmSize","z","z"],["#hmScheme","k","k"],["#hmRankSeg","rank","r"]].forEach(([sel,key,attr])=>
   $$(sel+" button").forEach(b=>b.onclick = e=>{ e.stopPropagation(); HM[key] = b.dataset[attr]; store.set("tt:heat", HM); key === "rank" ? (renderHeatRank(), $$("#hmRankSeg button").forEach(x=>x.classList.toggle("on", x===b))) : renderHeat(); }));
+/* ================= EARNINGS CALENDAR ================= */
+let EARN = null, earnLoading = null, earnWeek = null, earnFilter = "all";
+const EARN_NEXT = new Map();   // symbol -> next upcoming report
+const etToday = () => new Date().toLocaleDateString("en-CA", {timeZone:"America/New_York"});
+function loadEarn(){
+  if(!earnLoading) earnLoading = getJSON("earnings.json").then(d=>{
+    EARN = d; const t = etToday();
+    (d.events||[]).filter(e=>e.date >= t).forEach(e=>{ if(!EARN_NEXT.has(e.symbol)) EARN_NEXT.set(e.symbol, e); });
+  }).catch(()=>{ EARN = {weeks:[], events:[]}; });
+  return earnLoading;
+}
+const tradingDaysUntil = d => { let n = 0; const a = new Date(etToday()+"T12:00:00Z"), b = new Date(d+"T12:00:00Z");
+  for(const x = new Date(a); x < b; x.setUTCDate(x.getUTCDate()+1)){ const w = x.getUTCDay(); if(w && w < 6) n++; } return n; };
+const whenTxt = e => { const d = new Date(e.date+"T12:00:00Z");
+  return `${d.toLocaleDateString("en-US",{weekday:"short", month:"short", day:"numeric", timeZone:"UTC"})}${e.time==="bmo" ? " · before open" : e.time==="amc" ? " · after close" : ""}`; };
+function earnBadge(sym){   // for the screener: an "E" when the report is 7 trading days away or less
+  const e = EARN_NEXT.get(sym); if(!e) return "";
+  const n = tradingDaysUntil(e.date); return n <= 7 ? `<span class="ebadge" title="Earnings ${esc(whenTxt(e))}">E${n<=0?"":n}</span>` : "";
+}
+function setEarnChip(){
+  const c = $("#earnChip"); if(!c || !S) return; c.hidden = true;
+  let e = EARN_NEXT.get(S.symbol);
+  if(!e && S.fund && S.fund.nextEarnDate && S.fund.nextEarnDate >= etToday()) e = {date:S.fund.nextEarnDate, time:""};
+  if(!e) return;
+  const n = tradingDaysUntil(e.date); if(n > 20) return;
+  c.textContent = n <= 0 ? `Earnings today${e.time==="amc"?" after close":e.time==="bmo"?" before open":""}` : `Earnings in ${n} day${n===1?"":"s"} · ${whenTxt(e)}`;
+  c.className = "chip echip" + (n <= 5 ? " soon" : ""); c.title = "Reporting soon: a gap on the report can skip right past a stop."; c.hidden = false;
+}
+function renderEarn(){
+  if(!EARN){ $("#eCal").innerHTML = `<div class="empty">Loading…</div>`; loadEarn().then(()=>{ if(!$("#vEarn").hidden) renderEarn(); }); return; }
+  const W = EARN.weeks || [];
+  if(!earnWeek){   // the week that contains today; on a weekend, the coming one
+    const t = new Date(etToday()+"T12:00:00Z"); while(t.getUTCDay()===0 || t.getUTCDay()===6) t.setUTCDate(t.getUTCDate()+1);
+    const ts = t.toISOString().slice(0,10);
+    const hit = W.find(w=>{ const e = new Date(w.start+"T12:00:00Z"); e.setUTCDate(e.getUTCDate()+4); return w.start <= ts && ts <= e.toISOString().slice(0,10); });
+    earnWeek = (hit || W[1] || W[0] || {}).key; }
+  $("#eWeek").innerHTML = W.map(w=>{ const d = new Date(w.start+"T12:00:00Z"); return `<button data-w="${w.key}" class="${w.key===earnWeek?"on":""}">${esc(w.label)} <small>${d.toLocaleDateString("en-US",{month:"short", day:"numeric", timeZone:"UTC"})}</small></button>`; }).join("");
+  $$("#eWeek button").forEach(b=>b.onclick = ()=>{ earnWeek = b.dataset.w; renderEarn(); });
+  $$("#eFilter button").forEach(b=>b.classList.toggle("on", b.dataset.f === earnFilter));
+  const wk = W.find(w=>w.key===earnWeek); if(!wk){ $("#eCal").innerHTML = `<div class="empty">The calendar loads after the next nightly update.</div>`; return; }
+  const days = [...Array(5)].map((_,i)=>{ const d = new Date(wk.start+"T12:00:00Z"); d.setUTCDate(d.getUTCDate()+i); return d.toISOString().slice(0,10); });
+  const wl = new Set(getWL());
+  const keep = e => earnFilter === "lead" ? (e.rs||0) >= 80 : earnFilter === "watch" ? wl.has(e.symbol) : true;
+  const evs = (EARN.events||[]).filter(e=>days.includes(e.date) && keep(e));
+  const today = etToday();
+  // stats
+  const past = evs.filter(e=>e.epsAct!=null && e.surprise!=null), beat = past.filter(e=>e.surprise>0).length;
+  const lead = evs.filter(e=>(e.rs||0)>=80).length, rx = evs.filter(e=>e.reactPct!=null);
+  $("#eStats").innerHTML = `<div><b>${evs.length}</b><span>reports ${earnFilter==="all"?"":"(filtered)"}</span></div><div><b>${lead}</b><span>leaders (RS ≥ 80)</span></div>`
+    + (past.length ? `<div><b>${Math.round(100*beat/past.length)}%</b><span>beat estimates (${past.length} so far)</span></div><div><b class="${rx.length && rx.reduce((s,e)=>s+e.reactPct,0)<0?'neg':''}">${rx.length ? fmtPct(rx.reduce((s,e)=>s+e.reactPct,0)/rx.length,1) : "—"}</b><span>average reaction</span></div>`
+      : `<div class="wide"><span>Results, surprises and reactions fill in as companies report.</span></div>`);
+  $("#eCount").textContent = "Reported: EPS surprise · reaction   ·   Upcoming: consensus EPS · growth vs a year ago" + (EARN.dataDate ? `   ·   updated ${fmtLong(iso(EARN.dataDate))}` : "");
+  const item = e => {
+    const lead = (e.rs||0) >= 80, done = e.epsAct != null;
+    const g = (!done && e.epsEst!=null && e.epsLY) ? ((e.epsEst - e.epsLY)/Math.abs(e.epsLY))*100 : null;
+    const right = done
+      ? `<span class="${(e.surprise??0)<0?'neg':'up'}" title="EPS ${e.epsAct} vs ${e.epsEst ?? "—"} expected">${e.surprise!=null ? fmtPct(e.surprise,0) : "—"}</span>${e.reactPct!=null ? `<b class="${e.reactPct<0?'neg':'up'}" title="Reaction in the first session after the report">${fmtPct(e.reactPct,1)}</b>` : ""}`
+      : `<span title="Consensus EPS${e.epsLY?` vs ${e.epsLY} a year ago`:""}">${e.epsEst!=null ? "$"+(+e.epsEst).toFixed(2) : ""}</span>${g!=null && isFinite(g) ? `<b class="${g<0?'neg':'up'}" title="Expected EPS growth vs the same quarter last year">${fmtPct(g,0)}</b>` : ""}`;
+    return `<a class="eitem${lead?" lead":""}${wl.has(e.symbol)?" mine":""}" href="#${esc(e.symbol)}" title="${esc(e.name)}${e.groupRank?` · group ${esc(e.groupRank)}`:""}">
+      <span class="es">${esc(e.symbol)}</span><span class="ers${lead?" hot":""}">${e.rs ?? "—"}</span><span class="ev">${right}</span></a>`;
+  };
+  const block = (title, list, key) => {
+    if(!list.length) return "";
+    const LIM = 14, more = list.length - LIM, id = key;
+    return `<div class="eblk"><h5>${title} <small>${list.length}</small></h5>${list.slice(0, LIM).map(item).join("")}${more>0 ? `<div class="emore" id="${id}" hidden>${list.slice(LIM).map(item).join("")}</div><button class="lnk etog" data-t="${id}">+ ${more} more</button>` : ""}</div>`;
+  };
+  $("#eCal").innerHTML = days.map((d,i)=>{
+    const L = evs.filter(e=>e.date===d), dd = new Date(d+"T12:00:00Z");
+    const by = t => L.filter(e=>e.time===t);
+    return `<div class="eday${d===today?" today":""}${d<today?" past":""}"><header><b>${dd.toLocaleDateString("en-US",{weekday:"long", timeZone:"UTC"})}</b><span>${dd.toLocaleDateString("en-US",{month:"short", day:"numeric", timeZone:"UTC"})}</span></header>
+      ${L.length ? block("Before open", by("bmo"), `e${i}b`) + block("After close", by("amc"), `e${i}a`) + block("Time not set", by(""), `e${i}n`) : `<div class="enone">No reports${earnFilter!=="all"?" in this filter":""}</div>`}</div>`;
+  }).join("");
+  $$("#eCal .etog").forEach(b=>b.onclick = ()=>{ const m = document.getElementById(b.dataset.t); m.hidden = false; b.remove(); });
+}
+$$("#eFilter button").forEach(b=>b.onclick = ()=>{ earnFilter = b.dataset.f; renderEarn(); });
+
 /* ================= NEWSLETTER SIGN-UP ================= */
 // switched on once the API's /subscribe endpoint and the email sender are live
 const NEWSLETTER_ON = true;
@@ -1499,7 +1576,7 @@ addEventListener("scroll", ()=>{ if(TOUR_ON()) placeTour(); }, true);
   if(needsUni()) loadUni().catch(()=>{});
   if(auth.token) pullData(false);
   $("#scope").hidden = true;
-  loadHome();
+  loadHome(); loadEarn().then(()=>{ if(!$("#vScreener").hidden) renderScreener(); if(S && !$("#vChart").hidden) setEarnChip(); });
   setTimeout(()=>loadUni().catch(()=>{}), 400);   // background: full list for the ticker search
   if(!auth.token && !store.get("tt:welcomed") && !location.hash) history.replaceState(null, "", "#welcome");
   window.addEventListener("hashchange", route); route();
