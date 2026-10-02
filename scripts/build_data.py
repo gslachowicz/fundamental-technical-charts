@@ -1874,7 +1874,7 @@ def build_share_cards(out: Path, prices: dict, all_rows: list[dict], day: str) -
 <meta property="og:description" content="{E(desc)}"><meta property="og:url" content="https://tickerandtape.com/c/{E(fs)}/">
 <meta property="og:image" content="https://tickerandtape.com/og/{E(fs)}.png?d={day}"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@Tickerandtape"><meta name="twitter:image" content="https://tickerandtape.com/og/{E(fs)}.png?d={day}">
-<link rel="icon" href="/favicon.ico"><script>location.replace("/#" + {jdumps(s)});</script></head>
+<link rel="icon" href="/favicon.ico"><script>location.replace("/?via=card#" + {jdumps(s)});</script></head>
 <body style="font:16px Arial,sans-serif;background:#f3f1ea;color:#15171c;padding:24px"><h1 style="color:#1f3c6e">{E(s)} · {E(str(r.get('name') or ''))}</h1>
 <p>{E(desc)}</p><p><a href="/#{E(s)}">Open the interactive chart on Ticker&amp;Tape →</a></p><img src="/og/{E(fs)}.png" alt="{E(s)} daily chart" width="600"></body></html>""")
             made += 1
