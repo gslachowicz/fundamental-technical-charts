@@ -24,6 +24,17 @@ const fmtD = t => { const d=new Date(t); return String(d.getUTCDate()).padStart(
 const fmtLong = t => { const d=new Date(t); return MON[d.getUTCMonth()]+" "+d.getUTCDate()+", "+d.getUTCFullYear(); };
 const esc = s => String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const sign = v => /^\s*-/.test(v||"") ? "neg" : /^\s*\+/.test(v||"") ? "pos" : "";
+/* ---------- table color tiers: up/down in the chart colors, bold + shaded when the reading is strong ---------- */
+const TIER = {
+  chg:   v => v==null ? "" : v >= 2 ? "t-up2" : v > 0 ? "t-up" : v <= -2 ? "t-dn2" : v < 0 ? "t-dn" : "",
+  eps:   v => v==null ? "" : v >= 25 ? "t-up2" : v >= 0 ? "t-up" : v <= -25 ? "t-dn2" : "t-dn",      // CAN SLIM: +25% or better
+  sales: v => v==null ? "" : v >= 25 ? "t-up2" : v >= 0 ? "t-up" : v <= -15 ? "t-dn2" : "t-dn",
+  high:  v => v==null ? "" : v >= -5 ? "t-up" : v <= -25 ? "t-dn2" : v <= -15 ? "t-dn" : "",        // leaders trade near their highs
+  vs50:  v => v==null ? "" : v >= 25 ? "t-warn" : v > 0 ? "t-up" : v <= -8 ? "t-dn2" : "t-dn",      // 25%+ over the 50-day = extended
+  ud:    v => v==null ? "" : v >= 1.5 ? "t-up2" : v >= 1 ? "t-up" : v < 0.7 ? "t-dn2" : "t-dn",
+  pivot: v => v==null ? "" : v > 5 ? "t-warn" : v >= 0 ? "t-up2" : v >= -5 ? "t-up" : "t-dn",        // buy zone = 0 to +5%
+  vol:   (v, chg) => v==null || v < 40 ? "t-mute" : (chg ?? 0) >= 0 ? "t-up2" : "t-dn2",           // heavy volume: accumulation or distribution
+};
 const iso = s => { const [y,m,d] = s.split("-").map(Number); return Date.UTC(y,m-1,d); };
 const pnum = s => { const v = parseFloat(String(s||"").replace(/[+%,]/g,"")); return isFinite(v)?v:null; };
 function toast(msg){ const t=$("#toast"); t.textContent=msg; t.hidden=false; clearTimeout(toast.h); toast.h=setTimeout(()=>t.hidden=true, 4000); }
@@ -113,18 +124,18 @@ function renderScreener(){
       <td class="l"><span class="sym">${esc(r.symbol)}</span>${scrState.scope!=="watch" && inWL(r.symbol)?'<span class="star" title="In your watchlist">★</span>':''}${earnBadge(r.symbol)}${r.stale?' <span class="stale">stale</span>':''}<span class="nm" title="${esc(r.name)}">${esc(r.name)}</span></td>
       <td class="spk">${r.pending?'<span class="pend">pending</span>':`<canvas data-spark="${esc(r.symbol)}"></canvas>`}</td>
       <td>${fmtP(r.close)}</td>
-      <td class="${r.chgPct<0?'neg':''}">${fmtPct(r.chgPct,2)}</td>
+      <td class="${TIER.chg(r.chgPct)}">${fmtPct(r.chgPct,2)}</td>
       <td><span class="rsv ${rs>=80?'hot':''}">${rs??"—"}</span></td>
       <td title="${esc(r.group)}">${r.etf ? `<span class="nm">${esc(r.tracks||r.group||"")}</span>` : esc(r.groupRank||"—")}</td>
-      <td class="${sign(r.epsChg)}">${esc(r.epsChg||"—")}</td>
-      <td class="${sign(r.salesChg)}">${esc(r.salesChg||"—")}</td>
-      <td class="${(r.offHighPct??0)<-15?'neg':''}">${fmtPct(r.offHighPct)}</td>
-      <td class="${(r.vs50Pct??0)<0?'neg':''}">${fmtPct(r.vs50Pct)}</td>
-      <td class="${(r.volVsAvgPct??0)<0?'':'pos'}">${fmtPct(r.volVsAvgPct,0)}</td>
-      <td class="${(r.udRatio??1)<1?'neg':''}">${r.udRatio==null?"—":r.udRatio.toFixed(2)}</td>
+      <td class="${TIER.eps(pnum(r.epsChg))}">${esc(r.epsChg||"—")}</td>
+      <td class="${TIER.sales(pnum(r.salesChg))}">${esc(r.salesChg||"—")}</td>
+      <td class="${TIER.high(r.offHighPct)}">${fmtPct(r.offHighPct)}</td>
+      <td class="${TIER.vs50(r.vs50Pct)}" ${(r.vs50Pct??0)>=25?'title="25%+ above the 50-day line: extended"':''}>${fmtPct(r.vs50Pct)}</td>
+      <td class="${TIER.vol(r.volVsAvgPct, r.chgPct)}">${fmtPct(r.volVsAvgPct,0)}</td>
+      <td class="${TIER.ud(r.udRatio)}">${r.udRatio==null?"—":r.udRatio.toFixed(2)}</td>
       <td class="l">${b.type?`${esc(b.type)}<span class="nm">${b.weeks} wks · ${b.depthPct}% deep</span>`:"—"}</td>
       <td>${b.pivot?fmtP(b.pivot):"—"}</td>
-      <td class="${(b.distPct??0)<0?'neg':''}">${b.pivot?fmtPct(b.distPct):"—"}</td>
+      <td class="${b.pivot ? TIER.pivot(b.distPct) : ""}">${b.pivot?fmtPct(b.distPct):"—"}</td>
       <td class="l">${b.status?`<span class="chip ${stc}">${esc(b.status)}</span>`:"—"}</td>
     </tr>`; }).join("") || `<tr><td colspan="16" class="l" style="padding:18px">${scrState.scope==="watch" && !getWL().length ? "Your watchlist is empty. Open any ticker and tap the ☆ next to its symbol to add it." : "No tickers match this filter."}</td></tr>`;
   const bySym = new Map(shown.map(r=>[r.symbol,r]));
@@ -189,7 +200,9 @@ function normCfg(c){
 }
 let cfg = normCfg(store.get("ink:cfg"));
 const maCol = m => (cfg.colors.ma||{})[m.k] || m.color;
-function applyColors(){ C.up = cfg.colors.up; C.down = cfg.colors.down; C.vup = cfg.colors.vup; C.vdown = cfg.colors.vdown; }
+function applyColors(){ C.up = cfg.colors.up; C.down = cfg.colors.down; C.vup = cfg.colors.vup; C.vdown = cfg.colors.vdown;
+  // tables use the same up/down colors as the chart bars
+  const st = document.documentElement.style; st.setProperty("--up", C.up); st.setProperty("--down", C.down); }
 applyColors();
 const GRID_DASH = {dotted:[1,3], dashed:[5,4], solid:[]};
 function niceStep(x){ const m=Math.pow(10,Math.floor(Math.log10(x))); for(const k of [1,2,2.5,5,10]) if(k*m>=x) return k*m; return 10*m; }
