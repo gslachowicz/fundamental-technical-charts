@@ -127,7 +127,7 @@ function renderScreener(){
     const b = r.base || {};
     const rs = r.rsRating; const stc = STATUS_CLASS[b.status] || "";
     return `<tr data-s="${esc(r.symbol)}" tabindex="0"${b.type || b.status ? "" : ' class="nob"'}>
-      <td class="l"><span class="sym">${esc(r.symbol)}</span>${scrState.scope!=="watch" && inWL(r.symbol)?'<span class="star" title="In your watchlist">★</span>':''}${earnBadge(r.symbol)}${r.stale?' <span class="stale">stale</span>':''}<span class="nm" title="${esc(r.name)}">${esc(r.name)}</span></td>
+      <td class="l"><span class="sym">${esc(r.symbol)}</span>${scrState.scope!=="watch" && inWL(r.symbol)?'<span class="star" title="In your watchlist">★</span>':''}${earnBadge(r.symbol)}${r.stale?' <span class="stale">stale</span>':''}<span class="nm" title="${esc(r.name)}">${esc(r.name)}</span>${NOTES[r.symbol] ? `<span class="wnote" title="${esc(NOTES[r.symbol])}">✎ ${esc(NOTES[r.symbol])}</span>` : ""}</td>
       <td class="spk">${r.pending?'<span class="pend">pending</span>':`<canvas data-spark="${esc(r.symbol)}"></canvas>`}</td>
       <td>${fmtP(r.close)}</td>
       <td class="${TIER.chg(r.chgPct)}" data-l="Chg">${fmtPct(r.chgPct,2)}</td>
@@ -151,7 +151,7 @@ function renderScreener(){
   const sc = $("#secChip"); sc.hidden = !scrState.sector;
   if(scrState.sector){ sc.innerHTML = `Sector: <b>${esc(scrState.sector)}</b> <button aria-label="Clear sector filter">×</button>`; sc.querySelector("button").onclick = ()=>{ scrState.sector=null; scrState.limit=PAGE; renderScreener(); }; }
   fitTable();
-  $("#wlClear").hidden = scrState.scope !== "watch" || !getWL().length;
+  renderWlCtl();
   $("#moreWrap").hidden = total <= shown.length;
   if(total > shown.length) $("#moreBtn").textContent = `Show ${Math.min(PAGE, total-shown.length)} more`;
 }
@@ -428,6 +428,8 @@ function draw(){
     if(ln.t2 < vis[0].t) continue; const y=yOf(ln.p);
     ctx.strokeStyle=C.ink; ctx.lineWidth=1.4; ctx.setLineDash([4,3]); ctx.globalAlpha=ln.preview?.55:1;
     ctx.beginPath(); ctx.moveTo(xAtT(ln.t1)-bw/2,y); ctx.lineTo(xAtT(ln.t2)+bw/2,y); ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha=1; }
+
+  drawAlerts(ctx, yOf, L, plotW, pTop, pBot);
 
   // moving averages
   const line = (arr, color, w) => { if(!arr) return; ctx.strokeStyle=color; ctx.lineWidth=w; ctx.beginPath(); let on=false;
@@ -904,21 +906,22 @@ async function openChart(sym){
     const [bundle] = await Promise.all([getJSON(`t/${encodeURIComponent(sym.replace(/=/g,"_"))}.json`), BENCH ? null : getJSON("bench.json").then(b=>{ BENCH = b.prices.map(([d,c])=>({t:iso(d),c})); })]);
     S = { symbol: bundle.symbol, name: bundle.name, fund: bundle.fund||{}, stats: bundle.stats||{}, base: bundle.base,
       px: bundle.prices.map(([d,o,h,l,c,v])=>({t:iso(d),o,h,l,c,v})), marks: store.get(marksKey(bundle.symbol)) || [] };
-    CUR = S.symbol; updateStar(); patchS(); hover=-1; renderPanels(); draw(); renderDbox(); setShare(); setEarnChip(); setNavPos();
+    CUR = S.symbol; updateStar(); renderTkNote(); $("#bAlert").classList.toggle("on", ALERTS.some(a=>a.symbol===CUR && !a.fired)); patchS(); hover=-1; renderPanels(); draw(); renderDbox(); setShare(); setEarnChip(); setNavPos();
   }catch(e){
     S=null; draw(); $("#sym").textContent = sym; $("#cname").textContent = "";
     toast(inWL(sym) ? `${sym} is in your watchlist: its chart loads after the next nightly update.` : `No data for ${sym} yet. Tap ☆ to add it to your watchlist: it loads after the next nightly update.`);
   }finally{ $("#loading").hidden = true; }
 }
-const LISTS = {watchlist:"watch", screener:"all", etfs:"etf"};
+const ROUTES = {watchlist:"watch", screener:"all", etfs:"etf"};
 let lastList = "";
 function setTab(v){ $$("#tabs a").forEach(a=>a.classList.toggle("on", a.dataset.v===v)); }
 function route(){
   let raw = decodeURIComponent(location.hash.slice(1)).trim();
   if(/^reset=[0-9a-f]{48}$/.test(raw)){   // link from the password reset email
     resetToken = raw.slice(6); history.replaceState(null, "", location.pathname); openAuth("reset"); raw = ""; }
+  if(raw.toLowerCase() === "alerts"){ history.replaceState(null, "", location.pathname); raw = ""; setTimeout(()=>{ if(auth.token) loadAlerts().then(openAlertsList); else openAuth("in"); }, 300); }
   const low = raw.toLowerCase();
-  const isList = raw === low && LISTS[low];
+  const isList = raw === low && ROUTES[low];
   const isHome = raw === "" || raw === "home";
   ["#vWelcome","#vHome","#vScreener","#vChart","#vHeat","#vIdeas","#vEarn","#vBreadth"].forEach(id=>$(id).hidden = true); $("#hmTip").hidden = true;
   document.body.classList.toggle("on-welcome", raw === "welcome");
@@ -929,9 +932,9 @@ function route(){
   if(low === "breadth"){ lastList = "breadth"; $("#vBreadth").hidden = false; setTab("breadth"); document.title = "Market breadth · Ticker&Tape"; window.scrollTo(0,0); renderBreadth(); return; }
   if(low === "heatmap"){ lastList = "heatmap"; $("#vHeat").hidden = false; setTab("heat"); document.title = "Heatmap · Ticker&Tape"; window.scrollTo(0,0); renderHeat(); return; }
   if(isHome){ lastList = ""; $("#vHome").hidden = false; setTab("home"); document.title = "Ticker&Tape · Market dashboard"; renderHome(); return; }
-  if(isList){ lastList = raw; $("#vScreener").hidden = false; setTab(LISTS[low]); document.title = `${{watch:"Watchlist",all:"Screener",etf:"ETFs"}[LISTS[low]]} · Ticker&Tape`;
-    if(LISTS[low] !== "all") scrState.sector = null;
-    setScope(LISTS[low]); return; }
+  if(isList){ lastList = raw; $("#vScreener").hidden = false; setTab(ROUTES[low]); document.title = `${{watch:"Watchlist",all:"Screener",etf:"ETFs"}[ROUTES[low]]} · Ticker&Tape`;
+    if(ROUTES[low] !== "all") scrState.sector = null;
+    setScope(ROUTES[low]); return; }
   setTab(""); openChart(raw.toUpperCase());
 }
 $("#bBack").onclick = () => { location.hash = lastList; };   // back to the list (or home) the chart was opened from
@@ -1561,11 +1564,14 @@ function push(key, value){
     .catch(e=>toast("Could not save to your account: " + e.message)), 500);
 }
 function localMarkKeys(){ const out=[]; try{ for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(k && k.startsWith("ink:marks:")) out.push(k); } }catch(e){} return out; }
-async function pullData(fresh){
+async function pullData(fresh, isNew){
   // fresh = just signed in / signed up: anything only on this device goes up to the account
   let d; try{ d = await api("/data"); }catch(e){ return; }
-  if(Array.isArray(d.watchlist)){ WL = d.watchlist; store.set("tt:wl", WL); }
-  else if(fresh){ WL = WL ? WL.slice() : []; store.set("tt:wl", WL); push("watchlist", WL); }   // new accounts start empty; the sample list is only for visitors
+  if(d.lists && Array.isArray(d.lists.lists) && d.lists.lists.length){ LISTS = d.lists; ensureLists(); WL = activeList().t.slice(); store.set("tt:wl", WL); store.set("tt:lists", LISTS); }
+  else if(Array.isArray(d.watchlist)){ WL = d.watchlist; store.set("tt:wl", WL); LISTS = null; ensureLists(); store.set("tt:lists", LISTS); push("lists", LISTS); }
+  else { WL = fresh && WL ? WL.slice() : []; store.set("tt:wl", WL); push("watchlist", WL); if(!(fresh && LISTS)) LISTS = null; ensureLists(); activeList().t = WL.slice(); saveLists(); }   // accounts never use the sample list; lists made before signing up are kept
+  if(d.notes && typeof d.notes === "object"){ NOTES = fresh ? {...d.notes, ...NOTES} : d.notes; store.set("tt:notes", NOTES); if(fresh) push("notes", NOTES); }
+  else if(fresh && Object.keys(NOTES).length) push("notes", NOTES);   // new accounts start empty; the sample list is only for visitors
   if(d.cfg && typeof d.cfg==="object"){ cfg = normCfg(d.cfg); store.set("ink:cfg", cfg); redrawAll();
     if(cfg.lang && cfg.lang !== I18N.lang && I18N.setLang) I18N.setLang(cfg.lang); }
   else if(fresh){ push("cfg", cfg); }
@@ -1574,13 +1580,14 @@ async function pullData(fresh){
   if(fresh) localMarkKeys().forEach(k=>{ const key = k.slice(4); const v = store.get(k); if(!remote.has(key) && Array.isArray(v) && v.length) push(key, v); });
   if(needsUni()) loadUni().catch(()=>{});
   if(S){ S.marks = store.get(marksKey(S.symbol)) || []; draw(); renderDbox(); }
-  updateStar();
+  updateStar(); if(S) renderTkNote();
   if(!$("#vScreener").hidden) renderScreener();
+  loadAlerts(); startNotifs(); checkMe(isNew);
 }
 function signedOut(expired){
   auth.token = auth.email = null;
-  try{ localStorage.removeItem("tt:token"); localStorage.removeItem("tt:email"); localStorage.removeItem("tt:wl"); localMarkKeys().forEach(k=>localStorage.removeItem(k)); }catch(e){}
-  WL = null; if(S){ S.marks = []; draw(); } if(!$("#vIdeas").hidden) renderIdeas();
+  try{ ["tt:token","tt:email","tt:wl","tt:lists","tt:notes","tt:notifSeen"].forEach(k=>localStorage.removeItem(k)); localMarkKeys().forEach(k=>localStorage.removeItem(k)); }catch(e){}
+  WL = null; LISTS = null; NOTES = {}; ALERTS = []; NOTIF = {items:[], unread:0}; clearInterval(notifTimer); $("#vBar").hidden = true; renderBell(); if(S) renderTkNote(); if(S){ S.marks = []; draw(); } if(!$("#vIdeas").hidden) renderIdeas();
   renderAcct(); updateStar(); if(!$("#vScreener").hidden) renderScreener();
   if(expired) toast("Your session expired. Sign in again to sync your watchlist.");
 }
@@ -1588,15 +1595,18 @@ function renderAcct(){
   const b = $("#acct"); b.textContent = auth.email ? auth.email.split("@")[0] : "Sign in";
   b.title = auth.email ? `Signed in as ${auth.email}` : "Sign in or create a free account";
   b.classList.toggle("on", !!auth.email);
+  renderBell();
 }
 function toggleMenu(on){
   const m = $("#acctMenu"); on = on==null ? m.hidden : on; m.hidden = !on; $("#acct").setAttribute("aria-expanded", on);
-  if(on) m.innerHTML = `<div class="who">Signed in as<br><b>${esc(auth.email)}</b></div><button data-a="pw" role="menuitem">Change password</button><button data-a="out" role="menuitem">Sign out</button>`;
+  if(on) m.innerHTML = `<div class="who">Signed in as<br><b>${esc(auth.email)}</b></div><button data-a="alerts" role="menuitem">My alerts</button><button data-a="pw" role="menuitem">Change password</button><button data-a="out" role="menuitem">Sign out</button><button data-a="del" role="menuitem" class="danger">Delete account</button>`;
 }
 $("#acct").onclick = e => { e.stopPropagation(); if(auth.token) toggleMenu(); else openAuth("in"); };
 $("#acctMenu").addEventListener("click", async e=>{
   const a = e.target.closest("button[data-a]"); if(!a) return; toggleMenu(false);
   if(a.dataset.a==="pw") openAuth("pw");
+  if(a.dataset.a==="alerts") openAlertsList();
+  if(a.dataset.a==="del") openDelete();
   if(a.dataset.a==="out"){ try{ await api("/auth/logout", {method:"POST"}); }catch(err){} signedOut(); toast("Signed out."); }
 });
 document.addEventListener("click", e=>{ const m=$("#acctMenu"); if(!m.hidden && !e.composedPath().includes(m)) toggleMenu(false); });
@@ -1650,7 +1660,7 @@ $("#authForm").addEventListener("submit", async e=>{
       auth.token = r.token; auth.email = r.email; store.set("tt:token", r.token); store.set("tt:email", r.email);
       closeAuth(); renderAcct(); if(!$("#vIdeas").hidden) renderIdeas();
       toast(authMode==="up" ? "Account created. Your watchlist now syncs to every device." : `Welcome back, ${r.email}.`);
-      await pullData(true);
+      await pullData(true, authMode==="up");
       store.set("tt:welcomed", true);
       if(!$("#vWelcome").hidden){ location.hash = ""; if(authMode==="up" && !store.get("tt:toured")) setTimeout(startTour, 700); }
     }
@@ -1673,14 +1683,283 @@ $("#star").onclick = () => {
     const hasData = ROWS.some(r=>r.symbol===CUR) || (UNI && UNI.some(r=>r.symbol===CUR));
     toast(!hasData ? `${CUR} added. Its data loads after the next nightly update.` : auth.token ? `${CUR} added to your watchlist.` : `${CUR} added. Sign in or create a free account to keep it on every device.`);
   }
-  WL = L; store.set("tt:wl", WL); push("watchlist", WL); updateStar();
+  setWL(L); updateStar(); if(!$("#vScreener").hidden) renderScreener();
 };
 
-$("#wlClear").onclick = () => {
-  const n = getWL().length; if(!n) return;
-  if(!confirm(TX(`Remove all ${n} tickers from your watchlist? This cannot be undone.`))) return;
-  WL = []; store.set("tt:wl", WL); push("watchlist", WL); updateStar(); scrState.limit = PAGE; renderScreener(); toast("Your watchlist is empty now.");
-};
+
+/* ================= DIALOG (generic) ================= */
+function dlg(title, html, bind){
+  $("#dlgT").textContent = title; $("#dlgB").innerHTML = html; $("#dlg").hidden = false;
+  if(bind) bind($("#dlgB"));
+  const f = $("#dlgB").querySelector("input:not([type=checkbox]),textarea,select,button.on"); if(f) setTimeout(()=>f.focus(), 30);
+}
+function closeDlg(){ $("#dlg").hidden = true; $("#dlgB").innerHTML = ""; }
+$("#dlgX").onclick = closeDlg;
+$("#dlg").addEventListener("click", e=>{ if(e.target.id === "dlg") closeDlg(); });
+document.addEventListener("keydown", e=>{ if(e.key === "Escape" && !$("#dlg").hidden) closeDlg(); });
+
+/* ================= SEVERAL WATCHLISTS ================= */
+// LISTS = {active, lists:[{id, name, t:[tickers]}]}; WL always mirrors the active list
+let LISTS = (()=>{ const L = store.get("tt:lists"); return L && Array.isArray(L.lists) && L.lists.length ? L : null; })();
+const newId = () => "l" + Date.now().toString(36) + Math.random().toString(36).slice(2,5);
+function ensureLists(){
+  if(!LISTS) LISTS = {active:"l1", lists:[{id:"l1", name:"My watchlist", t: WL ? WL.slice() : []}]};
+  if(!LISTS.lists.some(l=>l.id===LISTS.active)) LISTS.active = LISTS.lists[0].id;
+  return LISTS;
+}
+const activeList = () => ensureLists().lists.find(l=>l.id===LISTS.active);
+function saveLists(){ store.set("tt:lists", LISTS); push("lists", LISTS); }
+function setWL(L){   // replaces the tickers of the active list
+  const a = activeList(); a.t = L.slice(0, 300); WL = a.t.slice();
+  store.set("tt:wl", WL); push("watchlist", WL); saveLists();
+}
+function switchList(id){
+  ensureLists(); const l = LISTS.lists.find(x=>x.id===id); if(!l) return;
+  LISTS.active = id; WL = l.t.slice(); store.set("tt:wl", WL); push("watchlist", WL); saveLists();
+  scrState.limit = PAGE; updateStar(); if(needsUni()) loadUni().then(()=>renderScreener()).catch(()=>{}); renderScreener();
+}
+function renderWlCtl(){
+  const box = $("#wlCtl"); if(!box) return; box.hidden = scrState.scope !== "watch";
+  if(box.hidden) return;
+  $("#wlSel").innerHTML = LISTS ? LISTS.lists.map(l=>`<option value="${esc(l.id)}" ${l.id===LISTS.active?"selected":""}>${esc(l.name==="My watchlist" ? TX("My watchlist") : l.name)} (${l.t.length})</option>`).join("")
+    : `<option>${esc(TX("Sample watchlist"))}</option>`;
+}
+$("#wlSel").onchange = e => switchList(e.target.value);
+function wlMenu(on){
+  const m = $("#wlMenu"); on = on==null ? m.hidden : on; m.hidden = !on; $("#wlMenuBtn").setAttribute("aria-expanded", on);
+  if(on) m.innerHTML = [["new","New list"],["rename","Rename list"],["del","Delete list"],["imp","Import tickers"],["exp","Export to CSV"],["clear","Clear this list"]]
+    .map(([a,l])=>`<button data-w="${a}" role="menuitem" class="${a==="del"||a==="clear"?"danger":""}">${l}</button>`).join("");
+}
+$("#wlMenuBtn").onclick = e => { e.stopPropagation(); wlMenu(); };
+document.addEventListener("click", e=>{ if(!$("#wlMenu").hidden && !e.target.closest("#wlMenu,#wlMenuBtn")) wlMenu(false); });
+$("#wlMenu").addEventListener("click", e=>{
+  const b = e.target.closest("button[data-w]"); if(!b) return; wlMenu(false); const a = b.dataset.w;
+  if(a === "new" || a === "rename"){
+    const cur = a === "rename" && LISTS ? activeList().name : "";
+    dlg(TX(a === "new" ? "New list" : "Rename list"), `<label class="fld"><span>${esc(TX("Name"))}</span><input id="lName" maxlength="40" value="${esc(cur)}" placeholder="${esc(TX("e.g. Swing trades"))}"></label>
+      <button class="btn on wide" id="lOk">${esc(TX(a === "new" ? "Create list" : "Save"))}</button>`, B=>{
+      const go = ()=>{ const n = B.querySelector("#lName").value.trim().slice(0,40); if(!n){ B.querySelector("#lName").focus(); return; }
+        ensureLists();
+        if(a === "new"){ if(LISTS.lists.length >= 20){ toast("You can have up to 20 lists."); return; } const id = newId(); LISTS.lists.push({id, name:n, t:[]}); closeDlg(); switchList(id); toast(`List “${n}” created. Star tickers to fill it.`); }
+        else { activeList().name = n; saveLists(); closeDlg(); renderWlCtl(); } };
+      B.querySelector("#lOk").onclick = go; B.querySelector("#lName").onkeydown = ev=>{ if(ev.key==="Enter") go(); }; });
+  }
+  if(a === "del"){
+    if(!LISTS || LISTS.lists.length < 2){ toast("This is your only list. Use Clear this list to empty it."); return; }
+    const l = activeList();
+    if(!confirm(TX(`Delete the list “${l.name}” and its ${l.t.length} tickers? This cannot be undone.`))) return;
+    LISTS.lists = LISTS.lists.filter(x=>x.id!==l.id); switchList(LISTS.lists[0].id); toast("List deleted.");
+  }
+  if(a === "clear"){
+    const n = getWL().length; if(!n){ toast("This list is already empty."); return; }
+    if(!confirm(TX(`Remove all ${n} tickers from your watchlist? This cannot be undone.`))) return;
+    setWL([]); updateStar(); scrState.limit = PAGE; renderScreener(); toast("Your watchlist is empty now.");
+  }
+  if(a === "imp") openImport();
+  if(a === "exp") exportCsv();
+});
+function openImport(){
+  dlg(TX("Import tickers"), `<p class="msub">${esc(TX("Paste symbols separated by spaces, commas or new lines, for example from TradingView or a spreadsheet. They are added to the list you have open."))}</p>
+    <label class="fld"><textarea id="impT" rows="6" spellcheck="false" placeholder="NVDA, AVGO, META&#10;ANET&#10;NASDAQ:CRWD"></textarea></label>
+    <button class="btn on wide" id="impOk">${esc(TX("Add to the list"))}</button>`, B=>{
+    B.querySelector("#impOk").onclick = ()=>{
+      const raw = B.querySelector("#impT").value.toUpperCase().split(/[\s,;|]+/).map(x=>x.replace(/^[A-Z]+:/,"").replace(/\./g,"-").trim()).filter(Boolean);
+      const ok = [...new Set(raw.filter(x=>SYM_OK.test(x)))], bad = raw.length - raw.filter(x=>SYM_OK.test(x)).length;
+      const L = (WL ? WL.slice() : []); let added = 0;
+      for(const s of ok){ if(L.length >= 300) break; if(!L.includes(s)){ L.push(s); added++; } }
+      setWL(L); closeDlg(); updateStar(); if(needsUni()) loadUni().then(()=>renderScreener()).catch(()=>{}); renderScreener();
+      toast(TX(`Added ${added} tickers`) + (bad ? " · " + TX(`${bad} skipped`) : "") + ".");
+    }; });
+}
+function exportCsv(){
+  const rows = watchRows(); if(!rows.length){ toast("This list is empty."); return; }
+  const q = v => { const s = v==null ? "" : String(v); return /[",\n]/.test(s) ? `"${s.replace(/"/g,'""')}"` : s; };
+  const head = ["Symbol","Name","Price","Chg %","RS Rating","EPS chg","Sales chg","Base","Pivot","To pivot %","Status","Note"];
+  const lines = [head.join(",")].concat(rows.map(r=>{ const b = r.base || {}; return [r.symbol, r.name, r.close, r.chgPct!=null ? r.chgPct.toFixed(2) : "", r.rsRating, r.epsChg, r.salesChg,
+    b.type, b.pivot, b.distPct, b.status, NOTES[r.symbol]].map(q).join(","); }));
+  const name = (LISTS ? activeList().name : "watchlist").replace(/[^\w\- ]+/g,"").trim().replace(/\s+/g,"-") || "watchlist";
+  const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob(["﻿" + lines.join("\n")], {type:"text/csv"}));
+  a.download = `${name}-${new Date().toISOString().slice(0,10)}.csv`; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 500);
+}
+
+/* ================= NOTES PER TICKER ================= */
+let NOTES = store.get("tt:notes") || {};
+function saveNotes(){ store.set("tt:notes", NOTES); push("notes", NOTES); }
+function renderTkNote(){
+  const p = $("#tkNote"), n = CUR && NOTES[CUR];
+  p.hidden = !n; if(n) p.innerHTML = `<span>✎</span> ${esc(n)} <button class="lnk" id="tkNoteEdit">${esc(TX("Edit"))}</button>`;
+  if(n) $("#tkNoteEdit").onclick = openNote;
+  $("#tkNoteBtn").classList.toggle("on", !!n);
+}
+function openNote(){
+  if(!CUR) return; const sym = CUR, cur = NOTES[sym] || "";
+  dlg(`${TX("Note")} · ${sym}`, `<p class="msub">${esc(TX("A private note for this ticker. It shows on the chart and in your watchlist."))}</p>
+    <label class="fld"><textarea id="nT" rows="3" maxlength="280" placeholder="${esc(TX("e.g. Wait for a move through the pivot on volume"))}">${esc(cur)}</textarea></label>
+    <div class="dlgbtns"><button class="btn on" id="nOk">${esc(TX("Save"))}</button>${cur ? `<button class="btn ghost" id="nDel">${esc(TX("Delete note"))}</button>` : ""}</div>`, B=>{
+    B.querySelector("#nOk").onclick = ()=>{ const v = B.querySelector("#nT").value.trim().slice(0,280); if(v) NOTES[sym] = v; else delete NOTES[sym];
+      if(Object.keys(NOTES).length > 500){ toast("You can keep up to 500 notes."); return; } saveNotes(); closeDlg(); renderTkNote(); };
+    const d = B.querySelector("#nDel"); if(d) d.onclick = ()=>{ delete NOTES[sym]; saveNotes(); closeDlg(); renderTkNote(); }; });
+}
+$("#tkNoteBtn").onclick = openNote;
+
+/* ================= ALERTS ================= */
+let ALERTS = [], VERIFIED = true;
+const MA_LBL = {e21:"21-day EMA", d50:"50-day line", d200:"200-day line"};
+function alertDesc(a){
+  if(a.kind === "ma") return `${a.dir === "above" ? "Crosses above" : "Crosses below"} the ${MA_LBL[a.ma]}`;
+  if(a.kind === "pivot") return `Breakout above the ${fmtP(a.level)} pivot`;
+  return `Price ${a.dir === "above" ? "above" : "below"} ${fmtP(a.level)}`;
+}
+async function loadAlerts(){
+  if(!auth.token){ ALERTS = []; return; }
+  try{ const r = await api("/alerts"); ALERTS = r.alerts || []; VERIFIED = r.verified !== false; }catch(e){}
+  if(S && !$("#vChart").hidden) draw();
+  $("#bAlert").classList.toggle("on", !!(CUR && ALERTS.some(a=>a.symbol===CUR && !a.fired)));
+}
+function chartRefs(){
+  // last close and the 21-day EMA / 50- and 200-day lines of the chart on screen
+  if(!S || !S.px.length) return {};
+  const px = S.px, last = px[px.length-1].c, at = arr => arr[arr.length-1];
+  return {last, e21: at(ema(px,21,b=>b.c)), d50: at(sma(px,50,b=>b.c)), d200: at(sma(px,200,b=>b.c)), pivot: S.base && S.base.pivot};
+}
+function openAlert(){
+  if(!S) return;
+  if(!auth.token){ toast("Create a free account or sign in to set alerts."); openAuth("up"); return; }
+  const sym = S.symbol, R = chartRefs(), mine = ALERTS.filter(a=>a.symbol===sym && !a.fired);
+  const lines = (S.marks||[]).filter(m=>m.k==="line").map(m=>m.p).filter((v,i,a)=>a.indexOf(v)===i).slice(-6);
+  const st = {kind:"price", ma:"d50", level: +R.last.toFixed(R.last < 20 ? 3 : 2), dir:null};
+  const dirFor = lv => lv >= R.last ? "above" : "below";
+  const body = () => {
+    const maV = R[st.ma];
+    const maDir = st.dir || (R.last > maV ? "below" : "above");
+    return `<div class="seg aseg">${[["price","Price"],["ma","Moving average"],["pivot","Pivot breakout"]].map(([k,l])=>`<button data-k="${k}" class="${st.kind===k?"on":""}" ${k==="pivot"&&!R.pivot?"disabled":""}>${esc(TX(l))}</button>`).join("")}</div>
+      ${st.kind==="price" ? `<label class="fld"><span>${esc(TX("Price level"))}</span><input id="aLv" type="number" step="any" min="0" value="${st.level}"></label>
+        <p class="msub ahint" id="aHint"></p>
+        ${lines.length ? `<p class="msub">${esc(TX("Your lines on this chart"))}: ${lines.map(v=>`<button class="lnk aline" data-v="${v}">${fmtP(v)}</button>`).join(" · ")}</p>` : ""}`
+      : st.kind==="ma" ? `<div class="seg aseg2">${Object.keys(MA_LBL).map(k=>`<button data-ma="${k}" class="${st.ma===k?"on":""}" ${R[k]==null?"disabled":""}>${esc(TX(MA_LBL[k]))}</button>`).join("")}</div>
+        <div class="seg aseg2">${["above","below"].map(d=>`<button data-d="${d}" class="${maDir===d?"on":""}">${esc(TX(d==="above"?"Crosses above":"Crosses below"))}</button>`).join("")}</div>
+        <p class="msub">${esc(TX("Today"))}: ${esc(TX(MA_LBL[st.ma]))} ${fmtP(maV)} · ${esc(TX("last"))} ${fmtP(R.last)}</p>`
+      : `<p class="msub">${esc(TX(`Alert when ${sym} trades above its ${fmtP(R.pivot)} pivot with volume running at least 40% above average.`))}</p>`}
+      <label class="fld"><span>${esc(TX("Note (optional)"))}</span><input id="aNote" maxlength="140" placeholder="${esc(TX("e.g. Buy half on the breakout"))}"></label>
+      <label class="chk"><input type="checkbox" id="aMail" ${VERIFIED?"checked":"disabled"}> ${esc(TX("Email me too"))}${VERIFIED ? "" : ` <small>(${esc(TX("confirm your email first"))})</small>`}</label>
+      <button class="btn on wide" id="aOk">${esc(TX("Create alert"))}</button>
+      <p class="msub afine">${esc(TX("Checked every 15 minutes during the session with delayed prices. Each alert fires once."))}</p>
+      ${mine.length ? `<div class="alist"><h5>${esc(TX("Active alerts for"))} ${esc(sym)}</h5>${mine.map(a=>`<div class="arow"><span>${esc(TX(alertDesc(a)))}${a.note?` <i>${esc(a.note)}</i>`:""}</span><button class="lnk" data-del="${a.id}" aria-label="${esc(TX("Delete alert"))}">×</button></div>`).join("")}</div>` : ""}`;
+  };
+  const bind = B => {
+    B.innerHTML = body();
+    const hint = () => { const h = B.querySelector("#aHint"), v = parseFloat(B.querySelector("#aLv").value); if(h) h.textContent = isFinite(v) && v>0 ? TX(`Fires when ${sym} ${dirFor(v)==="above" ? "rises to" : "falls to"} ${fmtP(v)} (now ${fmtP(R.last)}).`) : ""; };
+    B.querySelectorAll(".aseg button").forEach(b=>b.onclick = ()=>{ st.kind = b.dataset.k; st.dir = null; bind(B); });
+    B.querySelectorAll("[data-ma]").forEach(b=>b.onclick = ()=>{ st.ma = b.dataset.ma; st.dir = null; bind(B); });
+    B.querySelectorAll("[data-d]").forEach(b=>b.onclick = ()=>{ st.dir = b.dataset.d; bind(B); });
+    B.querySelectorAll(".aline").forEach(b=>b.onclick = ()=>{ B.querySelector("#aLv").value = b.dataset.v; st.level = +b.dataset.v; hint(); });
+    const lv = B.querySelector("#aLv"); if(lv){ lv.oninput = ()=>{ st.level = parseFloat(lv.value); hint(); }; hint(); }
+    B.querySelectorAll("[data-del]").forEach(b=>b.onclick = async ()=>{ try{ await api("/alerts/"+b.dataset.del, {method:"DELETE"}); await loadAlerts(); openAlert(); }catch(e){ toast(e.message); } });
+    B.querySelector("#aOk").onclick = async ()=>{
+      const note = B.querySelector("#aNote").value.trim(), email = B.querySelector("#aMail").checked;
+      let req;
+      if(st.kind === "price"){ const v = parseFloat(B.querySelector("#aLv").value); if(!(v > 0)){ toast("Enter a valid price."); return; } req = {kind:"price", level:v, dir:dirFor(v)}; }
+      else if(st.kind === "ma") req = {kind:"ma", ma:st.ma, dir: st.dir || (R.last > R[st.ma] ? "below" : "above")};
+      else req = {kind:"pivot", level:R.pivot, dir:"above"};
+      const ok = B.querySelector("#aOk"); ok.disabled = true;
+      try{ await api("/alerts", {method:"POST", body: JSON.stringify({symbol:sym, note: note || null, email, ...req})}); await loadAlerts(); closeDlg();
+        toast(`Alert set: ${sym} · ${TX(alertDesc({...req, symbol:sym}))}`); }
+      catch(e){ toast(e.message); ok.disabled = false; }
+    };
+  };
+  dlg(`${TX("New alert")} · ${sym}`, "", bind);
+}
+$("#bAlert").onclick = openAlert;
+function openAlertsList(){
+  if(!auth.token){ openAuth("in"); return; }
+  const fmtT = t => t ? fmtLong(t*1000) : "";
+  const act = ALERTS.filter(a=>!a.fired), done = ALERTS.filter(a=>a.fired);
+  const row = a => `<div class="arow"><a href="#${esc(a.symbol)}" class="asym">${esc(a.symbol)}</a><span>${esc(TX(alertDesc(a)))}${a.note?` <i>${esc(a.note)}</i>`:""}${a.fired?`<small>${esc(TX("Fired"))} ${fmtT(a.fired)} · ${fmtP(a.fired_px)}</small>`:""}</span><button class="lnk" data-del="${a.id}" aria-label="${esc(TX("Delete alert"))}">×</button></div>`;
+  dlg(TX("My alerts"), `<div class="alist">${act.length ? act.map(row).join("") : `<p class="msub">${esc(TX("No active alerts. Open any chart and tap 🔔 Alert to set one."))}</p>`}
+    ${done.length ? `<h5>${esc(TX("Fired in the last 30 days"))}</h5>${done.map(row).join("")}` : ""}</div>
+    ${VERIFIED ? "" : `<p class="msub">${esc(TX("Confirm your email to also get alerts by email."))}</p>`}`, B=>{
+    B.querySelectorAll("a.asym").forEach(a=>a.onclick = ()=>closeDlg());
+    B.querySelectorAll("[data-del]").forEach(b=>b.onclick = async ()=>{ try{ await api("/alerts/"+b.dataset.del, {method:"DELETE"}); await loadAlerts(); openAlertsList(); }catch(e){ toast(e.message); } });
+  });
+}
+// active price and pivot alerts drawn on the chart
+function drawAlerts(g, yOf, L, plotW, pTop, pBot){
+  if(!S) return;
+  for(const a of ALERTS){ if(a.symbol !== S.symbol || a.fired || a.kind === "ma" || !a.level) continue;
+    const y = Math.round(yOf(a.level)) + .5; if(y < pTop || y > pBot) continue;
+    g.strokeStyle = "#a86a00"; g.lineWidth = 1; g.setLineDash([6,4]); g.beginPath(); g.moveTo(L, y); g.lineTo(L+plotW, y); g.stroke(); g.setLineDash([]);
+    g.font = `600 10px ${FONT_L}`; g.fillStyle = "#a86a00"; g.textAlign = "right"; g.textBaseline = "bottom"; g.fillText(`🔔 ${fmtP(a.level)}`, L+plotW-4, y-2); }
+}
+
+/* ================= NOTIFICATIONS (bell) ================= */
+let NOTIF = {items:[], unread:0}, notifSeen = +store.get("tt:notifSeen") || 0, notifTimer = null;
+function notifText(n){
+  let o; try{ o = JSON.parse(n.msg); }catch(e){ return n.msg; }
+  const lv = fmtP(o.lv);
+  const s = o.k === "ma" ? `${o.s} crossed ${o.d} its ${MA_LBL[o.ma]} (${lv})` : o.k === "pivot" ? `${o.s} broke out above its ${lv} pivot` : `${o.s} ${o.d === "above" ? "rose above" : "fell below"} ${lv}`;
+  return {txt: TX(s), last: fmtP(o.px), note: o.n};
+}
+function renderBell(){
+  const b = $("#bell"); b.hidden = !auth.token; if(b.hidden) return;
+  $("#bellN").hidden = !NOTIF.unread; $("#bellN").textContent = NOTIF.unread > 9 ? "9+" : NOTIF.unread;
+}
+async function pollNotifs(first){
+  if(!auth.token) return;
+  try{ NOTIF = await api("/notifications"); }catch(e){ return; }
+  const fresh = NOTIF.items.filter(n=>!n.read && n.id > notifSeen);
+  if(fresh.length && !first){
+    const t = notifText(fresh[0]); toast(`🔔 ${t.txt}`);
+    if("Notification" in window && Notification.permission === "granted") fresh.slice(0,3).forEach(n=>{ const x = notifText(n);
+      try{ const no = new Notification("Ticker&Tape", {body: `${x.txt} · ${TX("last")} ${x.last}`, tag:"tt"+n.id}); no.onclick = ()=>{ focus(); location.hash = n.symbol; }; }catch(e){} });
+    loadAlerts();
+  }
+  if(NOTIF.items.length){ notifSeen = Math.max(notifSeen, ...NOTIF.items.map(n=>n.id)); store.set("tt:notifSeen", notifSeen); }
+  renderBell();
+}
+function startNotifs(){ clearInterval(notifTimer); if(!auth.token) return; pollNotifs(true); notifTimer = setInterval(()=>{ if(document.visibilityState === "visible") pollNotifs(); }, 3*60*1000); }
+document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState === "visible" && auth.token) pollNotifs(); });
+function bellMenu(on){
+  const m = $("#bellMenu"); on = on==null ? m.hidden : on; m.hidden = !on; $("#bell").setAttribute("aria-expanded", on);
+  if(!on) return;
+  const ago = t => { const h = (Date.now()/1000 - t)/3600; return h < 1 ? TX("now") : h < 24 ? TX(`${Math.round(h)}h ago`) : fmtLong(t*1000); };
+  m.innerHTML = `<div class="who">${esc(TX("Notifications"))}</div>${NOTIF.items.length ? NOTIF.items.slice(0,15).map(n=>{ const x = notifText(n);
+      return `<a class="nitem ${n.read?"":"new"}" href="#${esc(n.symbol)}"><b>${esc(x.txt)}</b><small>${esc(TX("last"))} ${x.last} · ${ago(n.created)}${x.note?` · ${esc(x.note)}`:""}</small></a>`; }).join("")
+    : `<p class="nempty">${esc(TX("No notifications yet. Set an alert from any chart with 🔔 Alert."))}</p>`}
+    ${"Notification" in window && Notification.permission === "default" ? `<button data-n="perm">${esc(TX("Enable browser notifications"))}</button>` : ""}
+    <button data-n="list">${esc(TX("My alerts"))}</button>`;
+  if(NOTIF.unread){ api("/notifications/read", {method:"POST"}).then(()=>{ NOTIF.unread = 0; NOTIF.items.forEach(n=>n.read = 1); renderBell(); }).catch(()=>{}); }
+}
+$("#bell").onclick = e => { e.stopPropagation(); bellMenu(); };
+document.addEventListener("click", e=>{ if(!$("#bellMenu").hidden && !e.target.closest("#bellMenu,#bell")) bellMenu(false); });
+$("#bellMenu").addEventListener("click", e=>{
+  if(e.target.closest("a.nitem")){ bellMenu(false); return; }
+  const b = e.target.closest("button[data-n]"); if(!b) return;
+  if(b.dataset.n === "perm") Notification.requestPermission().then(()=>bellMenu(true));
+  if(b.dataset.n === "list"){ bellMenu(false); openAlertsList(); }
+});
+
+/* ================= EMAIL VERIFICATION + DELETE ACCOUNT ================= */
+async function checkMe(isNew){
+  if(!auth.token) return;
+  let me; try{ me = await api("/me"); }catch(e){ return; }
+  VERIFIED = !!me.verified;
+  const v = $("#vBar"); v.hidden = VERIFIED || sessionStorage.getItem("tt:vbarOff") === "1";
+  if(!v.hidden) v.innerHTML = `<span>${esc(TX(isNew ? `Welcome! We sent a link to ${auth.email}: confirm your email to get alerts by email.` : `Confirm your email (${auth.email}) to get alerts by email.`))}</span>
+    <button class="lnk" id="vResend">${esc(TX("Send the link again"))}</button><button class="x" id="vClose" aria-label="${esc(TX("Close"))}">×</button>`;
+  if(!v.hidden){
+    $("#vResend").onclick = async ()=>{ try{ await api("/auth/verify", {method:"POST"}); toast(`Link sent to ${auth.email}.`); }catch(e){ toast(e.message); } };
+    $("#vClose").onclick = ()=>{ v.hidden = true; try{ sessionStorage.setItem("tt:vbarOff","1"); }catch(e){} };
+  }
+}
+function openDelete(){
+  dlg(TX("Delete account"), `<p class="msub">${esc(TX("This deletes your account, watchlists, notes, drawings and alerts for good. It cannot be undone."))}</p>
+    <label class="fld"><span>${esc(TX("Password"))}</span><input type="password" id="dPw" autocomplete="current-password"></label>
+    <button class="btn wide danger" id="dOk">${esc(TX("Delete my account"))}</button>`, B=>{
+    B.querySelector("#dOk").onclick = async ()=>{ const b = B.querySelector("#dOk"); b.disabled = true;
+      try{ await api("/auth/delete", {method:"POST", body: JSON.stringify({password: B.querySelector("#dPw").value})});
+        closeDlg(); signedOut(); toast("Your account was deleted."); }
+      catch(e){ toast(e.message); b.disabled = false; } }; });
+}
 
 /* ================= WELCOME PAGE ================= */
 $("#vWelcome").addEventListener("click", e=>{

@@ -23,7 +23,7 @@
 <meta name="description" content="O'Neil-style daily charts, RS Ratings, industry group ranks and automatic base and pivot detection for every S&amp;P 1500 and Nasdaq-100 stock. Free.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&family=Archivo+Narrow:wght@400;600;700&family=Libre+Franklin:wght@600;800&family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&display=swap">
-<link rel="stylesheet" href="style.css?v=20261006b">
+<link rel="stylesheet" href="style.css?v=20261007a">
 </head>
 <body>
 <div class="sheet">
@@ -33,6 +33,8 @@
     <span class="sp"></span>
     <label class="jump"><span class="vh">Go to ticker</span><input id="jump" placeholder="Ticker…" maxlength="10" spellcheck="false" autocomplete="off" list="symlist"></label>
     <datalist id="symlist"></datalist>
+    <button class="gear bell" id="bell" hidden aria-haspopup="true" aria-expanded="false" title="Notifications" aria-label="Notifications"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22zm7-6V11a7 7 0 0 0-5.5-6.84V3.5a1.5 1.5 0 0 0-3 0v.66A7 7 0 0 0 5 11v5l-2 2v1h18v-1l-2-2z"/></svg><span class="bdg" id="bellN" hidden></span></button>
+    <div class="acctmenu bellmenu" id="bellMenu" hidden role="menu"></div>
     <button class="btn acct" id="acct" aria-haspopup="true">Sign in</button>
     <div class="acctmenu" id="acctMenu" hidden role="menu"></div>
     <button class="gear help" id="help" title="How Ticker&amp;Tape works (tour)" aria-label="Help: take the tour">?</button>
@@ -40,6 +42,7 @@
     <div class="settings" id="settings" hidden role="dialog" aria-label="Settings"></div>
   </nav>
   <div class="banner" id="banner" hidden></div>
+  <div class="vbar" id="vBar" hidden></div>
   <nav class="tabs" id="tabs" aria-label="Sections">
     <a href="#" data-v="home">Home</a><a href="#watchlist" data-v="watch">Watchlist</a><a href="#screener" data-v="all">Screener</a><a href="#etfs" data-v="etf">ETFs</a><a href="#heatmap" data-v="heat">Heatmap</a><a href="#breadth" data-v="breadth">Breadth</a><a href="#ideas" data-v="ideas">Trade ideas</a><a href="#earnings" data-v="earn">Earnings</a><a href="#breadth" class="mktchip" id="mktChip" title="Market direction · open Market breadth" hidden></a>
   </nav>
@@ -244,7 +247,7 @@
         <button data-s="watch" class="on">Watchlist</button>
         <button data-s="all">All stocks</button>
       </div>
-      <button class="btn ghost" id="wlClear" hidden title="Remove every ticker from your watchlist">Clear watchlist</button>
+      <span class="wlctl" id="wlCtl" hidden><select id="wlSel" aria-label="Watchlist"></select><button class="btn ghost" id="wlMenuBtn" aria-haspopup="true" aria-expanded="false">Manage ▾</button><span class="acctmenu wlmenu" id="wlMenu" hidden role="menu"></span></span>
       <div class="seg" role="group" aria-label="Filter" id="filters">
         <button data-f="all" class="on">All</button>
         <button data-f="setup">Breakout / buy zone</button>
@@ -295,6 +298,7 @@
       <div class="tick">
         <h1 id="sym">—</h1>
         <button class="starbtn" id="star" aria-pressed="false" title="Add to your watchlist">☆</button>
+        <button class="starbtn notebtn" id="tkNoteBtn" title="Add a private note to this ticker" aria-label="Add a private note to this ticker">✎</button>
         <span id="cname" class="cname"></span>
         <span id="baseChip" class="chip"></span>
         <a id="earnChip" class="chip echip" href="#earnings" hidden></a>
@@ -305,6 +309,7 @@
         <div class="meta" id="qMeta"></div>
       </div>
     </header>
+    <p class="tknote" id="tkNote" hidden></p>
 
     <div class="bar">
       <button class="btn" id="bBack">← Back</button>
@@ -329,6 +334,9 @@
         <button class="btn" id="bNote" title="Click a bar and type a note with an arrow">Note</button>
         <button class="btn" id="bUndo">Undo</button>
         <button class="btn" id="bClr">Clear drawings</button>
+      </span>
+      <span class="grp">
+        <button class="btn" id="bAlert" title="Get an alert when the price reaches a level">🔔 Alert</button>
       </span>
       <span class="grp">
         <a class="btn xshare" id="bShare" href="#" target="_blank" rel="noopener" title="Share this chart on X"><svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><path fill="currentColor" d="M18.9 2H22l-6.8 7.8L23.2 22h-6.3l-4.9-6.4L6.4 22H3.3l7.3-8.3L1 2h6.4l4.4 5.9L18.9 2Zm-1.1 18.1h1.7L6.3 3.8H4.5l13.3 16.3Z"/></svg>Share</a>
@@ -453,8 +461,14 @@
     <div class="tbtns"><button class="lnk" id="tSkip">Skip tour</button><span class="sp"></span><button class="btn" id="tBack">Back</button><button class="btn on" id="tNext">Next</button></div>
   </div>
 </div>
+<div class="modal" id="dlg" hidden>
+  <div class="mbox dlgbox" role="dialog" aria-modal="true" aria-labelledby="dlgT">
+    <div class="sethd"><b id="dlgT"></b><button type="button" class="x" id="dlgX" aria-label="Close">×</button></div>
+    <div id="dlgB"></div>
+  </div>
+</div>
 <div class="toast" id="toast" hidden></div>
-<script src="i18n.js?v=20261006b"></script>
-<script src="app.js?v=20261006b"></script>
+<script src="i18n.js?v=20261007a"></script>
+<script src="app.js?v=20261007a"></script>
 </body>
 </html>
