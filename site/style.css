@@ -967,3 +967,18 @@ details.howto > p{margin:8px 0 0}
 .gatebar .btn.on{background:#fff;color:var(--navy)}
 .gatebar .btn:not(.on){background:transparent;color:#fff}
 button.w2new{cursor:pointer}
+/* rotating showcase of the tools on the welcome page */
+.w2stage{position:relative;aspect-ratio:16/10;overflow:hidden;border:1px solid var(--imgb);background:var(--page)}
+.w2stage img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:top left;opacity:0;transform:scale(1.035);transition:opacity .8s ease,transform 5.5s ease-out;border:0}
+.w2stage img.on{opacity:1;transform:scale(1)}
+.w2tabs{display:flex;flex-wrap:wrap;gap:0;margin-top:8px;border-top:1px solid var(--trule)}
+.w2tabs button{position:relative;flex:1 1 auto;background:none;border:0;padding:8px 6px 7px;font:700 11px var(--f-label);letter-spacing:.1em;text-transform:uppercase;color:var(--tsub);cursor:pointer;white-space:nowrap}
+.w2tabs button:hover{color:var(--tfg)}
+.w2tabs button.on{color:var(--amber)}
+.w2tabs button i{position:absolute;left:6px;right:6px;top:-1px;height:2px;background:var(--amber);transform:scaleX(0);transform-origin:left}
+.w2tabs button.on i{animation:w2prog var(--dur,5.5s) linear forwards}
+.w2show-paused .w2tabs button.on i{animation-play-state:paused}
+@keyframes w2prog{to{transform:scaleX(1)}}
+#wCap{min-height:2.9em}
+@media (prefers-reduced-motion:reduce){.w2stage img{transition:opacity .2s;transform:none}.w2tabs button.on i{animation:none;transform:scaleX(1)}}
+@media (max-width:600px){.w2tabs button{flex:1 1 25%;font-size:10px;letter-spacing:.06em}}

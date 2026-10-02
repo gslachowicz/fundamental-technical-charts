@@ -2577,8 +2577,49 @@ function openCmp(spec){
 }
 
 /* ================= WELCOME PAGE ================= */
+// rotating showcase: screenshots of each tool, taken every night by scripts/showcase.mjs
+const SHOW = [
+  {k:"wall", t:"Chart wall", c:"Your whole watchlist as a wall of O'Neil-style charts, with RS Rating, Composite and base status on every one."},
+  {k:"screener", t:"Screener", c:"Every U.S. stock and ADR worth $1 billion or more, ranked by RS Rating, with EPS and sales growth, bases, pivots and status."},
+  {k:"heatmap", t:"Heatmap", c:"The S&P 500 and Nasdaq-100 by sector, colored by daily, weekly or year-to-date change, or by RS Rating."},
+  {k:"breadth", t:"Breadth", c:"Market direction the O'Neil way, plus stocks above their moving averages, new highs and lows and the A/D line."},
+  {k:"ideas", t:"Trade ideas", c:"Leaders near a buy point every day, with the pivot, buy zone and a stop 7% below, tracked for 8 weeks."},
+  {k:"earnings", t:"Earnings", c:"Who reports this week, with each stock's RS Rating, expected EPS and how the stock reacted last time."},
+  {k:"compare", t:"Compare", c:"SPY vs RSP vs MAGS on one timeline, or ratios like RSP:SPY, with your own moving averages."},
+  {k:"chart", t:"Charts", c:"Daily and weekly charts with the RS line, labeled volume, the earnings strip and the current base with its pivot."}];
+const show = {i:0, list:SHOW.slice(), timer:0, paused:false, dur:5500, built:false};
+function showImg(k){ let im = $(`#wStage img[data-k="${k}"]`);
+  if(!im){ im = new Image(); im.dataset.k = k; im.width = 1440; im.height = 900; im.alt = (SHOW.find(x=>x.k===k)||{}).t || "";
+    im.onerror = () => { show.list = show.list.filter(x=>x.k!==k); im.remove(); buildShowTabs(); if(!show.list.length) noShow(); }; im.src = `/img/showcase/${k}.jpg`; $("#wStage").appendChild(im); }
+  return im; }
+function noShow(){ clearTimeout(show.timer); $("#wStage").innerHTML = `<img class="on" src="/img/hero-chart.jpg" alt="Ticker&Tape daily chart of NVDA" width="1380" height="654" style="object-fit:contain">`; $("#wTabs").innerHTML = ""; $("#wShowName").textContent = "NVDA · Daily";
+  $("#wCap").textContent = TX("NVDA, daily: cup base with pivot and buy zone, 50- and 200-day lines, RS line, labeled volume and the quarterly earnings strip."); }
+function buildShowTabs(){ const cur = show.list[show.i] && show.list[show.i].k;
+  $("#wTabs").innerHTML = show.list.map(x=>`<button role="tab" data-k="${x.k}" aria-selected="${x.k===cur}"><i></i>${esc(TX(x.t))}</button>`).join(""); setShow(Math.max(0, show.list.findIndex(x=>x.k===cur)), true); }
+function setShow(i, keep){
+  if(!show.list.length) return;
+  show.i = (i + show.list.length) % show.list.length; const s = show.list[show.i];
+  const im = showImg(s.k); showImg(show.list[(show.i+1) % show.list.length].k);   // preload the next one
+  $$("#wStage img").forEach(x=>x.classList.toggle("on", x === im));
+  $$("#wTabs button").forEach(b=>{ const on = b.dataset.k === s.k; b.classList.toggle("on", on); b.setAttribute("aria-selected", on);
+    if(on && !keep){ const bar = b.querySelector("i"); bar.style.animation = "none"; void bar.offsetWidth; bar.style.animation = ""; } });
+  $("#wShowName").textContent = TX(s.t); $("#wCap").textContent = TX(s.c);
+  clearTimeout(show.timer); if(!show.paused) show.timer = setTimeout(()=>{ if(!$("#vWelcome").hidden) setShow(show.i + 1); }, show.dur);
+}
+function startShow(){
+  if(!show.built){ show.built = true;
+    const fig = $("#wShow"); fig.style.setProperty("--dur", show.dur/1000 + "s");
+    const pause = on => { show.paused = on; fig.classList.toggle("w2show-paused", on); if(on) clearTimeout(show.timer); else setShow(show.i, true); };
+    fig.addEventListener("mouseenter", ()=>pause(true)); fig.addEventListener("mouseleave", ()=>pause(false));
+    $("#wTabs").addEventListener("click", e=>{ const b = e.target.closest("button[data-k]"); if(b) setShow(show.list.findIndex(x=>x.k===b.dataset.k)); });
+    $("#wStage img").onerror = () => { show.list = show.list.filter(x=>x.k!=="wall"); $("#wStage img").remove(); buildShowTabs(); if(!show.list.length) noShow(); };
+    const first = $("#wStage img"); if(first && first.complete && !first.naturalWidth) first.onerror();
+    buildShowTabs(); return; }
+  setShow(show.i);
+}
 // ticker tape (index ETFs, sectors and commodities, with delayed intraday prices when the market is open) and the market board
 function renderWelcome(){
+  startShow();
   if(!HOME){ loadHome().then(()=>{ if(!$("#vWelcome").hidden) renderWelcome(); }).catch(()=>{}); }
   else {
     const rows = [...(HOME.market||[]), ...(HOME.sectors||[]), ...(HOME.commodities||[])].map(r=>{
