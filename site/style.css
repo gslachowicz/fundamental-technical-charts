@@ -1,4 +1,4 @@
-/* Ink Charts — a book-plate chart room in the manner of O'Neil's printed charts.
+/* Ticker&Tape — a book-plate chart room in the manner of O'Neil's printed charts.
    Navy headline type, white dotted-grid plates, ink bars. Deliberately single (paper) theme. */
 :root{
   --page:#f3f1ea; --plate:#ffffff; --ink:#15171c; --ink2:#5a5d66; --rule:#c9c6bc;

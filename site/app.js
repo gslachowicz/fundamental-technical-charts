@@ -1,4 +1,4 @@
-/* Ink Charts — screener + O'Neil-style chart. Reads static JSON from ./data/ */
+/* Ticker&Tape — screener + O'Neil-style chart. Reads static JSON from ./data/ */
 (() => {
 "use strict";
 const $ = s => document.querySelector(s);
@@ -537,7 +537,7 @@ function renderPanels(){
   const F = S.fund||{}, st = S.stats||{}, b = S.base;
   const ch = st.chgPct;
   $("#sym").textContent = S.symbol; $("#cname").textContent = S.name || "";
-  document.title = `${S.symbol} · Ink Charts`;
+  document.title = `${S.symbol} · Ticker&Tape`;
   $("#qPx").textContent = fmtP(st.close);
   $("#qChg").innerHTML = `<span class="${ch<0?'dn':''}">${ch>=0?"+":""}${fmtP(st.close-st.prevClose)} (${fmtPct(ch,2)})</span>`;
   $("#qMeta").textContent = (S.live ? `${fmtLong(iso(st.date))} · ${liveTime()} ET, delayed` : `${fmtLong(iso(st.date))} close`) + ` · Vol ${fmtV(st.volume)}` + (F.exchange? " · "+F.exchange : "");
@@ -657,8 +657,8 @@ function renderPeers(){
 
 /* ---------- intraday prices (live.json on the "live" branch, refreshed every 15 min in market hours) ---------- */
 let LIVE = null;
-const LIVE_URL = (()=>{ const h = location.hostname; if(!h.endsWith(".github.io")) return "data/live.json";
-  const repo = location.pathname.split("/")[1]; return repo ? `https://raw.githubusercontent.com/${h.split(".")[0]}/${repo}/live/live.json` : null; })();
+const LIVE_URL = (location.hostname === "localhost" || location.protocol === "file:") ? "data/live.json"
+  : "https://raw.githubusercontent.com/gslachowicz/fundamental-technical-charts/live/live.json";
 const liveTime = () => LIVE ? new Date(LIVE.updated).toLocaleTimeString("en-US",{timeZone:"America/New_York", hour:"numeric", minute:"2-digit"}) : "";
 function patchRow(r){
   const q = LIVE && LIVE.q[r.symbol]; if(!q || !r.date) return;
@@ -762,7 +762,7 @@ async function openChart(sym){
 function route(){
   const sym = decodeURIComponent(location.hash.slice(1)).toUpperCase();
   if(sym){ openChart(sym); }
-  else { $("#vChart").hidden = true; $("#vScreener").hidden = false; document.title = "Ink Charts"; renderScreener(); }
+  else { $("#vChart").hidden = true; $("#vScreener").hidden = false; document.title = "Ticker&Tape"; renderScreener(); }
 }
 
 /* ---------- boot ---------- */
