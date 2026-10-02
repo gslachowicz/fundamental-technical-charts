@@ -55,7 +55,7 @@ const cleanEmail = e => String(e || "").trim().toLowerCase();
 
 /* ================= NEWSLETTER =================
    Needs: D1 table "subscribers" (schema.sql), Worker secret RESEND_API_KEY (resend.com, domain tickerandtape.com verified),
-   optional secret ADMIN_KEY (for /newsletter/preview and /newsletter/test), and a Cron Trigger "0 2 * * 6" (Friday night, after the nightly build). */
+   optional secret ADMIN_KEY (for /newsletter/preview and /newsletter/test), and a Cron Trigger "0 2 * * SAT" (Friday night, after the nightly build). */
 const SITE = "https://tickerandtape.com";
 const API_BASE = "https://api.tickerandtape.com";
 const FROM = "Ticker&Tape <newsletter@tickerandtape.com>";
