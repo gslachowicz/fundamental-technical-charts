@@ -1225,7 +1225,7 @@ function renderEarn(){
   const lead = evs.filter(e=>(e.rs||0)>=80).length, rx = evs.filter(e=>e.reactPct!=null);
   $("#eStats").innerHTML = `<div><b>${evs.length}</b><span>reports ${earnFilter==="all"?"":"(filtered)"}</span></div><div><b>${lead}</b><span>leaders (RS ≥ 80)</span></div>`
     + (past.length ? `<div><b>${Math.round(100*beat/past.length)}%</b><span>beat estimates (${past.length} so far)</span></div><div><b class="${rx.length && rx.reduce((s,e)=>s+e.reactPct,0)<0?'neg':''}">${rx.length ? fmtPct(rx.reduce((s,e)=>s+e.reactPct,0)/rx.length,1) : "—"}</b><span>average reaction</span></div>`
-      : `<div class="wide"><span>Results, surprises and reactions fill in as companies report.</span></div>`);
+      : `<div class="wide" style="grid-column:span 2"><span>Results, surprises and reactions fill in as companies report.</span></div>`);
   $("#eCount").textContent = "Reported: EPS surprise · reaction   ·   Upcoming: consensus EPS · growth vs a year ago" + (EARN.dataDate ? `   ·   updated ${fmtLong(iso(EARN.dataDate))}` : "");
   const item = e => {
     const lead = (e.rs||0) >= 80, done = e.epsAct != null;
@@ -1233,19 +1233,28 @@ function renderEarn(){
     const right = done
       ? `<span class="${(e.surprise??0)<0?'neg':'up'}" title="EPS ${e.epsAct} vs ${e.epsEst ?? "—"} expected">${e.surprise!=null ? fmtPct(e.surprise,0) : "—"}</span>${e.reactPct!=null ? `<b class="${e.reactPct<0?'neg':'up'}" title="Reaction in the first session after the report">${fmtPct(e.reactPct,1)}</b>` : ""}`
       : `<span title="Consensus EPS${e.epsLY?` vs ${e.epsLY} a year ago`:""}">${e.epsEst!=null ? "$"+(+e.epsEst).toFixed(2) : ""}</span>${g!=null && isFinite(g) ? `<b class="${g<0?'neg':'up'}" title="Expected EPS growth vs the same quarter last year">${fmtPct(g,0)}</b>` : ""}`;
-    return `<a class="eitem${lead?" lead":""}${wl.has(e.symbol)?" mine":""}" href="#${esc(e.symbol)}" title="${esc(e.name)}${e.groupRank?` · group ${esc(e.groupRank)}`:""}">
+    const res = done ? ((e.surprise ?? 0) > 0 ? " beat" : (e.surprise ?? 0) < 0 ? " miss" : "") : "";
+    return `<a class="eitem${lead?" lead":""}${wl.has(e.symbol)?" mine":""}${res}" href="#${esc(e.symbol)}" title="${esc(e.name)}${e.groupRank?` · group ${esc(e.groupRank)}`:""}">
       <span class="es">${esc(e.symbol)}</span><span class="ers${lead?" hot":""}">${e.rs ?? "—"}</span><span class="ev">${right}</span></a>`;
   };
-  const block = (title, list, key) => {
+  const ICON = {
+    bmo: `<svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="currentColor" d="M12 7a5 5 0 0 1 5 5H7a5 5 0 0 1 5-5Zm-1-5h2v3h-2V2ZM4.2 5.6l1.4-1.4 2.1 2.1-1.4 1.4-2.1-2.1Zm12.1.7 2.1-2.1 1.4 1.4-2.1 2.1-1.4-1.4ZM2 14h20v2H2v-2Zm4 4h12v2H6v-2Z"/></svg>`,
+    amc: `<svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="currentColor" d="M14.5 2A9 9 0 1 0 22 15.6 7.5 7.5 0 0 1 14.5 2Z"/></svg>`,
+    "": `<svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 1 1 0 20 10 10 0 0 1 0-20Zm0 2a8 8 0 1 0 0 16 8 8 0 0 0 0-16Zm-1 3h2v6h-2V7Zm0 8h2v2h-2v-2Z"/></svg>`};
+  const block = (title, list, key, kind) => {
     if(!list.length) return "";
     const LIM = 14, more = list.length - LIM, id = key;
-    return `<div class="eblk"><h5>${title} <small>${list.length}</small></h5>${list.slice(0, LIM).map(item).join("")}${more>0 ? `<div class="emore" id="${id}" hidden>${list.slice(LIM).map(item).join("")}</div><button class="lnk etog" data-t="${id}">+ ${more} more</button>` : ""}</div>`;
+    return `<div class="eblk k-${kind||"na"}"><h5><span>${ICON[kind||""]}${title}</span><small>${list.length}</small></h5>${list.slice(0, LIM).map(item).join("")}${more>0 ? `<div class="emore" id="${id}" hidden>${list.slice(LIM).map(item).join("")}</div><button class="lnk etog" data-t="${id}">+ ${more} more</button>` : ""}</div>`;
   };
   $("#eCal").innerHTML = days.map((d,i)=>{
     const L = evs.filter(e=>e.date===d), dd = new Date(d+"T12:00:00Z");
     const by = t => L.filter(e=>e.time===t);
-    return `<div class="eday${d===today?" today":""}${d<today?" past":""}"><header><b>${dd.toLocaleDateString("en-US",{weekday:"long", timeZone:"UTC"})}</b><span>${dd.toLocaleDateString("en-US",{month:"short", day:"numeric", timeZone:"UTC"})}</span></header>
-      ${L.length ? block("Before open", by("bmo"), `e${i}b`) + block("After close", by("amc"), `e${i}a`) + block("Time not set", by(""), `e${i}n`) : `<div class="enone">No reports${earnFilter!=="all"?" in this filter":""}</div>`}</div>`;
+    const nLead = L.filter(e=>(e.rs||0)>=80).length;
+    return `<div class="eday${d===today?" today":""}${d<today?" past":""}"><header>
+        <span class="edn">${dd.getUTCDate()}</span>
+        <span class="edw"><b>${dd.toLocaleDateString("en-US",{weekday:"long", timeZone:"UTC"})}</b><small>${dd.toLocaleDateString("en-US",{month:"long", timeZone:"UTC"})}${d===today?" · today":""}</small></span>
+        <span class="edc">${L.length}<small>${L.length===1?"report":"reports"}${nLead?` · ${nLead} lead`:""}</small></span></header>
+      ${L.length ? block("Before open", by("bmo"), `e${i}b`, "bmo") + block("After close", by("amc"), `e${i}a`, "amc") + block("Time not set", by(""), `e${i}n`, "") : `<div class="enone">No reports${earnFilter!=="all"?" in this filter":""}</div>`}</div>`;
   }).join("");
   $$("#eCal .etog").forEach(b=>b.onclick = ()=>{ const m = document.getElementById(b.dataset.t); m.hidden = false; b.remove(); });
 }
