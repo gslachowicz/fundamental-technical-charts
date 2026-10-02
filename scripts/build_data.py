@@ -67,6 +67,19 @@ ETFS = {
     "EWU": ("International", "United Kingdom", ""),
     "IBIT": ("Crypto", "Bitcoin", ""), "ETHA": ("Crypto", "Ether", ""), "UUP": ("Currency", "U.S. Dollar", ""),
 }
+# Futures (Yahoo continuous front-month contracts): symbol -> (group, name, unit)
+FUTURES = {
+    "ES=F": ("Index", "S&P 500 E-mini", "index pts"),
+    "GC=F": ("Metals", "Gold", "$/oz"), "SI=F": ("Metals", "Silver", "$/oz"),
+    "HG=F": ("Metals", "Copper", "$/lb"), "PL=F": ("Metals", "Platinum", "$/oz"),
+    "CL=F": ("Energy", "Crude Oil WTI", "$/bbl"), "BZ=F": ("Energy", "Brent Crude", "$/bbl"),
+    "NG=F": ("Energy", "Natural Gas", "$/MMBtu"), "RB=F": ("Energy", "Gasoline RBOB", "$/gal"),
+    "ZC=F": ("Agriculture", "Corn", "¢/bu"), "ZW=F": ("Agriculture", "Wheat", "¢/bu"),
+    "ZS=F": ("Agriculture", "Soybeans", "¢/bu"), "KC=F": ("Agriculture", "Coffee", "¢/lb"),
+    "LE=F": ("Agriculture", "Live Cattle", "¢/lb"),
+}
+HOME_CHART = "ES=F"
+HOME_COMMODITIES = [s for s in FUTURES if FUTURES[s][0] != "Index"]
 HOME_MARKET = ["SPY", "QQQ", "DIA", "IWM", "RSP"]
 HOME_SECTORS = ["XLK", "XLC", "XLY", "XLF", "XLI", "XLV", "XLE", "XLB", "XLP", "XLU", "XLRE"]
 
@@ -126,6 +139,21 @@ def qlabel(ts: pd.Timestamp) -> str:
 
 def month_end(ts: pd.Timestamp) -> pd.Timestamp:
     return (pd.Timestamp(ts.year, ts.month, 1) + pd.offsets.MonthEnd(0)).normalize()
+
+
+def file_symbol(s: str) -> str:
+    """Chart file name for a symbol ("ES=F" -> "ES_F"; the page does the same mapping)."""
+    return s.replace("=", "_")
+
+
+def clean_futures(df: pd.DataFrame) -> pd.DataFrame:
+    """Yahoo futures dailies can carry weekend stubs, duplicate dates and missing volume."""
+    df = df[~df.index.duplicated(keep="last")]
+    df = df[df.index.dayofweek < 5].copy()
+    df["Volume"] = df["Volume"].fillna(0)
+    for k in ("Open", "High", "Low"):
+        df[k] = df[k].fillna(df["Close"])
+    return df
 
 
 def yf_symbol(s: str) -> str:
@@ -1111,6 +1139,8 @@ def demo_inputs(watch: list[str]):
     for e_sym, (grp, short, gics) in ETFS.items():
         uni[e_sym] = {"sector": "ETF", "industry": grp, "name": short, "etf": True}
         prices[e_sym] = walk(rng.uniform(20, 600), rng.normal(0.0003, 0.0006), rng.uniform(0.008, 0.018), 2e7)
+    for f_sym in FUTURES:
+        prices[f_sym] = walk(rng.uniform(3, 3000), rng.normal(0.0002, 0.0008), rng.uniform(0.01, 0.022), 2e5)
     idx = walk(4200, 0.0005, 0.009, 3.5e9)
     prices["^GSPC"] = idx
     prices["^IXIC"] = walk(13000, 0.0006, 0.011, 5e9)
@@ -1260,16 +1290,23 @@ def main():
             uni[s] = {"sector": "", "industry": "", "user": True}
         log(f"user tickers: {len(user_extra)} added")
         log(f"universe: {len(uni)} stocks")
-        symbols = list(dict.fromkeys(watch + list(INDEXES) + list(uni)))
+        symbols = list(dict.fromkeys(watch + list(INDEXES) + list(FUTURES) + list(uni)))
         prices = download_prices(symbols, "3y")
+    for f_sym in FUTURES:
+        if f_sym in prices:
+            prices[f_sym] = clean_futures(prices[f_sym])
 
     bench_df = prices.get(BENCH)
     if bench_df is None:
         sys.exit("Could not download the S&P 500 (^GSPC). Yahoo may be rate-limiting; try again later.")
     bench = bench_df["Close"]
+    # Globex reopens at 6 pm ET, so Yahoo may already carry a stub bar for the next session: cut it
+    for f_sym in FUTURES:
+        if f_sym in prices:
+            prices[f_sym] = prices[f_sym][prices[f_sym].index <= bench.index[-1]]
 
     # RS ratings against the universe (plus watchlist so the scale is never empty)
-    scores = {s: rs_score(df["Close"].to_numpy()) for s, df in prices.items() if not s.startswith("^")}
+    scores = {s: rs_score(df["Close"].to_numpy()) for s, df in prices.items() if not s.startswith("^") and s not in FUTURES}
     ref_syms = [s for s in uni if scores.get(s) is not None and not uni[s].get("user") and not uni[s].get("etf")] or [s for s in scores if scores[s] is not None]
     ref = np.sort(np.array([scores[s] for s in ref_syms]))
     log(f"RS reference set: {len(ref)} stocks")
@@ -1342,10 +1379,10 @@ def main():
 
     def write_bundle(s, bundle, keep_cache=False):
         txt = jdumps(bundle, separators=(",", ":"))
-        (out / "t" / f"{s}.json").write_text(txt)
+        (out / "t" / f"{file_symbol(s)}.json").write_text(txt)
         if keep_cache:
             (CACHE / "t").mkdir(exist_ok=True)
-            (CACHE / "t" / f"{s}.json").write_text(txt)
+            (CACHE / "t" / f"{file_symbol(s)}.json").write_text(txt)
 
     # ---------- 1) watchlist: fresh fundamentals every run
     rows, errors = [], []
@@ -1438,6 +1475,23 @@ def main():
             log(f"{s}: universe row failed: {e}")
     log(f"universe screener: {len(uni_rows)} stocks, {with_fund + len(watch)} with fundamentals")
 
+    # ---------- 4) futures: chart files only (not in the screener, RS or group ranks)
+    for f_sym, (f_grp, f_name, f_unit) in FUTURES.items():
+        df = prices.get(f_sym)
+        if df is None:
+            cached = CACHE / "t" / f"{file_symbol(f_sym)}.json"
+            errors.append(f"{f_sym}: no price data from Yahoo" + (" (showing cached data)" if cached.exists() else ""))
+            if cached.exists():
+                (out / "t" / cached.name).write_text(cached.read_text())
+            continue
+        try:
+            _, bundle, _ = build(f_sym, df, {"name": f"{f_name} futures", "futures": {"group": f_grp, "unit": f_unit}})
+            bundle["stats"].pop("rsRating", None)
+            bundle["row"]["rsRating"] = None
+            write_bundle(f_sym, bundle, keep_cache=True)
+        except Exception as e:  # noqa: BLE001
+            log(f"{f_sym}: futures chart failed: {e}")
+
     (out / "screener.json").write_text(jdumps(rows, separators=(",", ":")))
     (out / "universe.json").write_text(jdumps(uni_rows, separators=(",", ":")))
     meta = {
@@ -1463,11 +1517,16 @@ def main():
         prev_year = c[c.index < pd.Timestamp(c.index[-1].year, 1, 1)]
         ytd = rnd(pct_change(last, float(prev_year.iloc[-1]))) if len(prev_year) else None
         grp, short, gics = ETFS.get(sym, ("", sym, ""))
-        return {"symbol": sym, "name": short, "gics": gics, "close": round(last, 2), "date": c.index[-1].strftime("%Y-%m-%d"),
+        unit = ""
+        if sym in FUTURES:
+            grp, short, unit = FUTURES[sym]
+        return {"symbol": sym, "name": short, "gics": gics, "grp": grp, "unit": unit, "close": round(last, 3 if last < 20 else 2), "date": c.index[-1].strftime("%Y-%m-%d"),
                 "d1": back(1), "w1": back(5), "m3": back(63), "m9": back(189), "ytd": ytd, "m12": back(252),
                 "spark": [round(float(x), 2) for x in c.to_numpy()[-63:]]}
     home = {"updated": now_iso, "market": [r for r in map(perf_row, HOME_MARKET) if r],
-            "sectors": [r for r in map(perf_row, HOME_SECTORS) if r], "news": []}
+            "sectors": [r for r in map(perf_row, HOME_SECTORS) if r],
+            "commodities": [r for r in map(perf_row, HOME_COMMODITIES) if r],
+            "chart": {"symbol": HOME_CHART, "file": file_symbol(HOME_CHART), "name": FUTURES[HOME_CHART][1]}, "news": []}
     if not args.demo:
         try:
             import yfinance as yf

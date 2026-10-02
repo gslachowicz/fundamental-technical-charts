@@ -22,6 +22,8 @@ import yfinance as yf
 
 ROOT = Path(__file__).resolve().parents[1]
 INDEXES = ["^GSPC", "^IXIC"]
+# futures on the home page (S&P 500 chart + commodities board); keep in sync with FUTURES in build_data.py
+FUTURES = ["ES=F", "GC=F", "SI=F", "HG=F", "PL=F", "CL=F", "BZ=F", "NG=F", "RB=F", "ZC=F", "ZW=F", "ZS=F", "KC=F", "LE=F"]
 
 
 def read_watchlist() -> list[str]:
@@ -60,7 +62,7 @@ def num(x):
 
 def main():
     out_path = Path(sys.argv[1] if len(sys.argv) > 1 else "live.json")
-    symbols = list(dict.fromkeys(INDEXES + read_watchlist() + site_symbols()))
+    symbols = list(dict.fromkeys(INDEXES + FUTURES + read_watchlist() + site_symbols()))
     print(f"{len(symbols)} symbols")
     quotes: dict[str, list] = {}
     dates: dict[str, str] = {}
@@ -83,13 +85,15 @@ def main():
                 o, h, l, c, v = (num(r["Open"]), num(r["High"]), num(r["Low"]), num(r["Close"]), num(r["Volume"]))
                 if c is None:
                     continue
-                quotes[s] = [round(o or c, 2), round(h or c, 2), round(l or c, 2), round(c, 2), int(v or 0)]
+                nd = 4 if c < 20 else 2   # natural gas, copper, gasoline need more decimals
+                quotes[s] = [round(o or c, nd), round(h or c, nd), round(l or c, nd), round(c, nd), int(v or 0)]
                 dates[s] = pd.Timestamp(d.index[-1]).strftime("%Y-%m-%d")
             except Exception:  # noqa: BLE001
                 continue
     if not quotes:
         sys.exit("no quotes")
-    day = max(dates.values())
+    # the session date comes from stocks and indexes; futures roll to the next day at 6 pm ET
+    day = max((d for s, d in dates.items() if s not in FUTURES), default=max(dates.values()))
     quotes = {s: q for s, q in quotes.items() if dates[s] == day}
     now = dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%MZ")
     out_path.write_text(json.dumps({"updated": now, "date": day, "q": quotes}, separators=(",", ":")))
