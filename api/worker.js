@@ -146,7 +146,8 @@ ${E.length ? h3("Next week's earnings · leaders first") + table(["Stock", "Repo
 <tr><td style="padding:18px 0 0;border-top:1px solid ${C.rule};font:12px/1.5 Arial,sans-serif;color:${C.ink2}">
 Ideas come from an automatic scan and are not investment advice or a recommendation to buy or sell. Buy point = pivot, zone = up to 5% above it, stop = 7% under the buy point. Data: Yahoo Finance.<br>
 Follow us on X: <a href="https://x.com/Tickerandtape" style="color:${C.navy}">@Tickerandtape</a> · Questions: <a href="mailto:${REPLY_TO}" style="color:${C.navy}">${REPLY_TO}</a><br>
-You get this because you subscribed at tickerandtape.com. <a href="${unsubLink}" style="color:${C.navy}">Unsubscribe</a></td></tr>
+You get this because you subscribed at tickerandtape.com. <a href="${unsubLink}" style="color:${C.navy}">Unsubscribe</a> · <a href="${SITE}/privacy.html" style="color:${C.navy}">Privacy</a><br>
+Ticker&amp;Tape · Buenos Aires, Argentina</td></tr>
 </table></td></tr></table></body></html>`;
 }
 
@@ -247,6 +248,44 @@ export default {
         }
         await env.DB.prepare("UPDATE users SET failed = 0, locked_until = 0 WHERE id = ?").bind(u.id).run();
         return json(req, { token: await newSession(env, u.id), email: u.email });
+      }
+
+      // ---------- password reset (link by email, valid one hour, single use)
+      if (path === "/auth/forgot" && req.method === "POST") {
+        const em = cleanEmail((await body(req)).email);
+        const u = EMAIL_RE.test(em) && await env.DB.prepare("SELECT id, email FROM users WHERE email = ?").bind(em).first();
+        if (u) {
+          const recent = await env.DB.prepare("SELECT COUNT(*) AS n FROM password_resets WHERE user_id = ? AND created > ?")
+            .bind(u.id, now() - 5 * 60).first();
+          if (!recent || !recent.n) {
+            const token = hex(crypto.getRandomValues(new Uint8Array(24)));
+            await env.DB.prepare("DELETE FROM password_resets WHERE user_id = ? OR expires < ?").bind(u.id, now()).run();
+            await env.DB.prepare("INSERT INTO password_resets (token_hash, user_id, expires, created) VALUES (?, ?, ?, ?)")
+              .bind(await sha256(token), u.id, now() + 3600, now()).run();
+            const link = `${SITE}/#reset=${token}`;
+            await sendEmails(env, [{ from: FROM, to: [u.email], reply_to: REPLY_TO, subject: "Reset your Ticker&Tape password",
+              html: `<div style="font:16px/1.5 Arial,sans-serif;color:#15171c;max-width:520px"><h2 style="color:#1f3c6e">Reset your password</h2>
+<p>Someone (hopefully you) asked to reset the password of your Ticker&amp;Tape account. The link works for one hour and only once.</p>
+<p><a href="${link}" style="display:inline-block;background:#1f3c6e;color:#fff;padding:10px 16px;text-decoration:none;font-weight:700">Choose a new password</a></p>
+<p style="color:#5a5d66;font-size:13px">If you did not ask for this, ignore this email: your password stays the same.</p></div>`,
+              text: `Reset your Ticker&Tape password (valid one hour): ${link}` }]);
+          }
+        }
+        return json(req, { ok: true });   // same answer whether or not the account exists
+      }
+      if (path === "/auth/reset" && req.method === "POST") {
+        const { token, password } = await body(req);
+        if (!/^[0-9a-f]{48}$/.test(String(token || ""))) return fail(req, "This reset link is not valid. Ask for a new one.");
+        if (typeof password !== "string" || password.length < 8 || password.length > 200) return fail(req, "Use a password of at least 8 characters.");
+        const th = await sha256(token);
+        const r = await env.DB.prepare("SELECT r.user_id, u.email FROM password_resets r JOIN users u ON u.id = r.user_id WHERE r.token_hash = ? AND r.expires > ?")
+          .bind(th, now()).first();
+        if (!r) return fail(req, "This reset link expired or was already used. Ask for a new one.", 400);
+        const n = await hashPassword(password);
+        await env.DB.prepare("UPDATE users SET pw_hash = ?, pw_salt = ?, failed = 0, locked_until = 0 WHERE id = ?").bind(n.hash, n.salt, r.user_id).run();
+        await env.DB.prepare("DELETE FROM password_resets WHERE user_id = ?").bind(r.user_id).run();
+        await env.DB.prepare("DELETE FROM sessions WHERE user_id = ?").bind(r.user_id).run();   // sign out every other device
+        return json(req, { token: await newSession(env, r.user_id), email: r.email });
       }
 
       // ---------- signed in
