@@ -991,6 +991,8 @@ def fetch_fundamentals(sym: str) -> dict:
         f["epsSurprise"] = f"{n_beat}/{len(beats)} {fmt_pct(beats[0]['surprise'], 0)}"
     if next_earn:
         f["nextEarn"] = pd.Timestamp(next_earn["date"]).strftime("%d-%b-%y")
+        f["nextEarnDate"] = next_earn["date"]
+        f["nextEarnEst"] = next_earn["est"]
         if next_earn["est"] is not None and len(reports) >= 4:
             f["epsDue"] = fmt_pct(pct_change(next_earn["est"], reports[3]["eps"]))
 
@@ -1281,6 +1283,149 @@ def idea_ok(r: dict) -> bool:
         and b.get("type") != "Deep correction" and (r.get("dollarVol50") or 0) >= IDEA_MIN_DVOL
         and (r.get("close") or 0) >= IDEA_MIN_PX
         and (r.get("vs50Pct") is None or r["vs50Pct"] > 0) and (r.get("vs200Pct") is None or r["vs200Pct"] > 0))
+
+
+# ---------------------------------------------------------------- earnings calendar
+NASDAQ_UA = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36",
+             "Accept": "application/json, text/plain, */*", "Origin": "https://www.nasdaq.com", "Referer": "https://www.nasdaq.com/"}
+
+
+def _timing(v) -> str:
+    """Normalize report timing to "bmo" (before the open), "amc" (after the close) or ""."""
+    t = str(v or "").lower()
+    if any(k in t for k in ("bmo", "pre-market", "pre market", "before")):
+        return "bmo"
+    if any(k in t for k in ("amc", "after", "post")):
+        return "amc"
+    return ""
+
+
+def earnings_from_nasdaq(days: list[pd.Timestamp]) -> dict:
+    """{(symbol, date): {...}} from Nasdaq's public earnings calendar, one request per weekday."""
+    import requests
+    out = {}
+    for d in days:
+        try:
+            r = requests.get("https://api.nasdaq.com/api/calendar/earnings", params={"date": d.strftime("%Y-%m-%d")},
+                             headers=NASDAQ_UA, timeout=20)
+            rows = ((r.json().get("data") or {}).get("rows")) or []
+        except Exception as e:  # noqa: BLE001
+            log(f"earnings (nasdaq) {d.date()}: {e}")
+            continue
+        for x in rows:
+            sym = yf_symbol(str(x.get("symbol") or ""))
+            if not sym:
+                continue
+            money = lambda v: fnum(str(v or "").replace("$", "").replace(",", "").replace("(", "-").replace(")", ""))
+            out[(sym, d.strftime("%Y-%m-%d"))] = {
+                "time": _timing(x.get("time")), "epsEst": money(x.get("epsForecast")), "epsLY": money(x.get("lastYearEPS")),
+                "epsAct": money(x.get("eps")),
+                "surprise": fnum(str(x.get("surprise") or "").replace("%", "")), "quarter": x.get("fiscalQuarterEnding") or ""}
+        time.sleep(0.6)
+    log(f"earnings (nasdaq): {len(out)} events")
+    return out
+
+
+def earnings_from_yahoo(start: pd.Timestamp, end: pd.Timestamp) -> dict:
+    """Same shape from Yahoo's earnings calendar (yfinance >= 1.x), paged 100 at a time."""
+    import yfinance as yf
+    out = {}
+    try:
+        cal = yf.Calendars(start=start.strftime("%Y-%m-%d"), end=end.strftime("%Y-%m-%d"))
+        for page in range(40):
+            df = cal.get_earnings_calendar(limit=100, offset=page * 100, filter_most_active=False, force=True)
+            if df is None or df.empty:
+                break
+            df = df.reset_index()
+            c_sym, c_dt = find_col(df, "symbol"), find_col(df, "startdate") or find_col(df, "date")
+            c_tim, c_est = find_col(df, "timing") or find_col(df, "calltime"), find_col(df, "estimate")
+            c_act, c_sur = find_col(df, "reported"), find_col(df, "surprise")
+            if c_sym is None or c_dt is None:
+                break
+            for _, x in df.iterrows():
+                ts = pd.Timestamp(x[c_dt])
+                if ts.tzinfo is not None:
+                    ts = ts.tz_convert("America/New_York").tz_localize(None)
+                tim = _timing(x[c_tim]) if c_tim is not None else ("bmo" if ts.hour and ts.hour < 12 else "amc" if ts.hour >= 15 else "")
+                out[(yf_symbol(str(x[c_sym])), ts.strftime("%Y-%m-%d"))] = {
+                    "time": tim, "epsEst": fnum(x[c_est]) if c_est is not None else None,
+                    "epsAct": fnum(x[c_act]) if c_act is not None else None,
+                    "surprise": fnum(x[c_sur]) if c_sur is not None else None, "quarter": ""}
+            if len(df) < 100:
+                break
+            time.sleep(1)
+    except Exception as e:  # noqa: BLE001
+        log(f"earnings (yahoo): {e}")
+    log(f"earnings (yahoo): {len(out)} events")
+    return out
+
+
+def build_earnings(out: Path, rows: list[dict], prices: dict, data_day: pd.Timestamp, now_iso: str, demo=False) -> None:
+    """earnings.json: who reports from last Monday to next Friday, before the open or after the close, with estimates,
+    results and the stock's reaction. Only stocks the site covers (index members, watchlists, starred tickers)."""
+    by_sym = {r["symbol"]: r for r in rows if not r.get("etf")}
+    mon = (data_day - pd.Timedelta(days=data_day.weekday())).normalize()
+    if data_day.weekday() >= 4:   # from Friday's close on, "this week" is the coming one
+        mon += pd.Timedelta(days=7)
+    start, end = mon - pd.Timedelta(days=7), mon + pd.Timedelta(days=11)
+    days = [d for d in pd.date_range(start, end) if d.weekday() < 5]
+
+    events: dict = {}
+    if demo:
+        rng = np.random.default_rng(3)
+        for s in list(by_sym)[::4]:
+            d = days[int(rng.integers(0, len(days)))]
+            past = d <= data_day
+            est = round(float(rng.uniform(0.2, 3)), 2)
+            act = round(est * float(rng.uniform(0.85, 1.25)), 2) if past else None
+            events[(s, d.strftime("%Y-%m-%d"))] = {"time": ["bmo", "amc", ""][int(rng.integers(0, 3))], "epsEst": est, "epsAct": act,
+                                                   "surprise": round((act / est - 1) * 100, 1) if act else None, "quarter": ""}
+    else:
+        events = earnings_from_nasdaq(days)
+        for k, v in earnings_from_yahoo(start, end + pd.Timedelta(days=1)).items():
+            if k in events:
+                e = events[k]
+                for f in ("time", "epsEst", "epsAct", "surprise"):
+                    if e.get(f) in (None, "") and v.get(f) not in (None, ""):
+                        e[f] = v[f]
+            else:
+                events[k] = v
+    # fallback: next report date stored with each stock's fundamentals
+    seen = {s for s, _ in events}
+    for s in by_sym:
+        if s in seen:
+            continue
+        f = fund_cache_get(s)[0] or {}
+        d = f.get("nextEarnDate")
+        if d and start.strftime("%Y-%m-%d") <= d <= end.strftime("%Y-%m-%d"):
+            events[(s, d)] = {"time": "", "epsEst": f.get("nextEarnEst"), "epsAct": None, "surprise": None, "quarter": ""}
+
+    out_rows = []
+    for (s, d), e in events.items():
+        r = by_sym.get(s)
+        if r is None:
+            continue
+        ev = {"symbol": s, "name": r.get("name", ""), "date": d, "time": e.get("time", ""),
+              "epsEst": e.get("epsEst"), "epsAct": e.get("epsAct"), "surprise": e.get("surprise"), "epsLY": e.get("epsLY"),
+              "rs": r.get("rsRating"), "mcap": r.get("mcap"), "close": r.get("close"), "sector": r.get("sector", ""),
+              "group": r.get("group", ""), "groupRank": r.get("groupRank", ""), "w": 1 if r.get("w") else 0}
+        if ev["surprise"] is None and ev["epsAct"] is not None and ev["epsEst"] not in (None, 0):
+            ev["surprise"] = round((ev["epsAct"] - ev["epsEst"]) / abs(ev["epsEst"]) * 100, 1)
+        # reaction: first full session that traded on the news (same day before the open, next day after the close)
+        df = prices.get(s)
+        if df is not None and pd.Timestamp(d) <= data_day:
+            c = df["Close"]
+            i = c.index.searchsorted(pd.Timestamp(d))
+            j = i if ev["time"] == "bmo" else i + 1
+            if 0 < j < len(c) and i < len(c):
+                ev["reactPct"] = round((float(c.iloc[j]) / float(c.iloc[j - 1]) - 1) * 100, 1)
+        out_rows.append(ev)
+    out_rows.sort(key=lambda e: (e["date"], -(e["mcap"] or 0)))
+    weeks = [{"key": k, "start": (mon + pd.Timedelta(days=7 * o)).strftime("%Y-%m-%d"), "label": lbl}
+             for k, o, lbl in (("last", -1, "Last week"), ("this", 0, "This week"), ("next", 1, "Next week"))]
+    (out / "earnings.json").write_text(jdumps({"updated": now_iso, "dataDate": data_day.strftime("%Y-%m-%d"), "weeks": weeks,
+                                                "events": out_rows}, separators=(",", ":")))
+    log(f"earnings calendar: {len(out_rows)} reports between {start.date()} and {end.date()}")
 
 
 def build_ideas(out: Path, rows: list[dict], prices: dict, day: str, now_iso: str) -> None:
@@ -1630,6 +1775,13 @@ def main():
     except Exception as e:  # noqa: BLE001
         traceback.print_exc()
         log(f"ideas failed: {e}")
+
+    # ---------- earnings calendar: last week, this week and next week for every stock on the site
+    try:
+        build_earnings(out, uni_rows, prices, bench.index[-1], now_iso, demo=bool(args.demo))
+    except Exception as e:  # noqa: BLE001
+        traceback.print_exc()
+        log(f"earnings calendar failed: {e}")
 
     # ---------- home page: market and sector ETFs performance + market headlines
     def perf_row(sym):
