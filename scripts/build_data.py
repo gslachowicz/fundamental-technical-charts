@@ -41,6 +41,9 @@ UA = {"User-Agent": "Mozilla/5.0 (ink-charts data builder; +https://github.com)"
 ETFS = {
     "SPY": ("Market", "S&P 500", ""), "QQQ": ("Market", "Nasdaq-100", ""), "DIA": ("Market", "Dow Jones Industrial Average", ""),
     "IWM": ("Market", "Russell 2000", ""), "MDY": ("Market", "S&P MidCap 400", ""), "RSP": ("Market", "S&P 500 Equal Weight", ""),
+    "MAGS": ("Market", "Magnificent Seven", ""), "QQQE": ("Market", "Nasdaq-100 Equal Weight", ""),
+    "IWF": ("Factor", "Russell 1000 Growth", ""), "IWD": ("Factor", "Russell 1000 Value", ""), "MTUM": ("Factor", "Momentum", ""),
+    "SPHB": ("Factor", "S&P 500 High Beta", ""), "SPLV": ("Factor", "S&P 500 Low Volatility", ""),
     "XLK": ("Sector", "Technology", "Information Technology"), "XLF": ("Sector", "Financials", "Financials"),
     "XLV": ("Sector", "Health Care", "Health Care"), "XLE": ("Sector", "Energy", "Energy"),
     "XLY": ("Sector", "Consumer Discretionary", "Consumer Discretionary"), "XLP": ("Sector", "Consumer Staples", "Consumer Staples"),
