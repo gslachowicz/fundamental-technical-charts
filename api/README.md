@@ -22,3 +22,14 @@ Endpoints: POST /auth/signup, /auth/login, /auth/logout, /auth/password; GET /me
 once: Worker > Settings > Builds > Connect, repository `gslachowicz/fundamental-technical-charts`, branch `main`,
 root directory `api`, deploy command `npx wrangler deploy`. From then on every change pushed to `api/` is deployed
 automatically; database changes (SQL migrations) are still run by hand in the D1 console.
+
+## Control panel (/admin)
+
+`https://api.tickerandtape.com/admin` is a private page (not linked anywhere, `noindex`) that asks for the `ADMIN_KEY` secret
+and shows: accounts (total, new, verified, DAU/WAU/MAU, 7-day retention), visits (unique visitors and page views per day,
+sections, tickers, referrers, countries, devices, languages, visitor-to-signup conversion), account usage (watchlists, lists,
+notes, saved screens), alerts, newsletter and site health (last nightly build, live prices).
+Setup, once: run `migrate-2026-10-stats.sql` in the D1 console. `admin.html` is bundled into the Worker as text
+(`[[rules]]` in `wrangler.toml`), so the Worker must be deployed with Wrangler (Workers Builds does this).
+Visits come from `POST /t`, a beacon the site sends on every page view: no cookies, no IPs stored; unique visitors are
+counted with a daily hash. Browsers with Do Not Track are not counted, and known bots are skipped.

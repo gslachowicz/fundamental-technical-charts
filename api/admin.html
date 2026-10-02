@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Ticker&amp;Tape · Panel de control</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&family=Archivo+Narrow:wght@400;600;700&family=Libre+Franklin:wght@600;800&display=swap">
+<style>
+:root{--page:#f3f1ea;--plate:#fff;--ink:#15171c;--ink2:#5a5d66;--rule:#d9d6cc;--navy:#1f3c6e;--blue:#1d3fc4;--pink:#e0337f;--green:#2f7d32;--amber:#a86a00;--soft:#eceae2;
+  --f-head:"Libre Franklin",Arial,sans-serif;--f-label:"Archivo Narrow","Arial Narrow",Arial,sans-serif;--f-data:"Courier Prime","Courier New",monospace;color-scheme:light}
+*{box-sizing:border-box}[hidden]{display:none!important}
+body{margin:0;background:var(--page);color:var(--ink);font:14px var(--f-label);padding:14px 16px 40px}
+.wrap{max-width:1400px;margin:0 auto;display:grid;gap:14px}
+header{display:flex;align-items:center;gap:12px;flex-wrap:wrap;border-bottom:3px double var(--ink);padding-bottom:8px}
+h1{margin:0;font:800 22px var(--f-head);color:var(--navy)}h1 small{font:600 13px var(--f-label);color:var(--ink2);letter-spacing:.08em;text-transform:uppercase;margin-left:6px}
+.sp{flex:1}.muted{color:var(--ink2);font:12px var(--f-data)}
+.seg{display:inline-flex}.seg button,.btn{font:600 12px var(--f-label);letter-spacing:.05em;text-transform:uppercase;background:var(--plate);border:1px solid var(--ink);padding:5px 10px;cursor:pointer;color:var(--ink)}
+.seg button+button{border-left:0}.seg button.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+h2{margin:6px 0 0;font:700 12px var(--f-label);letter-spacing:.14em;text-transform:uppercase;color:var(--ink2)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
+.kpi{background:var(--plate);border:1px solid var(--ink);padding:10px 12px}
+.kpi b{display:block;font:700 26px var(--f-data);color:var(--navy);font-variant-numeric:tabular-nums}
+.kpi span{font:12.5px var(--f-label);color:var(--ink2)}.kpi i{font:normal 12px var(--f-data);color:var(--ink2);display:block;margin-top:2px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,520px),1fr));gap:14px}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:14px}
+.box{background:var(--plate);border:1px solid var(--ink);min-width:0}
+.box h3{margin:0;background:var(--navy);color:#fff;font:600 12px var(--f-head);letter-spacing:.1em;text-transform:uppercase;padding:6px 10px;display:flex;justify-content:space-between;gap:8px}
+.box h3 small{font:400 12px var(--f-label);letter-spacing:.02em;text-transform:none;opacity:.85}
+.in{padding:10px 12px}
+.legend{display:flex;gap:14px;font:12.5px var(--f-label);color:var(--ink2);margin-bottom:4px}.legend i{display:inline-block;width:14px;height:3px;border-radius:2px;vertical-align:middle;margin-right:5px}
+.chart{position:relative}.chart svg{display:block;width:100%;height:220px}
+.tip{position:absolute;pointer-events:none;background:var(--ink);color:#fff;font:12px var(--f-data);padding:5px 8px;white-space:nowrap;transform:translate(-50%,-100%);top:0}
+.bars{display:grid;gap:5px}.bar{display:grid;grid-template-columns:minmax(70px,auto) 1fr auto;gap:8px;align-items:center;font:13px var(--f-label)}
+.bar .t{height:10px;background:var(--soft);border-radius:2px;overflow:hidden}.bar .t i{display:block;height:100%;background:var(--blue);border-radius:0 2px 2px 0}
+.bar b{font:700 12.5px var(--f-data);color:var(--ink);font-variant-numeric:tabular-nums}.bar span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.empty{color:var(--ink2);font-size:13px;padding:6px 0}
+dl.kv{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin:0;font-size:13.5px}dl.kv dt{color:var(--ink2)}dl.kv dd{margin:0;font:700 13px var(--f-data);text-align:right}
+.ok{color:var(--green)}.warn{color:var(--amber)}.bad{color:var(--pink)}
+.login{max-width:380px;margin:12vh auto;background:var(--plate);border:1px solid var(--ink);padding:22px}
+.login input{width:100%;font:15px var(--f-data);border:1px solid var(--ink);padding:9px 10px;margin:10px 0}
+.login .btn{width:100%;padding:9px;background:var(--navy);color:#fff;border-color:var(--navy)}
+.err{color:var(--pink);font-size:13px;margin-top:6px}
+table.tv{width:100%;border-collapse:collapse;font:12px var(--f-data)}table.tv th,table.tv td{padding:3px 6px;border-bottom:1px solid var(--rule);text-align:right}table.tv th:first-child,table.tv td:first-child{text-align:left}
+details summary{cursor:pointer;font:600 12px var(--f-label);color:var(--navy);margin-top:6px}
+</style>
+</head>
+<body>
+<div class="login" id="login" hidden>
+  <h1>Ticker&amp;Tape <small>Panel</small></h1>
+  <p class="muted">Ingresá la clave de administrador (el secreto ADMIN_KEY del Worker). Queda guardada solo en este navegador.</p>
+  <form id="lf"><input type="password" id="key" autocomplete="current-password" placeholder="ADMIN_KEY"><button class="btn" type="submit">Entrar</button></form>
+  <div class="err" id="lerr" hidden></div>
+</div>
+<div class="wrap" id="app" hidden>
+  <header>
+    <h1>Ticker&amp;Tape <small>Panel de control</small></h1>
+    <div class="seg" id="range"><button data-d="7">7 días</button><button data-d="30" class="on">30 días</button><button data-d="90">90 días</button><button data-d="365">1 año</button></div>
+    <span class="sp"></span><span class="muted" id="gen"></span>
+    <button class="btn" id="reload">Actualizar</button><button class="btn" id="logout">Salir</button>
+  </header>
+
+  <h2>Usuarios</h2>
+  <section class="kpis" id="kUsers"></section>
+  <h2>Tráfico <span class="muted" id="rlabel"></span></h2>
+  <section class="kpis" id="kTraffic"></section>
+
+  <section class="grid2">
+    <div class="box"><h3>Visitas por día <small>visitantes únicos y páginas vistas</small></h3><div class="in"><div class="legend"><span><i style="background:var(--blue)"></i>Visitantes</span><span><i style="background:var(--pink)"></i>Páginas vistas</span></div><div class="chart" id="cTraffic"></div>
+      <details><summary>Ver tabla</summary><div id="tTraffic"></div></details></div></div>
+    <div class="box"><h3>Cuentas por día <small>registros nuevos y usuarios activos</small></h3><div class="in"><div class="legend"><span><i style="background:var(--blue)"></i>Activos</span><span><i style="background:var(--pink)"></i>Registros</span></div><div class="chart" id="cUsers"></div>
+      <details><summary>Ver tabla</summary><div id="tUsers"></div></details></div></div>
+  </section>
+
+  <section class="grid3">
+    <div class="box"><h3>Secciones <small>páginas vistas</small></h3><div class="in bars" id="bSections"></div></div>
+    <div class="box"><h3>Tickers más vistos</h3><div class="in bars" id="bTickers"></div></div>
+    <div class="box"><h3>De dónde vienen <small>primera visita del día</small></h3><div class="in bars" id="bRefs"></div></div>
+    <div class="box"><h3>Países</h3><div class="in bars" id="bCountries"></div></div>
+    <div class="box"><h3>Dispositivo · idioma · sesión</h3><div class="in"><div class="bars" id="bDevices"></div><div class="bars" id="bLangs" style="margin-top:10px"></div><div class="bars" id="bUsers" style="margin-top:10px"></div></div></div>
+    <div class="box"><h3>Más seguidos <small>en watchlists de usuarios</small></h3><div class="in bars" id="bWatched"></div></div>
+  </section>
+
+  <section class="grid3">
+    <div class="box"><h3>Uso de las cuentas</h3><div class="in"><dl class="kv" id="dEng"></dl></div></div>
+    <div class="box"><h3>Alarmas</h3><div class="in"><dl class="kv" id="dAlerts"></dl><div class="bars" id="bAlertSyms" style="margin-top:10px"></div></div></div>
+    <div class="box"><h3>Newsletter y salud del sitio</h3><div class="in"><dl class="kv" id="dNews"></dl><hr style="border:0;border-top:1px solid var(--rule);margin:10px 0"><dl class="kv" id="dHealth"></dl></div></div>
+  </section>
+  <p class="muted">Visitas medidas sin cookies: no se guardan IPs ni identificadores; los visitantes únicos se cuentan con un código diario que cambia cada día. Los bots conocidos se excluyen.</p>
+</div>
+<script>
+(() => {
+"use strict";
+const $ = s => document.querySelector(s);
+const KEY = "tt:adminKey";
+let key = ""; try{ key = localStorage.getItem(KEY) || ""; }catch(e){}
+let days = 30, data = null;
+const nf = new Intl.NumberFormat("es-AR");
+const fmt = v => v == null ? "—" : nf.format(v);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const SEC = {home:"Inicio", watchlist:"Watchlist", screener:"Screener", etfs:"ETFs", groups:"Grupos", heatmap:"Mapa de calor", breadth:"Amplitud", ideas:"Ideas de trading", earnings:"Resultados", wall:"Muro de gráficos", welcome:"Bienvenida", chart:"Gráfico de un ticker"};
+const DEV = {mobile:"Celular", tablet:"Tablet", desktop:"Escritorio"}, LANG = {en:"Inglés", es:"Español", pt:"Portugués"}, KIND = {price:"Precio", ma:"Media móvil", pivot:"Pivot"};
+const flag = cc => /^[A-Z]{2}$/.test(cc) ? String.fromCodePoint(...[...cc].map(c => 127397 + c.charCodeAt(0))) + " " + cc : cc;
+async function load(){
+  $("#gen").textContent = "Cargando…";
+  let r; try{ r = await fetch(`/admin/stats?days=${days}`, {headers:{"X-Admin-Key": key}}); }catch(e){ $("#gen").textContent = "Sin conexión"; return; }
+  if(r.status === 401){ showLogin("Clave incorrecta."); return; }
+  if(!r.ok){ $("#gen").textContent = "Error " + r.status; return; }
+  data = await r.json(); $("#login").hidden = true; $("#app").hidden = false; render();
+}
+function showLogin(msg){ $("#app").hidden = true; $("#login").hidden = false; $("#lerr").hidden = !msg; $("#lerr").textContent = msg || ""; setTimeout(()=>$("#key").focus(), 30); }
+$("#lf").onsubmit = e => { e.preventDefault(); key = $("#key").value.trim(); try{ localStorage.setItem(KEY, key); }catch(e){} load(); };
+$("#logout").onclick = () => { try{ localStorage.removeItem(KEY); }catch(e){} key = ""; showLogin(); };
+$("#reload").onclick = load;
+document.querySelectorAll("#range button").forEach(b => b.onclick = () => { days = +b.dataset.d; document.querySelectorAll("#range button").forEach(x => x.classList.toggle("on", x === b)); load(); });
+const tile = (v, label, sub) => `<div class="kpi"><b>${v}</b><span>${esc(label)}</span>${sub ? `<i>${sub}</i>` : ""}</div>`;
+function bars(el, rows, map, color){
+  const box = $(el); if(!rows || !rows.length){ box.innerHTML = `<div class="empty">Sin datos todavía.</div>`; return; }
+  const max = Math.max(...rows.map(r => r.n)), tot = rows.reduce((a, r) => a + r.n, 0);
+  box.innerHTML = rows.map(r => `<div class="bar" title="${esc(map ? (map[r.key] || r.key) : r.key)}: ${fmt(r.n)} (${Math.round(100*r.n/tot)}%)"><span>${esc(map ? (map[r.key] || r.key) : r.key)}</span><div class="t"><i style="width:${Math.max(2, 100*r.n/max)}%;${color?`background:${color}`:""}"></i></div><b>${fmt(r.n)}</b></div>`).join("");
+}
+// daily series: fill the missing days with zeros
+function series(rows, f){ const m = new Map((rows||[]).map(r => [r.day, r])); const out = [];
+  for(let i = days - 1; i >= 0; i--){ const d = new Date(Date.now() - i*86400e3).toISOString().slice(0,10); out.push({day:d, ...f(m.get(d) || {})}); } return out; }
+function lineChart(el, rows, keys){   // keys: [[field, color, label]]
+  const box = $(el), W = box.clientWidth || 600, H = 220, L = 8, R = 46, T = 12, B = 22, n = rows.length;
+  const max = Math.max(1, ...rows.flatMap(r => keys.map(([k]) => r[k] || 0)));
+  const step = (()=>{ const raw = max/4, p = Math.pow(10, Math.floor(Math.log10(raw))); return [1,2,2.5,5,10].map(m=>m*p).find(s=>s>=raw); })();
+  const top = Math.ceil(max/step)*step, x = i => L + (n<2 ? 0 : i/(n-1)) * (W-L-R), y = v => T + (1 - v/top) * (H-T-B);
+  let g = "";
+  for(let v = 0; v <= top + 1e-9; v += step) g += `<line x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}" stroke="#d9d6cc" stroke-dasharray="1 3"/><text x="${W-R+6}" y="${y(v)+4}" font-size="11" font-family="Courier Prime,monospace" fill="#5a5d66">${fmt(v)}</text>`;
+  const every = Math.max(1, Math.round(n/6));
+  rows.forEach((r,i) => { if(i % every === 0) g += `<text x="${x(i)}" y="${H-5}" font-size="11" text-anchor="middle" font-family="Archivo Narrow,Arial" fill="#5a5d66">${r.day.slice(8,10)}/${r.day.slice(5,7)}</text>`; });
+  for(const [k, c] of keys){ g += `<path d="${rows.map((r,i)=>`${i?"L":"M"}${x(i).toFixed(1)},${y(r[k]||0).toFixed(1)}`).join("")}" fill="none" stroke="${c}" stroke-width="2" stroke-linejoin="round"/>`;
+    const last = rows[n-1]; g += `<circle cx="${x(n-1)}" cy="${y(last[k]||0)}" r="4" fill="${c}" stroke="#fff" stroke-width="2"/>`; }
+  box.innerHTML = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="Gráfico por día">${g}<line id="xh" y1="${T}" y2="${H-B}" stroke="#15171c" stroke-opacity=".35" stroke-dasharray="3 3" visibility="hidden"/></svg><div class="tip" hidden></div>`;
+  const svg = box.querySelector("svg"), tip = box.querySelector(".tip"), xh = svg.querySelector("#xh");
+  svg.onmousemove = e => { const rc = svg.getBoundingClientRect(), px = (e.clientX - rc.left) * W / rc.width; const i = Math.max(0, Math.min(n-1, Math.round((px - L)/((W-L-R)/Math.max(1,n-1)))));
+    xh.setAttribute("x1", x(i)); xh.setAttribute("x2", x(i)); xh.setAttribute("visibility", "visible");
+    tip.hidden = false; tip.style.left = (x(i) * rc.width / W) + "px"; tip.style.top = "8px";
+    tip.innerHTML = `${rows[i].day.split("-").reverse().join("/")} · ` + keys.map(([k,,l]) => `${l} ${fmt(rows[i][k]||0)}`).join(" · "); };
+  svg.onmouseleave = () => { tip.hidden = true; xh.setAttribute("visibility", "hidden"); };
+}
+function table(el, rows, cols){ $(el).innerHTML = `<table class="tv"><thead><tr>${cols.map(([,l])=>`<th>${l}</th>`).join("")}</tr></thead><tbody>${rows.slice().reverse().map(r=>`<tr>${cols.map(([k])=>`<td>${k==="day"?r.day.split("-").reverse().join("/"):fmt(r[k]||0)}</td>`).join("")}</tr>`).join("")}</tbody></table>`; }
+function render(){
+  const D = data, U = D.users, T = D.traffic, E = D.engagement, A = D.alerts, N = D.newsletter, S = D.site;
+  $("#gen").textContent = "Actualizado " + new Date(D.generated).toLocaleString("es-AR", {hour:"2-digit", minute:"2-digit", day:"2-digit", month:"2-digit"});
+  $("#rlabel").textContent = `· últimos ${days} días`;
+  const pct = (a, b) => b ? Math.round(100*a/b) + "%" : "—";
+  $("#kUsers").innerHTML = tile(fmt(U.total), "Cuentas", `${pct(U.verified, U.total)} con email confirmado`) + tile(fmt(U.new7), "Nuevas en 7 días", `${fmt(U.new30)} en 30 días`)
+    + tile(fmt(U.dau), "Activos hoy", "DAU") + tile(fmt(U.wau), "Activos 7 días", "WAU") + tile(fmt(U.mau), "Activos 30 días", `MAU · ${U.mau ? (U.dau/U.mau*100).toFixed(0) + "% DAU/MAU" : ""}`)
+    + tile(U.retention7 == null ? "—" : U.retention7 + "%", "Retención 7 días", "cuentas de +7 días que volvieron esta semana");
+  $("#kTraffic").innerHTML = tile(fmt(T.uv), "Visitantes", "únicos por día, sumados") + tile(fmt(T.pv), "Páginas vistas", T.uv ? (T.pv/T.uv).toFixed(1) + " por visitante" : "")
+    + tile(T.conversion == null ? "—" : T.conversion + "%", "Conversión", "registros / visitantes") + tile(fmt(N.active), "Newsletter", `${fmt(N.pending)} pendientes de confirmar`)
+    + tile(fmt(A.active), "Alarmas activas", `${fmt(A.users)} usuarios · ${fmt(A.fired7)} sonaron en 7 días`) + tile(fmt(A.emailedToday) + " / " + A.emailCap, "Mails de alarmas hoy", "tope diario");
+  const tr = series(T.byDay, r => ({uv: r.uv||0, pv: r.pv||0}));
+  lineChart("#cTraffic", tr, [["uv", "#1d3fc4", "Visitantes"], ["pv", "#e0337f", "Páginas"]]); table("#tTraffic", tr, [["day","Día"],["uv","Visitantes"],["pv","Páginas"]]);
+  const act = new Map((U.active||[]).map(r=>[r.day, r.n])), sig = new Map((U.signups||[]).map(r=>[r.day, r.n]));
+  const ur = series([], () => ({})).map(r => ({day: r.day, a: act.get(r.day)||0, s: sig.get(r.day)||0}));
+  lineChart("#cUsers", ur, [["a", "#1d3fc4", "Activos"], ["s", "#e0337f", "Registros"]]); table("#tUsers", ur, [["day","Día"],["a","Activos"],["s","Registros"]]);
+  bars("#bSections", T.sections, SEC); bars("#bTickers", T.tickers); bars("#bRefs", T.refs, {direct:"Directo / sin dato", card:"Link compartido (imagen)"});
+  bars("#bCountries", (T.countries||[]).map(r => ({...r, key: flag(r.key)}))); bars("#bDevices", T.devices, DEV); bars("#bLangs", T.langs, LANG); bars("#bUsers", T.users, {"signed in":"Con sesión iniciada", guest:"Sin cuenta"});
+  bars("#bWatched", E.topWatched);
+  $("#dEng").innerHTML = [["Con watchlist propia", fmt(E.withWatchlist)], ["Tickers promedio por usuario", E.avgTickers], ["Con más de una lista", fmt(E.multiList)], ["Con notas", fmt(E.withNotes)], ["Con filtros guardados", fmt(E.withScreens)],
+    ["Idioma elegido", Object.entries(E.lang||{}).map(([k,v]) => `${LANG[k]||k} ${v}`).join(" · ") || "—"]].map(([k,v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("");
+  $("#dAlerts").innerHTML = [["Activas", fmt(A.active)], ["Usuarios con alarmas", fmt(A.users)], ["Sonaron en 7 días", fmt(A.fired7)], ["Sonaron en 30 días", fmt(A.fired30)],
+    ["Por tipo", (A.byKind||[]).map(r => `${KIND[r.key]||r.key} ${r.n}`).join(" · ") || "—"]].map(([k,v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("");
+  bars("#bAlertSyms", A.topSymbols, null, "#a86a00");
+  $("#dNews").innerHTML = [["Suscriptores activos", fmt(N.active)], ["Pendientes de confirmar", fmt(N.pending)], ["Se dieron de baja", fmt(N.unsub)],
+    ["Confirmaciones en el período", fmt((N.byDay||[]).reduce((a,r)=>a+r.n,0))]].map(([k,v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("");
+  const ago = iso => { if(!iso) return null; const h = (Date.now() - Date.parse(iso.length <= 17 ? iso.replace("Z", ":00Z") : iso))/36e5; return h; };
+  const hb = ago(S && S.updated), hl = ago(S && S.live);
+  const cls = (h, ok, warn) => h == null ? "bad" : h < ok ? "ok" : h < warn ? "warn" : "bad";
+  $("#dHealth").innerHTML = S ? [["Último build nocturno", `<span class="${cls(hb, 30, 54)}">● ${S.updated.replace("T"," ").replace("Z"," UTC")}</span>`], ["Datos al cierre del", S.dataDate], ["Acciones en el sitio", fmt(S.stocks)],
+      ["Errores en el último build", `<span class="${S.errors ? "warn" : "ok"}">${S.errors}</span>`], ["Precios en vivo", S.live ? `<span class="${cls(hl, 1, 72)}">● ${S.live.replace("T"," ").replace("Z"," UTC")}</span>` : "—"]]
+      .map(([k,v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("") : `<dt>Sitio</dt><dd class="bad">No se pudo leer meta.json</dd>`;
+}
+let rt = 0; addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(() => data && render(), 150); });
+setInterval(() => { if(key && document.visibilityState === "visible") load(); }, 5*60*1000);
+if(key) load(); else showLogin();
+})();
+</script>
+</body>
+</html>

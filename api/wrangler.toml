@@ -10,6 +10,12 @@ workers_dev = true
 preview_urls = false
 routes = [{ pattern = "api.tickerandtape.com", custom_domain = true }]
 
+# admin.html is bundled into the Worker as text (the private control panel at /admin)
+[[rules]]
+type = "Text"
+globs = ["**/*.html"]
+fallthrough = true
+
 [[d1_databases]]
 binding = "DB"
 database_name = "tickerandtape"

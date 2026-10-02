@@ -1,4 +1,5 @@
 // Ticker&Tape API — accounts + per-user watchlists, settings and drawings.
+import ADMIN_HTML from "./admin.html";   // the private control panel at /admin (bundled as text, see wrangler.toml)
 // Cloudflare Worker with a D1 database bound as DB. Served at https://api.tickerandtape.com
 const ORIGINS = ["https://tickerandtape.com", "https://www.tickerandtape.com", "http://localhost:8000", "http://127.0.0.1:8000"];
 const SESSION_DAYS = 90;
@@ -28,7 +29,7 @@ const sha256 = async s => hex(await crypto.subtle.digest("SHA-256", enc.encode(s
 
 function cors(req) {
   const o = req.headers.get("Origin");
-  const h = { "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS", "Access-Control-Allow-Headers": "Content-Type,Authorization",
+  const h = { "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS", "Access-Control-Allow-Headers": "Content-Type,Authorization,X-Admin-Key",
     "Access-Control-Max-Age": "86400", "Vary": "Origin" };
   if (o && ORIGINS.includes(o)) h["Access-Control-Allow-Origin"] = o;
   return h;
@@ -48,8 +49,14 @@ async function newSession(env, userId) {
 async function currentUser(req, env) {
   const m = (req.headers.get("Authorization") || "").match(/^Bearer ([0-9a-f]{64})$/);
   if (!m) return null;
-  return await env.DB.prepare("SELECT u.id, u.email, u.verified, u.verify_sent FROM sessions s JOIN users u ON u.id = s.user_id WHERE s.token_hash = ? AND s.expires > ?")
+  const u = await env.DB.prepare("SELECT u.id, u.email, u.verified, u.verify_sent, u.last_seen FROM sessions s JOIN users u ON u.id = s.user_id WHERE s.token_hash = ? AND s.expires > ?")
     .bind(await sha256(m[1]), now()).first();
+  // daily activity for the admin dashboard (one write per user per day)
+  if (u && (u.last_seen || 0) < now() - (now() % 86400)) {
+    try { await env.DB.batch([env.DB.prepare("UPDATE users SET last_seen = ? WHERE id = ?").bind(now(), u.id),
+      env.DB.prepare("INSERT OR IGNORE INTO user_active (day, user_id) VALUES (?, ?)").bind(new Date().toISOString().slice(0, 10), u.id)]); } catch {}
+  }
+  return u;
 }
 const cleanEmail = e => String(e || "").trim().toLowerCase();
 
@@ -172,6 +179,93 @@ function validAlert(b) {
   if (b.kind !== "ma" && !(typeof b.level === "number" && isFinite(b.level) && b.level > 0 && b.level < 1e7)) return "Enter a valid price.";
   if (b.note != null && (typeof b.note !== "string" || b.note.length > 140)) return "Keep the note under 140 characters.";
   return null;
+}
+
+/* ================= USAGE STATISTICS (anonymous, no cookies) =================
+   The site sends one small beacon per page view: section, ticker, language, screen width and where the visit came from.
+   Country comes from Cloudflare. Unique visitors are counted with a daily hash of IP + browser + a secret, which cannot
+   be traced back and changes every day; no IP address or identifier is stored. Tables "stats_daily" and "visitors". */
+const SECTIONS = new Set(["home", "watchlist", "screener", "etfs", "groups", "heatmap", "breadth", "ideas", "earnings", "wall", "welcome", "chart"]);
+const BOT_RE = /bot|crawl|spider|slurp|preview|facebookexternalhit|embedly|headless|lighthouse|monitor/i;
+async function trackView(req, env) {
+  const ua = req.headers.get("User-Agent") || "";
+  if (BOT_RE.test(ua)) return;
+  let b = {}; try { b = JSON.parse(await req.text()); } catch {}
+  const sec = SECTIONS.has(b.p) ? b.p : null; if (!sec) return;
+  const day = new Date().toISOString().slice(0, 10);
+  const ip = req.headers.get("CF-Connecting-IP") || "";
+  const vh = (await sha256(`${day}|${ip}|${ua}|${env.ADMIN_KEY || "tt"}`)).slice(0, 20);
+  const r = await env.DB.prepare("INSERT OR IGNORE INTO visitors (day, vh) VALUES (?, ?)").bind(day, vh).run();
+  const isNew = r.meta.changes > 0;
+  const up = (kind, key) => env.DB.prepare("INSERT INTO stats_daily (day, kind, key, n) VALUES (?, ?, ?, 1) ON CONFLICT(day, kind, key) DO UPDATE SET n = n + 1").bind(day, kind, String(key).slice(0, 60));
+  const q = [up("pv", sec)];
+  const sym = String(b.s || "").toUpperCase();
+  if (sec === "chart" && SYM_RE.test(sym)) q.push(up("sym", sym));
+  if (isNew) {
+    const w = +b.w || 0;
+    q.push(up("country", (req.cf && req.cf.country) || "??"), up("device", w && w < 700 ? "mobile" : w && w < 1100 ? "tablet" : "desktop"),
+      up("lang", ["en", "es", "pt"].includes(b.l) ? b.l : "en"), up("ref", String(b.r || "direct").toLowerCase().replace(/^www\./, "").slice(0, 40) || "direct"),
+      up("user", b.u ? "signed in" : "guest"));
+  }
+  await env.DB.batch(q);
+}
+async function adminStats(env, days) {
+  const DB = env.DB, t = now(), since = new Date(Date.now() - days * 86400e3).toISOString().slice(0, 10);
+  const one = async (sql, ...a) => (await DB.prepare(sql).bind(...a).first()) || {};
+  const all = async (sql, ...a) => (await DB.prepare(sql).bind(...a).all()).results || [];
+  const d1 = new Date(Date.now() - 86400e3).toISOString().slice(0, 10), d7 = new Date(Date.now() - 7 * 86400e3).toISOString().slice(0, 10),
+    d30 = new Date(Date.now() - 30 * 86400e3).toISOString().slice(0, 10), today = new Date().toISOString().slice(0, 10);
+  const [users, signups, active, dau, wau, mau, retained, lists, cfgs, alertsN, alertsByKind, alertSyms, notif, subs, subsByDay,
+    traffic, uv, top] = await Promise.all([
+    one("SELECT COUNT(*) AS total, SUM(verified) AS verified, SUM(created >= ?) AS new7, SUM(created >= ?) AS new30 FROM users", d7, d30),
+    all("SELECT substr(created, 1, 10) AS day, COUNT(*) AS n FROM users WHERE created >= ? GROUP BY day ORDER BY day", since),
+    all("SELECT day, COUNT(*) AS n FROM user_active WHERE day >= ? GROUP BY day ORDER BY day", since),
+    one("SELECT COUNT(*) AS n FROM user_active WHERE day = ?", today),
+    one("SELECT COUNT(DISTINCT user_id) AS n FROM user_active WHERE day > ?", d7),
+    one("SELECT COUNT(DISTINCT user_id) AS n FROM user_active WHERE day > ?", d30),
+    one("SELECT COUNT(*) AS base, SUM(EXISTS(SELECT 1 FROM user_active a WHERE a.user_id = u.id AND a.day > ?)) AS back FROM users u WHERE created < ?", d7, d7),
+    all("SELECT key, value FROM user_data WHERE key IN ('lists', 'watchlist', 'notes')"),
+    all("SELECT value FROM user_data WHERE key = 'cfg'"),
+    one("SELECT SUM(fired IS NULL) AS active, SUM(fired > ?) AS fired7, SUM(fired > ?) AS fired30, COUNT(DISTINCT CASE WHEN fired IS NULL THEN user_id END) AS users FROM alerts", t - 7 * 86400, t - 30 * 86400),
+    all("SELECT kind AS key, COUNT(*) AS n FROM alerts WHERE fired IS NULL GROUP BY kind ORDER BY n DESC"),
+    all("SELECT symbol AS key, COUNT(*) AS n FROM alerts WHERE fired IS NULL GROUP BY symbol ORDER BY n DESC LIMIT 10"),
+    one("SELECT SUM(emailed = 1 AND created >= ?) AS emailedToday, COUNT(*) AS total FROM notifications", t - (t % 86400)),
+    one("SELECT SUM(confirmed = 1 AND unsub = 0) AS active, SUM(confirmed = 0) AS pending, SUM(unsub = 1) AS unsub FROM subscribers"),
+    all("SELECT substr(confirmed_at, 1, 10) AS day, COUNT(*) AS n FROM subscribers WHERE confirmed = 1 AND confirmed_at >= ? GROUP BY day ORDER BY day", since),
+    all("SELECT day, SUM(n) AS pv FROM stats_daily WHERE kind = 'pv' AND day >= ? GROUP BY day ORDER BY day", since),
+    all("SELECT day, COUNT(*) AS uv FROM visitors WHERE day >= ? GROUP BY day ORDER BY day", since),
+    all("SELECT kind, key, SUM(n) AS n FROM stats_daily WHERE day >= ? GROUP BY kind, key ORDER BY n DESC", since)]);
+  // watchlists and notes: how much people use their accounts
+  const wl = new Map(), multi = new Set(), notes = new Map(), tick = new Map();
+  for (const r of lists) { try { const v = JSON.parse(r.value);
+    if (r.key === "lists") { const L = v.lists || []; if (L.length > 1) multi.add(r); const all_ = L.flatMap(l => l.t || []); wl.set(r, all_.length); all_.forEach(x => tick.set(x, (tick.get(x) || 0) + 1)); }
+    if (r.key === "notes") notes.set(r, Object.keys(v || {}).length); } catch {} }
+  const sizes = [...wl.values()];
+  let screens = 0, lang = {};
+  for (const r of cfgs) { try { const c = JSON.parse(r.value); if (Array.isArray(c.screens) && c.screens.length) screens++; const l = c.lang || "en"; lang[l] = (lang[l] || 0) + 1; } catch {} }
+  const group = k => top.filter(r => r.kind === k).slice(0, 12).map(r => ({ key: r.key, n: r.n }));
+  const sumPv = traffic.reduce((a, r) => a + r.pv, 0), sumUv = uv.reduce((a, r) => a + r.uv, 0);
+  let site = null;
+  try { const [m, l] = await Promise.all([fetch(`${SITE}/data/meta.json?t=${Date.now()}`).then(r => r.json()), fetch(`${LIVE_JSON}?t=${Date.now()}`).then(r => r.json()).catch(() => null)]);
+    site = { updated: m.updated, dataDate: m.dataDate, stocks: m.allStocks, errors: (m.errors || []).length, live: l && l.updated, liveDate: l && l.date }; } catch {}
+  return {
+    generated: new Date().toISOString(), days,
+    users: { total: users.total || 0, verified: users.verified || 0, new7: users.new7 || 0, new30: users.new30 || 0, dau: dau.n || 0, wau: wau.n || 0, mau: mau.n || 0,
+      retention7: retained.base ? Math.round(100 * (retained.back || 0) / retained.base) : null, signups, active },
+    engagement: { withWatchlist: sizes.filter(x => x > 0).length, avgTickers: sizes.length ? +(sizes.reduce((a, b) => a + b, 0) / sizes.length).toFixed(1) : 0,
+      multiList: multi.size, withNotes: [...notes.values()].filter(x => x > 0).length, withScreens: screens, lang,
+      topWatched: [...tick.entries()].sort((a, b) => b[1] - a[1]).slice(0, 12).map(([key, n]) => ({ key, n })) },
+    alerts: { active: alertsN.active || 0, users: alertsN.users || 0, fired7: alertsN.fired7 || 0, fired30: alertsN.fired30 || 0, byKind: alertsByKind, topSymbols: alertSyms,
+      emailedToday: notif.emailedToday || 0, emailCap: EMAIL_ALL_DAY },
+    newsletter: { active: subs.active || 0, pending: subs.pending || 0, unsub: subs.unsub || 0, byDay: subsByDay },
+    traffic: { byDay: traffic.map(r => ({ day: r.day, pv: r.pv, uv: (uv.find(x => x.day === r.day) || {}).uv || 0 })), pv: sumPv, uv: sumUv,
+      conversion: sumUv ? +(100 * signups.reduce((a, r) => a + r.n, 0) / sumUv).toFixed(2) : null,
+      sections: group("pv"), tickers: group("sym"), countries: group("country"), devices: group("device"), langs: group("lang"), refs: group("ref"), users: group("user") },
+    site };
+}
+function adminPage() {
+  return new Response(ADMIN_HTML, { headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store", "X-Robots-Tag": "noindex",
+    "Content-Security-Policy": "default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; script-src 'unsafe-inline'; connect-src 'self'" } });
 }
 
 /* ================= NEWSLETTER =================
@@ -330,6 +424,17 @@ export default {
         if (path === "/newsletter/alerts") return json(req, await checkAlerts(env));
         if (path === "/newsletter/stats") return json(req, await env.DB.prepare(
           "SELECT SUM(confirmed = 1 AND unsub = 0) AS active, SUM(confirmed = 0) AS pending, SUM(unsub = 1) AS unsubscribed FROM subscribers").first());
+      }
+      if (path === "/t" && req.method === "POST") {
+        try { await trackView(req, env); } catch {}
+        return new Response(null, { status: 204, headers: cors(req) });
+      }
+      if (path === "/admin" && req.method === "GET") return adminPage();
+      if (path === "/admin/stats" && req.method === "GET") {
+        const k = req.headers.get("X-Admin-Key") || "";
+        if (!env.ADMIN_KEY || !safeEqual(k, env.ADMIN_KEY)) return json(req, { error: "Wrong admin key." }, 401);
+        const days = Math.min(365, Math.max(7, +url.searchParams.get("days") || 30));
+        return json(req, await adminStats(env, days));
       }
       if (path === "/verify" && req.method === "GET") {
         const t = url.searchParams.get("t") || "";
@@ -532,6 +637,11 @@ export default {
   // "5,20,35,50 13-21 * * MON-FRI" checks the price alerts every 15 minutes during US market hours.
   async scheduled(event, env, ctx) {
     if (event.cron && event.cron.includes("13-21")) ctx.waitUntil(checkAlerts(env).then(r => console.log("alerts:", JSON.stringify(r))).catch(e => console.log("alerts failed:", e.message)));
-    else ctx.waitUntil(sendWeekly(env).catch(e => console.log("weekly failed:", e.message)));
+    else {
+      ctx.waitUntil(sendWeekly(env).catch(e => console.log("weekly failed:", e.message)));
+      // keep 400 days of statistics; daily visitor hashes are only needed to count unique visitors
+      ctx.waitUntil(env.DB.batch([env.DB.prepare("DELETE FROM visitors WHERE day < ?").bind(new Date(Date.now() - 400 * 86400e3).toISOString().slice(0, 10)),
+        env.DB.prepare("DELETE FROM stats_daily WHERE day < ?").bind(new Date(Date.now() - 400 * 86400e3).toISOString().slice(0, 10))]).catch(() => {}));
+    }
   },
 };
