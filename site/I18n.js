@@ -1,0 +1,458 @@
+/* Ticker&Tape — interface translations (English is the source; Spanish and Portuguese).
+   The site is written in English. When another language is chosen (Settings > Language, saved as tt:lang),
+   this script translates every piece of interface text as it appears on the page: exact phrases first,
+   then patterns with numbers and dates, then each " · " part and each sentence on its own.
+   Data (tickers, company names, news, descriptions) stays as published. Load it before app.js. */
+(() => {
+"use strict";
+const LANGS = {en:"English", es:"Español", pt:"Português"};
+let lang = "en";
+try{ const v = JSON.parse(localStorage.getItem("tt:lang") || '"en"'); if(LANGS[v]) lang = v; }catch(e){}
+const LOCALE = {en:"en-US", es:"es-ES", pt:"pt-BR"}[lang];
+const MON = {
+  en:["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],
+  es:["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"],
+  pt:["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"]}[lang];
+const api = { lang, langs: LANGS, locale: LOCALE, mon: MON,
+  setLang(l){ if(!LANGS[l] || l === lang) return; try{ localStorage.setItem("tt:lang", JSON.stringify(l)); }catch(e){} location.reload(); },
+  t: s => s };
+window.TT_I18N = api;
+document.documentElement.lang = lang;
+if(lang === "en") return;
+const L = lang === "es" ? 1 : 2;
+
+/* ---------- phrases: [English, Español, Português] ---------- */
+const D = [
+// navigation, top bar, footer
+["Home","Inicio","Início"],["Watchlist","Watchlist","Watchlist"],["Screener","Screener","Screener"],["ETFs","ETFs","ETFs"],
+["Heatmap","Mapa de calor","Mapa de calor"],["Breadth","Amplitud","Amplitude"],["Trade ideas","Ideas de trading","Ideias de trade"],["Earnings","Resultados","Balanços"],
+["Go to ticker","Ir a un ticker","Ir para um ticker"],["Ticker…","Ticker…","Ticker…"],["Sign in","Iniciar sesión","Entrar"],
+["Sign in or create a free account","Inicia sesión o crea una cuenta gratis","Entre ou crie uma conta grátis"],
+["How Ticker&Tape works (tour)","Cómo funciona Ticker&Tape (recorrido)","Como funciona o Ticker&Tape (tour)"],["Help: take the tour","Ayuda: hacer el recorrido","Ajuda: fazer o tour"],
+["Chart settings","Configuración","Configurações"],["Settings","Configuración","Configurações"],["Sections","Secciones","Seções"],
+["Demo data: synthetic prices and fundamentals generated for testing. The live site shows real Yahoo Finance data.","Datos de demostración: precios y fundamentales sintéticos generados para pruebas. El sitio en vivo muestra datos reales de Yahoo Finance.","Dados de demonstração: preços e fundamentos sintéticos gerados para testes. O site ao vivo mostra dados reais do Yahoo Finance."],
+["Site footer","Pie de página","Rodapé"],["O'Neil-style charts, RS Ratings and market breadth for growth-stock traders.","Gráficos estilo O'Neil, RS Ratings y amplitud de mercado para traders de acciones de crecimiento.","Gráficos no estilo O'Neil, RS Ratings e amplitude de mercado para traders de ações de crescimento."],
+["Contact","Contacto","Contato"],["Explore","Explorar","Explorar"],["Market dashboard","Panel del mercado","Painel do mercado"],["Earnings calendar","Calendario de resultados","Calendário de balanços"],
+["Market breadth","Amplitud de mercado","Amplitude de mercado"],["Help","Ayuda","Ajuda"],["Take the tour","Hacer el recorrido","Fazer o tour"],["About Ticker&Tape","Sobre Ticker&Tape","Sobre o Ticker&Tape"],
+["Report a bug or suggest a feature","Reportar un error o sugerir una mejora","Relatar um erro ou sugerir uma melhoria"],["Terms of Use","Términos de uso","Termos de uso"],["Privacy Policy","Política de privacidad","Política de privacidade"],["Privacy","Privacidad","Privacidade"],
+["Ticker&Tape is a charting and research tool, not investment advice. Ratings, bases and pivots are calculated automatically and can be wrong. Market data: Yahoo Finance, end of day plus intraday prices delayed about 15 minutes. ©","Ticker&Tape es una herramienta de gráficos e investigación, no asesoramiento de inversión. Los ratings, bases y pivots se calculan automáticamente y pueden fallar. Datos de mercado: Yahoo Finance, cierre diario más precios intradía con unos 15 minutos de demora. ©","O Ticker&Tape é uma ferramenta de gráficos e pesquisa, não uma recomendação de investimento. Ratings, bases e pivôs são calculados automaticamente e podem errar. Dados de mercado: Yahoo Finance, fechamento diário mais preços intraday com cerca de 15 minutos de atraso. ©"],
+["Loading…","Cargando…","Carregando…"],["Close","Cerrar","Fechar"],["Back","Atrás","Voltar"],["Next","Siguiente","Próximo"],["Done","Listo","Concluir"],["Skip tour","Saltar recorrido","Pular tour"],
+["← Back","← Volver","← Voltar"],["Show more","Ver más","Ver mais"],["Share","Compartir","Compartilhar"],["Share on X","Compartir en X","Compartilhar no X"],["Share this chart on X","Compartir este gráfico en X","Compartilhar este gráfico no X"],
+// home
+["S&P 500 futures · ES","Futuros del S&P 500 · ES","Futuros do S&P 500 · ES"],["S&P 500 futures","Futuros del S&P 500","Futuros do S&P 500"],["Full chart →","Gráfico completo →","Gráfico completo →"],
+["S&P 500 E-mini futures daily chart","Gráfico diario de los futuros E-mini del S&P 500","Gráfico diário dos futuros E-mini do S&P 500"],["Market pulse","Pulso del mercado","Pulso do mercado"],
+["Uptrend","Tendencia alcista","Tendência de alta"],["Uptrend under pressure","Tendencia alcista bajo presión","Tendência de alta sob pressão"],["Rally attempt","Intento de rally","Tentativa de rally"],["Correction","Corrección","Correção"],["Under pressure","Bajo presión","Sob pressão"],
+["Above 21-day","Sobre la de 21 días","Acima da de 21 dias"],["Above 50-day","Sobre la de 50 días","Acima da de 50 dias"],["Above 200-day","Sobre la de 200 días","Acima da de 200 dias"],
+["Below 21-day","Bajo la de 21 días","Abaixo da de 21 dias"],["Below 50-day","Bajo la de 50 días","Abaixo da de 50 dias"],["Below 200-day","Bajo la de 200 días","Abaixo da de 200 dias"],
+["Distribution days in the last 25 sessions: index down 0.2% or more on higher volume","Días de distribución en las últimas 25 ruedas: el índice cae 0,2% o más con más volumen","Dias de distribuição nos últimos 25 pregões: índice cai 0,2% ou mais com volume maior"],
+["Breadth →","Amplitud →","Amplitude →"],["Market news","Noticias del mercado","Notícias do mercado"],["latest headlines","últimos titulares","últimas manchetes"],["No headlines right now.","No hay titulares por ahora.","Sem manchetes no momento."],
+["Market & sectors","Mercado y sectores","Mercado e setores"],["Select Sector SPDR ETFs · click a row for its chart","ETFs Select Sector SPDR · clic en una fila para ver su gráfico","ETFs Select Sector SPDR · clique numa linha para ver o gráfico"],
+["Commodities","Materias primas","Commodities"],["front-month futures · click a row for its chart","futuros del primer vencimiento · clic en una fila para ver su gráfico","futuros do primeiro vencimento · clique numa linha para ver o gráfico"],
+["Top RS Rating","Mejor RS Rating","Maior RS Rating"],["price leaders","líderes de precio","líderes de preço"],["Top up/down volume","Mejor volumen alcista/bajista","Maior volume de alta/baixa"],["accumulation, 50 days","acumulación, 50 días","acumulação, 50 dias"],
+["Biggest movers","Mayores movimientos","Maiores variações"],["today","hoy","hoje"],["Gainers","Suben","Altas"],["Losers","Bajan","Baixas"],
+["Top lists include stocks with at least $20M traded a day on average. Prices are delayed during the session. Data: Yahoo Finance.","Las listas incluyen acciones con al menos US$20M operados por día en promedio. Durante la rueda los precios tienen demora. Datos: Yahoo Finance.","As listas incluem ações com pelo menos US$20M negociados por dia em média. Durante o pregão os preços têm atraso. Dados: Yahoo Finance."],
+["3 months","3 meses","3 meses"],["Market","Mercado","Mercado"],["Sectors","Sectores","Setores"],["click a column to rank them","clic en una columna para ordenarlos","clique numa coluna para ordená-los"],["Components →","Componentes →","Componentes →"],
+["click a column to rank within each group","clic en una columna para ordenar dentro de cada grupo","clique numa coluna para ordenar dentro de cada grupo"],
+["Commodity","Materia prima","Commodity"],["Last","Último","Último"],["Metals","Metales","Metais"],["Energy","Energía","Energia"],["Agriculture","Agricultura","Agricultura"],
+["Gold","Oro","Ouro"],["Silver","Plata","Prata"],["Copper","Cobre","Cobre"],["Platinum","Platino","Platina"],["Crude Oil WTI","Petróleo WTI","Petróleo WTI"],["Brent Crude","Petróleo Brent","Petróleo Brent"],
+["Natural Gas","Gas natural","Gás natural"],["Gasoline RBOB","Nafta RBOB","Gasolina RBOB"],["Corn","Maíz","Milho"],["Wheat","Trigo","Trigo"],["Soybeans","Soja","Soja"],["Coffee","Café","Café"],["Live Cattle","Ganado en pie","Boi gordo"],
+["Stock","Acción","Ação"],["Volume vs 50-day average","Volumen vs promedio de 50 días","Volume vs média de 50 dias"],["Chg","Var.","Var."],["Price","Precio","Preço"],
+["Dow Jones Industrial Average","Promedio Industrial Dow Jones","Média Industrial Dow Jones"],["S&P 500 Equal Weight","S&P 500 de igual ponderación","S&P 500 com pesos iguais"],
+// sectors (GICS and Yahoo)
+["Information Technology","Tecnología de la información","Tecnologia da informação"],["Technology","Tecnología","Tecnologia"],["Communication Services","Servicios de comunicación","Serviços de comunicação"],["Comm. Services","Comunicaciones","Comunicações"],
+["Consumer Discretionary","Consumo discrecional","Consumo discricionário"],["Discretionary","Consumo discrecional","Consumo discricionário"],["Consumer Staples","Consumo básico","Consumo básico"],["Staples","Consumo básico","Consumo básico"],
+["Health Care","Salud","Saúde"],["Healthcare","Salud","Saúde"],["Financials","Finanzas","Financeiro"],["Financial Services","Servicios financieros","Serviços financeiros"],["Industrials","Industria","Indústria"],
+["Materials","Materiales","Materiais"],["Basic Materials","Materiales básicos","Materiais básicos"],["Real Estate","Inmobiliario","Imobiliário"],["Utilities","Servicios públicos","Utilidades públicas"],
+["Consumer Cyclical","Consumo cíclico","Consumo cíclico"],["Consumer Defensive","Consumo defensivo","Consumo defensivo"],["Other","Otros","Outros"],
+// heatmap
+["Group","Grupo","Grupo"],["Color by","Color según","Cor por"],["Size by","Tamaño según","Tamanho por"],["Market cap","Capitalización","Valor de mercado"],["Equal","Igual","Igual"],["Colors","Colores","Cores"],
+["Red / green","Rojo / verde","Vermelho / verde"],["Chart colors","Colores del gráfico","Cores do gráfico"],["Market heatmap","Mapa de calor del mercado","Mapa de calor do mercado"],
+["Click a box to open its chart. Boxes are grouped by GICS sector.","Haz clic en un recuadro para abrir su gráfico. Los recuadros se agrupan por sector GICS.","Clique num quadro para abrir o gráfico. Os quadros são agrupados por setor GICS."],
+["Ranked","Ranking","Ranking"],["Best","Mejores","Melhores"],["Worst","Peores","Piores"],["Your watchlist","Tu watchlist","Sua watchlist"],
+["1-day change","variación de 1 día","variação de 1 dia"],["1-week change","variación de 1 semana","variação de 1 semana"],["1-month change","variación de 1 mes","variação de 1 mês"],["3-month change","variación de 3 meses","variação de 3 meses"],
+["year-to-date change","variación en el año","variação no ano"],["12-month change","variación de 12 meses","variação de 12 meses"],
+["Your watchlist is empty. Star a few tickers (☆ next to the symbol) and they show up here.","Tu watchlist está vacía. Marca algunos tickers con la estrella (☆ junto al símbolo) y aparecerán aquí.","Sua watchlist está vazia. Marque alguns tickers com a estrela (☆ ao lado do símbolo) e eles aparecem aqui."],
+["The index list loads after the next nightly update.","La lista del índice se carga tras la próxima actualización nocturna.","A lista do índice carrega após a próxima atualização noturna."],["Could not load the stock list.","No se pudo cargar la lista de acciones.","Não foi possível carregar a lista de ações."],
+// breadth
+["Research · market health, updated every trading day after the close","Investigación · salud del mercado, actualizada cada día hábil tras el cierre","Pesquisa · saúde do mercado, atualizada a cada pregão após o fechamento"],
+["Is the rally broad or carried by a handful of names? The market direction of the S&P 500 and the Nasdaq, read the O'Neil way with distribution days and follow-through days, next to how many stocks sit above their 20-, 50- and 200-day lines, new 52-week highs against new lows, the advance/decline line and the McClellan oscillator.","¿La suba es amplia o la sostienen unas pocas acciones? La dirección del mercado del S&P 500 y el Nasdaq, leída al estilo O'Neil con días de distribución y días de follow-through, junto a cuántas acciones están sobre sus medias de 20, 50 y 200 días, nuevos máximos de 52 semanas contra nuevos mínimos, la línea de avance/descenso y el oscilador McClellan.","A alta é ampla ou sustentada por poucas ações? A direção do mercado do S&P 500 e do Nasdaq, lida ao estilo O'Neil com dias de distribuição e dias de follow-through, ao lado de quantas ações estão acima das médias de 20, 50 e 200 dias, novas máximas de 52 semanas contra novas mínimas, a linha de avanço/declínio e o oscilador McClellan."],
+["Market direction","Dirección del mercado","Direção do mercado"],["Stocks","Acciones","Ações"],["Range","Período","Período"],["S&P 1500 + Nasdaq-100","S&P 1500 + Nasdaq-100","S&P 1500 + Nasdaq-100"],
+["Market breadth charts: index, percent of stocks above moving averages, new highs and lows, advance/decline line and McClellan oscillator","Gráficos de amplitud: índice, porcentaje de acciones sobre sus medias, nuevos máximos y mínimos, línea de avance/descenso y oscilador McClellan","Gráficos de amplitude: índice, porcentagem de ações acima das médias, novas máximas e mínimas, linha de avanço/declínio e oscilador McClellan"],
+["Market direction is worked out automatically from price and volume and is not IBD's call.","La dirección del mercado se calcula automáticamente con precio y volumen y no es la lectura de IBD.","A direção do mercado é calculada automaticamente com preço e volume e não é a leitura da IBD."],
+["Distribution day: the index falls 0.2% or more on higher volume than the day before; it counts for 25 sessions or until the index rises 5% above that close.","Día de distribución: el índice cae 0,2% o más con más volumen que el día anterior; cuenta durante 25 ruedas o hasta que el índice sube 5% sobre ese cierre.","Dia de distribuição: o índice cai 0,2% ou mais com volume maior que no dia anterior; conta por 25 pregões ou até o índice subir 5% acima desse fechamento."],
+["A rally attempt starts with the first up day after a low; a follow-through day comes on day 4 or later with a gain of at least 1.25% on higher volume.","Un intento de rally empieza con el primer día de suba tras un mínimo; el día de follow-through llega el día 4 o después con una suba de al menos 1,25% y más volumen.","Uma tentativa de rally começa no primeiro dia de alta após uma mínima; o dia de follow-through vem no dia 4 ou depois, com alta de pelo menos 1,25% e volume maior."],
+["Under pressure: 5 or more distribution days, or the index under its 50-day line.","Bajo presión: 5 o más días de distribución, o el índice bajo su media de 50 días.","Sob pressão: 5 ou mais dias de distribuição, ou o índice abaixo da média de 50 dias."],
+["Correction: 8% off the peak, or 6 distribution days under the 50-day line.","Corrección: 8% bajo el máximo, o 6 días de distribución bajo la media de 50 días.","Correção: 8% abaixo do pico, ou 6 dias de distribuição abaixo da média de 50 dias."],
+["McClellan oscillator: 19-day minus 39-day average of ratio-adjusted net advances.","Oscilador McClellan: promedio de 19 días menos el de 39 días de los avances netos ajustados.","Oscilador McClellan: média de 19 dias menos a de 39 dias dos avanços líquidos ajustados."],
+["Not investment advice.","No es asesoramiento de inversión.","Não é recomendação de investimento."],
+["above the 50-day line","sobre la media de 50 días","acima da média de 50 dias"],["above the 200-day line","sobre la media de 200 días","acima da média de 200 dias"],["new 52-week highs / lows","nuevos máximos / mínimos de 52 semanas","novas máximas / mínimas de 52 semanas"],
+["McClellan oscillator","Oscilador McClellan","Oscilador McClellan"],["McClellan","McClellan","McClellan"],
+["Confirmed uptrend. The backdrop favors buying breakouts from sound bases.","Tendencia alcista confirmada. El contexto favorece comprar rupturas de bases sólidas.","Tendência de alta confirmada. O cenário favorece comprar rompimentos de bases sólidas."],
+["Confirmed uptrend.","Tendencia alcista confirmada.","Tendência de alta confirmada."],["The backdrop favors buying breakouts from sound bases.","El contexto favorece comprar rupturas de bases sólidas.","O cenário favorece comprar rompimentos de bases sólidas."],
+["Uptrend under pressure.","Tendencia alcista bajo presión.","Tendência de alta sob pressão."],["Be selective with new buys and keep stops tight.","Sé selectivo con las compras nuevas y mantén los stops ajustados.","Seja seletivo nas novas compras e mantenha os stops curtos."],
+["Rally attempt.","Intento de rally.","Tentativa de rally."],["Wait for a follow-through day before buying aggressively.","Espera un día de follow-through antes de comprar con fuerza.","Espere um dia de follow-through antes de comprar com força."],
+["Market in correction.","Mercado en corrección.","Mercado em correção."],["Protect capital; most breakouts fail in this phase.","Protege el capital; la mayoría de las rupturas fallan en esta fase.","Proteja o capital; a maioria dos rompimentos falha nesta fase."],
+["A rally attempt starts with the first up day.","Un intento de rally empieza con el primer día de suba.","Uma tentativa de rally começa no primeiro dia de alta."],
+["Distribution days that still count","Días de distribución que todavía cuentan","Dias de distribuição que ainda contam"],["Breadth data appears after the next nightly update.","Los datos de amplitud aparecen tras la próxima actualización nocturna.","Os dados de amplitude aparecem após a próxima atualização noturna."],
+["% of stocks above moving averages","% de acciones sobre sus medias móviles","% de ações acima das médias móveis"],["% above MAs","% sobre medias","% acima das médias"],["New 52-week highs / lows","Nuevos máximos / mínimos de 52 semanas","Novas máximas / mínimas de 52 semanas"],["52-wk highs / lows","Máx. / mín. 52 sem.","Máx. / mín. 52 sem."],
+["Advance / decline line","Línea de avance / descenso","Linha de avanço / declínio"],["A/D line","Línea A/D","Linha A/D"],["Cumulative","Acumulada","Acumulada"],["50-day avg","Prom. 50 días","Média 50 dias"],["Net, 10-day avg","Neto, prom. 10 días","Líquido, média 10 dias"],
+["Highs","Máximos","Máximas"],["Lows","Mínimos","Mínimas"],["▼ distribution","▼ distribución","▼ distribuição"],["▲ follow-through","▲ follow-through","▲ follow-through"],["20-day","20 días","20 dias"],["50-day","50 días","50 dias"],["200-day","200 días","200 dias"],
+["Index","Índice","Índice"],["now","ahora","agora"],
+// trade ideas
+["Research · updated every trading day after the close","Investigación · actualizada cada día hábil tras el cierre","Pesquisa · atualizada a cada pregão após o fechamento"],
+["Leaders setting up right now: RS Rating of","Líderes armando su base ahora mismo: RS Rating de","Líderes montando base agora: RS Rating de"],
+["or higher, trading above the 50- and 200-day lines, and sitting near a pivot, inside the buy zone or just out of a base. Found by the same automatic scan for every S&P 1500 and Nasdaq-100 stock.","o más, operando sobre las medias de 50 y 200 días y cerca de un pivot, dentro de la zona de compra o recién salidas de una base. Las encuentra el mismo escaneo automático sobre todas las acciones del S&P 1500 y el Nasdaq-100.","ou mais, negociando acima das médias de 50 e 200 dias e perto de um pivô, dentro da zona de compra ou recém-saídas de uma base. Encontradas pela mesma varredura automática em todas as ações do S&P 1500 e do Nasdaq-100."],
+["Setup","Setup","Setup"],["All setups","Todos los setups","Todos os setups"],["Breakouts","Rupturas","Rompimentos"],["In buy zone","En zona de compra","Na zona de compra"],["Near pivot","Cerca del pivot","Perto do pivô"],
+["Quality","Calidad","Qualidade"],["Any SMR","Cualquier SMR","Qualquer SMR"],["SMR A–B only","Solo SMR A–B","Só SMR A–B"],["SMR Rating A or B: top sales growth, margins and return on equity","SMR Rating A o B: el mejor crecimiento de ventas, márgenes y retorno sobre el patrimonio","SMR Rating A ou B: melhor crescimento de vendas, margens e retorno sobre o patrimônio"],
+["The Ticker&Tape weekly","El semanario de Ticker&Tape","O semanal do Ticker&Tape"],
+["Sectors, commodities, RS leaders and the week's trade ideas with buy points and stops. Every Friday after the close. Free.","Sectores, materias primas, líderes de RS y las ideas de trading de la semana con puntos de compra y stops. Todos los viernes tras el cierre. Gratis.","Setores, commodities, líderes de RS e as ideias de trade da semana com pontos de compra e stops. Toda sexta após o fechamento. Grátis."],
+["you@email.com","tu@email.com","voce@email.com"],["Email address","Dirección de email","Endereço de e-mail"],["Subscribe","Suscribirme","Assinar"],
+["Track record","Historial","Histórico"],["every idea since it was flagged · closed at a 7% stop or after 8 weeks","cada idea desde que se marcó · cerrada en un stop de 7% o tras 8 semanas","cada ideia desde que foi marcada · encerrada num stop de 7% ou após 8 semanas"],
+["Ideas come from an automatic scan, not from a person reviewing each chart, and are not investment advice or a recommendation to buy or sell.","Las ideas salen de un escaneo automático, no de una persona revisando cada gráfico, y no son asesoramiento de inversión ni una recomendación de compra o venta.","As ideias vêm de uma varredura automática, não de uma pessoa revisando cada gráfico, e não são recomendação de investimento nem de compra ou venda."],
+["Buy point = pivot; buy zone = up to 5% above it; stop = 7% under the buy point.","Punto de compra = pivot; zona de compra = hasta 5% por encima; stop = 7% bajo el punto de compra.","Ponto de compra = pivô; zona de compra = até 5% acima dele; stop = 7% abaixo do ponto de compra."],
+["Returns in the track record are measured from the close on the day each idea was flagged, before costs.","Los rendimientos del historial se miden desde el cierre del día en que se marcó cada idea, antes de costos.","Os retornos do histórico são medidos a partir do fechamento do dia em que cada ideia foi marcada, antes de custos."],
+["setups today","setups hoy","setups hoje"],["ideas tracked","ideas seguidas","ideias acompanhadas"],["in the green","en positivo","no positivo"],["average return","rendimiento promedio","retorno médio"],["average best gain","mejor ganancia promedio","melhor ganho médio"],
+["The track record fills in as ideas age: every one is followed for 8 weeks or until its stop.","El historial se completa a medida que las ideas maduran: cada una se sigue 8 semanas o hasta su stop.","O histórico se completa conforme as ideias amadurecem: cada uma é acompanhada por 8 semanas ou até o stop."],
+["The first ideas enter the track record after their first full trading day.","Las primeras ideas entran al historial tras su primer día completo de operaciones.","As primeiras ideias entram no histórico após o primeiro pregão completo."],
+["vs pivot","vs pivot","vs pivô"],["EPS / Sales","EPS / Ventas","LPA / Vendas"],["Sales growth, profit margins and return on equity, A (best) to E","Crecimiento de ventas, márgenes y retorno sobre el patrimonio, de A (mejor) a E","Crescimento de vendas, margens e retorno sobre o patrimônio, de A (melhor) a E"],
+["Buy point","Punto de compra","Ponto de compra"],["Buy zone to","Zona de compra hasta","Zona de compra até"],["Stop (−7%)","Stop (−7%)","Stop (−7%)"],["Free account: see the trade plan","Cuenta gratis: mira el plan de trading","Conta grátis: veja o plano de trade"],["Open chart →","Abrir gráfico →","Abrir gráfico →"],
+["Flagged","Marcada","Marcada"],["Price then","Precio entonces","Preço na época"],["Return","Rendimiento","Retorno"],
+["In weak markets that is normal: fewer leaders set up.","En mercados débiles es normal: menos líderes arman bases.","Em mercados fracos isso é normal: menos líderes montam bases."],
+// earnings
+["Research · earnings calendar","Investigación · calendario de resultados","Pesquisa · calendário de balanços"],["Who reports this week","Quién presenta resultados esta semana","Quem divulga balanço esta semana"],
+["Every S&P 1500 and Nasdaq-100 stock reporting, split into before the open and after the close, biggest companies first. Upcoming reports show the consensus EPS and the growth it implies against the same quarter last year; past reports show the surprise and how the stock reacted the next session.","Todas las acciones del S&P 1500 y el Nasdaq-100 que presentan resultados, separadas en antes de la apertura y después del cierre, de mayor a menor. Los próximos reportes muestran el EPS de consenso y el crecimiento que implica contra el mismo trimestre del año anterior; los pasados, la sorpresa y cómo reaccionó la acción en la rueda siguiente.","Todas as ações do S&P 1500 e do Nasdaq-100 que divulgam balanço, separadas em antes da abertura e após o fechamento, das maiores para as menores. Os próximos mostram o LPA de consenso e o crescimento implícito contra o mesmo trimestre do ano anterior; os passados, a surpresa e como a ação reagiu no pregão seguinte."],
+["Week","Semana","Semana"],["Show","Mostrar","Mostrar"],["All stocks","Todas las acciones","Todas as ações"],["Leaders · RS ≥ 80","Líderes · RS ≥ 80","Líderes · RS ≥ 80"],["My watchlist","Mi watchlist","Minha watchlist"],
+["Dates and times come from Nasdaq and Yahoo Finance and can move: companies confirm them a few weeks ahead.","Las fechas y horarios vienen de Nasdaq y Yahoo Finance y pueden cambiar: las empresas los confirman unas semanas antes.","Datas e horários vêm da Nasdaq e do Yahoo Finance e podem mudar: as empresas confirmam algumas semanas antes."],
+["Reaction = change in the first session that traded on the report (the same day for reports before the open, the next day for reports after the close).","Reacción = variación en la primera rueda que operó con el reporte (el mismo día si se presentó antes de la apertura, el siguiente si fue después del cierre).","Reação = variação no primeiro pregão após o balanço (no mesmo dia se divulgado antes da abertura, no dia seguinte se após o fechamento)."],
+["reports","reportes","balanços"],["report","reporte","balanço"],["leaders (RS ≥ 80)","líderes (RS ≥ 80)","líderes (RS ≥ 80)"],["average reaction","reacción promedio","reação média"],
+["Last week","Semana pasada","Semana passada"],["This week","Esta semana","Esta semana"],["Next week","Próxima semana","Próxima semana"],
+["Reported","Reportado","Divulgado"],["EPS surprise","sorpresa de EPS","surpresa de LPA"],["reaction","reacción","reação"],["Upcoming","Próximos","Próximos"],["consensus EPS","EPS de consenso","LPA de consenso"],["growth vs a year ago","crecimiento vs hace un año","crescimento vs um ano atrás"],
+["Before open","Antes de la apertura","Antes da abertura"],["After close","Después del cierre","Após o fechamento"],["Time not set","Horario sin confirmar","Horário a confirmar"],["before open","antes de la apertura","antes da abertura"],["after close","después del cierre","após o fechamento"],
+["Reaction in the first session after the report","Reacción en la primera rueda tras el reporte","Reação no primeiro pregão após o balanço"],["Consensus EPS","EPS de consenso","LPA de consenso"],["Expected EPS growth vs the same quarter last year","Crecimiento de EPS esperado vs el mismo trimestre del año anterior","Crescimento de LPA esperado vs o mesmo trimestre do ano anterior"],
+["The calendar loads after the next nightly update.","El calendario se carga tras la próxima actualización nocturna.","O calendário carrega após a próxima atualização noturna."],["Results, surprises and reactions fill in as companies report.","Resultados, sorpresas y reacciones se completan a medida que las empresas reportan.","Resultados, surpresas e reações se completam conforme as empresas divulgam."],
+["Earnings today","Resultados hoy","Balanço hoje"],
+// welcome
+["Est. 2026 · The chart room for growth-stock traders","Desde 2026 · La sala de gráficos para traders de acciones de crecimiento","Desde 2026 · A sala de gráficos para traders de ações de crescimento"],["Read the tape.","Lee la cinta.","Leia a fita."],["Find the leaders.","Encuentra a los líderes.","Encontre os líderes."],
+["Ticker&Tape puts O'Neil-style daily charts, RS Ratings, industry group ranks and automatic base-and-pivot detection for every S&P 1500 and Nasdaq-100 stock in one clean, fast chart room.","Ticker&Tape reúne gráficos diarios estilo O'Neil, RS Ratings, ranking de grupos industriales y detección automática de bases y pivots para todas las acciones del S&P 1500 y el Nasdaq-100 en una sala de gráficos limpia y rápida.","O Ticker&Tape reúne gráficos diários no estilo O'Neil, RS Ratings, ranking de grupos de indústria e detecção automática de bases e pivôs para todas as ações do S&P 1500 e do Nasdaq-100 numa sala de gráficos limpa e rápida."],
+["Create your free account","Crea tu cuenta gratis","Crie sua conta grátis"],["Free. No credit card. Your watchlist, chart settings and drawings sync to every device.","Gratis. Sin tarjeta de crédito. Tu watchlist, configuración y dibujos se sincronizan en todos tus dispositivos.","Grátis. Sem cartão de crédito. Sua watchlist, configurações e desenhos sincronizam em todos os seus dispositivos."],
+["Explore without an account →","Explorar sin cuenta →","Explorar sem conta →"],["or explore without an account →","o explora sin cuenta →","ou explore sem conta →"],
+["Ticker&Tape daily chart of NVDA with a cup base, pivot, RS line, labeled volume and quarterly earnings strip","Gráfico diario de NVDA en Ticker&Tape con una base en taza, pivot, línea RS, volumen etiquetado y franja de resultados trimestrales","Gráfico diário da NVDA no Ticker&Tape com base em xícara, pivô, linha RS, volume rotulado e faixa de resultados trimestrais"],
+["NVDA, daily: cup base with its pivot, 50- and 200-day lines, RS line, labeled volume and the quarterly earnings strip.","NVDA, diario: base en taza con su pivot, medias de 50 y 200 días, línea RS, volumen etiquetado y la franja de resultados trimestrales.","NVDA, diário: base em xícara com o pivô, médias de 50 e 200 dias, linha RS, volume rotulado e a faixa de resultados trimestrais."],
+["stocks rated every trading day","acciones calificadas cada día hábil","ações classificadas a cada pregão"],["industry groups ranked","grupos industriales en ranking","grupos de indústria no ranking"],["RS Rating on every stock","RS Rating en cada acción","RS Rating em cada ação"],["15 min","15 min","15 min"],
+["delayed prices during the session","de demora en los precios durante la rueda","de atraso nos preços durante o pregão"],["Everything on one page. Nothing you don't need.","Todo en una página. Nada que no necesites.","Tudo numa página. Nada que você não precise."],
+["Charts the way the pros printed them","Gráficos como los imprimían los profesionales","Gráficos como os profissionais imprimiam"],
+["High-low-close bars in blue and pink, the 50- and 200-day lines, the RS line against the S&P 500, labeled volume spikes and a quarterly EPS and sales strip under every chart.","Barras máximo-mínimo-cierre en azul y rosa, las medias de 50 y 200 días, la línea RS contra el S&P 500, picos de volumen etiquetados y una franja trimestral de EPS y ventas bajo cada gráfico.","Barras máxima-mínima-fechamento em azul e rosa, as médias de 50 e 200 dias, a linha RS contra o S&P 500, picos de volume rotulados e uma faixa trimestral de LPA e vendas sob cada gráfico."],
+["RS Rating and group rank","RS Rating y ranking de grupo","RS Rating e ranking de grupo"],
+["Every stock ranked 1 to 99 on twelve-month price strength against 1,500 peers, and every industry group ranked, so you can see where the leadership is.","Cada acción calificada de 1 a 99 según su fuerza de precio a doce meses frente a 1.500 pares, y cada grupo industrial en ranking, para ver dónde está el liderazgo.","Cada ação classificada de 1 a 99 pela força de preço em doze meses contra 1.500 pares, e cada grupo de indústria no ranking, para ver onde está a liderança."],
+["Bases and pivots, spotted for you","Bases y pivots, detectados por ti","Bases e pivôs, detectados para você"],
+["Cups, handles and flat bases detected automatically, with the pivot, the 5% buy zone and the status: near pivot, breakout, extended.","Tazas, asas y bases planas detectadas automáticamente, con el pivot, la zona de compra del 5% y el estado: cerca del pivot, ruptura, extendida.","Xícaras, alças e bases planas detectadas automaticamente, com o pivô, a zona de compra de 5% e o status: perto do pivô, rompimento, estendida."],
+["Earnings at a glance","Resultados de un vistazo","Balanços num relance"],
+["Quarterly and annual EPS and sales growth, surprises, margins and analyst price targets, right beside the chart.","Crecimiento trimestral y anual de EPS y ventas, sorpresas, márgenes y precios objetivo de analistas, junto al gráfico.","Crescimento trimestral e anual de LPA e vendas, surpresas, margens e preços-alvo de analistas, ao lado do gráfico."],
+["A screener that thinks in setups","Un screener que piensa en setups","Um screener que pensa em setups"],
+["Filter for breakouts, stocks near a pivot, RS 80 and up, names above the 50-day and liquid leaders. Sort by any column.","Filtra rupturas, acciones cerca del pivot, RS de 80 o más, acciones sobre la media de 50 días y líderes líquidos. Ordena por cualquier columna.","Filtre rompimentos, ações perto do pivô, RS 80 ou mais, ações acima da média de 50 dias e líderes líquidas. Ordene por qualquer coluna."],
+["Your watchlist, everywhere","Tu watchlist, en todas partes","Sua watchlist, em todo lugar"],
+["Star any ticker. Your list, chart settings, lines and notes follow you from the desk to your phone.","Marca cualquier ticker con la estrella. Tu lista, configuración, líneas y notas te siguen del escritorio al teléfono.","Marque qualquer ticker com a estrela. Sua lista, configurações, linhas e notas acompanham você do computador ao celular."],
+["How it works","Cómo funciona","Como funciona"],["Create a free account.","Crea una cuenta gratis.","Crie uma conta grátis."],["Thirty seconds, just an email and a password.","Treinta segundos, solo un email y una contraseña.","Trinta segundos, só um e-mail e uma senha."],
+["Star the stocks you follow.","Marca las acciones que sigues.","Marque as ações que você acompanha."],["Any S&P 1500 or Nasdaq-100 name, or any other U.S. ticker.","Cualquier acción del S&P 1500 o el Nasdaq-100, o cualquier otro ticker de EE.UU.","Qualquer ação do S&P 1500 ou do Nasdaq-100, ou qualquer outro ticker dos EUA."],
+["Check the screener after the close.","Revisa el screener tras el cierre.","Confira o screener após o fechamento."],["Leaders, setups and pivots on a single page, updated every trading day.","Líderes, setups y pivots en una sola página, actualizados cada día hábil.","Líderes, setups e pivôs numa única página, atualizados a cada pregão."],
+["The tape is running.","La cinta está corriendo.","A fita está rodando."],
+["Data: Yahoo Finance, end of day plus delayed intraday prices. Ratings, bases and pivots are calculated automatically and are a starting point for your own analysis. Ticker&Tape is a charting and research tool, not investment advice.","Datos: Yahoo Finance, cierre diario más precios intradía con demora. Los ratings, bases y pivots se calculan automáticamente y son un punto de partida para tu propio análisis. Ticker&Tape es una herramienta de gráficos e investigación, no asesoramiento de inversión.","Dados: Yahoo Finance, fechamento diário mais preços intraday com atraso. Ratings, bases e pivôs são calculados automaticamente e são um ponto de partida para sua própria análise. O Ticker&Tape é uma ferramenta de gráficos e pesquisa, não uma recomendação de investimento."],
+// screener
+["List","Lista","Lista"],["Filter","Filtro","Filtro"],["All","Todas","Todas"],["Breakout / buy zone","Ruptura / zona de compra","Rompimento / zona de compra"],["RS ≥ 80","RS ≥ 80","RS ≥ 80"],
+["Average dollar volume of at least $20M a day","Volumen promedio de al menos US$20M por día","Volume médio de pelo menos US$20M por dia"],["Liquid","Líquidas","Líquidas"],["Symbol","Símbolo","Símbolo"],["90 days","90 días","90 dias"],
+["IBD-style relative strength rating 1–99 vs S&P 1500 + Nasdaq-100 stocks","Rating de fuerza relativa estilo IBD, 1–99, vs acciones del S&P 1500 + Nasdaq-100","Rating de força relativa estilo IBD, 1–99, vs ações do S&P 1500 + Nasdaq-100"],
+["Industry group rank (GICS sub-industry, by average RS)","Ranking del grupo industrial (subindustria GICS, por RS promedio)","Ranking do grupo de indústria (subindústria GICS, por RS médio)"],
+["Latest quarter EPS change vs year ago","Variación del EPS del último trimestre vs un año antes","Variação do LPA do último trimestre vs um ano antes"],["EPS Δ","EPS Δ","LPA Δ"],
+["Latest quarter sales change vs year ago","Variación de ventas del último trimestre vs un año antes","Variação das vendas do último trimestre vs um ano antes"],["Sales Δ","Ventas Δ","Vendas Δ"],
+["Distance from 52-week high","Distancia al máximo de 52 semanas","Distância da máxima de 52 semanas"],["Off high","Desde máx.","Da máx."],["vs 50d","vs 50d","vs 50d"],["Today's volume vs 50-day average","Volumen de hoy vs promedio de 50 días","Volume de hoje vs média de 50 dias"],["Vol Δ","Vol Δ","Vol Δ"],
+["Up/down volume ratio, 50 days","Relación de volumen alcista/bajista, 50 días","Razão de volume de alta/baixa, 50 dias"],["Base","Base","Base"],["Pivot","Pivot","Pivô"],["Distance from pivot","Distancia al pivot","Distância do pivô"],["To pivot","Al pivot","Ao pivô"],["Status","Estado","Status"],
+["Colors follow your chart's up/down colors.","Los colores siguen los colores alcista/bajista de tu gráfico.","As cores seguem as cores de alta/baixa do seu gráfico."],
+["strong: EPS or sales +25% or more, U/D 1.5+, inside the buy zone, heavy volume on an up day","fuerte: EPS o ventas +25% o más, U/D 1,5+, dentro de la zona de compra, volumen alto en día de suba","forte: LPA ou vendas +25% ou mais, U/D 1,5+, dentro da zona de compra, volume alto em dia de alta"],
+["weak: big drop, heavy volume on a down day, far below highs","débil: caída fuerte, volumen alto en día de baja, lejos de máximos","fraco: queda forte, volume alto em dia de baixa, longe das máximas"],
+["extended: 25%+ over the 50-day or 5%+ past the pivot","extendida: 25%+ sobre la media de 50 días o 5%+ pasado el pivot","estendida: 25%+ acima da média de 50 dias ou 5%+ além do pivô"],
+["RS Rating: each stock's 12-month performance (last quarter weighted double) ranked against the S&P 1500 and Nasdaq-100 stocks, 1–99.","RS Rating: el rendimiento a 12 meses de cada acción (con el último trimestre al doble) en ranking contra las acciones del S&P 1500 y el Nasdaq-100, 1–99.","RS Rating: o desempenho de 12 meses de cada ação (com o último trimestre em dobro) classificado contra as ações do S&P 1500 e do Nasdaq-100, 1–99."],
+["All stocks: every S&P 500, MidCap 400, SmallCap 600 and Nasdaq-100 member; their earnings and sales data refresh in rotation.","Todas las acciones: cada integrante del S&P 500, MidCap 400, SmallCap 600 y Nasdaq-100; sus datos de ganancias y ventas se actualizan por rotación.","Todas as ações: cada membro do S&P 500, MidCap 400, SmallCap 600 e Nasdaq-100; seus dados de lucros e vendas são atualizados em rodízio."],
+["Star any ticker to add it to your watchlist; tickers outside these indexes load after the next nightly update.","Marca cualquier ticker con la estrella para sumarlo a tu watchlist; los que no están en estos índices se cargan tras la próxima actualización nocturna.","Marque qualquer ticker com a estrela para adicioná-lo à watchlist; tickers fora desses índices carregam após a próxima atualização noturna."],
+["Bases and pivots are detected automatically from daily bars and are a starting point for your own read of the chart.","Las bases y pivots se detectan automáticamente con barras diarias y son un punto de partida para tu propia lectura del gráfico.","Bases e pivôs são detectados automaticamente com barras diárias e são um ponto de partida para sua própria leitura do gráfico."],
+["Data: Yahoo Finance via yfinance, end of day.","Datos: Yahoo Finance vía yfinance, cierre diario.","Dados: Yahoo Finance via yfinance, fechamento diário."],
+["In your watchlist","En tu watchlist","Na sua watchlist"],["25%+ above the 50-day line: extended","25%+ sobre la media de 50 días: extendida","25%+ acima da média de 50 dias: estendida"],
+["No tickers match this filter.","Ningún ticker cumple este filtro.","Nenhum ticker passa neste filtro."],["Clear sector filter","Quitar filtro de sector","Limpar filtro de setor"],["(filtered)","(filtrado)","(filtrado)"],
+["Your watchlist is empty. Open any ticker and tap the ☆ next to its symbol to add it.","Tu watchlist está vacía. Abre cualquier ticker y toca la ☆ junto a su símbolo para sumarlo.","Sua watchlist está vazia. Abra qualquer ticker e toque na ☆ ao lado do símbolo para adicioná-lo."],
+["Loading ETFs…","Cargando ETFs…","Carregando ETFs…"],["Loading all stocks…","Cargando todas las acciones…","Carregando todas as ações…"],
+["Could not load the full stock list. It appears after the next data update.","No se pudo cargar la lista completa de acciones. Aparece tras la próxima actualización de datos.","Não foi possível carregar a lista completa de ações. Ela aparece após a próxima atualização de dados."],
+// statuses and bases
+["Breakout","Ruptura","Rompimento"],["Extended","Extendida","Estendida"],["Below pivot","Bajo el pivot","Abaixo do pivô"],["Correcting","Corrigiendo","Corrigindo"],["Failed breakout","Ruptura fallida","Rompimento falho"],
+["Base forming","Base en formación","Base em formação"],["Deep correction","Corrección profunda","Correção profunda"],["Cup","Taza","Xícara"],["Cup with handle","Taza con asa","Xícara com alça"],["Flat base","Base plana","Base plana"],["Double bottom","Doble piso","Fundo duplo"],
+// ETF groups
+["International","Internacional","Internacional"],["Crypto","Cripto","Cripto"],["Industry","Industria","Indústria"],["Currency","Moneda","Moeda"],["Bonds","Bonos","Títulos"],["Sector","Sector","Setor"],
+// chart page
+["Add to your watchlist","Agregar a tu watchlist","Adicionar à sua watchlist"],["Remove from your watchlist","Quitar de tu watchlist","Remover da sua watchlist"],["Previous ticker (←)","Ticker anterior (←)","Ticker anterior (←)"],["Next ticker (→)","Ticker siguiente (→)","Próximo ticker (→)"],
+["Period","Período","Período"],["Daily","Diario","Diário"],["Weekly","Semanal","Semanal"],["Data box","Datos","Dados"],["Pivots","Pivots","Pivôs"],["S&P 500 line at the top","Línea del S&P 500 arriba","Linha do S&P 500 no topo"],
+["Relative strength line vs the S&P 500","Línea de fuerza relativa vs el S&P 500","Linha de força relativa vs o S&P 500"],["RS line","Línea RS","Linha RS"],["Drag on the chart to draw a dotted line","Arrastra sobre el gráfico para dibujar una línea punteada","Arraste no gráfico para desenhar uma linha pontilhada"],
+["Line","Línea","Linha"],["Click a bar and type a note with an arrow","Haz clic en una barra y escribe una nota con flecha","Clique numa barra e escreva uma nota com seta"],["Note","Nota","Nota"],["Undo","Deshacer","Desfazer"],["Clear drawings","Borrar dibujos","Apagar desenhos"],
+["Price and volume chart","Gráfico de precio y volumen","Gráfico de preço e volume"],["Type a note, press Enter","Escribe una nota y presiona Enter","Digite uma nota e pressione Enter"],
+["Reporting soon: a gap on the report can skip right past a stop.","Presenta resultados pronto: un gap con el reporte puede saltar el stop.","Divulga balanço em breve: um gap no balanço pode pular o stop."],
+["Business description","Descripción del negocio","Descrição do negócio"],["Full description","Descripción completa","Descrição completa"],["No description available.","No hay descripción disponible.","Nenhuma descrição disponível."],
+["The business description loads with the fundamentals rotation in the next updates.","La descripción del negocio se carga con la rotación de fundamentales en las próximas actualizaciones.","A descrição do negócio carrega com o rodízio de fundamentos nas próximas atualizações."],
+["Peers","Pares","Pares"],["same industry group","mismo grupo industrial","mesmo grupo de indústria"],["Loading peers…","Cargando pares…","Carregando pares…"],["Peers are not available yet.","Los pares aún no están disponibles.","Os pares ainda não estão disponíveis."],
+["No other stocks from this industry group in the S&P 1500 / Nasdaq-100.","No hay otras acciones de este grupo industrial en el S&P 1500 / Nasdaq-100.","Não há outras ações deste grupo de indústria no S&P 1500 / Nasdaq-100."],
+["From the chart","Del gráfico","Do gráfico"],["Annual earnings & sales","Ganancias y ventas anuales","Lucros e vendas anuais"],["last 10 years","últimos 10 años","últimos 10 anos"],["Quarterly earnings & sales","Ganancias y ventas trimestrales","Lucros e vendas trimestrais"],
+["reported vs. expected · y/y growth","reportado vs. esperado · crecimiento interanual","divulgado vs. esperado · crescimento anual"],["reported vs. expected","reportado vs. esperado","divulgado vs. esperado"],["y/y growth","crecimiento interanual","crescimento anual"],
+["Base analysis","Análisis de la base","Análise da base"],["auto-detected","detección automática","detecção automática"],["Analysts","Analistas","Analistas"],["consensus","consenso","consenso"],["News","Noticias","Notícias"],
+["Insider activity","Operaciones de insiders","Atividade de insiders"],["Form 4 filings","presentaciones Form 4","registros Form 4"],["Institutional ownership","Tenencia institucional","Participação institucional"],["13F filings","presentaciones 13F","registros 13F"],
+["Mkt cap","Capitaliz.","Valor mercado"],["Mkt Cap","Capitaliz.","Valor mercado"],["Year","Año","Ano"],["Sales","Ventas","Vendas"],["Group Rank","Rank de grupo","Rank do grupo"],["SMR Rating","SMR Rating","SMR Rating"],
+["U/D Vol Ratio","Relación vol. U/D","Razão vol. U/D"],["% vs 52w High","% vs máx. 52s","% vs máx. 52s"],["EPS Growth Rate","Crecimiento de EPS","Crescimento do LPA"],["EPS Surprise","Sorpresa de EPS","Surpresa de LPA"],
+["50-day MA","MA de 50 días","MM de 50 dias"],["200-day MA","MA de 200 días","MM de 200 dias"],["vs S&P 500","vs S&P 500","vs S&P 500"],["50-day avg volume","Vol. promedio 50 días","Vol. médio 50 dias"],["Unbroken swing","Swing no roto","Swing não rompido"],
+["Pivot · buy zone","Pivot · zona de compra","Pivô · zona de compra"],["Ants","Hormigas","Formigas"],["Up","Suben","Alta"],["down","bajan","baixa"],["log scale","escala logarítmica","escala logarítmica"],["linear scale","escala lineal","escala linear"],
+["bars: close above / below prior close","barras: cierre arriba / abajo del cierre anterior","barras: fechamento acima / abaixo do anterior"],
+["Float","Flotante","Free float"],["Shares out","Acciones emitidas","Ações emitidas"],["Institutional","Institucional","Institucional"],["Pretax margin","Margen antes de impuestos","Margem antes de impostos"],["Debt / equity","Deuda / patrimonio","Dívida / patrimônio"],
+["EPS growth (3y)","Crecimiento EPS (3a)","Crescimento LPA (3a)"],["EPS surprises (8q)","Sorpresas EPS (8t)","Surpresas LPA (8t)"],["Next earnings","Próximos resultados","Próximo balanço"],["Next qtr EPS est.","EPS est. próx. trim.","LPA est. próx. trim."],
+["Group rank","Rank de grupo","Rank do grupo"],["Employees","Empleados","Funcionários"],["Headquarters","Sede","Sede"],["Exchange","Bolsa","Bolsa"],["Website","Sitio web","Site"],
+["RS Rating 1–99","RS Rating 1–99","RS Rating 1–99"],["Sales growth, margins, ROE (A–E)","Crecimiento de ventas, márgenes, ROE (A–E)","Crescimento de vendas, margens, ROE (A–E)"],["Up/down volume, 50 days","Volumen alcista/bajista, 50 días","Volume de alta/baixa, 50 dias"],
+["Latest quarter EPS vs year ago","EPS del último trimestre vs un año antes","LPA do último trimestre vs um ano antes"],["Latest quarter sales vs year ago","Ventas del último trimestre vs un año antes","Vendas do último trimestre vs um ano antes"],["Annual EPS growth, 3 years","Crecimiento anual de EPS, 3 años","Crescimento anual do LPA, 3 anos"],["EPS 3y","EPS 3a","LPA 3a"],
+["52-week high","Máximo de 52 semanas","Máxima de 52 semanas"],["Off 52-week high","Desde el máximo de 52 semanas","Da máxima de 52 semanas"],["52-week low","Mínimo de 52 semanas","Mínima de 52 semanas"],["Avg volume (50d)","Volumen prom. (50d)","Volume médio (50d)"],
+["Avg $ volume (50d)","Volumen US$ prom. (50d)","Volume US$ médio (50d)"],["Volume vs avg","Volumen vs prom.","Volume vs média"],["Up/down volume","Volumen alcista/bajista","Volume de alta/baixa"],["ATR (21d)","ATR (21d)","ATR (21d)"],
+["RS line, 3 months","Línea RS, 3 meses","Linha RS, 3 meses"],["RS line at new high","Línea RS en nuevo máximo","Linha RS em nova máxima"],["Yes ●","Sí ●","Sim ●"],["Yes","Sí","Sim"],["No","No","Não"],
+["Last swing high (unbroken)","Último máximo de swing (no roto)","Última máxima de swing (não rompida)"],["Last swing low (unbroken)","Último mínimo de swing (no roto)","Última mínima de swing (não rompida)"],
+["% chg","% var.","% var."],["Net mgn","Mg. neto","Mg. líq."],["Qtr","Trim.","Trim."],["Op.","Op.","Op."],["mgn","mg.","mg."],["Op. mgn","Mg. op.","Mg. op."],["Actual","Real","Real"],["Est.","Est.","Est."],["Surp.","Sorp.","Surp."],
+["Faster growth than the prior quarter","Crece más rápido que el trimestre anterior","Cresce mais rápido que o trimestre anterior"],["Faster growth than the quarter before","Crece más rápido que el trimestre anterior","Cresce mais rápido que o trimestre anterior"],
+["Growth 25%+ or beat","Crecimiento 25%+ o supera","Crescimento 25%+ ou supera"],["Decline or miss","Caída o no alcanza","Queda ou não atinge"],["EPS adjusted, as reported to analysts","EPS ajustado, tal como se informa a los analistas","LPA ajustado, como informado aos analistas"],
+["No annual data","Sin datos anuales","Sem dados anuais"],["No annual data.","Sin datos anuales.","Sem dados anuais."],["Annual figures load with the fundamentals rotation in the next updates.","Las cifras anuales se cargan con la rotación de fundamentales en las próximas actualizaciones.","Os números anuais carregam com o rodízio de fundamentos nas próximas atualizações."],
+["Yahoo did not return quarterly earnings for this ticker.","Yahoo no devolvió resultados trimestrales para este ticker.","O Yahoo não retornou resultados trimestrais para este ticker."],
+["Earnings and sales for this stock are still loading: the site fetches them for a batch of stocks each day, so they appear within the next few updates.","Las ganancias y ventas de esta acción todavía se están cargando: el sitio las descarga para un grupo de acciones por día, así que aparecen en las próximas actualizaciones.","Lucros e vendas desta ação ainda estão carregando: o site baixa os dados de um lote de ações por dia, então aparecem nas próximas atualizações."],
+["Length","Duración","Duração"],["Depth","Profundidad","Profundidade"],["Left-side high","Máximo del lado izquierdo","Máxima do lado esquerdo"],["Base low","Mínimo de la base","Mínima da base"],["Buy zone (+5%)","Zona de compra (+5%)","Zona de compra (+5%)"],["Price vs pivot","Precio vs pivot","Preço vs pivô"],
+["Still below the pivot; the right side of the base is forming.","Todavía bajo el pivot; se está formando el lado derecho de la base.","Ainda abaixo do pivô; o lado direito da base está se formando."],
+["Depth above 35% is on the deep side for a cup.","Una profundidad mayor a 35% es mucha para una taza.","Profundidade acima de 35% é muita para uma xícara."],
+["Trading inside the 5% buy zone above the pivot.","Opera dentro de la zona de compra del 5% sobre el pivot.","Negocia dentro da zona de compra de 5% acima do pivô."],["Still inside the 5% buy zone.","Todavía dentro de la zona de compra del 5%.","Ainda dentro da zona de compra de 5%."],
+["More than 5% past the pivot: extended from a proper buy point.","Más de 5% pasado el pivot: extendida respecto de un punto de compra correcto.","Mais de 5% além do pivô: estendida em relação a um ponto de compra adequado."],
+["Within 5% below the pivot. Watch for a move through it on volume at least 40–50% above average.","A menos de 5% bajo el pivot. Atento a que lo supere con volumen al menos 40–50% sobre el promedio.","A menos de 5% abaixo do pivô. Fique atento a um rompimento com volume pelo menos 40–50% acima da média."],
+["Within 5% below the pivot.","A menos de 5% bajo el pivot.","A menos de 5% abaixo do pivô."],["Watch for a move through it on volume at least 40–50% above average.","Atento a que lo supere con volumen al menos 40–50% sobre el promedio.","Fique atento a um rompimento com volume pelo menos 40–50% acima da média."],
+["Broke out but fell back more than 3% under the pivot.","Rompió pero volvió más de 3% por debajo del pivot.","Rompeu mas voltou mais de 3% abaixo do pivô."],["The correction is deeper than 50%; not a sound base yet.","La corrección supera el 50%; todavía no es una base sólida.","A correção passa de 50%; ainda não é uma base sólida."],
+["No base detected. The stock is either trending at new highs without a 5-week consolidation, or has too little history.","No se detectó una base. La acción está en tendencia en nuevos máximos sin una consolidación de 5 semanas, o tiene poca historia.","Nenhuma base detectada. A ação está em tendência em novas máximas sem uma consolidação de 5 semanas, ou tem pouco histórico."],
+["buy","compra","compra"],["Strong buy","Compra fuerte","Compra forte"],["Buy","Compra","Compra"],["Hold","Mantener","Manter"],["Sell","Venta","Venda"],["Strong sell","Venta fuerte","Venda forte"],
+["Mean price target","Precio objetivo promedio","Preço-alvo médio"],["Target range","Rango de objetivos","Faixa de preço-alvo"],["No analyst coverage from Yahoo.","Sin cobertura de analistas en Yahoo.","Sem cobertura de analistas no Yahoo."],["No recent headlines.","Sin titulares recientes.","Sem manchetes recentes."],
+["Shares insiders acquired in the last 6 months, including stock awards","Acciones que adquirieron los insiders en los últimos 6 meses, incluidas las otorgadas como pago","Ações adquiridas por insiders nos últimos 6 meses, incluindo as recebidas como remuneração"],
+["Acquired, 6 mo","Adquiridas, 6 m","Adquiridas, 6 m"],["Shares insiders sold or disposed of in the last 6 months","Acciones que los insiders vendieron o cedieron en los últimos 6 meses","Ações vendidas ou cedidas por insiders nos últimos 6 meses"],["Disposed, 6 mo","Cedidas, 6 m","Cedidas, 6 m"],
+["Net shares","Acciones netas","Ações líquidas"],["Insiders own","Los insiders tienen","Insiders detêm"],["of shares","de las acciones","das ações"],["Date","Fecha","Data"],["Insider","Insider","Insider"],["Type","Tipo","Tipo"],["Shares","Acciones","Ações"],["Value","Valor","Valor"],
+["Chief Executive Officer","Director ejecutivo (CEO)","Diretor-presidente (CEO)"],["Chief Financial Officer","Director financiero (CFO)","Diretor financeiro (CFO)"],["Chief Operating Officer","Director de operaciones (COO)","Diretor de operações (COO)"],["Officer","Directivo","Executivo"],["Director","Consejero","Conselheiro"],
+["Award","Otorgamiento","Concessão"],["Exercise","Ejercicio","Exercício"],["Purchase","Compra","Compra"],["Sale","Venta","Venda"],["Gift","Donación","Doação"],
+["Open-market buys and sells are what matter: awards and option exercises are pay, not a view on the stock.","Lo que importa son las compras y ventas en el mercado: los otorgamientos y ejercicios de opciones son remuneración, no una opinión sobre la acción.","O que importa são compras e vendas no mercado: concessões e exercícios de opções são remuneração, não uma visão sobre a ação."],
+["No insider transactions reported recently.","No hay operaciones de insiders recientes.","Sem operações de insiders recentes."],["Institutions own","Las instituciones tienen","Instituições detêm"],["Of the float","Del flotante","Do free float"],["Institutions","Instituciones","Instituições"],["holders","tenedores","detentores"],
+["Top holders","Principales tenedores","Maiores detentores"],["% held","% en cartera","% detido"],["Change in the position since the previous quarter","Cambio de la posición desde el trimestre anterior","Mudança na posição desde o trimestre anterior"],["Q/Q chg","Var. trim.","Var. trim."],
+["Positions from the latest 13F filings, reported up to 45 days after each quarter ends.","Posiciones de los últimos 13F, informadas hasta 45 días después del cierre de cada trimestre.","Posições dos últimos 13F, informadas até 45 dias após o fim de cada trimestre."],["No institutional holders reported.","No hay tenedores institucionales informados.","Nenhum detentor institucional informado."],
+["Ownership data loads with the fundamentals rotation in the next updates.","Los datos de tenencia se cargan con la rotación de fundamentales en las próximas actualizaciones.","Os dados de participação carregam com o rodízio de fundamentos nas próximas atualizações."],
+["Top holdings","Principales posiciones","Principais posições"],["Wt","Peso","Peso"],["Assets","Activos","Ativos"],["Expense","Gastos","Taxa"],["Yield","Rendimiento","Rendimento"],["Expense ratio","Ratio de gastos","Taxa de administração"],["Category","Categoría","Categoria"],["Fund family","Familia de fondos","Família de fundos"],
+["Fund profile","Perfil del fondo","Perfil do fundo"],["Tracks","Replica","Replica"],["Since","Desde","Desde"],["Sector weights","Pesos por sector","Pesos por setor"],["by weight","por peso","por peso"],["Name","Nombre","Nome"],["Weight","Peso","Peso"],
+["Click a holding to open its chart.","Haz clic en una posición para abrir su gráfico.","Clique numa posição para abrir o gráfico."],["Holdings load with the fundamentals rotation in the next updates.","Las posiciones se cargan con la rotación de fundamentales en las próximas actualizaciones.","As posições carregam com o rodízio de fundamentos nas próximas atualizações."],
+["Yahoo does not publish holdings for this fund.","Yahoo no publica las posiciones de este fondo.","O Yahoo não publica as posições deste fundo."],["Not available.","No disponible.","Não disponível."],["Loads after the next nightly update","Se carga tras la próxima actualización nocturna","Carrega após a próxima atualização noturna"],["Loads with the fundamentals rotation.","Se carga con la rotación de fundamentales.","Carrega com o rodízio de fundamentos."],
+["Commodity prices load after the next nightly update.","Los precios de materias primas se cargan tras la próxima actualización nocturna.","Os preços das commodities carregam após a próxima atualização noturna."],
+["No data yet. The first update runs automatically after the US close; you can also start it from the Actions tab on GitHub (Update data → Run workflow).","Todavía no hay datos. La primera actualización corre sola tras el cierre de EE.UU.; también puedes iniciarla desde la pestaña Actions de GitHub (Update data → Run workflow).","Ainda não há dados. A primeira atualização roda sozinha após o fechamento dos EUA; você também pode iniciá-la na aba Actions do GitHub (Update data → Run workflow)."],
+["daily chart on Ticker&Tape","gráfico diario en Ticker&Tape","gráfico diário no Ticker&Tape"],
+// canvas
+["RS LINE","LÍNEA RS","LINHA RS"],["● RS LINE AT NEW HIGH","● LÍNEA RS EN NUEVO MÁXIMO","● LINHA RS EM NOVA MÁXIMA"],["Vol.","Vol.","Vol."],
+// settings
+["Language","Idioma","Idioma"],["Price scale","Escala de precio","Escala de preço"],["Log","Log","Log"],["Linear","Lineal","Linear"],["Price bars","Barras de precio","Barras de preço"],["O'Neil (H-L-C)","O'Neil (H-L-C)","O'Neil (H-L-C)"],["Candles","Velas","Candles"],
+["Bar weight","Grosor de barra","Espessura da barra"],["Thin","Fina","Fina"],["Normal","Normal","Normal"],["Bold","Gruesa","Grossa"],
+["David Ryan's Ants: up at least 12 of the last 15 sessions with volume 20%+ above its 50-day average. Gold when the stock also gained 20%+ in those 15 days.","Las hormigas de David Ryan: suba en al menos 12 de las últimas 15 ruedas con volumen 20%+ sobre su promedio de 50 días. En dorado si además la acción ganó 20%+ en esos 15 días.","As formigas de David Ryan: alta em pelo menos 12 dos últimos 15 pregões com volume 20%+ acima da média de 50 dias. Em dourado se a ação também subiu 20%+ nesses 15 dias."],
+["Hide","Ocultar","Ocultar"],["Grid lines","Líneas de grilla","Linhas de grade"],["Dotted","Punteadas","Pontilhadas"],["Dashed","Discontinuas","Tracejadas"],["Solid","Continuas","Contínuas"],["None","Ninguna","Nenhuma"],
+["Moving averages","Medias móviles","Médias móveis"],["tap a swatch to change its color","toca un color para cambiarlo","toque numa cor para mudá-la"],["10-day MA","MA de 10 días","MM de 10 dias"],["21-day EMA","EMA de 21 días","MME de 21 dias"],["150-day MA","MA de 150 días","MM de 150 dias"],
+["10-week MA","MA de 10 semanas","MM de 10 semanas"],["30-week MA","MA de 30 semanas","MM de 30 semanas"],["40-week MA","MA de 40 semanas","MM de 40 semanas"],["(daily only)","(solo diario)","(só diário)"],
+["(10-week MA on weekly)","(MA de 10 semanas en semanal)","(MM de 10 semanas no semanal)"],["(30-week MA on weekly)","(MA de 30 semanas en semanal)","(MM de 30 semanas no semanal)"],["(40-week MA on weekly)","(MA de 40 semanas en semanal)","(MM de 40 semanas no semanal)"],
+["Up bars","Barras alcistas","Barras de alta"],["Down bars","Barras bajistas","Barras de baixa"],["Up volume","Volumen alcista","Volume de alta"],["Down volume","Volumen bajista","Volume de baixa"],["Reset to defaults","Restablecer valores","Restaurar padrão"],
+// account
+["Keep your watchlist, chart settings and drawings on any device.","Ten tu watchlist, configuración y dibujos en cualquier dispositivo.","Tenha sua watchlist, configurações e desenhos em qualquer dispositivo."],["Email","Email","E-mail"],["Current password","Contraseña actual","Senha atual"],["Password","Contraseña","Senha"],
+["Forgot your password?","¿Olvidaste tu contraseña?","Esqueceu a senha?"],["By creating an account you agree to the","Al crear una cuenta aceptas los","Ao criar uma conta você aceita os"],["and the","y la","e a"],["New here?","¿Eres nuevo?","Novo por aqui?"],
+["Create a free account","Crea una cuenta gratis","Crie uma conta grátis"],["Create your account","Crea tu cuenta","Crie sua conta"],["Password (8+ characters)","Contraseña (8+ caracteres)","Senha (8+ caracteres)"],["Create account","Crear cuenta","Criar conta"],
+["Already have an account?","¿Ya tienes cuenta?","Já tem conta?"],["Reset your password","Restablece tu contraseña","Redefina sua senha"],["Email me a reset link","Enviarme un enlace","Enviar link por e-mail"],["Remembered it?","¿La recordaste?","Lembrou?"],
+["Change password","Cambiar contraseña","Alterar senha"],["Save new password","Guardar contraseña nueva","Salvar nova senha"],["New password (8+ characters)","Contraseña nueva (8+ caracteres)","Nova senha (8+ caracteres)"],["Choose a new password","Elige una contraseña nueva","Escolha uma nova senha"],
+["Save and sign in","Guardar e iniciar sesión","Salvar e entrar"],["Sign out","Cerrar sesión","Sair"],["Signed in as","Sesión iniciada como","Conectado como"],["Signed out.","Sesión cerrada.","Você saiu."],
+["Account created. Your watchlist now syncs to every device.","Cuenta creada. Tu watchlist ahora se sincroniza en todos tus dispositivos.","Conta criada. Sua watchlist agora sincroniza em todos os seus dispositivos."],
+["Password changed.","Contraseña cambiada.","Senha alterada."],["Password updated. You are signed in.","Contraseña actualizada. Ya iniciaste sesión.","Senha atualizada. Você está conectado."],
+["Your session expired. Sign in again to sync your watchlist.","Tu sesión expiró. Vuelve a iniciar sesión para sincronizar tu watchlist.","Sua sessão expirou. Entre novamente para sincronizar sua watchlist."],
+["Your watchlist is full (300 tickers).","Tu watchlist está llena (300 tickers).","Sua watchlist está cheia (300 tickers)."],["You are already subscribed. See you Friday.","Ya estás suscrito. Nos vemos el viernes.","Você já está inscrito. Até sexta."],
+["Enter a valid email address.","Ingresa un email válido.","Digite um e-mail válido."],["Could not reach the server. Check your connection.","No se pudo conectar con el servidor. Revisa tu conexión.","Não foi possível conectar ao servidor. Verifique sua conexão."],["Something went wrong. Try again.","Algo salió mal. Inténtalo de nuevo.","Algo deu errado. Tente novamente."],
+["Wrong email or password.","Email o contraseña incorrectos.","E-mail ou senha incorretos."],["There is already an account with that email. Sign in instead.","Ya existe una cuenta con ese email. Inicia sesión.","Já existe uma conta com esse e-mail. Entre nela."],
+["Use a password of at least 8 characters.","Usa una contraseña de al menos 8 caracteres.","Use uma senha de pelo menos 8 caracteres."],["That password is too long.","Esa contraseña es demasiado larga.","Essa senha é longa demais."],
+["Too many attempts. Try again in a few minutes.","Demasiados intentos. Vuelve a intentarlo en unos minutos.","Tentativas demais. Tente novamente em alguns minutos."],["Your current password is not correct.","Tu contraseña actual no es correcta.","Sua senha atual não está correta."],
+["This reset link expired or was already used. Ask for a new one.","Este enlace venció o ya se usó. Pide uno nuevo.","Este link expirou ou já foi usado. Peça um novo."],["This reset link is not valid. Ask for a new one.","Este enlace no es válido. Pide uno nuevo.","Este link não é válido. Peça um novo."],
+["Server error. Try again in a moment.","Error del servidor. Inténtalo en un momento.","Erro no servidor. Tente novamente em instantes."],["Invalid watchlist (max 300 tickers).","Watchlist inválida (máx. 300 tickers).","Watchlist inválida (máx. 300 tickers)."],
+["It works for one hour.","Sirve durante una hora.","Ele vale por uma hora."],["Its data loads after the next nightly update.","Sus datos se cargan tras la próxima actualización nocturna.","Os dados carregam após a próxima atualização noturna."],
+["Sign in or create a free account to keep it on every device.","Inicia sesión o crea una cuenta gratis para tenerla en todos tus dispositivos.","Entre ou crie uma conta grátis para tê-la em todos os seus dispositivos."],
+["Tap ☆ to add it to your watchlist: it loads after the next nightly update.","Toca ☆ para sumarlo a tu watchlist: se carga tras la próxima actualización nocturna.","Toque em ☆ para adicioná-lo à watchlist: ele carrega após a próxima atualização noturna."],
+// tour
+["Four rooms","Las secciones","As seções"],
+["Home is the market dashboard. Watchlist holds the stocks you starred. Screener lists every S&P 1500 and Nasdaq-100 stock, about 1,500 names rated every trading day. ETFs covers indexes, sectors, industries, commodities, bonds and countries. Heatmap shows the S&P 500, the Nasdaq-100 or your watchlist as a map of boxes sized by market cap and colored by performance or RS Rating.","Inicio es el panel del mercado. Watchlist guarda las acciones que marcaste. Screener lista todas las acciones del S&P 1500 y el Nasdaq-100, unas 1.500 calificadas cada día hábil. ETFs cubre índices, sectores, industrias, materias primas, bonos y países. Mapa de calor muestra el S&P 500, el Nasdaq-100 o tu watchlist como recuadros del tamaño de su capitalización y coloreados por rendimiento o RS Rating.","Início é o painel do mercado. Watchlist guarda as ações que você marcou. Screener lista todas as ações do S&P 1500 e do Nasdaq-100, cerca de 1.500 classificadas a cada pregão. ETFs cobre índices, setores, indústrias, commodities, títulos e países. Mapa de calor mostra o S&P 500, o Nasdaq-100 ou sua watchlist como quadros do tamanho do valor de mercado e coloridos por desempenho ou RS Rating."],
+["Sector scoreboard","Tablero de sectores","Placar de setores"],
+["The market ETFs and the eleven Select Sector SPDRs with their 1-day, 1-week, 3-month, 9-month and year-to-date change. Click a column to rank the sectors, a row to open its chart, or Components to see the stocks in that sector. Next to it, the commodities board shows metals, energy and grains futures on the same scale.","Los ETFs del mercado y los once Select Sector SPDR con su variación de 1 día, 1 semana, 3 meses, 9 meses y en el año. Haz clic en una columna para ordenar los sectores, en una fila para abrir su gráfico, o en Componentes para ver sus acciones. Al lado, el tablero de materias primas muestra futuros de metales, energía y granos en la misma escala.","Os ETFs do mercado e os onze Select Sector SPDR com a variação de 1 dia, 1 semana, 3 meses, 9 meses e no ano. Clique numa coluna para ordenar os setores, numa linha para abrir o gráfico, ou em Componentes para ver as ações do setor. Ao lado, o painel de commodities mostra futuros de metais, energia e grãos na mesma escala."],
+["What is leading","Qué lidera","O que lidera"],["The five highest RS Ratings, the strongest accumulation by up/down volume and the biggest movers of the day, among stocks with real liquidity.","Los cinco RS Ratings más altos, la mayor acumulación por volumen alcista/bajista y los mayores movimientos del día, entre acciones con liquidez real.","Os cinco maiores RS Ratings, a maior acumulação por volume de alta/baixa e as maiores variações do dia, entre ações com liquidez real."],
+["The S&P 500 and the Nasdaq against their 21, 50 and 200-day lines, plus distribution days (heavy-volume declines) in the last 25 sessions. Most stocks follow the market's direction.","El S&P 500 y el Nasdaq frente a sus medias de 21, 50 y 200 días, más los días de distribución (caídas con volumen alto) de las últimas 25 ruedas. La mayoría de las acciones sigue la dirección del mercado.","O S&P 500 e o Nasdaq contra as médias de 21, 50 e 200 dias, mais os dias de distribuição (quedas com volume alto) dos últimos 25 pregões. A maioria das ações segue a direção do mercado."],
+["Filter for setups","Filtrar setups","Filtrar setups"],
+["Breakout / buy zone: up to 5% above the pivot. Near pivot: within 5% below it. RS ≥ 80: the strongest fifth of the market. Liquid: $20M or more traded a day.","Ruptura / zona de compra: hasta 5% sobre el pivot. Cerca del pivot: hasta 5% por debajo. RS ≥ 80: el quinto más fuerte del mercado. Líquidas: US$20M o más operados por día.","Rompimento / zona de compra: até 5% acima do pivô. Perto do pivô: até 5% abaixo. RS ≥ 80: o quinto mais forte do mercado. Líquidas: US$20M ou mais negociados por dia."],
+["RS Rating","RS Rating","RS Rating"],
+["Relative strength from 1 to 99: twelve-month price performance, with the last quarter counted double, ranked against about 1,500 stocks. 80 and up is leadership territory. Click any column header to sort by it.","Fuerza relativa de 1 a 99: rendimiento de precio a doce meses, con el último trimestre al doble, en ranking contra unas 1.500 acciones. De 80 para arriba es territorio de líderes. Haz clic en cualquier encabezado para ordenar.","Força relativa de 1 a 99: desempenho de preço em doze meses, com o último trimestre em dobro, classificado contra cerca de 1.500 ações. De 80 para cima é território de líderes. Clique em qualquer cabeçalho para ordenar."],
+["Base, pivot and status","Base, pivot y estado","Base, pivô e status"],
+["The base the stock is building (cup, cup with handle, flat base), its pivot or buy point, how far price is from it, and the status: Near pivot, Breakout, In buy zone, Extended.","La base que arma la acción (taza, taza con asa, base plana), su pivot o punto de compra, a qué distancia está el precio, y el estado: Cerca del pivot, Ruptura, En zona de compra, Extendida.","A base que a ação está formando (xícara, xícara com alça, base plana), seu pivô ou ponto de compra, a distância do preço até ele, e o status: Perto do pivô, Rompimento, Na zona de compra, Estendida."],
+["Jump to any ticker","Ir a cualquier ticker","Ir para qualquer ticker"],["Type a symbol and press Enter to open its chart. Tickers outside the indexes work too: star them and they load after the next nightly update.","Escribe un símbolo y presiona Enter para abrir su gráfico. También sirven tickers fuera de los índices: márcalos con la estrella y se cargan tras la próxima actualización nocturna.","Digite um símbolo e pressione Enter para abrir o gráfico. Tickers fora dos índices também funcionam: marque com a estrela e eles carregam após a próxima atualização noturna."],
+["Star it","Márcala","Marque"],["Tap the star next to the symbol to add the stock to your watchlist, or tap again to remove it.","Toca la estrella junto al símbolo para sumar la acción a tu watchlist, o tócala otra vez para quitarla.","Toque na estrela ao lado do símbolo para adicionar a ação à watchlist, ou toque de novo para removê-la."],
+["Reading the chart","Cómo leer el gráfico","Como ler o gráfico"],
+["Up bars closed higher than the day before, down bars closed lower. The colored lines are the moving averages. The dark line under the price is the RS line against the S&P 500, with the RS Rating at its end. The dashed line marks the pivot, and each E is an earnings report. Volume sits underneath.","Las barras alcistas cerraron más arriba que el día anterior y las bajistas más abajo. Las líneas de color son las medias móviles. La línea oscura bajo el precio es la línea RS contra el S&P 500, con el RS Rating al final. La línea discontinua marca el pivot y cada E es un reporte de resultados. El volumen está debajo.","As barras de alta fecharam acima do dia anterior e as de baixa abaixo. As linhas coloridas são as médias móveis. A linha escura sob o preço é a linha RS contra o S&P 500, com o RS Rating no fim. A linha tracejada marca o pivô e cada E é um balanço. O volume fica embaixo."],
+["Daily or weekly","Diario o semanal","Diário ou semanal"],["Switch between daily and weekly bars, and pick the time range next to it: 6 months to 3 years.","Cambia entre barras diarias y semanales, y elige el período al lado: de 6 meses a 3 años.","Alterne entre barras diárias e semanais, e escolha o período ao lado: de 6 meses a 3 anos."],
+["Draw and take notes","Dibuja y toma notas","Desenhe e faça anotações"],["Line: drag across the chart to draw a trendline. Note: click a bar and type. Your drawings stay with the chart, and sync to your account when you are signed in.","Línea: arrastra sobre el gráfico para trazar una línea de tendencia. Nota: haz clic en una barra y escribe. Tus dibujos quedan en el gráfico y se sincronizan con tu cuenta si iniciaste sesión.","Linha: arraste no gráfico para traçar uma linha de tendência. Nota: clique numa barra e digite. Seus desenhos ficam no gráfico e sincronizam com sua conta quando você está conectado."],
+["Fundamentals under the chart","Fundamentales bajo el gráfico","Fundamentos sob o gráfico"],["Peers, chart statistics, annual and quarterly earnings and sales, the base analysis, analysts and news. Further down: insider buying and selling, and the largest institutional holders.","Pares, estadísticas del gráfico, ganancias y ventas anuales y trimestrales, el análisis de la base, analistas y noticias. Más abajo: compras y ventas de insiders y los mayores tenedores institucionales.","Pares, estatísticas do gráfico, lucros e vendas anuais e trimestrais, a análise da base, analistas e notícias. Mais abaixo: compras e vendas de insiders e os maiores detentores institucionais."],
+["Make the chart yours","Haz tuyo el gráfico","Deixe o gráfico do seu jeito"],["Log or linear scale, O'Neil bars, OHLC or candles, bar weight, moving averages, grid lines, and the colors of the bars, the volume and every moving average. You also pick the language here.","Escala logarítmica o lineal, barras O'Neil, OHLC o velas, grosor de barra, medias móviles, líneas de grilla y los colores de las barras, el volumen y cada media móvil. Aquí también eliges el idioma.","Escala logarítmica ou linear, barras O'Neil, OHLC ou candles, espessura da barra, médias móveis, linhas de grade e as cores das barras, do volume e de cada média móvel. Aqui você também escolhe o idioma."],
+["Your account","Tu cuenta","Sua conta"],["Sign in to keep your watchlist, chart settings and drawings on every device. You can replay this tour anytime with the ? button.","Inicia sesión para tener tu watchlist, configuración y dibujos en todos tus dispositivos. Puedes repetir este recorrido cuando quieras con el botón ?.","Entre para ter sua watchlist, configurações e desenhos em todos os seus dispositivos. Você pode refazer este tour quando quiser com o botão ?."],
+// ETF names
+["Brazil","Brasil","Brasil"],["Germany","Alemania","Alemanha"],["Japan","Japón","Japão"],["India","India","Índia"],["United Kingdom","Reino Unido","Reino Unido"],["Mexico","México","México"],["China Internet","Internet China","Internet China"],["China Large-Cap","China gran capitalización","China large caps"],
+["Emerging Markets","Mercados emergentes","Mercados emergentes"],["Developed Markets","Mercados desarrollados","Mercados desenvolvidos"],["U.S. Dollar","Dólar estadounidense","Dólar americano"],["Gold Miners","Mineras de oro","Mineradoras de ouro"],["Junior Gold Miners","Mineras de oro junior","Mineradoras de ouro júnior"],
+["Silver Miners","Mineras de plata","Mineradoras de prata"],["Copper Miners","Mineras de cobre","Mineradoras de cobre"],["Semiconductors","Semiconductores","Semicondutores"],["Banks","Bancos","Bancos"],["Regional Banks","Bancos regionales","Bancos regionais"],["Airlines","Aerolíneas","Companhias aéreas"],
+["Homebuilders","Constructoras","Construtoras"],["Home Construction","Construcción de viviendas","Construção residencial"],["Transportation","Transporte","Transporte"],["Cloud Computing","Computación en la nube","Computação em nuvem"],["Cybersecurity","Ciberseguridad","Cibersegurança"],
+["Robotics & AI","Robótica e IA","Robótica e IA"],["Clean Energy","Energía limpia","Energia limpa"],["Lithium & Battery","Litio y baterías","Lítio e baterias"],["Uranium","Uranio","Urânio"],["Oil Services","Servicios petroleros","Serviços de petróleo"],["Oil & Gas E&P","Petróleo y gas E&P","Petróleo e gás E&P"],
+["Crude Oil","Petróleo crudo","Petróleo bruto"],["Broad Commodities","Materias primas diversificadas","Commodities diversificadas"],["Metals & Mining","Metales y minería","Metais e mineração"],["Retail","Comercio minorista","Varejo"],["Aerospace & Defense","Aeroespacial y defensa","Aeroespacial e defesa"],
+["Biotech","Biotecnología","Biotecnologia"],["Biotech (equal weight)","Biotecnología (igual ponderación)","Biotecnologia (pesos iguais)"],["Disruptive Innovation","Innovación disruptiva","Inovação disruptiva"],["High Yield Corporate","Bonos corporativos high yield","Títulos corporativos high yield"],
+["Investment Grade Corporate","Bonos corporativos grado de inversión","Títulos corporativos grau de investimento"],["1-3 Year Treasury","Tesoro 1-3 años","Tesouro 1-3 anos"],["7-10 Year Treasury","Tesoro 7-10 años","Tesouro 7-10 anos"],["20+ Year Treasury","Tesoro 20+ años","Tesouro 20+ anos"],
+["Real Estate","Inmobiliario","Imobiliário"],["Homebuilders & Construction","Construcción","Construção"],["1-day","1 día","1 dia"],
+// page titles
+["O'Neil-style charts, RS ratings and bases","Gráficos estilo O'Neil, RS ratings y bases","Gráficos no estilo O'Neil, RS ratings e bases"],["This page is available in English only.","Esta página solo está disponible en inglés.","Esta página está disponível apenas em inglês."],
+["the English version is the one that applies.","la versión en inglés es la que rige.","a versão em inglês é a que vale."],
+];
+
+/* ---------- patterns with numbers, dates and names ---------- */
+const P = [
+[/^(\d+) distribution days?$/, n=>[`${n} día${n==1?"":"s"} de distribución`, `${n} dia${n==1?"":"s"} de distribuição`]],
+[/^(\d+) distribution days?: (.+)$/, (n,d)=>[`${n} día${n==1?"":"s"} de distribución: ${d}`, `${n} dia${n==1?"":"s"} de distribuição: ${d}`]],
+[/^rally day (\d+)$/, n=>[`día ${n} del rally`, `dia ${n} do rally`]],
+[/^Day (\d+) of the rally attempt off the (.+) low\.$/, (n,d)=>[`Día ${n} del intento de rally desde el mínimo del ${d}.`, `Dia ${n} da tentativa de rally a partir da mínima de ${d}.`]],
+[/^Follow-through day: (.+)\.$/, d=>[`Día de follow-through: ${d}.`, `Dia de follow-through: ${d}.`]],
+[/^Low so far: (.+)\.$/, d=>[`Mínimo hasta ahora: ${d}.`, `Mínima até agora: ${d}.`]],
+[/^Step (\d+) of (\d+)$/, (a,b)=>[`Paso ${a} de ${b}`, `Passo ${a} de ${b}`]],
+[/^Showing (\d+) of ([\d,]+)$/, (a,b)=>[`Mostrando ${a} de ${b}`, `Mostrando ${a} de ${b}`]],
+[/^([\d,]+) of ([\d,]+) (stocks|tickers|ETFs)$/, (a,b,c)=>[`${a} de ${b} ${NOUN[c][0]}`, `${a} de ${b} ${NOUN[c][1]}`]],
+[/^([\d,]+) (stocks|tickers)$/, (a,c)=>[`${a} ${NOUN[c][0]}`, `${a} ${NOUN[c][1]}`]],
+[/^Show ([\d,]+) more$/, n=>[`Ver ${n} más`, `Ver mais ${n}`]],
+[/^(\d+) wks$/, n=>[`${n} sem.`, `${n} sem.`]],
+[/^([\d.]+)% deep$/, n=>[`${n}% de profundidad`, `${n}% de profundidade`]],
+[/^(\d+) weeks$/, n=>[`${n} semanas`, `${n} semanas`]],
+[/^(\d+) of (\d+)$/, (a,b)=>[`${a} de ${b}`, `${a} de ${b}`]],
+[/^group (\d+) of (\d+)$/, (a,b)=>[`grupo ${a} de ${b}`, `grupo ${a} de ${b}`]],
+[/^rank (\d+) of (\d+)$/, (a,b)=>[`puesto ${a} de ${b}`, `posição ${a} de ${b}`]],
+[/^as of (.+) close$/, d=>[`al cierre del ${d}`, `no fechamento de ${d}`]],
+[/^as of (.+) settle$/, d=>[`al ajuste del ${d}`, `no ajuste de ${d}`]],
+[/^as of (.+)$/, d=>[`al ${d}`, `em ${d}`]],
+[/^Data as of (.+) close$/, d=>[`Datos al cierre del ${d}`, `Dados do fechamento de ${d}`]],
+[/^(.+\d{2,4}) close$/, d=>[`cierre del ${d}`, `fechamento de ${d}`]],
+[/^live prices (.+) ET \(delayed\)$/, t=>[`precios en vivo ${t} ET (con demora)`, `preços ao vivo ${t} ET (com atraso)`]],
+[/^1D live, (.+) ET \(delayed\)$/, t=>[`1D en vivo, ${t} ET (con demora)`, `1D ao vivo, ${t} ET (com atraso)`]],
+[/^live (.+) ET \(delayed\)$/, t=>[`en vivo ${t} ET (con demora)`, `ao vivo ${t} ET (com atraso)`]],
+[/^RS vs ([\d,]+) stocks$/, n=>[`RS vs ${n} acciones`, `RS vs ${n} ações`]],
+[/^updated (.+)$/, d=>[`actualizado ${d}`, `atualizado ${d}`]],
+[/^(\d+) setups?$/, n=>[`${n} setup${n==1?"":"s"}`, `${n} setup${n==1?"":"s"}`]],
+[/^Earnings in (\d+) days?$/, n=>[`Resultados en ${n} día${n==1?"":"s"}`, `Balanço em ${n} dia${n==1?"":"s"}`]],
+[/^Earnings today (after close|before open)$/, w=>[`Resultados hoy ${tx(w)}`, `Balanço hoje ${tx(w)}`]],
+[/^Earnings (.+)$/, d=>[`Resultados: ${d}`, `Balanço: ${d}`]],
+[/^beat estimates \((\d+) so far\)$/, n=>[`superaron estimaciones (${n} hasta ahora)`, `superaram as estimativas (${n} até agora)`]],
+[/^(\d+) leads?$/, n=>[`${n} líder${n==1?"":"es"}`, `${n} líder${n==1?"":"es"}`]],
+[/^No reports( in this filter)?$/, f=>[`Sin reportes${f?" en este filtro":""}`, `Sem balanços${f?" neste filtro":""}`]],
+[/^EPS (\S+) vs (\S+) expected$/, (a,b)=>[`EPS ${a} vs ${b} esperado`, `LPA ${a} vs ${b} esperado`]],
+[/^Consensus EPS (.+)$/, r=>[`EPS de consenso ${r}`, `LPA de consenso ${r}`]],
+[/^Top (\d+) of (\d+) peers by RS Rating\.$/, (a,b)=>[`Los ${a} mejores de ${b} pares por RS Rating.`, `Os ${a} melhores de ${b} pares por RS Rating.`]],
+[/^(\d+)\/(\d+) up days on rising volume$/, (a,b)=>[`${a}/${b} días de suba con volumen creciente`, `${a}/${b} dias de alta com volume crescente`]],
+[/^(.+) sh$/, n=>[`${n} acc.`, `${n} ações`]],
+[/^(\d+) trades?$/, n=>[`${n} operación${n==1?"":"es"}`, `${n} operaç${n==1?"ão":"ões"}`]],
+[/^([-+\d.]+)% of holdings$/, n=>[`${n}% de su tenencia`, `${n}% da posição`]],
+[/^Vol (.+)$/, v=>[`Vol ${v}`, `Vol ${v}`]],
+[/^Broke out above the (.+) pivot( on volume (.+) vs average)?\.$/, (p,_,v)=>[`Rompió sobre el pivot de ${p}${v?` con volumen ${v} vs el promedio`:""}.`, `Rompeu acima do pivô de ${p}${v?` com volume ${v} vs a média`:""}.`]],
+[/^No stock passes every filter today( in this group)?\.$/, g=>[`Hoy ninguna acción pasa todos los filtros${g?" en este grupo":""}.`, `Hoje nenhuma ação passa em todos os filtros${g?" neste grupo":""}.`]],
+[/^(.+) is not a valid ticker\.$/, s=>[`${s} no es un ticker válido.`, `${s} não é um ticker válido.`]],
+[/^(.+) is in your watchlist: its chart loads after the next nightly update\.$/, s=>[`${s} está en tu watchlist: su gráfico se carga tras la próxima actualización nocturna.`, `${s} está na sua watchlist: o gráfico carrega após a próxima atualização noturna.`]],
+[/^No data for (.+) yet\.$/, s=>[`Todavía no hay datos de ${s}.`, `Ainda não há dados de ${s}.`]],
+[/^(.+) removed from your watchlist\.$/, s=>[`${s} se quitó de tu watchlist.`, `${s} foi removido da sua watchlist.`]],
+[/^(.+) added to your watchlist\.$/, s=>[`${s} se agregó a tu watchlist.`, `${s} foi adicionado à sua watchlist.`]],
+[/^(\S+) added\.$/, s=>[`${s} agregado.`, `${s} adicionado.`]],
+[/^Almost done: check (.+) and click the confirmation link\.$/, e=>[`Casi listo: revisa ${e} y haz clic en el enlace de confirmación.`, `Quase pronto: confira ${e} e clique no link de confirmação.`]],
+[/^If (.+) has an account, a reset link is on its way\.$/, e=>[`Si ${e} tiene una cuenta, el enlace ya está en camino.`, `Se ${e} tiver uma conta, o link já está a caminho.`]],
+[/^Welcome back, (.+)\.$/, e=>[`Hola de nuevo, ${e}.`, `Bem-vindo de volta, ${e}.`]],
+[/^Could not save to your account: (.*)$/, m=>[`No se pudo guardar en tu cuenta: ${tx(m)}`, `Não foi possível salvar na sua conta: ${tx(m)}`]],
+[/^Signed in as (.+)$/, e=>[`Sesión iniciada como ${e}`, `Conectado como ${e}`]],
+[/^See the (.+) stocks →$/, s=>[`Ver las acciones de ${tx(s)} →`, `Ver as ações de ${tx(s)} →`]],
+[/^Last update had problems with: (.+)$/, s=>[`La última actualización tuvo problemas con: ${s}`, `A última atualização teve problemas com: ${s}`]],
+[/^(.+) · Ticker&Tape$/, s=>[`${tx(s)} · Ticker&Tape`, `${tx(s)} · Ticker&Tape`]],
+[/^(20|50|200)-day (.+%)$/, (n,v)=>[`${n} días ${v}`, `${n} dias ${v}`]],
+[/^Highs (\d+)$/, n=>[`Máximos ${n}`, `Máximas ${n}`]], [/^Lows (\d+)$/, n=>[`Mínimos ${n}`, `Mínimas ${n}`]],
+[/^Day: (\d+) up$/, n=>[`Día: ${n} suben`, `Dia: ${n} sobem`]], [/^(\d+) up$/, n=>[`${n} suben`, `${n} sobem`]], [/^(\d+) down$/, n=>[`${n} bajan`, `${n} caem`]],
+[/^(\d+)h ago$/, n=>[`hace ${n} h`, `há ${n} h`]], [/^(\d+)d ago$/, n=>[`hace ${n} d`, `há ${n} d`]],
+[/^No\. (\d+)$/, n=>[`N.º ${n}`, `Nº ${n}`]],
+[/^(.+) color$/, m=>[`Color de ${tx(m)}`, `Cor de ${tx(m)}`]],
+[/^Pivot (.+)$/, v=>[`Pivot ${v}`, `Pivô ${v}`]],
+[/^Strong buy: (\d+)$/, n=>[`Compra fuerte: ${n}`, `Compra forte: ${n}`]], [/^Strong sell: (\d+)$/, n=>[`Venta fuerte: ${n}`, `Venda forte: ${n}`]],
+// "Label: value" where the label is a known phrase (Sector: Technology, Buy: 25, …)
+[/^([A-Z][A-Za-z /&.-]{1,30}): (.+)$/, (a,b)=> D_HAS(a) ? [`${tx(a)}: ${tx(b)}`, `${tx(a)}: ${tx(b)}`] : null],
+];
+const NOUN = {stocks:["acciones","ações"], tickers:["tickers","tickers"], ETFs:["ETFs","ETFs"]};
+
+const MAP = new Map(); for(const r of D) MAP.set(r[0], r[L]);
+const D_HAS = s => MAP.has(s);
+const cache = new Map();
+function one(s){
+  if(MAP.has(s)) return MAP.get(s);
+  for(const [re, f] of P){ const m = s.match(re); if(m){ const r = f(...m.slice(1)); if(r) return r[L-1]; } }
+  return null;
+}
+function tx(src){
+  if(src == null) return src;
+  const s = String(src).replace(/\s+/g, " ").trim(); if(!s || !/[A-Za-z]/.test(s)) return src;
+  if(cache.has(s)) return cache.get(s);
+  // phrases joined with " · " are translated part by part (patterns with (.+) must not swallow them)
+  let out = MAP.has(s) ? MAP.get(s) : s.includes(" · ") ? null : one(s);
+  if(out == null && s.includes(" · ")){ const parts = s.split(" · "), tr = parts.map(p=>one(p) ?? (p.includes(". ") ? sentences(p) : null));
+    if(tr.some(x=>x != null)) out = parts.map((p,i)=>tr[i] ?? p).join(" · "); }
+  if(out == null && /[.!?:]\s+[A-Z¿]/.test(s)) out = sentences(s);
+  if(cache.size > 5000) cache.clear();
+  cache.set(s, out ?? s);
+  return out ?? s;
+}
+function sentences(s){
+  const parts = s.split(/(?<=[.!?])\s+(?=[A-Z☆¿])/); if(parts.length < 2) return null;
+  const tr = parts.map(p=>one(p)); if(!tr.some(x=>x != null)) return null;
+  return parts.map((p,i)=>tr[i] ?? p).join(" ");
+}
+api.t = tx;
+
+/* ---------- applying it to the page ---------- */
+const SKIP = new Set(["SCRIPT","STYLE","TEXTAREA","CODE","PRE","OPTION"]);
+const ATTRS = ["title","placeholder","aria-label","alt"];
+function doText(n){
+  const v = n.nodeValue; if(!v || !/[A-Za-z]/.test(v)) return;
+  const p = n.parentNode; if(!p || SKIP.has(p.nodeName) || (p.closest && p.closest("[data-noi18n],.hmt,.hmtip .th"))) return;
+  const t = tx(v); if(t !== v.trim() && t !== v){ const lead = v.match(/^\s*/)[0], trail = v.match(/\s*$/)[0]; n.nodeValue = lead + t + trail; }
+}
+function doEl(el){
+  for(const a of ATTRS){ const v = el.getAttribute(a); if(v && /[A-Za-z]/.test(v)){ const t = tx(v); if(t !== v) el.setAttribute(a, t); } }
+}
+function walk(root){
+  if(root.nodeType === 3){ doText(root); return; }
+  if(root.nodeType !== 1 || SKIP.has(root.nodeName)) return;
+  doEl(root);
+  const w = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT);
+  let n; while((n = w.nextNode())){ if(n.nodeType === 3) doText(n); else if(!SKIP.has(n.nodeName)) doEl(n); }
+}
+let busy = false;
+const mo = new MutationObserver(list => {
+  if(busy) return; busy = true;
+  try{ for(const m of list){
+    if(m.type === "childList") m.addedNodes.forEach(walk);
+    else if(m.type === "characterData") doText(m.target);
+    else if(m.type === "attributes") doEl(m.target);
+  } } finally { busy = false; }
+});
+function start(){
+  // legal pages stay in English (the binding version): only say so at the top
+  if(/\/(privacy|terms)(\.html)?$/.test(location.pathname)){ const m = document.querySelector("main") || document.body;
+    const n = document.createElement("p"); n.className = "langnote";
+    n.textContent = tx("This page is available in English only.") + " " + (L === 1 ? "Ante cualquier diferencia, " : "Em caso de divergência, ") + tx("the English version is the one that applies.");
+    m.prepend(n); return; }
+  walk(document.body); const ti = document.querySelector("title"); if(ti) ti.textContent = tx(ti.textContent);
+  mo.observe(document.body, {subtree:true, childList:true, characterData:true, attributes:true, attributeFilter:ATTRS});
+  if(ti) new MutationObserver(()=>{ const t = tx(ti.textContent); if(t !== ti.textContent) ti.textContent = t; }).observe(ti, {childList:true});
+}
+if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", start); else start();
+})();

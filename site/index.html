@@ -23,7 +23,7 @@
 <meta name="description" content="O'Neil-style daily charts, RS Ratings, industry group ranks and automatic base and pivot detection for every S&amp;P 1500 and Nasdaq-100 stock. Free.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&family=Archivo+Narrow:wght@400;600;700&family=Libre+Franklin:wght@600;800&family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&display=swap">
-<link rel="stylesheet" href="style.css?v=20261005a">
+<link rel="stylesheet" href="style.css?v=20261005b">
 </head>
 <body>
 <div class="sheet">
@@ -36,8 +36,8 @@
     <button class="btn acct" id="acct" aria-haspopup="true">Sign in</button>
     <div class="acctmenu" id="acctMenu" hidden role="menu"></div>
     <button class="gear help" id="help" title="How Ticker&amp;Tape works (tour)" aria-label="Help: take the tour">?</button>
-    <button class="gear" id="gear" title="Chart settings" aria-label="Chart settings" aria-expanded="false" aria-controls="settings"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M19.4 13a7.5 7.5 0 0 0 0-2l2.1-1.6-2-3.5-2.5 1a7.6 7.6 0 0 0-1.7-1L15 3.3h-4l-.4 2.6a7.6 7.6 0 0 0-1.7 1l-2.5-1-2 3.5L6.6 11a7.5 7.5 0 0 0 0 2l-2.1 1.6 2 3.5 2.5-1c.5.4 1.1.7 1.7 1l.4 2.6h4l.4-2.6c.6-.3 1.2-.6 1.7-1l2.5 1 2-3.5zM13 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z" transform="translate(-1 0)"/></svg></button>
-    <div class="settings" id="settings" hidden role="dialog" aria-label="Chart settings"></div>
+    <button class="gear" id="gear" title="Settings" aria-label="Settings" aria-expanded="false" aria-controls="settings"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M19.4 13a7.5 7.5 0 0 0 0-2l2.1-1.6-2-3.5-2.5 1a7.6 7.6 0 0 0-1.7-1L15 3.3h-4l-.4 2.6a7.6 7.6 0 0 0-1.7 1l-2.5-1-2 3.5L6.6 11a7.5 7.5 0 0 0 0 2l-2.1 1.6 2 3.5 2.5-1c.5.4 1.1.7 1.7 1l.4 2.6h4l.4-2.6c.6-.3 1.2-.6 1.7-1l2.5 1 2-3.5zM13 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z" transform="translate(-1 0)"/></svg></button>
+    <div class="settings" id="settings" hidden role="dialog" aria-label="Settings"></div>
   </nav>
   <div class="banner" id="banner" hidden></div>
   <nav class="tabs" id="tabs" aria-label="Sections">
@@ -448,6 +448,7 @@
   </div>
 </div>
 <div class="toast" id="toast" hidden></div>
-<script src="app.js?v=20261005a"></script>
+<script src="i18n.js?v=20261005b"></script>
+<script src="app.js?v=20261005b"></script>
 </body>
 </html>
