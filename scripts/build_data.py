@@ -268,6 +268,78 @@ def fetch_universe() -> dict[str, dict]:
     return uni
 
 
+# ---------------------------------------------------------------- broader market: every U.S.-listed stock and ADR above $1B
+BROAD_MIN_CAP = 1e9
+BROAD_MIN_PRICE = 5.0
+NASDAQ_SECTOR = {"Technology": "Information Technology", "Finance": "Financials", "Basic Materials": "Materials",
+                 "Telecommunications": "Communication Services", "Health Care": "Health Care", "Consumer Discretionary": "Consumer Discretionary",
+                 "Consumer Staples": "Consumer Staples", "Industrials": "Industrials", "Energy": "Energy", "Utilities": "Utilities",
+                 "Real Estate": "Real Estate"}
+BROAD_SKIP = re.compile(r"warrant|\bunits?\b|\brights?\b|preferred|\bnotes? due\b|debenture|acquisition corp|% |depositary shares,? each representing (a )?1/", re.I)
+NAME_TAIL = re.compile(r"\s+(-\s+)?(Class [A-Z]\s+)?(Common Stock|Common Shares|Ordinary Shares|American Depositary Shares|American Depository Shares|"
+                       r"Sponsored ADR|ADS|Depositary Shares|Subordinate Voting Shares|Shares of Beneficial Interest)\b.*$", re.I)
+
+
+def fetch_broad_market() -> dict[str, dict]:
+    """U.S.-listed common stocks and ADRs with a market cap of $1B+ and a price of $5+, from Nasdaq's public stock screener
+    (NYSE, Nasdaq and NYSE American). Falls back to the last good list when the request fails."""
+    import requests
+    cache = CACHE / "broad.json"
+    out: dict[str, dict] = {}
+    try:
+        r = requests.get("https://api.nasdaq.com/api/screener/stocks", params={"tableonly": "true", "download": "true"},
+                         headers=NASDAQ_UA, timeout=60)
+        rows = ((r.json().get("data") or {}).get("rows")) or []
+        for x in rows:
+            raw = str(x.get("symbol") or "").strip().upper()
+            name = str(x.get("name") or "").strip()
+            if not raw or "^" in raw or BROAD_SKIP.search(name):
+                continue
+            sym = yf_symbol(raw.replace("/", "-"))
+            cap = _pnum(x.get("marketCap"))
+            price = _pnum(str(x.get("lastsale") or "").replace("$", ""))
+            if not re.fullmatch(r"[A-Z0-9\-]{1,10}", sym) or not cap or cap < BROAD_MIN_CAP or not price or price < BROAD_MIN_PRICE:
+                continue
+            out[sym] = {"sector": NASDAQ_SECTOR.get(str(x.get("sector") or ""), ""), "industry": "",
+                        "name": NAME_TAIL.sub("", name).strip(" ,.") or sym,
+                        "adr": 1 if re.search(r"depositary|depository|\bADS\b|\bADR\b", name, re.I) else 0,
+                        "country": str(x.get("country") or "")}
+        if len(out) >= 1000:
+            cache.write_text(jdumps(out))
+            log(f"broad market: {len(out)} stocks and ADRs over $1B ({sum(d['adr'] for d in out.values())} ADRs)")
+            return out
+        log(f"broad market: only {len(out)} rows from Nasdaq, using the cached list")
+    except Exception as e:  # noqa: BLE001
+        log(f"broad market failed: {e}")
+    try:
+        return json.loads(cache.read_text()) if cache.exists() else {}
+    except Exception:  # noqa: BLE001
+        return {}
+
+
+def map_gics(uni: dict) -> int:
+    """Stocks outside the S&P indexes get the GICS sector and sub-industry that S&P members with the same Yahoo industry
+    most often have, so they join the same industry groups. Needs their fundamentals (fetched in rotation)."""
+    from collections import Counter
+    best_by: dict[str, Counter] = {}
+    for s, d in uni.items():
+        if d.get("industry") and not d.get("broad"):
+            f, _ = fund_cache_get(s)
+            yi = (f or {}).get("industryYahoo")
+            if yi:
+                best_by.setdefault(yi, Counter())[(d.get("sector", ""), d["industry"])] += 1
+    best = {yi: c.most_common(1)[0][0] for yi, c in best_by.items()}
+    n = 0
+    for s, d in uni.items():
+        if d.get("broad") and not d.get("industry"):
+            f, _ = fund_cache_get(s)
+            yi = (f or {}).get("industryYahoo")
+            if yi in best:
+                d["sector"], d["industry"] = best[yi]
+                n += 1
+    return n
+
+
 # ---------------------------------------------------------------- prices
 def download_prices(symbols: list[str], period: str = "3y") -> dict[str, pd.DataFrame]:
     import yfinance as yf
@@ -438,7 +510,8 @@ def build_breadth(out: Path, prices: dict, uni: dict, ref_syms: list[str], now_i
 
     groups = {}
     for key, (label, bit) in BREADTH_GROUPS.items():
-        cols = [s for s in syms if not bit or (uni.get(s, {}).get("ix", 0) & bit)]
+        # breadth stays on the index members (S&P 1500 + Nasdaq-100), the standard universe for these indicators
+        cols = [s for s in syms if uni.get(s, {}).get("ix", 0) & (bit or 0xFF)]
         if len(cols) < 20:
             continue
         cl, hi, lw = close[cols], high[cols], low[cols]
@@ -1841,6 +1914,12 @@ def main():
             for s, d in cached_uni.items():
                 uni.setdefault(s, d)
             log(f"universe: completed from cached list ({len(uni)})")
+        broad = {} if args.no_universe else fetch_broad_market()
+        for s, d in broad.items():
+            if s not in uni:
+                uni[s] = {**d, "broad": True}
+        log(f"universe: {sum(1 for d in uni.values() if d.get('broad'))} stocks added from the broad market, "
+            f"{map_gics(uni)} of them placed in GICS groups")
         extra = read_list(ROOT / "universe_extra.txt")
         for s in extra:
             uni.setdefault(s, {"sector": "", "industry": ""})
@@ -1957,6 +2036,8 @@ def main():
             "spark": [round(float(x), 2) for x in df["Close"].to_numpy()[-90:]],
             **heat_fields(df, fund, gi),
         }
+        if gi.get("adr"):
+            row["adr"] = 1
         if gi.get("etf"):
             row["etf"] = 1
             row["group"] = ETFS.get(s, ("ETF",))[0]
@@ -2091,7 +2172,8 @@ def main():
         traceback.print_exc()
         log(f"composite rating failed: {e}")
     (out / "screener.json").write_text(jdumps(rows, separators=(",", ":")))
-    (out / "universe.json").write_text(jdumps(uni_rows, separators=(",", ":")))
+    (out / "universe.json").write_text(jdumps([{k: v for k, v in r.items() if k != "spark"} for r in uni_rows], separators=(",", ":")))
+    (out / "spark.json").write_text(jdumps({r["symbol"]: r.get("spark") for r in uni_rows if r.get("spark")}, separators=(",", ":")))
 
     # ---------- reference levels for alerts: 21-day EMA, 50/200-day lines, pivot and average volume per ticker.
     # The API checks alerts against the delayed intraday prices every 15 minutes during the session.
