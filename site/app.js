@@ -692,8 +692,8 @@ function renderOwnership(){
   const s6 = O.insider6m || {};
   const net = s6.netShares;
   const tiles = `<div class="otiles">
-      <div><span>Buys, 6 mo</span><b class="obuy">${s6.buyTrans??"–"}</b><small>${s6.buyShares!=null?num(s6.buyShares)+" sh":""}</small></div>
-      <div><span>Sells, 6 mo</span><b class="osell">${s6.sellTrans??"–"}</b><small>${s6.sellShares!=null?num(s6.sellShares)+" sh":""}</small></div>
+      <div title="Shares insiders acquired in the last 6 months, including stock awards"><span>Acquired, 6 mo</span><b class="obuy">${s6.buyShares!=null?num(s6.buyShares):"–"}</b><small>${s6.buyShares!=null?num(s6.buyShares)+" sh · "+(s6.buyTrans??"")+" trades":""}</small></div>
+      <div title="Shares insiders sold or disposed of in the last 6 months"><span>Disposed, 6 mo</span><b class="osell">${s6.sellShares!=null?num(s6.sellShares):"–"}</b><small>${s6.sellShares!=null?num(s6.sellShares)+" sh · "+(s6.sellTrans??"")+" trades":""}</small></div>
       <div><span>Net shares</span><b class="${net==null?"":net<0?"osell":"obuy"}">${net==null?"–":(net<0?"−":"+")+num(net)}</b><small>${s6.netPct!=null?fmtPct(s6.netPct,1)+" of holdings":""}</small></div>
       <div><span>Insiders own</span><b>${O.insidersPct!=null?O.insidersPct.toFixed(1)+"%":"–"}</b><small>of shares</small></div>
     </div>`;
