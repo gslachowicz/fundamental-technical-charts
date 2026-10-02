@@ -1625,6 +1625,192 @@ def build_ideas(out: Path, rows: list[dict], prices: dict, day: str, now_iso: st
     log(f"ideas: {len(ideas)} setups today, {len(hist)} in the track record")
 
 
+# ---------------------------------------------------------------- composite rating, industry groups, share cards
+SMR_PTS = {"A": 1.0, "B": 0.75, "C": 0.5, "D": 0.25, "E": 0.0}
+
+
+def _ranks(vals: dict) -> dict:
+    """Percentile (0..1) of each value among the non-missing ones."""
+    good = {k: v for k, v in vals.items() if v is not None and v == v}
+    if not good:
+        return {}
+    srt = np.sort(np.array(list(good.values()), dtype=float))
+    return {k: float(np.searchsorted(srt, v, side="right")) / len(srt) for k, v in good.items()}
+
+
+def add_composite(all_rows: list[dict]) -> None:
+    """Composite Rating 1-99, in the spirit of IBD's: EPS growth counts double, then RS Rating, industry group rank,
+    SMR and how close the stock trades to its 52-week high. Ranked against every stock on the site (ETFs excluded)."""
+    pool = {}
+    for r in all_rows:
+        if not r.get("etf") and r.get("symbol") and r.get("rsRating") is not None:
+            pool.setdefault(r["symbol"], r)
+    def eps_val(r):
+        v = [x for x in (_pnum(r.get("epsChg")), _pnum(r.get("epsGrowth"))) if x is not None]
+        return None if not v else float(np.mean([max(-100.0, min(300.0, x)) for x in v]))
+    def grp_val(r):
+        m = re.match(r"(\d+) of (\d+)", str(r.get("groupRank") or ""))
+        return None if not m else 1 - (int(m.group(1)) - 1) / max(1, int(m.group(2)))
+    comps = {"eps": (2.0, _ranks({s: eps_val(r) for s, r in pool.items()})),
+             "rs": (1.0, _ranks({s: r.get("rsRating") for s, r in pool.items()})),
+             "grp": (1.0, _ranks({s: grp_val(r) for s, r in pool.items()})),
+             "smr": (1.0, _ranks({s: SMR_PTS.get(r.get("smr") or "") for s, r in pool.items()})),
+             "high": (1.0, _ranks({s: r.get("offHighPct") for s, r in pool.items()}))}
+    raw = {}
+    for s in pool:
+        got = [(w, d[s]) for w, d in comps.values() if s in d]
+        if len(got) >= 3:
+            raw[s] = sum(w * v for w, v in got) / sum(w for w, _ in got)
+    final = {s: int(min(99, max(1, round(1 + 98 * p)))) for s, p in _ranks(raw).items()}
+    for r in all_rows:
+        if r.get("symbol") in final:
+            r["comp"] = final[r["symbol"]]
+
+
+def build_groups(out: Path, prices: dict, uni: dict, ref_syms: list[str], all_rows: list[dict], now_iso: str, day: str) -> None:
+    """groups.json: every GICS sub-industry ranked by the average RS score of its members today and 1, 3 and 6 weeks ago,
+    with equal-weight performance, breadth (% above the 50-day line) and its three strongest stocks."""
+    members: dict[str, list[str]] = {}
+    for s in ref_syms:
+        ind = uni.get(s, {}).get("industry")
+        if ind and s in prices:
+            members.setdefault(ind, []).append(s)
+    members = {g: m for g, m in members.items() if len(m) >= 2}
+    closes = {s: prices[s]["Close"].dropna().to_numpy(dtype=float) for m in members.values() for s in m}
+    ranks = {}
+    for lag in (0, 5, 15, 30):
+        avg = {}
+        for g, mem in members.items():
+            sc = [x for x in (rs_score(closes[s][:len(closes[s]) - lag] if lag else closes[s]) for s in mem) if x is not None]
+            if len(sc) >= 2:
+                avg[g] = float(np.mean(sc))
+        ranks[lag] = {g: i + 1 for i, g in enumerate(sorted(avg, key=lambda g: -avg[g]))}
+    by_sym = {}
+    for r in all_rows:
+        by_sym.setdefault(r.get("symbol"), r)
+    total = len(ranks[0])
+    out_groups = []
+    for g, rank in ranks[0].items():
+        mem = members[g]
+        def chg(n):
+            v = [c[-1] / c[-1 - n] - 1 for c in (closes[s] for s in mem) if len(c) > n and c[-1 - n] > 0]
+            return None if not v else round(float(np.mean(v)) * 100, 2)
+        ytd = []
+        above = []
+        for s in mem:
+            ser = prices[s]["Close"].dropna()
+            prev = ser[ser.index < pd.Timestamp(ser.index[-1].year, 1, 1)]
+            if len(prev):
+                ytd.append(float(ser.iloc[-1] / prev.iloc[-1] - 1))
+            if len(ser) >= 50:
+                above.append(float(ser.iloc[-1]) > float(ser.tail(50).mean()))
+        lead = sorted((by_sym[s] for s in mem if s in by_sym and by_sym[s].get("rsRating") is not None),
+                      key=lambda r: -(r.get("rsRating") or 0))[:3]
+        out_groups.append({
+            "name": g, "sector": uni[mem[0]].get("sector", ""), "n": len(mem), "rank": rank,
+            "r1w": ranks[5].get(g), "r3w": ranks[15].get(g), "r6w": ranks[30].get(g),
+            "chg1w": chg(5), "chg1m": chg(21), "chg3m": chg(63),
+            "ytd": None if not ytd else round(float(np.mean(ytd)) * 100, 2),
+            "above50": None if not above else round(100 * sum(above) / len(above)),
+            "leaders": [[r["symbol"], r.get("rsRating"), r.get("chgPct"), r.get("comp")] for r in lead]})
+    out_groups.sort(key=lambda x: x["rank"])
+    (out / "groups.json").write_text(jdumps({"updated": now_iso, "date": day, "total": total, "groups": out_groups}, separators=(",", ":")))
+    log(f"groups: {total} industry groups ranked")
+
+
+def build_share_cards(out: Path, prices: dict, all_rows: list[dict], day: str) -> None:
+    """For every ticker on the site: a 1200x630 chart image (og/SYMBOL.png) and a small page (c/SYMBOL/index.html)
+    whose preview shows that chart when the link is shared on X, WhatsApp or Telegram. People who open the link land
+    on the interactive chart."""
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    from matplotlib.collections import LineCollection
+    from PIL import Image
+    import html as _h
+
+    root = out.parent            # site/ (the data folder is site/data): cards live at /og/SYMBOL.png and /c/SYMBOL/
+    (root / "og").mkdir(exist_ok=True)
+    (root / "c").mkdir(exist_ok=True)
+    INK, NAVY, UP, DOWN, PAPER, GRID = "#15171c", "#1f3c6e", "#1d3fc4", "#e0337f", "#f3f1ea", "#c9cbd3"
+    fig = plt.figure(figsize=(12, 6.3), dpi=100, facecolor=PAPER)
+    seen, made = set(), 0
+    t0 = time.time()
+    for r in all_rows:
+        s = r.get("symbol")
+        df = prices.get(s)
+        if not s or s in seen or s.startswith("^") or "=" in s or df is None or len(df) < 60:
+            continue
+        seen.add(s)
+        try:
+            d = df.dropna(subset=["Close"]).tail(190)
+            c = d["Close"].to_numpy(float); h = d["High"].fillna(d["Close"]).to_numpy(float)
+            lo = d["Low"].fillna(d["Close"]).to_numpy(float); v = d["Volume"].fillna(0).to_numpy(float)
+            full = df["Close"].dropna().astype(float)
+            m50 = full.rolling(50).mean().tail(len(d)).to_numpy(); m200 = full.rolling(200).mean().tail(len(d)).to_numpy()
+            fig.clf()
+            ax = fig.add_axes([0.04, 0.27, 0.86, 0.5], facecolor="white"); axv = fig.add_axes([0.04, 0.08, 0.86, 0.17], facecolor="white", sharex=ax)
+            x = np.arange(len(c)); up = np.r_[True, c[1:] >= c[:-1]]
+            segs = [[(i, lo[i]), (i, h[i])] for i in x] + [[(i, c[i]), (i + 0.45, c[i])] for i in x]
+            cols = [UP if u else DOWN for u in up] * 2
+            ax.add_collection(LineCollection(segs, colors=cols, linewidths=1.4))
+            ax.plot(x, m50, color="#d23a2a", lw=1.3); ax.plot(x, m200, color=INK, lw=1.3)
+            piv = (r.get("base") or {}).get("pivot")
+            ymin, ymax = np.nanmin(lo), np.nanmax(h)
+            if piv and ymin * 0.8 < piv < ymax * 1.25:
+                ax.axhline(piv, color="#3c8a3a", lw=1.2, ls=(0, (4, 3))); ymax = max(ymax, piv)
+            pad = (ymax - ymin) * 0.06
+            ax.set_xlim(-1, len(c) + 1); ax.set_ylim(ymin - pad, ymax + pad)
+            axv.bar(x, v, color=cols[:len(x)], width=0.7)
+            for a in (ax, axv):
+                a.grid(True, color=GRID, ls=(0, (1, 3)), lw=0.8); a.tick_params(labelsize=10, colors="#5a5d66", length=0)
+                for sp in a.spines.values(): sp.set_color(INK)
+                a.yaxis.tick_right()
+            axv.set_yticks([]); plt.setp(ax.get_xticklabels(), visible=False)
+            months = [i for i in range(1, len(d)) if d.index[i].month != d.index[i - 1].month]
+            axv.set_xticks(months); axv.set_xticklabels([d.index[i].strftime("%b") for i in months])
+            chg = r.get("chgPct")
+            fig.text(0.04, 0.88, s, fontsize=40, fontweight="bold", color=NAVY, va="baseline")
+            fig.text(0.04 + 0.032 * len(s) + 0.02, 0.88, str(r.get("name") or "")[:44], fontsize=17, color=INK, va="baseline", family="serif")
+            fig.text(0.04, 0.815, f"{c[-1]:,.2f}" + ("" if chg is None else f"   {chg:+.2f}%") + f"   ·   {d.index[-1].strftime('%b %d, %Y')}",
+                     fontsize=15, color=INK, family="monospace", va="baseline")
+            badges = []
+            if r.get("rsRating") is not None: badges.append(f"RS {r['rsRating']}")
+            if r.get("comp") is not None: badges.append(f"Comp {r['comp']}")
+            b = r.get("base") or {}
+            if b.get("type") and b.get("status") and b.get("type") != "Deep correction":
+                badges.append(f"{b['type']} · {b['status']}" + (f" · pivot {b['pivot']:,.2f}" if b.get("pivot") else ""))
+            fig.text(0.96, 0.88, "   ".join(badges[:2]), fontsize=17, fontweight="bold", color=NAVY, ha="right", va="baseline")
+            if len(badges) > 2: fig.text(0.96, 0.815, badges[2], fontsize=13, color="#3c8a3a", ha="right", va="baseline")
+            fig.text(0.96, 0.025, "Ticker&Tape · tickerandtape.com", fontsize=12, fontweight="bold", color=NAVY, ha="right")
+            fig.text(0.04, 0.025, "Daily · 50- and 200-day lines" + (" · pivot" if piv else ""), fontsize=10, color="#5a5d66")
+            fs = file_symbol(s)
+            p = root / "og" / f"{fs}.png"
+            fig.savefig(p, dpi=100, facecolor=PAPER)
+            Image.open(p).convert("RGB").quantize(colors=48, method=Image.Quantize.MEDIANCUT).save(p, optimize=True)
+            # the page behind the shared link
+            title = f"{s} chart · " + (f"RS Rating {r['rsRating']} · " if r.get("rsRating") is not None else "") + "Ticker&Tape"
+            desc = f"{r.get('name') or s}: O'Neil-style daily chart" + "".join(f", {x}" for x in badges) + \
+                (f". EPS {r['epsChg']}, sales {r['salesChg']} last quarter" if r.get("epsChg") and r.get("salesChg") else "") + ". Free on Ticker&Tape."
+            E = _h.escape
+            (root / "c" / fs).mkdir(exist_ok=True)
+            (root / "c" / fs / "index.html").write_text(f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>{E(title)}</title>
+<meta name="description" content="{E(desc)}"><link rel="canonical" href="https://tickerandtape.com/c/{E(fs)}/">
+<meta property="og:type" content="website"><meta property="og:site_name" content="Ticker&amp;Tape"><meta property="og:title" content="{E(title)}">
+<meta property="og:description" content="{E(desc)}"><meta property="og:url" content="https://tickerandtape.com/c/{E(fs)}/">
+<meta property="og:image" content="https://tickerandtape.com/og/{E(fs)}.png?d={day}"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@Tickerandtape"><meta name="twitter:image" content="https://tickerandtape.com/og/{E(fs)}.png?d={day}">
+<link rel="icon" href="/favicon.ico"><script>location.replace("/#" + {jdumps(s)});</script></head>
+<body style="font:16px Arial,sans-serif;background:#f3f1ea;color:#15171c;padding:24px"><h1 style="color:#1f3c6e">{E(s)} · {E(str(r.get('name') or ''))}</h1>
+<p>{E(desc)}</p><p><a href="/#{E(s)}">Open the interactive chart on Ticker&amp;Tape →</a></p><img src="/og/{E(fs)}.png" alt="{E(s)} daily chart" width="600"></body></html>""")
+            made += 1
+        except Exception as e:  # noqa: BLE001
+            log(f"{s}: share card failed: {e}")
+    plt.close(fig)
+    log(f"share cards: {made} in {time.time() - t0:.0f}s")
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--demo", action="store_true", help="synthetic data, no internet")
@@ -1899,6 +2085,11 @@ def main():
         except Exception as e:  # noqa: BLE001
             log(f"{f_sym}: futures chart failed: {e}")
 
+    try:
+        add_composite(rows + uni_rows)
+    except Exception as e:  # noqa: BLE001
+        traceback.print_exc()
+        log(f"composite rating failed: {e}")
     (out / "screener.json").write_text(jdumps(rows, separators=(",", ":")))
     (out / "universe.json").write_text(jdumps(uni_rows, separators=(",", ":")))
 
@@ -1926,6 +2117,19 @@ def main():
     except Exception as e:  # noqa: BLE001
         traceback.print_exc()
         log(f"alert levels failed: {e}")
+
+    # ---------- industry group ranking page and the share cards (chart image + page per ticker)
+    day = bench.index[-1].strftime("%Y-%m-%d")
+    try:
+        build_groups(out, prices, uni, ref_syms, rows + uni_rows, now_iso, day)
+    except Exception as e:  # noqa: BLE001
+        traceback.print_exc()
+        log(f"groups failed: {e}")
+    try:
+        build_share_cards(out, prices, rows + uni_rows, day)
+    except Exception as e:  # noqa: BLE001
+        traceback.print_exc()
+        log(f"share cards failed: {e}")
     meta = {
         "updated": now_iso,
         "dataDate": bench.index[-1].strftime("%Y-%m-%d"),
