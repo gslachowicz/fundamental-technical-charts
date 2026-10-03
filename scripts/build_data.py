@@ -1899,6 +1899,7 @@ SECTION_PAGES = {
     "breadth": ("Market breadth and market direction · Ticker&Tape", "Market direction read the O'Neil way, with distribution and follow-through days, stocks above their moving averages, new highs and lows, the A/D line and the McClellan oscillator.", False),
     "compare": ("Comparative charts: SPY vs RSP vs MAGS and ratios · Ticker&Tape", "Stack several tickers on one timeline or chart ratios like RSP:SPY to see who leads the market. Custom moving averages and performance view.", False),
     "ideas": ("Trade ideas: leaders near a buy point · Ticker&Tape", "Stocks with an RS Rating of 80 or more near a pivot, in the buy zone or just out of a base, found automatically every trading day.", False),
+    "research": ("Research: The Daily Tape and The Weekly Tape · Ticker&Tape", "Short research reports with charts and precise ideas: overnight movers, earnings, breakouts, stocks near a buy point and the week in review.", False),
     "earnings": ("Earnings calendar · Ticker&Tape", "This week's and next week's earnings reports with RS Ratings, expected EPS and the stocks' chart setups.", False),
     "wall": ("Chart wall · Ticker&Tape", "", False),
     "welcome": ("Ticker&Tape · The complete research platform for stock traders", "", False),
