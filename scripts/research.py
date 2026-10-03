@@ -398,21 +398,26 @@ PAGE_ROOM = 800     # px of content under the masthead on a Letter page
 MAX_PAGES = 5
 
 
-def paginate(kind: str, date: str, no: int, first: str, secs: list, disc: str) -> str:
-    """Page 1 as given, then the sections packed onto as few pages as fit (at most five); the disclaimer closes the last one."""
-    pages, cur, room, title = [first], [], PAGE_ROOM, None
+def paginate(kind: str, date: str, no: int, first: str, secs: list, disc: str, first_h: int = PAGE_ROOM) -> str:
+    """Page 1 as given (first_h: its estimated height), then the sections packed onto as few pages as fit (at most five),
+    starting in the room left on page 1; the disclaimer closes the last page."""
+    pages, cur, room, title = [], [], PAGE_ROOM - first_h, "__first"
     for t, h_, est in secs:
         if est > room and cur:
             if len(pages) + 1 >= MAX_PAGES:
                 continue          # the last page is full: skip this section, a smaller one may still fit
             pages.append((title, cur)); cur, room, title = [], PAGE_ROOM, None
+        elif est > room and not cur and title == "__first":
+            pages.append((title, cur)); cur, room, title = [], PAGE_ROOM, None
         cur.append(h_); room -= est + 8; title = title or t
     if cur and len(pages) < MAX_PAGES:
         pages.append((title, cur))
+    if not pages or pages[0][0] != "__first":
+        pages.insert(0, ("__first", []))
     n = len(pages)
     out = []
     for i, pg in enumerate(pages):
-        body = pg if i == 0 else masthead(kind, date, no, pg[0]) + "".join(pg[1])
+        body = (first if i == 0 else masthead(kind, date, no, pg[0])) + "".join(pg[1])
         last = i == n - 1
         out.append(f'<section class="page">{body}{f"<div class=disc>{disc}</div>" if last else ""}{foot(i + 1, n, date)}</section>')
     return "".join(out)
@@ -551,7 +556,7 @@ def build_daily(D: Data, today: dt.date, no: int, demo=False) -> tuple[str, dict
         secs.append(("Charts to watch", f'<h2>Charts to watch</h2><div class="charts">{chart_html}</div>', 34 + 214 * ((len(charts) + 1) // 2)))
     disc = f"""<b>About this report.</b> The Daily Tape is generated automatically from Ticker&amp;Tape data: end-of-day prices, ratings and bases from the last close, and after-hours and pre-market prices as of {E(X_TIME)} ET. RS Rating ranks 12-month performance from 1 to 99. Ratings, bases and pivots are calculated automatically and can be wrong. This is a research tool, not investment advice; do your own analysis before you trade."""
     summary = [re.sub("<[^>]+>", "", t).replace("&amp;", "&") for t in tk[:3]]
-    return wrap(f"The Daily Tape · {fdate(date, '%b %-d, %Y')}", paginate("daily", date, no, p1, secs, disc)), {"kind": "daily", "date": date, "no": no,
+    return wrap(f"The Daily Tape · {fdate(date, '%b %-d, %Y')}", paginate("daily", date, no, p1, secs, disc, first_h=640)), {"kind": "daily", "date": date, "no": no,
             "title": f"The Daily Tape · {fdate(date, '%A, %B %-d, %Y')}", "summary": summary}
 
 
@@ -697,7 +702,7 @@ def build_weekly(D: Data, today: dt.date, no: int, demo=False) -> tuple[str, dic
         secs.append(("Headlines of the week", f'<h2>Headlines of the week</h2><ul class="news">{"".join(f"<li><b>{E(n.get("title", ""))}</b></li>" for n in news)}</ul>', 34 + 20 * len(news)))
     disc = f"""<b>About this report.</b> The Weekly Tape is generated automatically from Ticker&amp;Tape data as of the {fdate(ddate, "%B %-d")} close. RS Rating ranks 12-month performance from 1 to 99; trade ideas are leaders with an RS Rating of 80 or more near a buy point, tracked for 8 weeks with a stop 7% below the pivot. Ratings, bases and pivots are calculated automatically and can be wrong. This is a research tool, not investment advice; do your own analysis before you trade."""
     summary = [re.sub("<[^>]+>", "", t).replace("&amp;", "&") for t in tk[:3]]
-    return wrap(f"The Weekly Tape · {wk}", paginate("weekly", date, no, p1, secs, disc)), {"kind": "weekly", "date": date, "no": no, "title": f"The Weekly Tape · {wk}", "summary": summary}
+    return wrap(f"The Weekly Tape · {wk}", paginate("weekly", date, no, p1, secs, disc, first_h=490)), {"kind": "weekly", "date": date, "no": no, "title": f"The Weekly Tape · {wk}", "summary": summary}
 
 
 # ---------------------------------------------------------------- page
