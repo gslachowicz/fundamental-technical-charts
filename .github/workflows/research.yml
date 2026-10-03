@@ -1,0 +1,103 @@
+name: Research reports
+
+# The Daily Tape every trading morning before the open, The Weekly Tape on Saturday.
+# Reports are published to the "research" branch (PDF + cover + index.json); the site's Research section
+# reads index.json from there and opens the PDFs through jsDelivr, so publishing never rebuilds the site.
+on:
+  schedule:
+    - cron: "15 12 * * 1-5"   # Daily: 8:15 a.m. New York in summer time (7:15 a.m. in winter), before the open
+    - cron: "0 14 * * 6"      # Weekly: Saturday 10:00 a.m. New York (9:00 a.m. in winter)
+  workflow_dispatch:
+    inputs:
+      kind:
+        description: "daily or weekly"
+        default: "daily"
+      date:
+        description: "Report date YYYY-MM-DD (empty = today)"
+        default: ""
+
+permissions:
+  contents: write
+
+concurrency:
+  group: research
+  cancel-in-progress: false
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: |
+          npm install --no-save --no-audit --no-fund playwright@1.48.2
+          npx playwright install --with-deps chromium
+
+      - name: Which report
+        id: kind
+        run: |
+          K="${{ github.event.inputs.kind }}"
+          if [ -z "$K" ]; then if [ "$(date -u +%u)" = "6" ]; then K=weekly; else K=daily; fi; fi
+          echo "kind=$K" >> "$GITHUB_OUTPUT"
+
+      - name: Get the published reports
+        run: |
+          git fetch --depth 1 origin research:research 2>/dev/null && git worktree add pub research || {
+            git worktree add --orphan -b research pub 2>/dev/null || { mkdir -p pub && cd pub && git init -q -b research; }; }
+          mkdir -p pub/daily pub/weekly
+          [ -f pub/index.json ] || echo '{"reports":[]}' > pub/index.json
+
+      - name: Build the report
+        id: build
+        run: |
+          ARGS="${{ steps.kind.outputs.kind }} --out build/research --index pub/index.json"
+          [ -n "${{ github.event.inputs.date }}" ] && ARGS="$ARGS --date ${{ github.event.inputs.date }} --force"
+          set +e; python scripts/research.py $ARGS; code=$?; set -e
+          if [ $code = 2 ]; then echo "skip=1" >> "$GITHUB_OUTPUT"; exit 0; fi
+          [ $code = 0 ] || exit $code
+          node scripts/research_pdf.mjs build/research/report.html build/research/report.pdf build/research/cover.png
+
+      - name: Publish
+        if: steps.build.outputs.skip != '1'
+        run: |
+          python - <<'PY'
+          import json, shutil
+          from pathlib import Path
+          info = json.loads(Path("build/research/report.json").read_text())
+          base = f'{info["kind"]}/{info["date"]}'
+          shutil.copy("build/research/report.pdf", f"pub/{base}.pdf")
+          shutil.copy("build/research/cover.png", f"pub/{base}.png")
+          Path("build/research/base.txt").write_text(base)
+          PY
+          cd pub
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A && git commit -q -m "Research: $(cat ../build/research/base.txt)"
+          git push -q "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" HEAD:research
+          SHA=$(git rev-parse HEAD)
+          # the index points at that exact commit, so jsDelivr serves the new files right away
+          python - "$SHA" <<'PY'
+          import json, sys
+          from pathlib import Path
+          sha = sys.argv[1]
+          info = json.loads(Path("../build/research/report.json").read_text())
+          base = Path("../build/research/base.txt").read_text()
+          idx = json.loads(Path("index.json").read_text())
+          cdn = f"https://cdn.jsdelivr.net/gh/${{ github.repository }}@{sha}/"
+          entry = {**info, "pdf": cdn + base + ".pdf", "cover": cdn + base + ".png"}
+          idx["reports"] = [r for r in idx.get("reports", []) if not (r.get("kind") == info["kind"] and r.get("date") == info["date"])] + [entry]
+          idx["reports"].sort(key=lambda r: (r["date"], r["kind"]), reverse=True)
+          Path("index.json").write_text(json.dumps(idx, indent=1))
+          PY
+          git add index.json && git commit -q -m "Research index: $(cat ../build/research/base.txt)"
+          git push -q "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" HEAD:research
