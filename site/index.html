@@ -23,7 +23,7 @@
 <meta name="description" content="O'Neil-style charts, RS Ratings, screeners, market breadth, trade ideas and earnings for every U.S. stock and ADR, all in one place. Built by traders, for traders.">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&family=Archivo+Narrow:wght@400;600;700&family=Libre+Franklin:wght@600;800&family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&display=swap">
-<link rel="stylesheet" href="/style.css?v=20261014a">
+<link rel="stylesheet" href="/style.css?v=20261015a">
 <style id="colcss"></style>
 </head>
 <body>
@@ -47,7 +47,7 @@
   <div class="vbar" id="vBar" hidden></div>
   <button class="tabsbtn" id="tabsBtn" aria-expanded="false" aria-controls="tabs"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg><b id="tabsCur">Sections</b><span class="car" aria-hidden="true">▾</span></button>
   <nav class="tabs" id="tabs" aria-label="Sections">
-    <a href="/" data-v="home">Home</a><a href="/watchlist/" data-v="watch">Watchlist</a><a href="/screener/" data-v="all">Screener</a><a href="/etfs/" data-v="etf">ETFs</a><a href="/groups/" data-v="groups">Groups</a><a href="/heatmap/" data-v="heat">Heatmap</a><a href="/breadth/" data-v="breadth">Breadth</a><a href="/compare/" data-v="cmp">Compare</a><a href="/ideas/" data-v="ideas">Trade ideas</a><a href="/research/" data-v="research">Research</a><a href="/earnings/" data-v="earn">Earnings</a><a href="/breadth/" class="mktchip" id="mktChip" title="Market direction · open Market breadth" hidden></a>
+    <a href="/" data-v="home">Home</a><a href="/watchlist/" data-v="watch">Watchlist</a><a href="/screener/" data-v="all">Screener</a><a href="/etfs/" data-v="etf">ETFs</a><a href="/groups/" data-v="groups">Groups</a><a href="/heatmap/" data-v="heat">Heatmap</a><a href="/breadth/" data-v="breadth">Breadth</a><a href="/compare/" data-v="cmp">Compare</a><a href="/ideas/" data-v="ideas">Trade ideas</a><a href="/research/" data-v="research">Research</a><a href="/macro/" data-v="macro">Macro</a><a href="/earnings/" data-v="earn">Earnings</a><a href="/breadth/" class="mktchip" id="mktChip" title="Market direction · open Market breadth" hidden></a>
   </nav>
 
   <!-- ===================== HOME ===================== -->
@@ -191,6 +191,24 @@
     </section>
     <section class="box"><h3>Scoreboard <small>last close against the range start, each moving average and the range high · click a row for its chart</small></h3><div class="tablewrap" id="cTbl"></div></section>
     <p class="fine">Daily bars from Yahoo Finance, with delayed prices during the session. A ratio (A:B) divides the closes of two tickers: rising means A is beating B. Performance % starts every ticker at zero on the first day of the range. Double-click a panel to open its full chart. Any ticker on the site can be compared; one that is missing loads after the next nightly update once it is in a watchlist.</p>
+  </main>
+
+  <!-- ===================== MACRO ===================== -->
+  <main id="vMacro" class="mcv" hidden>
+    <section class="ihead">
+      <div>
+        <p class="kicker">Macro · the calendar and the Fed</p>
+        <h2>Macro calendar</h2>
+        <p class="lede">The economic releases and Fed events that move the market, with what the futures market expects from the Fed at every meeting. All times are New York time (ET).</p>
+      </div>
+      <div class="mcnext" id="mcNext"></div>
+    </section>
+    <section class="mcfed" id="mcFed"></section>
+    <div class="bar"><div class="seg" role="group" aria-label="Week" id="mcWeek"><button data-w="0" class="on">This week</button><button data-w="1">Next week</button><button data-w="2">Later</button></div>
+      <div class="seg" role="group" aria-label="Importance" id="mcImp"><button data-i="1" class="on">All</button><button data-i="3">High importance</button></div><span class="fine">Times in New York (ET)</span></div>
+    <section class="mccal" id="mcCal"></section>
+    <section class="mcind"><h3 class="mch">Key indicators <small>latest official data</small></h3><div class="mcgrid" id="mcInd"></div></section>
+    <p class="fine">Release dates from the Bureau of Labor Statistics, the Bureau of Economic Analysis, the Census Bureau, the ISM and the Federal Reserve; values from FRED (Federal Reserve Bank of St. Louis). Fed odds are calculated by Ticker&amp;Tape from the prices of 30-day fed funds futures and can differ slightly from other sources. Not investment advice.</p>
   </main>
 
   <!-- ===================== RESEARCH ===================== -->
@@ -574,6 +592,7 @@
           <li><a href="/compare/">Comparative charts</a></li>
           <li><a href="/ideas/">Trade ideas</a></li>
           <li><a href="/research/">Research reports</a></li>
+          <li><a href="/macro/">Macro calendar</a></li>
           <li><a href="/earnings/">Earnings calendar</a></li>
           <li><a href="/screener/">Screener</a></li>
           <li><a href="/etfs/">ETFs</a></li>
@@ -626,7 +645,7 @@
   </div>
 </div>
 <div class="toast" id="toast" hidden></div>
-<script src="/i18n.js?v=20261014a"></script>
-<script src="/app.js?v=20261014a"></script>
+<script src="/i18n.js?v=20261015a"></script>
+<script src="/app.js?v=20261015a"></script>
 </body>
 </html>

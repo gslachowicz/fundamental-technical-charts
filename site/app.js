@@ -13,7 +13,7 @@ const store = {
   set(k,v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
 };
 /* ---------- clean URLs: /chart/NVDA/, /breadth/, /compare/ … (old #NVDA links still work and get rewritten) ---------- */
-const SECTIONS = ["watchlist","screener","etfs","groups","heatmap","breadth","ideas","research","earnings","compare","wall","welcome"];
+const SECTIONS = ["watchlist","screener","etfs","groups","heatmap","breadth","ideas","research","macro","earnings","compare","wall","welcome"];
 function keyToPath(k){
   k = String(k || "").replace(/^#/, "").trim(); const low = k.toLowerCase();
   if(!k || low === "home") return "/";
@@ -1261,7 +1261,7 @@ function route(){
   if(raw.toLowerCase() === "alerts"){ history.replaceState(null, "", location.pathname); raw = ""; setTimeout(()=>{ if(auth.token) loadAlerts().then(openAlertsList); else openAuth("in"); }, 300); }
   // a path the site doesn't know (old or mistyped link): page not found, for visitors and members alike
   if(!location.hash && raw === "" && !/^\/(index\.html)?$/.test(location.pathname)){
-    ["#vWelcome","#vHome","#vScreener","#vChart","#vHeat","#vIdeas","#vResearch","#vEarn","#vBreadth","#vGroups","#vWall","#vCmp"].forEach(id=>$(id).hidden = true);
+    ["#vWelcome","#vHome","#vScreener","#vChart","#vHeat","#vIdeas","#vResearch","#vMacro","#vEarn","#vBreadth","#vGroups","#vWall","#vCmp"].forEach(id=>$(id).hidden = true);
     $("#vNotFound").hidden = false; document.body.classList.add("on-welcome"); setTab(""); document.title = TX("Page not found · Ticker&Tape"); window.scrollTo(0,0); return; }
   if(location.hash) history.replaceState(null, "", keyToPath(raw));   // old #links → clean URL
   // signed-out visitors only get the welcome page, except for a chart link (shared on X, found on Google), which opens with a sign-up bar
@@ -1269,14 +1269,15 @@ function route(){
     if(!auth.token && l !== "welcome" && !chartish){ history.replaceState(null, "", "/welcome/"); raw = "welcome"; } }
   const low = raw.toLowerCase();
   const isList = raw === low && ROUTES[low];
-  track(low === "" || low === "home" ? "home" : isList ? low : ["groups","heatmap","breadth","ideas","research","earnings","wall","welcome"].includes(low) ? low : low === "compare" || low.startsWith("compare/") ? "compare" : "chart", raw.toUpperCase());
+  track(low === "" || low === "home" ? "home" : isList ? low : ["groups","heatmap","breadth","ideas","research","macro","earnings","wall","welcome"].includes(low) ? low : low === "compare" || low.startsWith("compare/") ? "compare" : "chart", raw.toUpperCase());
   const isHome = raw === "" || raw === "home";
-  ["#vWelcome","#vHome","#vScreener","#vChart","#vHeat","#vIdeas","#vResearch","#vEarn","#vBreadth","#vGroups","#vWall","#vCmp","#vNotFound"].forEach(id=>$(id).hidden = true); $("#hmTip").hidden = true; $("#gateBar").hidden = true;
+  ["#vWelcome","#vHome","#vScreener","#vChart","#vHeat","#vIdeas","#vResearch","#vMacro","#vEarn","#vBreadth","#vGroups","#vWall","#vCmp","#vNotFound"].forEach(id=>$(id).hidden = true); $("#hmTip").hidden = true; $("#gateBar").hidden = true;
   $("#vNotFound").hidden = true; document.body.classList.toggle("on-welcome", raw === "welcome"); if(raw !== "welcome") $("#wSticky").classList.remove("on");
   document.body.classList.toggle("on-home", isHome);
   if(chartPath && raw){ setTab(""); $("#gateBar").hidden = !!auth.token; openChart(raw.toUpperCase()); return; }
   if(raw === "welcome"){ $("#vWelcome").hidden = false; setTab(""); document.title = "Ticker&Tape · The complete research platform for stock traders"; window.scrollTo(0,0); renderWelcome(); return; }
   if(low === "earnings"){ lastList = "earnings"; $("#vEarn").hidden = false; setTab("earn"); document.title = "Earnings calendar · Ticker&Tape"; window.scrollTo(0,0); renderEarn(); return; }
+  if(low === "macro"){ lastList = "macro"; $("#vMacro").hidden = false; setTab("macro"); document.title = "Macro calendar and Fed odds · Ticker&Tape"; window.scrollTo(0,0); renderMacro(); return; }
   if(low === "research"){ lastList = "research"; $("#vResearch").hidden = false; setTab("research"); document.title = "Research · Ticker&Tape"; window.scrollTo(0,0); renderResearch(); return; }
   if(low === "ideas"){ lastList = "ideas"; $("#vIdeas").hidden = false; setTab("ideas"); document.title = "Trade ideas · Ticker&Tape"; window.scrollTo(0,0); renderIdeas(); return; }
   if(low === "groups"){ lastList = "groups"; $("#vGroups").hidden = false; setTab("groups"); document.title = "Industry groups · Ticker&Tape"; window.scrollTo(0,0); renderGroups(); return; }
@@ -1683,6 +1684,67 @@ function setShare(){
   if(b && b.status && b.type !== "Deep correction") bits.push(`${b.type}, ${b.status.toLowerCase()} (pivot ${fmtP(b.pivot)})`);
   a.href = xShareUrl(S.symbol, bits.join(" · ") + (bits.length ? " — " : "") + "daily chart on Ticker&Tape");
 }
+
+/* ================= MACRO CALENDAR ================= */
+// data/macro.json, written every night by scripts/macro.py: official release dates, FRED values and the Fed odds
+let MAC = null, macLoading = null, macWeek = 0, macImp = +store.get("tt:macImp") || 1;
+function loadMacro(){ if(!macLoading) macLoading = getJSON("macro.json").then(d=>{ MAC = d; }).catch(()=>{ MAC = {events:[], indicators:{}}; }); return macLoading; }
+const nyToday = () => new Intl.DateTimeFormat("en-CA", {timeZone:"America/New_York"}).format(new Date());
+const nyClock = () => new Intl.DateTimeFormat("en-GB", {timeZone:"America/New_York", hour:"2-digit", minute:"2-digit", hour12:false}).format(new Date());
+const addDays = (iso_, n) => { const d = new Date(iso_ + "T12:00:00Z"); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0,10); };
+const fmtT12 = t => { const [h,m] = t.split(":").map(Number); return `${((h+11)%12)+1}:${String(m).padStart(2,"0")} ${h<12?"a.m.":"p.m."}`; };
+function macVal(v, x){ if(x == null || !isFinite(x)) return "—"; const u = v.unit;
+  return u === "%" ? (v.name.includes("change") && x > 0 ? "+" : "") + x.toFixed(1) + "%" : u === "k" ? (v.name.includes("change") && x > 0 ? "+" : "") + Math.round(x) + "k" : u === "M" ? x.toFixed(2) + "M" : x.toFixed(2); }
+function macSpark(arr, w=120, h=30){ const a = (arr||[]).filter(v=>v!=null); if(a.length < 2) return ""; const lo = Math.min(...a), hi = Math.max(...a), r = (hi-lo)||1;
+  return `<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" aria-hidden="true"><polyline fill="none" stroke="#1f3c6e" stroke-width="1.5" points="${a.map((v,i)=>`${(i*(w-2)/(a.length-1)+1).toFixed(1)},${(h-2-(v-lo)/r*(h-4)).toFixed(1)}`).join(" ")}"/></svg>`; }
+function renderMacro(){
+  if(!MAC){ $("#mcCal").innerHTML = `<div class="empty">${esc(TX("Loading…"))}</div>`; loadMacro().then(()=>{ if(!$("#vMacro").hidden) renderMacro(); }); return; }
+  const today = nyToday(), now = nyClock();
+  $$("#mcWeek button").forEach(b=>b.classList.toggle("on", +b.dataset.w === macWeek));
+  $$("#mcImp button").forEach(b=>b.classList.toggle("on", +b.dataset.i === macImp));
+  const F = MAC.fed, fomc = (MAC.fomc || []).filter(d=>d >= today);
+  // next FOMC
+  const nf = fomc[0];
+  $("#mcNext").innerHTML = nf ? `<div class="rsn"><span>${esc(TX("Next FOMC decision"))}</span><b>${esc(fmtLong(iso(nf)))} · 2:00 p.m. ET</b></div>
+    <div class="rsn"><span>${esc(TX("Countdown"))}</span><b>${Math.round((Date.parse(nf) - Date.parse(today)) / 864e5)} ${esc(TX("days"))}</b></div>` : "";
+  // the Fed card
+  if(F && F.meetings && F.meetings.length){
+    const m0 = F.meetings[0], mv = Object.entries(m0.move || {}).map(([k,p])=>({bp:+k, p})).sort((a,b)=>a.bp-b.bp);
+    const lbl = bp => bp < 0 ? `${TX("Cut")} ${-bp} bp` : bp > 0 ? `${TX("Hike")} ${bp} bp` : TX("Hold");
+    const col = bp => bp < 0 ? "var(--green)" : bp > 0 ? "var(--down)" : "var(--navy)";
+    const top = mv.slice().sort((a,b)=>b.p-a.p)[0];
+    const wk = m0.cumWeekAgo != null ? `<p class="fine">${esc(TX("A week ago the market priced"))} ${m0.cumWeekAgo > 0 ? "+" : ""}${m0.cumWeekAgo.toFixed(0)} bp ${esc(TX("by this meeting; today"))} ${m0.cum > 0 ? "+" : ""}${m0.cum.toFixed(0)} bp.</p>` : "";
+    $("#mcFed").innerHTML = `<div class="box mcfedl"><h3>${esc(TX("The Fed today"))}</h3><div class="in">
+        <div class="mcrate"><span>${esc(TX("Target range"))}</span><b>${F.lower.toFixed(2)}% – ${F.upper.toFixed(2)}%</b><small>${esc(TX("Effective fed funds rate"))} ${F.effr.toFixed(2)}%</small></div>
+        <h4>${esc(TX("Odds for the"))} ${esc(fmtLong(iso(m0.date)))} ${esc(TX("meeting"))}</h4>
+        <div class="mcbar">${mv.map(x=>`<span style="flex:${x.p};background:${col(x.bp)}" title="${esc(lbl(x.bp))} ${x.p.toFixed(0)}%">${x.p >= 12 ? `${esc(lbl(x.bp))} ${x.p.toFixed(0)}%` : ""}</span>`).join("")}</div>
+        <p class="mcsay">${esc(TX("The futures market sees a"))} <b>${top.p.toFixed(0)}%</b> ${esc(TX("chance of"))} <b>${esc(lbl(top.bp).toLowerCase())}</b>.</p>${wk}</div></div>
+      <div class="box mcfedr"><h3>${esc(TX("Rate path by meeting"))} <small>${esc(TX("implied by fed funds futures"))}</small></h3><div class="tablewrap"><table class="tbl mctbl"><thead><tr><th>${esc(TX("Meeting"))}</th><th>${esc(TX("Implied rate"))}</th><th>${esc(TX("vs today"))}</th><th>${esc(TX("Most likely range"))}</th><th>${esc(TX("Odds"))}</th></tr></thead><tbody>
+        ${F.meetings.map(m=>{ const r = (m.ranges||[]).slice().sort((a,b)=>b.prob-a.prob); const best = r[0];
+          return `<tr><td><b>${esc(fmtLong(iso(m.date)))}</b>${(MAC.sep||[]).includes(m.date) ? ` <small class="mcsep" title="${esc(TX("With economic projections and the dot plot"))}">SEP</small>` : ""}</td><td>${m.implied.toFixed(2)}%</td>
+            <td class="${m.cum < 0 ? "pos" : m.cum > 0 ? "neg" : ""}">${m.cum > 0 ? "+" : ""}${m.cum.toFixed(0)} bp</td><td>${best ? `${best.lower.toFixed(2)}–${best.upper.toFixed(2)}%` : "—"}</td>
+            <td><div class="mcmini">${r.slice().sort((a,b)=>a.lower-b.lower).map(x=>`<i style="flex:${x.prob};background:${x.lower < F.lower ? "var(--green)" : x.lower > F.lower ? "var(--down)" : "var(--navy)"}" title="${x.lower.toFixed(2)}–${x.upper.toFixed(2)}%: ${x.prob.toFixed(0)}%"></i>`).join("")}</div><small>${best ? best.prob.toFixed(0) + "%" : ""}</small></td></tr>`; }).join("")}
+        </tbody></table></div></div>`;
+  } else $("#mcFed").innerHTML = "";
+  // calendar
+  const dow = new Date(today + "T12:00:00Z").getUTCDay(), mon = addDays(today, -((dow + 6) % 7));
+  const from = macWeek === 0 ? mon : macWeek === 1 ? addDays(mon, 7) : addDays(mon, 14), to = macWeek === 2 ? addDays(mon, 60) : addDays(from, 6);
+  const E = (MAC.events || []).filter(e=>e.date >= from && e.date <= to && e.imp >= macImp);
+  const byDay = {}; E.forEach(e=>(byDay[e.date] = byDay[e.date] || []).push(e));
+  const done = e => e.date < today || (e.date === today && e.time <= now);
+  $("#mcCal").innerHTML = Object.keys(byDay).sort().map(d=>`<div class="mcday ${d === today ? "today" : ""}"><h4>${esc(new Date(d + "T12:00:00Z").toLocaleDateString(LOC, {weekday:"long", month:"long", day:"numeric", timeZone:"UTC"}))}${d === today ? ` <span>${esc(TX("Today"))}</span>` : ""}</h4>
+      ${byDay[d].map(e=>{ const vals = e.values || [];
+        return `<div class="mcev imp${e.imp} ${done(e) ? "done" : ""}"><span class="mct">${esc(fmtT12(e.time))}</span><span class="mci" title="${esc(TX(["","Low","Medium","High"][e.imp] + " importance"))}">${"●".repeat(e.imp)}${"○".repeat(3 - e.imp)}</span>
+          <span class="mcn"><b>${esc(TX(e.name))}</b>${e.period ? `<small>${esc(e.period)}</small>` : ""}</span>
+          <span class="mcv">${vals.map(v=>`<span><em>${esc(TX(v.name))}</em> ${done(e) ? `${esc(TX("Latest"))} <b>${macVal(v, v.last)}</b> · ${esc(TX("prior"))} ${macVal(v, v.prior)}` : `${esc(TX("Prior"))} <b>${macVal(v, v.last)}</b>`}</span>`).join("")}</span></div>`; }).join("")}</div>`).join("")
+    || `<div class="empty">${esc(TX("No releases in this period."))}</div>`;
+  // key indicators
+  const I = MAC.indicators || {};
+  $("#mcInd").innerHTML = ["cpi","core_cpi","pce","unrate","nfp","gdp","retail","claims","t2","t10"].filter(k=>I[k]).map(k=>{ const v = I[k], ch = v.prior != null ? v.last - v.prior : null;
+    return `<div class="mccard"><span>${esc(TX(v.name))}</span><b>${macVal(v, v.last)}</b><small>${esc(fmtLong(iso(v.lastDate)))}${ch != null ? ` · ${esc(TX("prior"))} ${macVal(v, v.prior)}` : ""}</small>${macSpark(v.spark)}</div>`; }).join("");
+}
+$$("#mcWeek button").forEach(b=>b.onclick = ()=>{ macWeek = +b.dataset.w; renderMacro(); });
+$$("#mcImp button").forEach(b=>b.onclick = ()=>{ macImp = +b.dataset.i; store.set("tt:macImp", macImp); renderMacro(); });
 
 /* ================= RESEARCH REPORTS ================= */
 // index.json on the "research" branch, written by .github/workflows/research.yml; PDFs and covers are served by jsDelivr

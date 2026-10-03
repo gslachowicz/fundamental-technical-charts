@@ -1113,3 +1113,46 @@ button.w2new{cursor:pointer}
 .rscard small{font:12.5px/1.4 var(--f-label);color:var(--ink2);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .rsempty{grid-column:1/-1;padding:28px;border:1px dashed var(--rule);font-size:15px;line-height:1.5}
 @media (max-width:700px){.rsfeat{grid-template-columns:1fr}.rsfeat .rscover{max-width:260px}.rsgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* ===== macro calendar and the Fed ===== */
+.mcnext{display:grid;gap:8px;align-self:stretch;align-content:end}
+.mcfed{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:18px;margin:18px 0}
+.mcfed:empty{display:none}
+.mcfed .in{padding:14px 16px}
+.mcrate span,.mcfedl h4{display:block;font:700 10.5px var(--f-label);letter-spacing:.14em;text-transform:uppercase;color:var(--ink2);margin:0 0 4px}
+.mcrate b{display:block;font:700 30px var(--f-data);color:var(--navy);line-height:1.1}
+.mcrate small{font:13px var(--f-label);color:var(--ink2)}
+.mcfedl h4{margin-top:16px}
+.mcbar{display:flex;height:30px;border:1px solid var(--ink);overflow:hidden}
+.mcbar span{display:flex;align-items:center;justify-content:center;color:#fff;font:700 12px var(--f-label);white-space:nowrap;overflow:hidden}
+.mcsay{font:15px/1.5 var(--f-label);margin:10px 0 4px}
+.mctbl td{vertical-align:middle}
+.mcmini{display:inline-flex;width:90px;height:12px;border:1px solid var(--ink);vertical-align:middle;margin-right:6px;overflow:hidden}
+.mcmini i{display:block}
+.mcsep{font:700 9px var(--f-label);letter-spacing:.08em;background:#f2b134;color:var(--ink);padding:1px 4px}
+.mccal{margin:10px 0 24px}
+.mcday{margin-bottom:14px;border:1px solid var(--rule);background:var(--plate)}
+.mcday h4{margin:0;padding:8px 12px;font:700 12px var(--f-label);letter-spacing:.12em;text-transform:uppercase;color:#fff;background:var(--navy)}
+.mcday.today h4{background:var(--ink)}
+.mcday h4 span{background:#f2b134;color:var(--ink);padding:1px 6px;margin-left:6px;letter-spacing:.06em}
+.mcev{display:grid;grid-template-columns:86px 52px minmax(0,1.1fr) minmax(0,1.4fr);gap:10px;align-items:center;padding:9px 12px;border-top:1px dotted var(--rule);font-family:var(--f-label)}
+.mcev:first-of-type{border-top:0}
+.mcev.imp3{border-left:4px solid #f2b134;padding-left:8px}
+.mcev.done{background:#faf9f5}
+.mct{font:700 13px var(--f-data);color:var(--ink)}
+.mci{color:var(--navy);letter-spacing:1px;font-size:11px}
+.mcev.imp3 .mci{color:#c98a00}
+.mcn b{font-size:15px;display:block}
+.mcev.imp1 .mcn b{font-weight:600;color:var(--ink2)}
+.mcn small{font-size:12px;color:var(--ink2)}
+.mcv{display:grid;gap:2px;font-size:13px;color:var(--ink2)}
+.mcv em{font-style:normal;color:var(--ink)}
+.mcv b{font-family:var(--f-data);color:var(--navy)}
+.mch{font:700 12px var(--f-label);letter-spacing:.14em;text-transform:uppercase;color:var(--navy);border-bottom:2px solid var(--navy);padding-bottom:4px;margin:0 0 10px}
+.mch small{font-weight:600;letter-spacing:.02em;text-transform:none;color:var(--ink2)}
+.mcgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin-bottom:16px}
+.mccard{border:1px solid var(--ink);background:var(--plate);padding:10px 12px;display:grid;gap:2px}
+.mccard span{font:700 10.5px var(--f-label);letter-spacing:.06em;text-transform:uppercase;color:var(--ink2)}
+.mccard b{font:700 22px var(--f-data);color:var(--navy)}
+.mccard small{font:12px var(--f-label);color:var(--ink2)}
+@media (max-width:900px){.mcfed{grid-template-columns:1fr}.mcev{grid-template-columns:70px 40px minmax(0,1fr)}.mcv{grid-column:3}}
