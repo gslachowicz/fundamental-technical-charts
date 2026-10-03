@@ -335,6 +335,53 @@ def commodities_table(com, X=None, weekly=False):
     return table(head, rows)
 
 
+def t12(t):
+    h, m = map(int, t.split(":"))
+    return f"{(h + 11) % 12 + 1}:{m:02d} {'a.m.' if h < 12 else 'p.m.'}"
+
+
+def mval(v, x):
+    if x is None:
+        return "—"
+    u, chg = v.get("unit"), "change" in v.get("name", "")
+    if u == "%":
+        return f"{x:+.1f}%" if chg else f"{x:.1f}%"
+    if u == "k":
+        return f"{x:+.0f}k" if chg else f"{x:.0f}k"
+    if u == "M":
+        return f"{x:.2f}M"
+    return f"{x:.2f}"
+
+
+def macro_rows(events, show_day=False):
+    rows = []
+    for e in events:
+        vals = "<br>".join(f'<small>{E(v["name"])}</small> {mval(v, v.get("last"))}' for v in e.get("values", []))
+        imp = "●" * e["imp"] + "○" * (3 - e["imp"])
+        day = f'{dt.date.fromisoformat(e["date"]).strftime("%a %b %-d")} · ' if show_day else ""
+        rows.append(f'<tr class="{"hi" if e["imp"] == 3 else ""}"><td>{day}{t12(e["time"])}</td><td class="imp">{imp}</td><td><b class="ev">{E(e["name"])}</b>{f" <small>{E(e["period"])}</small>" if e.get("period") else ""}</td><td>{vals}</td></tr>')
+    return rows
+
+
+def fed_block(fed, sep=()):
+    """The Fed odds: next meeting bar and the rate path table."""
+    if not fed or not fed.get("meetings"):
+        return ""
+    m0 = fed["meetings"][0]
+    mv = sorted(((int(k), p) for k, p in (m0.get("move") or {}).items()), key=lambda t: t[0])
+    lbl = lambda bp: f"Cut {-bp} bp" if bp < 0 else f"Hike {bp} bp" if bp > 0 else "Hold"
+    col = lambda bp: GREEN if bp < 0 else DOWN if bp > 0 else NAVY
+    bar = "".join(f'<span style="flex:{p};background:{col(bp)}">{lbl(bp) + f" {p:.0f}%" if p >= 12 else ""}</span>' for bp, p in mv)
+    rows = []
+    for m in fed["meetings"][:6]:
+        best = max(m.get("ranges") or [{"lower": 0, "upper": 0, "prob": 0}], key=lambda r: r["prob"])
+        rows.append(f'<tr><td><b>{dt.date.fromisoformat(m["date"]).strftime("%b %-d, %Y")}</b>{" <span class=tag>SEP</span>" if m["date"] in sep else ""}</td><td>{m["implied"]:.2f}%</td>'
+                    f'<td class="{"up" if m["cum"] < 0 else "dn" if m["cum"] > 0 else ""}">{m["cum"]:+.0f} bp</td><td>{best["lower"]:.2f}–{best["upper"]:.2f}%</td><td>{best["prob"]:.0f}%</td></tr>')
+    return (f'<div class="g2"><div><div class="msx g"><span>Fed target range</span><b>{fed["lower"]:.2f}% – {fed["upper"]:.2f}%</b><small>Effective rate {fed["effr"]:.2f}%</small></div>'
+            f'<p class="h3s">Odds for the {dt.date.fromisoformat(m0["date"]).strftime("%B %-d")} meeting</p><div class="fbar">{bar}</div></div>'
+            f'<div>{table(["Meeting", "Implied", "vs today", "Most likely", "Odds"], rows)}</div></div>')
+
+
 # ---------------------------------------------------------------- desk notes
 def desk_note(date: str) -> str:
     p = ROOT / "research" / "notes.md"
@@ -426,7 +473,9 @@ def paginate(kind: str, date: str, no: int, first: str, secs: list, disc: str, f
 # ---------------------------------------------------------------- the Daily
 def build_daily(D: Data, today: dt.date, no: int, demo=False) -> tuple[str, dict]:
     meta, uni, earn, ideas, home = D.get("meta.json", {}), D.get("universe.json", []), D.get("earnings.json", {}), D.get("ideas.json", {}), D.get("home.json", {})
+    mac = D.get("macro.json", {}) or {}
     date = today.isoformat()
+    cal_today = [e for e in mac.get("events", []) if e.get("date") == date and e.get("imp", 0) >= 2]
     ddate = (meta or {}).get("dataDate") or ""
     by_sym = {r["symbol"]: r for r in uni}
     lead = leaders_of(uni, 70)
@@ -519,6 +568,17 @@ def build_daily(D: Data, today: dt.date, no: int, demo=False) -> tuple[str, dict
         tk.append(f'{len(brk)} stock{"s" if len(brk) != 1 else ""} broke out yesterday' + (f', led by <b>{E(brk[0]["symbol"])}</b> (RS {brk[0].get("rsRating")})' if brk else "") + '.')
     if near:
         tk.append(f'{len(near)} leaders sit within 5% of a buy point: ' + ", ".join(f"<b>{E(r['symbol'])}</b>" for r in near[:4]) + '.')
+    hi_today = [e for e in cal_today if e["imp"] == 3]
+    if hi_today:
+        tk.insert(min(2, len(tk)), "On the macro calendar today: " + ", ".join(f"<b>{E(e['name'])}</b> at {t12(e['time'])} ET" for e in hi_today[:3]) + ".")
+    fed = mac.get("fed") or {}
+    if fed.get("meetings"):
+        m0 = fed["meetings"][0]
+        if (dt.date.fromisoformat(m0["date"]) - today).days <= 14:
+            mvs = sorted(((int(k), p) for k, p in (m0.get("move") or {}).items()), key=lambda t: -t[1])
+            if mvs:
+                bp, p = mvs[0]
+                tk.insert(min(3, len(tk)), f'Fed on {dt.date.fromisoformat(m0["date"]).strftime("%B %-d")}: futures price a {p:.0f}% chance of {"a " + str(-bp) + " bp cut" if bp < 0 else "a " + str(bp) + " bp hike" if bp > 0 else "no change"}.')
     if today_rep:
         big = today_rep[:3]
         tk.append("Reporting today: " + ", ".join(f"<b>{E(e['symbol'])}</b>" for e in big) + (f" and {len(today_rep)-3} more" if len(today_rep) > 3 else "") + ".")
@@ -546,6 +606,7 @@ def build_daily(D: Data, today: dt.date, no: int, demo=False) -> tuple[str, dict
         ("Overnight movers", f"""<p class="lede">Leaders (RS Rating 70+ and $20M+ traded a day) moving 2% or more after yesterday's close or before today's open.</p>
           <div class="g2"><div><h2 class="up">Higher</h2>{table(mvh, [mv_row(t) for t in mv_up]) or empty("No leader is up 2% or more overnight.")}</div>
           <div><h2 class="dn">Lower</h2>{table(mvh, [mv_row(t) for t in mv_dn]) or empty("No leader is down 2% or more overnight.")}</div></div>""", 40 + th(max(len(mv_up), len(mv_dn)))),
+        ("Macro calendar today", f"""<h2>Macro calendar today · New York time</h2>{table(["Time", "", "Release", "Prior"], macro_rows(cal_today)) or empty("No major economic release today.")}""", th(len(cal_today))),
         ("Commodities", f"""<h2>Commodities · futures</h2>{commodities_table(com, X) or empty("No futures data.")}""", 58 + 34 * len(com)),
         ("Earnings after yesterday's close", f"""<h2>Earnings after yesterday's close</h2>{table(["Company", "RS", "EPS vs est.", "Surprise", "Reaction"], [rep_row(e) for e in prev_rep[:8]]) or empty("No company in our coverage reported after yesterday's close.")}""", th(len(prev_rep[:8]))),
         ("Reporting today", f"""<h2>Reporting today</h2>{table(["Company", "When", "RS", "EPS est.", "Pre-mkt", "Setup"], [rep_row(e, False) for e in today_rep[:12]]) or empty("No company in our coverage reports today.")}""", th(len(today_rep[:12]))),
@@ -565,6 +626,7 @@ X_TIME = "8:15 a.m."
 
 # ---------------------------------------------------------------- the Weekly
 def build_weekly(D: Data, today: dt.date, no: int, demo=False) -> tuple[str, dict]:
+    mac = D.get("macro.json", {}) or {}
     meta, uni, earn, ideas, home, groups, br = (D.get("meta.json", {}), D.get("universe.json", []), D.get("earnings.json", {}), D.get("ideas.json", {}),
                                                D.get("home.json", {}), D.get("groups.json", {}), D.get("breadth.json", {}))
     date = today.isoformat()
@@ -668,6 +730,8 @@ def build_weekly(D: Data, today: dt.date, no: int, demo=False) -> tuple[str, dic
     nhl = [None if h is None or l is None else h - l for h, l in zip((bg.get("nh") or [])[k0:], (bg.get("nl") or [])[k0:])]
     nhl10 = [None if i < 9 or any(v is None for v in nhl[i-9:i+1]) else sum(nhl[i-9:i+1]) / 10 for i in range(len(nhl))]
     yr = end.year
+    nmon = end + dt.timedelta(days=7 - end.weekday())
+    nxt_cal = [e for e in mac.get("events", []) if nmon.isoformat() <= e.get("date", "") <= (nmon + dt.timedelta(days=4)).isoformat() and e.get("imp", 0) >= 2][:14]
     secs = [
         ("Indexes year to date", f"""<h2>Indexes year to date · performance %</h2>{ytd_chart(D, ["SPY", "QQQ", "IWM", "RSP", "DIA"], yr) or empty("No index data.")}
           <p class="lede">Cap weight (SPY), the Nasdaq-100 (QQQ), small caps (IWM), the equal-weight S&amp;P 500 (RSP) and the Dow (DIA), all from zero on January 1. When RSP and IWM keep up with SPY, the rally is broad.</p>""", 300),
@@ -676,7 +740,9 @@ def build_weekly(D: Data, today: dt.date, no: int, demo=False) -> tuple[str, dic
           <h3 class="h3s">New highs minus new lows · 10-day average</h3>{line_chart([("NH − NL", GREEN, nhl10)], w=340, h=120, labels=labs, fmt=lambda v: f"{v:+.0f}") or empty("No data.")}</div><div>
           <h3 class="h3s">Advance / decline line</h3>{line_chart([("A/D line", NAVY, ad)], w=340, h=140, labels=labs, fmt=lambda v: f"{v/1000:.2f}k" if abs(v) >= 1000 else f"{v:.0f}") or empty("No data.")}
           <h3 class="h3s">McClellan oscillator</h3>{line_chart([("McClellan", "#7b4bb3", mco)], w=340, h=120, labels=labs, fmt=lambda v: f"{v:+.0f}") or empty("No data.")}</div></div>
-          <div class="fut">{"".join(f'<div><span>{dt.date.fromisoformat(d).strftime("%a %b %-d")} · highs / lows</span><b>{h} / {l}</b></div>' for d, h, l in zip(dates[-5:], nh, nl))}</div>""", 420),
+          <div class="fut">{"".join(f'<div><span>{dt.date.fromisoformat(d).strftime("%a %b %-d")} · new 52-wk highs / lows</span><b>{h} / {l}</b></div>' for d, h, l in zip(dates[-5:], nh, nl))}</div>""", 420),
+        ("The Fed", f"""<h2>The Fed · odds implied by fed funds futures</h2>{fed_block(mac.get("fed"), set(mac.get("sep") or [])) or empty("No Fed data this week.")}""", 190),
+        ("Next week's calendar", f"""<h2>Next week's macro calendar · New York time</h2>{table(["Day and time", "", "Release", "Prior"], macro_rows(nxt_cal, True)) or empty("No major economic release next week.")}""", th(len(nxt_cal))),
         ("Commodities", f"""<h2>Commodities · futures</h2>{commodities_table(com, weekly=True) or empty("No futures data.")}""", 58 + 34 * len(com)),
         ("Breadth and leadership", f"""<div class="g2"><div><h2>Top industry groups</h2>{table(["#", "Group", "Week", "Leaders"], [f'<tr><td>{x.get("rank")}</td><td>{E(x.get("name",""))}</td><td class="{cls(x.get("chg1w"))}">{pct(x.get("chg1w"))}</td><td>{", ".join(E(l[0]) for l in (x.get("leaders") or [])[:3])}</td></tr>' for x in g_top])}
           </div><div><h2>Biggest climbers in the ranking</h2>{table(["Group", "Rank", "Up"], [f'<tr><td>{E(x.get("name",""))}</td><td>{x.get("rank")}</td><td class="up">+{x["move"]}</td></tr>' for x in climb]) or empty("No group climbed the ranking this week.")}</div></div>""",
@@ -723,6 +789,9 @@ html, body {{ margin: 0; background: #fff; color: {INK}; font: 10.5px/1.4 "Archi
 .ed {{ text-align: right; font: 700 10px "Courier Prime", monospace }}
 .ed b {{ display: block; font-size: 15px; color: {AMBER} }}
 h2 {{ font: 700 10px "Archivo Narrow", sans-serif; letter-spacing: .16em; text-transform: uppercase; color: {NAVY}; margin: 13px 0 6px; padding-bottom: 3px; border-bottom: 2px solid {NAVY} }}
+.fbar {{ display: flex; height: 22px; border: 1px solid {INK}; overflow: hidden }}
+.fbar span {{ display: flex; align-items: center; justify-content: center; color: #fff; font: 700 9.5px "Archivo Narrow"; white-space: nowrap }}
+.t tr.hi td {{ background: #fdf6e3 !important }} .t td.imp {{ color: #c98a00; letter-spacing: 1px; font-size: 9px }} .t b.ev {{ font: 700 10.5px "Archivo Narrow", sans-serif; color: {INK} }}
 .h3s {{ margin: 6px 0 3px; font: 700 9.5px "Archivo Narrow"; color: {INK2}; letter-spacing: .04em }}
 h2.up {{ color: {GREEN}; border-color: {GREEN} }} h2.dn {{ color: {DOWN}; border-color: {DOWN} }}
 .g2 {{ display: grid; grid-template-columns: 1fr 1fr; gap: 22px }}
