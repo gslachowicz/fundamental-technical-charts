@@ -13,7 +13,7 @@ const store = {
   set(k,v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
 };
 /* ---------- clean URLs: /chart/NVDA/, /breadth/, /compare/ … (old #NVDA links still work and get rewritten) ---------- */
-const SECTIONS = ["watchlist","screener","etfs","groups","heatmap","breadth","ideas","earnings","compare","wall","welcome"];
+const SECTIONS = ["watchlist","screener","etfs","groups","heatmap","breadth","ideas","research","earnings","compare","wall","welcome"];
 function keyToPath(k){
   k = String(k || "").replace(/^#/, "").trim(); const low = k.toLowerCase();
   if(!k || low === "home") return "/";
@@ -1261,7 +1261,7 @@ function route(){
   if(raw.toLowerCase() === "alerts"){ history.replaceState(null, "", location.pathname); raw = ""; setTimeout(()=>{ if(auth.token) loadAlerts().then(openAlertsList); else openAuth("in"); }, 300); }
   // a path the site doesn't know (old or mistyped link): page not found, for visitors and members alike
   if(!location.hash && raw === "" && !/^\/(index\.html)?$/.test(location.pathname)){
-    ["#vWelcome","#vHome","#vScreener","#vChart","#vHeat","#vIdeas","#vEarn","#vBreadth","#vGroups","#vWall","#vCmp"].forEach(id=>$(id).hidden = true);
+    ["#vWelcome","#vHome","#vScreener","#vChart","#vHeat","#vIdeas","#vResearch","#vEarn","#vBreadth","#vGroups","#vWall","#vCmp"].forEach(id=>$(id).hidden = true);
     $("#vNotFound").hidden = false; document.body.classList.add("on-welcome"); setTab(""); document.title = TX("Page not found · Ticker&Tape"); window.scrollTo(0,0); return; }
   if(location.hash) history.replaceState(null, "", keyToPath(raw));   // old #links → clean URL
   // signed-out visitors only get the welcome page, except for a chart link (shared on X, found on Google), which opens with a sign-up bar
@@ -1269,14 +1269,15 @@ function route(){
     if(!auth.token && l !== "welcome" && !chartish){ history.replaceState(null, "", "/welcome/"); raw = "welcome"; } }
   const low = raw.toLowerCase();
   const isList = raw === low && ROUTES[low];
-  track(low === "" || low === "home" ? "home" : isList ? low : ["groups","heatmap","breadth","ideas","earnings","wall","welcome"].includes(low) ? low : low === "compare" || low.startsWith("compare/") ? "compare" : "chart", raw.toUpperCase());
+  track(low === "" || low === "home" ? "home" : isList ? low : ["groups","heatmap","breadth","ideas","research","earnings","wall","welcome"].includes(low) ? low : low === "compare" || low.startsWith("compare/") ? "compare" : "chart", raw.toUpperCase());
   const isHome = raw === "" || raw === "home";
-  ["#vWelcome","#vHome","#vScreener","#vChart","#vHeat","#vIdeas","#vEarn","#vBreadth","#vGroups","#vWall","#vCmp","#vNotFound"].forEach(id=>$(id).hidden = true); $("#hmTip").hidden = true; $("#gateBar").hidden = true;
+  ["#vWelcome","#vHome","#vScreener","#vChart","#vHeat","#vIdeas","#vResearch","#vEarn","#vBreadth","#vGroups","#vWall","#vCmp","#vNotFound"].forEach(id=>$(id).hidden = true); $("#hmTip").hidden = true; $("#gateBar").hidden = true;
   $("#vNotFound").hidden = true; document.body.classList.toggle("on-welcome", raw === "welcome"); if(raw !== "welcome") $("#wSticky").classList.remove("on");
   document.body.classList.toggle("on-home", isHome);
   if(chartPath && raw){ setTab(""); $("#gateBar").hidden = !!auth.token; openChart(raw.toUpperCase()); return; }
   if(raw === "welcome"){ $("#vWelcome").hidden = false; setTab(""); document.title = "Ticker&Tape · The complete research platform for stock traders"; window.scrollTo(0,0); renderWelcome(); return; }
   if(low === "earnings"){ lastList = "earnings"; $("#vEarn").hidden = false; setTab("earn"); document.title = "Earnings calendar · Ticker&Tape"; window.scrollTo(0,0); renderEarn(); return; }
+  if(low === "research"){ lastList = "research"; $("#vResearch").hidden = false; setTab("research"); document.title = "Research · Ticker&Tape"; window.scrollTo(0,0); renderResearch(); return; }
   if(low === "ideas"){ lastList = "ideas"; $("#vIdeas").hidden = false; setTab("ideas"); document.title = "Trade ideas · Ticker&Tape"; window.scrollTo(0,0); renderIdeas(); return; }
   if(low === "groups"){ lastList = "groups"; $("#vGroups").hidden = false; setTab("groups"); document.title = "Industry groups · Ticker&Tape"; window.scrollTo(0,0); renderGroups(); return; }
   if(low === "wall"){ lastList = "wall"; $("#vWall").hidden = false; setTab(""); document.title = "Chart wall · Ticker&Tape"; window.scrollTo(0,0); renderWall(); return; }
@@ -1682,6 +1683,36 @@ function setShare(){
   if(b && b.status && b.type !== "Deep correction") bits.push(`${b.type}, ${b.status.toLowerCase()} (pivot ${fmtP(b.pivot)})`);
   a.href = xShareUrl(S.symbol, bits.join(" · ") + (bits.length ? " — " : "") + "daily chart on Ticker&Tape");
 }
+
+/* ================= RESEARCH REPORTS ================= */
+// index.json on the "research" branch, written by .github/workflows/research.yml; PDFs and covers are served by jsDelivr
+const RESEARCH_URL = (location.hostname === "localhost" || location.hostname === "127.0.0.1" || location.protocol === "file:") ? "/data/research.json"
+  : "https://raw.githubusercontent.com/gslachowicz/fundamental-technical-charts/research/index.json";
+let RS = null, rsLoading = null, rsFilter = store.get("tt:rsF") || "all";
+function loadResearch(){
+  if(!rsLoading) rsLoading = fetch(RESEARCH_URL + "?t=" + Math.floor(Date.now()/3e5), {cache:"no-store"}).then(r=>r.ok ? r.json() : {reports:[]}).catch(()=>({reports:[]})).then(d=>{ RS = d; });
+  return rsLoading;
+}
+const rsKind = k => k === "weekly" ? "The Weekly Tape" : "The Daily Tape";
+const rsDate = r => r.kind === "weekly" ? `${TX("Week ending")} ${fmtLong(iso(r.date))}` : fmtLong(iso(r.date));
+function renderResearch(){
+  if(!RS){ $("#rsGrid").innerHTML = `<div class="empty">${esc(TX("Loading…"))}</div>`; loadResearch().then(()=>{ if(!$("#vResearch").hidden) renderResearch(); }); return; }
+  $$("#rsFilter button").forEach(b=>b.classList.toggle("on", b.dataset.k === rsFilter));
+  const all = (RS.reports || []).filter(r=>r && r.pdf), L = all.filter(r=>rsFilter === "all" || r.kind === rsFilter);
+  $("#rsCount").textContent = L.length ? `${L.length} ${TX(L.length === 1 ? "report" : "reports")}` : "";
+  // next editions: weekdays before the open, Saturday for the weekly
+  const now = new Date(), d = now.getUTCDay();
+  $("#rsNext").innerHTML = `<div class="rsn"><span>${esc(TX("Next Daily"))}</span><b>${esc(TX(d === 5 || d === 6 ? "Monday" : "Tomorrow"))}, ${esc(TX("before the open"))}</b></div><div class="rsn"><span>${esc(TX("Next Weekly"))}</span><b>${esc(TX("Saturday morning"))}</b></div>`;
+  if(!L.length){ $("#rsFeat").innerHTML = ""; $("#rsGrid").innerHTML = `<div class="empty rsempty"><b>${esc(TX("The first reports are on their way."))}</b> ${esc(TX("The Daily Tape comes out every trading morning before the open and The Weekly Tape every Saturday. They will all be here."))}</div>`; return; }
+  const f = L[0];
+  $("#rsFeat").innerHTML = `<a class="rscover big" href="${esc(f.pdf)}" target="_blank" rel="noopener"><img src="${esc(f.cover)}" alt="${esc(f.title)}" loading="lazy"></a>
+    <div class="rsfx"><p class="kicker">${esc(TX("Latest"))} · ${esc(TX(rsKind(f.kind)))} · No. ${String(f.no||0).padStart(3,"0")}</p><h3>${esc(TX(rsKind(f.kind)))}</h3><p class="rsd">${esc(rsDate(f))}</p>
+      ${(f.summary||[]).length ? `<ul>${f.summary.map(t=>`<li>${esc(t)}</li>`).join("")}</ul>` : ""}
+      <div class="ctas"><a class="btn on" href="${esc(f.pdf)}" target="_blank" rel="noopener">${esc(TX("Read the report"))} (PDF)</a><a class="btn xshare" target="_blank" rel="noopener" href="https://x.com/intent/post?text=${encodeURIComponent(rsKind(f.kind) + " · " + rsDate(f) + " by @Tickerandtape")}&url=${encodeURIComponent(location.origin + "/research/")}">${esc(TX("Share on X"))}</a></div></div>`;
+  $("#rsGrid").innerHTML = L.slice(1).map(r=>`<a class="rscard" href="${esc(r.pdf)}" target="_blank" rel="noopener"><span class="rscover"><img src="${esc(r.cover)}" alt="" loading="lazy"></span>
+      <span class="rsk ${r.kind}">${esc(TX(r.kind === "weekly" ? "Weekly" : "Daily"))} · No. ${String(r.no||0).padStart(3,"0")}</span><b>${esc(rsDate(r))}</b>${r.summary && r.summary[0] ? `<small>${esc(r.summary[0])}</small>` : ""}</a>`).join("");
+}
+$$("#rsFilter button").forEach(b=>b.onclick = ()=>{ rsFilter = b.dataset.k; store.set("tt:rsF", rsFilter); renderResearch(); });
 
 /* ================= TRADE IDEAS ================= */
 /* ================= MARKET BREADTH ================= */
