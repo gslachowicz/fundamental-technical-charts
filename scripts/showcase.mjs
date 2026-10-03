@@ -1,8 +1,11 @@
 // Screenshots of the site's main tools for the rotating showcase on the welcome page.
 // Runs in the nightly build after the data is ready: node scripts/showcase.mjs <site dir> [base url]
-// Saves site/img/showcase/<name>.jpg (1440x900). A failed shot is skipped; the welcome page hides missing slides.
+// Saves site/img/showcase/<name>.jpg (1440x900) plus a lighter <name>.webp when sharp is installed (the page tries the WebP first).
+// A failed shot is skipped; the welcome page hides missing slides.
 import { chromium } from "playwright";
 import { mkdirSync } from "node:fs";
+let sharp = null;
+try { sharp = (await import("sharp")).default; } catch { console.log("showcase: sharp not installed, JPEG only"); }
 
 const SITE = process.argv[2] || "site";
 const BASE = process.argv[3] || "http://127.0.0.1:8000";
@@ -41,7 +44,8 @@ for (const s of SHOTS) {
     await page.waitForSelector(s.ready, { timeout: 20000 }).catch(() => {});
     await page.waitForTimeout(s.wait || 1200);
     const top = await page.evaluate(sel => { const t = document.querySelector(sel); return t ? Math.max(0, t.getBoundingClientRect().top + scrollY - 6) : 0; }, s.from || "#tabs");
-    await page.screenshot({ path: `${OUT}/${s.name}.jpg`, type: "jpeg", quality: 78, fullPage: true, clip: { x: 0, y: top, width: 1440, height: 900 } });
+    const buf = await page.screenshot({ path: `${OUT}/${s.name}.jpg`, type: "jpeg", quality: 78, fullPage: true, clip: { x: 0, y: top, width: 1440, height: 900 } });
+    if (sharp) await sharp(buf).webp({ quality: 74, effort: 5 }).toFile(`${OUT}/${s.name}.webp`).catch(e => console.log(`showcase: ${s.name} webp failed: ${e.message}`));
     ok++;
     console.log(`showcase: ${s.name} ok`);
   } catch (e) {

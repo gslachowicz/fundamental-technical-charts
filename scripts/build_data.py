@@ -1901,9 +1901,9 @@ SECTION_PAGES = {
     "ideas": ("Trade ideas: leaders near a buy point · Ticker&Tape", "Stocks with an RS Rating of 80 or more near a pivot, in the buy zone or just out of a base, found automatically every trading day.", False),
     "earnings": ("Earnings calendar · Ticker&Tape", "This week's and next week's earnings reports with RS Ratings, expected EPS and the stocks' chart setups.", False),
     "wall": ("Chart wall · Ticker&Tape", "", False),
-    "welcome": ("Ticker&Tape · O'Neil-style charts, RS ratings and bases", "", False),
+    "welcome": ("Ticker&Tape · The complete research platform for stock traders", "", False),
 }
-STATIC_PAGES = ["about/", "methodology/", "changelog/", "privacy.html", "terms.html"]
+STATIC_PAGES = ["about/", "methodology/", "glossary/", "changelog/", "privacy.html", "terms.html"]
 
 
 def build_pages(root: Path, all_rows: list[dict], day: str) -> None:
