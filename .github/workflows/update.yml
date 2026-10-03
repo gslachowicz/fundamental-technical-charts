@@ -49,6 +49,12 @@ jobs:
       - name: Build data from Yahoo Finance
         run: python scripts/build_data.py
 
+      # macro calendar (BLS, BEA, Census, Fed) and the Fed rate odds from fed funds futures; a failure never blocks the deploy
+      - name: Macro calendar and Fed odds
+        continue-on-error: true
+        timeout-minutes: 8
+        run: python scripts/macro.py --out site/data/macro.json --cache cache
+
       - uses: actions/cache/save@v4
         if: always()
         with:
