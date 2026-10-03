@@ -258,7 +258,7 @@ function settingsHTML(){
     <div class="setrow"><span>Bar weight</span>${seg("weight",[["thin","Thin"],["normal","Normal"],["bold","Bold"]])}</div>
     <div class="setrow"><span title="David Ryan's Ants: up at least 12 of the last 15 sessions with volume 20%+ above its 50-day average. Gold when the stock also gained 20%+ in those 15 days.">Ants</span>${seg("ants",[["on","Show"],["off","Hide"]])}</div>
     <div class="setrow"><span>Grid lines</span>${seg("grid",[["dotted","Dotted"],["dashed","Dashed"],["solid","Solid"],["none","None"]])}</div>
-    <div class="setrow col"><span>Moving averages <small class="hint">tap a swatch to change its color</small></span><div class="checks">${MAS.map(m=>`<label class="macheck"><input type="checkbox" data-ma="${m.k}" ${cfg.ma[m.k]?'checked':''}><input type="color" class="swatch" data-macol="${m.k}" value="${maCol(m)}" title="${m.d} color" aria-label="${m.d} color">${m.d}${m.wl?` <small>(${m.wl} on weekly)</small>`:` <small>(daily only)</small>`}</label>`).join("")}</div></div>
+    <div class="setrow"><span>Indicators</span><button class="btn" id="setInd">${esc(TX("Moving averages and studies…"))}</button></div>
     <div class="setrow col"><span>Colors</span><div class="colgrid">
       <label><input type="color" class="swatch" data-col="up" value="${cfg.colors.up}">Up bars</label>
       <label><input type="color" class="swatch" data-col="down" value="${cfg.colors.down}">Down bars</label>
@@ -272,8 +272,8 @@ function applyCfg(){ store.set("ink:cfg", cfg); push("cfg", cfg); $("#settings")
 function bindSettings(){
   $$("#settings [data-cfg]").forEach(b=>b.onclick=()=>{ cfg[b.dataset.cfg]=b.dataset.v; applyCfg(); });
   $$("#settings [data-lang]").forEach(b=>b.onclick=()=>{ const l = b.dataset.lang; if(l === I18N.lang) return; cfg.lang = l; store.set("ink:cfg", cfg); push("cfg", cfg); setTimeout(()=>I18N.setLang && I18N.setLang(l), 250); });
-  $$("#settings [data-ma]").forEach(c=>c.onchange=()=>{ cfg.ma[c.dataset.ma]=c.checked; applyCfg(); });
-  $("#setReset").onclick=()=>{ const keep = {screens: cfg.screens, cols: cfg.cols, lang: cfg.lang, cmp: cfg.cmp}; cfg = normCfg({...JSON.parse(JSON.stringify(DEF_CFG)), ...keep}); applyCfg(); };
+  $("#setInd").onclick=()=>{ toggleSettings(false); openInd(); };
+  $("#setReset").onclick=()=>{ const keep = {screens: cfg.screens, cols: cfg.cols, lang: cfg.lang, cmp: cfg.cmp}; cfg = normCfg({...JSON.parse(JSON.stringify(DEF_CFG)), ...keep, tpl: cfg.tpl}); cfg.ind = normInd(JSON.parse(JSON.stringify(IND_DEF))); cfg.tpl = normTpl(cfg.tpl); cfg.draw = normDraw(cfg.draw); syncBox(); applyCfg(); };
   // colors: live preview while dragging, save when the picker closes
   const setCol = (el, v) => { if(el.dataset.col) cfg.colors[el.dataset.col] = v; else cfg.colors.ma[el.dataset.macol] = v; };
   $$("#settings input[type=color]").forEach(el=>{
@@ -289,9 +289,163 @@ $("#gear").onclick = e => { e.stopPropagation(); toggleSettings(); };
 document.addEventListener("click", e=>{ const p=$("#settings"), path=e.composedPath(); if(!p.hidden && !path.includes(p) && !path.includes($("#gear"))) toggleSettings(false); });
 document.addEventListener("keydown", e=>{ if(e.key==="Escape" && !$("#settings").hidden) toggleSettings(false); });
 
+/* ================= CHART INDICATORS ================= */
+// cfg.ind: the user's own studies on the stock chart (follows the account). Templates live in cfg.tpl.
+const IND_PAL = ["#d23a2a","#15171c","#5fa35a","#e07b1f","#7b4bb3","#1d3fc4","#0f7c86","#a0306a"];
+const PANES = {rsi:"RSI", macd:"MACD", adr:"ADR %", atr:"ATR", rvol:"Relative volume"};
+const IND_MAX_MA = 8, IND_MAX_PANES = 3;
+const RS_BENCH = {spx:"S&P 500", qqq:"Nasdaq-100", sector:"Sector ETF"};
+const SECTOR_ETF = {"Information Technology":"XLK","Technology":"XLK","Financials":"XLF","Financial Services":"XLF","Health Care":"XLV","Healthcare":"XLV",
+  "Energy":"XLE","Consumer Discretionary":"XLY","Consumer Cyclical":"XLY","Consumer Staples":"XLP","Consumer Defensive":"XLP","Industrials":"XLI",
+  "Materials":"XLB","Basic Materials":"XLB","Utilities":"XLU","Real Estate":"XLRE","Communication Services":"XLC"};
+const IND_DEF = {mas:[{t:"sma",n:50,c:"#d23a2a",w:2},{t:"sma",n:200,c:"#15171c",w:1}],
+  bb:{on:false,n:20,k:2,c:"#7b4bb3"}, kc:{on:false,n:20,k:1.5,c:"#0f7c86"}, vwap:{on:false,a:"earn",c:"#a86a00"},
+  vol:true, box:true, strip:true, panes:[], rsi:{n:14}, macd:{f:12,s:26,g:9}, adr:{n:20}, atr:{n:14}, rvol:{n:50}, rs:"spx"};
+const clampN = (v, lo, hi, d) => { v = Math.round(+v); return v >= lo && v <= hi ? v : d; };
+function normInd(o){
+  const legacy = !o || typeof o !== "object";
+  o = legacy ? {} : o;
+  // first time: carry over the moving averages switched on in the old Settings panel
+  const mas = Array.isArray(o.mas) ? o.mas : legacy ? MAS.filter(m=>cfg.ma[m.k]).map(m=>({t:m.ema?"ema":"sma", n:m.n, c:maCol(m), w:m.k==="d50"?2:1})) : IND_DEF.mas;
+  const sub = (k, f) => { const d = IND_DEF[k], v = o[k] && typeof o[k] === "object" ? o[k] : {}; return f(v, d); };
+  return {
+    mas: mas.filter(m=>m && (m.t==="sma"||m.t==="ema")).slice(0, IND_MAX_MA).map((m,i)=>({t:m.t, n:clampN(m.n,2,400,50), c:HEX.test(m.c||"")?m.c:IND_PAL[i%IND_PAL.length], w:[1,2,3].includes(m.w)?m.w:1})),
+    bb: sub("bb", (v,d)=>({on:!!v.on, n:clampN(v.n,5,100,d.n), k:[1,1.5,2,2.5,3].includes(+v.k)?+v.k:d.k, c:HEX.test(v.c||"")?v.c:d.c})),
+    kc: sub("kc", (v,d)=>({on:!!v.on, n:clampN(v.n,5,100,d.n), k:[1,1.5,2,2.5,3].includes(+v.k)?+v.k:d.k, c:HEX.test(v.c||"")?v.c:d.c})),
+    vwap: sub("vwap", (v,d)=>({on:!!v.on, a:["earn","base","hi","lo"].includes(v.a)?v.a:d.a, c:HEX.test(v.c||"")?v.c:d.c})),
+    vol: o.vol !== false, box: o.box !== false, strip: o.strip !== false,
+    panes: (Array.isArray(o.panes) ? o.panes : []).filter((p,i,a)=>PANES[p] && a.indexOf(p)===i).slice(0, IND_MAX_PANES),
+    rsi: {n: clampN((o.rsi||{}).n, 2, 50, 14)}, macd: {f: clampN((o.macd||{}).f, 2, 50, 12), s: clampN((o.macd||{}).s, 3, 100, 26), g: clampN((o.macd||{}).g, 2, 50, 9)},
+    adr: {n: clampN((o.adr||{}).n, 2, 100, 20)}, atr: {n: clampN((o.atr||{}).n, 2, 100, 14)}, rvol: {n: clampN((o.rvol||{}).n, 5, 200, 50)},
+    rs: RS_BENCH[o.rs] ? o.rs : "spx"};
+}
+function normTpl(t){ return (Array.isArray(t) ? t : []).filter(x=>x && typeof x.name === "string" && x.name.trim()).slice(0, 12).map(x=>({name: x.name.trim().slice(0, 30), ind: normInd(x.ind)})); }
+cfg.ind = normInd(cfg.ind); cfg.tpl = normTpl(cfg.tpl);
+const maName = (m, weekly) => weekly ? `${Math.round(m.n/5)}-week ${m.t==="ema"?"EMA":"MA"}` : `${m.n}-day ${m.t==="ema"?"EMA":"MA"}`;
+const maOnWeekly = m => m.n >= 25;
+const LW_MA = {1:1.2, 2:1.6, 3:2.3};
+function saveInd(){ store.set("ink:cfg", cfg); push("cfg", cfg); }
+// the data box follows the user's style (cfg.ind.box); the Data box button switches it and saves it
+function syncBox(){ view.box = cfg.ind.box; const b = $("#tBox"); if(b){ b.classList.toggle("on", view.box); b.setAttribute("aria-pressed", view.box); } if(S && !$("#vChart").hidden) renderDbox(); }
+
+// benchmark for the RS line and the index line on top: the S&P 500 (bench.json) or another ETF's prices
+const benchX = new Map();
+function rsBenchSym(){ const k = cfg.ind.rs; if(k === "qqq") return "QQQ"; if(k === "sector" && S){ const F = S.fund || {}; return SECTOR_ETF[F.sector] || SECTOR_ETF[F.group] || null; } return null; }
+function rsBenchName(){ const s = rsBenchSym(); return s && benchX.has(s) ? (cfg.ind.rs === "qqq" ? "Nasdaq-100" : s) : "S&P 500"; }
+function loadBenchX(){ const s = rsBenchSym(); if(!s || benchX.has(s)) return Promise.resolve();
+  return getBundle(s).then(b=>{ if(b && b.prices) benchX.set(s, b.prices.map(([d,o,h,l,c])=>({t:iso(d), c}))); }); }
+
+// study math on bars {t,o,h,l,c,v}
+function stdev(arr, n, f, mid){ const out = new Array(arr.length).fill(null);
+  for(let i=n-1;i<arr.length;i++){ const m = mid[i]; if(m==null) continue; let s=0; for(let j=i-n+1;j<=i;j++){ const d=f(arr[j])-m; s+=d*d; } out[i]=Math.sqrt(s/n); } return out; }
+function trueRange(b){ return b.map((x,i)=> i ? Math.max(x.h, b[i-1].c) - Math.min(x.l, b[i-1].c) : x.h - x.l); }
+function wilder(vals, n){ const out = new Array(vals.length).fill(null); let a = null, s = 0;
+  for(let i=0;i<vals.length;i++){ if(i < n){ s += vals[i]; if(i === n-1){ a = s/n; out[i] = a; } continue; } a = (a*(n-1) + vals[i])/n; out[i] = a; } return out; }
+function rsiOf(b, n){ const up = [], dn = []; for(let i=0;i<b.length;i++){ const d = i ? b[i].c - b[i-1].c : 0; up.push(Math.max(d,0)); dn.push(Math.max(-d,0)); }
+  const au = wilder(up.slice(1), n), ad = wilder(dn.slice(1), n); return [null, ...au.map((u,i)=> u==null ? null : ad[i] === 0 ? 100 : 100 - 100/(1 + u/ad[i]))]; }
+function macdOf(b, f, s, g){ const ef = ema(b, f, x=>x.c), es = ema(b, s, x=>x.c); const m = ef.map((v,i)=> v!=null && es[i]!=null ? v - es[i] : null);
+  const first = m.findIndex(v=>v!=null); const sig = new Array(b.length).fill(null);
+  if(first >= 0){ const e = ema(m.slice(first).map(v=>({c:v})), g, x=>x.c); e.forEach((v,i)=>{ sig[first+i] = v; }); }
+  return {m, sig, h: m.map((v,i)=> v!=null && sig[i]!=null ? v - sig[i] : null)}; }
+function avwapOf(b, i0){ const out = new Array(b.length).fill(null); if(i0 == null || i0 < 0) return out; let pv=0, vv=0;
+  for(let i=i0;i<b.length;i++){ const tp=(b[i].h+b[i].l+b[i].c)/3; pv+=tp*b[i].v; vv+=b[i].v; out[i] = vv ? pv/vv : tp; } return out; }
+function vwapAnchor(base){
+  const I = cfg.ind, firstAt = t => { const i = base.findIndex(x=>x.t >= t); return i < 0 ? null : i; };
+  if(I.vwap.a === "earn"){ const q = ((S.fund||{}).quarters||[]).find(q=>q.date && iso(q.date) <= base[base.length-1].t); return q ? firstAt(iso(q.date)) : null; }
+  if(I.vwap.a === "base") return S.base && S.base.start ? firstAt(iso(S.base.start)) : null;
+  const k = Math.max(0, base.length - (view.weekly ? 52 : 252)); let j = k;
+  for(let i=k;i<base.length;i++) if(I.vwap.a === "hi" ? base[i].h > base[j].h : base[i].l < base[j].l) j = i;
+  return j;
+}
+const VWAP_A = {earn:"last earnings", base:"start of the base", hi:"52-week high", lo:"52-week low"};
+function studies(base){
+  const I = cfg.ind, out = {over:[], panes:[]}, closeF = x=>x.c;
+  if(I.bb.on){ const m = sma(base, I.bb.n, closeF), sd = stdev(base, I.bb.n, closeF, m);
+    out.over.push({kind:"band", c:I.bb.c, mid:m, up:m.map((v,i)=>v==null||sd[i]==null?null:v+I.bb.k*sd[i]), lo:m.map((v,i)=>v==null||sd[i]==null?null:v-I.bb.k*sd[i]), name:`Bollinger (${I.bb.n}, ${I.bb.k})`}); }
+  if(I.kc.on){ const m = ema(base, I.kc.n, closeF), at = wilder(trueRange(base), I.kc.n);
+    out.over.push({kind:"band", c:I.kc.c, mid:m, up:m.map((v,i)=>v==null||at[i]==null?null:v+I.kc.k*at[i]), lo:m.map((v,i)=>v==null||at[i]==null?null:v-I.kc.k*at[i]), name:`Keltner (${I.kc.n}, ${I.kc.k})`}); }
+  if(I.vwap.on){ out.over.push({kind:"line", c:I.vwap.c, data:avwapOf(base, vwapAnchor(base)), name:`VWAP from ${VWAP_A[I.vwap.a]}`}); }
+  for(const p of I.panes){
+    if(p === "rsi") out.panes.push({k:p, name:`RSI (${I.rsi.n})`, lines:[{d:rsiOf(base, I.rsi.n), c:C.navy}], fix:[0,100], guides:[30,70], fmt:v=>v.toFixed(0)});
+    if(p === "macd"){ const r = macdOf(base, I.macd.f, I.macd.s, I.macd.g); out.panes.push({k:p, name:`MACD (${I.macd.f}, ${I.macd.s}, ${I.macd.g})`, hist:r.h, lines:[{d:r.m, c:C.navy},{d:r.sig, c:"#e07b1f"}], guides:[0], fmt:v=>v.toFixed(2)}); }
+    if(p === "adr"){ const d = sma(base, I.adr.n, x=>(x.h/x.l - 1)*100); out.panes.push({k:p, name:`ADR % (${I.adr.n})`, lines:[{d, c:"#0f7c86"}], fmt:v=>v.toFixed(2)+"%"}); }
+    if(p === "atr"){ const d = wilder(trueRange(base), I.atr.n); out.panes.push({k:p, name:`ATR (${I.atr.n})`, lines:[{d, c:"#7b4bb3"}], fmt:v=>fmtP(v)}); }
+    if(p === "rvol"){ const avg = sma(base, I.rvol.n, x=>x.v); out.panes.push({k:p, name:`Relative volume (${I.rvol.n})`, bars:base.map((x,i)=>avg[i] ? x.v/avg[i] : null), guides:[1], fmt:v=>v.toFixed(2)+"×"}); }
+  }
+  return out;
+}
+
+// the Indicators dialog
+function openInd(){
+  const I = JSON.parse(JSON.stringify(cfg.ind));
+  const apply = () => { cfg.ind = normInd(I); saveInd(); syncBox(); loadBenchX().then(()=>{ if(S && !$("#vChart").hidden){ renderPanels(); draw(); } }); };
+  const num = (k, f, v, lo, hi, lbl) => `<label class="inum"><span>${esc(TX(lbl))}</span><input type="number" min="${lo}" max="${hi}" step="${f==="k"?0.5:1}" data-ik="${k}" data-if="${f}" value="${v}"></label>`;
+  const body = () => `
+    <div class="indtpl"><label><span>${esc(TX("Template"))}</span><select id="iTpl"><option value="">${esc(TX("Choose a template…"))}</option><option value="__def">${esc(TX("Default (O'Neil)"))}</option>
+      ${cfg.tpl.map((t,i)=>`<option value="${i}">${esc(t.name)}</option>`).join("")}</select></label>
+      <button class="btn sm" id="iSave">${esc(TX("Save as template"))}</button>${cfg.tpl.length ? `<button class="btn sm" id="iDelTpl">${esc(TX("Delete a template"))}</button>` : ""}</div>
+    <h5 class="indh">${esc(TX("Moving averages"))}</h5>
+    <div class="indmas">${I.mas.map((m,i)=>`<div class="indma"><input type="color" class="swatch" data-mc="${i}" value="${m.c}" aria-label="${esc(TX("Color"))}">
+      <select data-mt="${i}" aria-label="${esc(TX("Type"))}"><option value="sma" ${m.t==="sma"?"selected":""}>SMA</option><option value="ema" ${m.t==="ema"?"selected":""}>EMA</option></select>
+      <input type="number" min="2" max="400" data-mn="${i}" value="${m.n}" aria-label="${esc(TX("Length (days)"))}"><span class="fine">${esc(TX("days"))}</span>
+      <div class="seg wseg" role="group" aria-label="${esc(TX("Line width"))}">${[1,2,3].map(w=>`<button data-mw="${i}" data-v="${w}" class="${m.w===w?"on":""}" title="${esc(TX("Line width"))} ${w}"><i style="height:${w}px"></i></button>`).join("")}</div>
+      <button class="cx" data-mdel="${i}" aria-label="${esc(TX("Remove"))}">×</button></div>`).join("")}
+      ${I.mas.length < IND_MAX_MA ? `<button class="btn sm" id="iMaAdd">＋ ${esc(TX("Add moving average"))}</button>` : ""}</div>
+    <p class="fine">${esc(TX("On the weekly chart each average becomes its weekly equivalent (50 days = 10 weeks); averages shorter than 25 days show on the daily chart only."))}</p>
+    <h5 class="indh">${esc(TX("On the price"))}</h5>
+    <div class="indrow"><label class="chk"><input type="checkbox" data-on="bb" ${I.bb.on?"checked":""}> ${esc(TX("Bollinger Bands"))}</label>${num("bb","n",I.bb.n,5,100,"Length")}${num("bb","k",I.bb.k,1,3,"Std. dev.")}<input type="color" class="swatch" data-oc="bb" value="${I.bb.c}" aria-label="${esc(TX("Color"))}"></div>
+    <div class="indrow"><label class="chk"><input type="checkbox" data-on="kc" ${I.kc.on?"checked":""}> ${esc(TX("Keltner Channels"))}</label>${num("kc","n",I.kc.n,5,100,"Length")}${num("kc","k",I.kc.k,1,3,"ATR ×")}<input type="color" class="swatch" data-oc="kc" value="${I.kc.c}" aria-label="${esc(TX("Color"))}"></div>
+    <div class="indrow"><label class="chk"><input type="checkbox" data-on="vwap" ${I.vwap.on?"checked":""}> ${esc(TX("Anchored VWAP"))}</label>
+      <label class="inum"><span>${esc(TX("From"))}</span><select data-va>${Object.entries(VWAP_A).map(([k,l])=>`<option value="${k}" ${I.vwap.a===k?"selected":""}>${esc(TX(l))}</option>`).join("")}</select></label><input type="color" class="swatch" data-oc="vwap" value="${I.vwap.c}" aria-label="${esc(TX("Color"))}"></div>
+    <h5 class="indh">${esc(TX("Below the price"))} <small>${esc(TX("up to 3 panels"))}</small></h5>
+    <div class="indrow"><label class="chk"><input type="checkbox" id="iVol" ${I.vol?"checked":""}> ${esc(TX("Volume"))}</label></div>
+    ${Object.entries(PANES).map(([k,l])=>`<div class="indrow"><label class="chk"><input type="checkbox" data-pane="${k}" ${I.panes.includes(k)?"checked":""} ${!I.panes.includes(k)&&I.panes.length>=IND_MAX_PANES?"disabled":""}> ${esc(TX(l))}</label>
+      ${k==="macd" ? num("macd","f",I.macd.f,2,50,"Fast")+num("macd","s",I.macd.s,3,100,"Slow")+num("macd","g",I.macd.g,2,50,"Signal") : num(k,"n",I[k].n,2,200,"Length")}</div>`).join("")}
+    <h5 class="indh">${esc(TX("Fundamentals on the chart"))}</h5>
+    <div class="indrow"><label class="chk"><input type="checkbox" id="iBox" ${I.box?"checked":""}> ${esc(TX("Data box (annual EPS and sales, ratings)"))}</label></div>
+    <div class="indrow"><label class="chk"><input type="checkbox" id="iStrip" ${I.strip?"checked":""}> ${esc(TX("Quarterly table under the volume (EPS, sales, margin)"))}</label></div>
+    <h5 class="indh">${esc(TX("RS line"))}</h5>
+    <div class="seg" role="group" aria-label="${esc(TX("RS line compared with"))}">${Object.entries(RS_BENCH).map(([k,l])=>`<button data-rs="${k}" class="${I.rs===k?"on":""}">${esc(TX(l))}</button>`).join("")}</div>
+    <p class="fine">${esc(TX("Sector ETF compares the stock with the SPDR fund of its sector, to see if it leads its own group."))}</p>
+    <div class="indft"><button class="btn" id="iReset">${esc(TX("Back to the default"))}</button><button class="btn on" id="iDone">${esc(TX("Done"))}</button></div>`;
+  const bind = B => {
+    B.innerHTML = body();
+    const re = () => { apply(); bind(B); };
+    B.querySelector("#iMaAdd")?.addEventListener("click", ()=>{ const used = I.mas.map(m=>m.n), n = [10,21,50,150,200,100,20,65].find(x=>!used.includes(x)) || 100;
+      I.mas.push({t: n===21 ? "ema" : "sma", n, c: IND_PAL.find(c=>!I.mas.some(m=>m.c===c)) || IND_PAL[0], w:1}); re(); });
+    B.querySelectorAll("[data-mdel]").forEach(b=>b.onclick = ()=>{ I.mas.splice(+b.dataset.mdel, 1); re(); });
+    B.querySelectorAll("[data-mw]").forEach(b=>b.onclick = ()=>{ I.mas[+b.dataset.mw].w = +b.dataset.v; re(); });
+    B.querySelectorAll("[data-mt]").forEach(s=>s.onchange = ()=>{ I.mas[+s.dataset.mt].t = s.value; re(); });
+    B.querySelectorAll("[data-mn]").forEach(s=>s.onchange = ()=>{ const v = clampN(s.value, 2, 400, null); if(v == null){ toast(TX("Use a length between 2 and 400 days.")); s.value = I.mas[+s.dataset.mn].n; return; } I.mas[+s.dataset.mn].n = v; re(); });
+    B.querySelectorAll("input[type=color]").forEach(el=>{ const set = () => { if(el.dataset.mc != null) I.mas[+el.dataset.mc].c = el.value; else I[el.dataset.oc].c = el.value; };
+      el.addEventListener("input", ()=>{ set(); cfg.ind = normInd(I); draw(); }); el.addEventListener("change", ()=>{ set(); apply(); }); });
+    B.querySelectorAll("[data-on]").forEach(c=>c.onchange = ()=>{ I[c.dataset.on].on = c.checked; re(); });
+    B.querySelectorAll("[data-ik]").forEach(s=>s.onchange = ()=>{ I[s.dataset.ik][s.dataset.if] = +s.value; cfg.ind = normInd(I); Object.assign(I, JSON.parse(JSON.stringify(cfg.ind))); re(); });
+    B.querySelector("[data-va]").onchange = e => { I.vwap.a = e.target.value; I.vwap.on = true; re(); };
+    B.querySelector("#iVol").onchange = e => { I.vol = e.target.checked; re(); };
+    B.querySelector("#iBox").onchange = e => { I.box = e.target.checked; re(); };
+    B.querySelector("#iStrip").onchange = e => { I.strip = e.target.checked; re(); };
+    B.querySelectorAll("[data-pane]").forEach(c=>c.onchange = ()=>{ const k = c.dataset.pane; I.panes = c.checked ? [...I.panes, k] : I.panes.filter(p=>p!==k); re(); });
+    B.querySelectorAll("[data-rs]").forEach(b=>b.onclick = ()=>{ I.rs = b.dataset.rs; re(); });
+    B.querySelector("#iTpl").onchange = e => { const v = e.target.value; if(!v) return;
+      const src = v === "__def" ? normInd(JSON.parse(JSON.stringify(IND_DEF))) : cfg.tpl[+v].ind; Object.keys(I).forEach(k=>delete I[k]); Object.assign(I, JSON.parse(JSON.stringify(src))); re();
+      toast(`${TX("Template loaded")}: ${v === "__def" ? TX("Default (O'Neil)") : cfg.tpl[+v].name}`); };
+    B.querySelector("#iSave").onclick = () => { const name = (prompt(TX("Name this template (for example Swing or Long term):")) || "").trim(); if(!name) return;
+      const i = cfg.tpl.findIndex(t=>t.name.toLowerCase() === name.toLowerCase()); const t = {name: name.slice(0,30), ind: normInd(I)};
+      if(i >= 0) cfg.tpl[i] = t; else { if(cfg.tpl.length >= 12){ toast(TX("Up to 12 templates. Delete one first.")); return; } cfg.tpl.push(t); }
+      saveInd(); bind(B); toast(`${TX("Template saved")}: ${t.name}`); };
+    B.querySelector("#iDelTpl")?.addEventListener("click", ()=>{ const name = (prompt(`${TX("Type the name of the template to delete")}: ${cfg.tpl.map(t=>t.name).join(", ")}`) || "").trim().toLowerCase(); if(!name) return;
+      const i = cfg.tpl.findIndex(t=>t.name.toLowerCase() === name); if(i < 0){ toast(TX("No template with that name.")); return; } cfg.tpl.splice(i, 1); saveInd(); bind(B); });
+    B.querySelector("#iReset").onclick = () => { Object.keys(I).forEach(k=>delete I[k]); Object.assign(I, normInd(JSON.parse(JSON.stringify(IND_DEF)))); re(); };
+    B.querySelector("#iDone").onclick = closeDlg;
+  };
+  dlg(TX("Indicators"), "", bind);
+  $("#dlg").classList.add("wide");
+}
+
 /* ================= CHART ================= */
 let S = null;               // current ticker bundle
-let view = { weekly:false, months:18, box:true, piv:true, base:true, idx:true, rsl:true };
+let view = { weekly:false, months:18, box:cfg.ind.box, piv:true, base:true, idx:true, rsl:true };
 let tool = null, geo = null, hover = -1, drag = null, pendingNote = null;
 const cv = $("#cv"), ctx = cv.getContext("2d");
 const marksKey = sym => "ink:marks:"+sym;
@@ -307,9 +461,9 @@ function sma(arr, n, f){ const out=new Array(arr.length).fill(null); let s=0;
   for(let i=0;i<arr.length;i++){ s+=f(arr[i]); if(i>=n) s-=f(arr[i-n]); if(i>=n-1) out[i]=s/n; } return out; }
 function ema(arr, n, f){ const out=new Array(arr.length).fill(null); const k=2/(n+1); let e=null;
   for(let i=0;i<arr.length;i++){ const v=f(arr[i]); e = e==null ? v : v*k + e*(1-k); if(i>=n-1) out[i]=e; } return out; }
-function alignBench(px){
-  if(!BENCH) return null; const out=[]; let j=0, last=null;
-  for(const b of px){ while(j<BENCH.length && BENCH[j].t<=b.t){ last=BENCH[j].c; j++; } out.push(last); }
+function alignBench(px, src){
+  src = src || BENCH; if(!src) return null; const out=[]; let j=0, last=null;
+  for(const b of px){ while(j<src.length && src[j].t<=b.t){ last=src[j].c; j++; } out.push(last); }
   return out;
 }
 function zigzag(base, th){
@@ -342,19 +496,20 @@ function logTicks(lo, hi, pxH){
 }
 function series(){
   const base = view.weekly ? toWeekly(S.px) : S.px;
-  const mas = MAS.filter(m=>cfg.ma[m.k] && (!view.weekly || m.w)).map(m=>{ const n = view.weekly ? m.w : m.n;
-    return {...m, color: maCol(m), data: m.ema ? ema(base, n, b=>b.c) : sma(base, n, b=>b.c)}; });
+  const mas = cfg.ind.mas.filter(m=>!view.weekly || maOnWeekly(m)).map(m=>{ const n = view.weekly ? Math.round(m.n/5) : m.n;
+    return {...m, color: m.c, lw: LW_MA[m.w] || 1.2, name: maName(m, view.weekly), data: m.t==="ema" ? ema(base, n, b=>b.c) : sma(base, n, b=>b.c)}; });
   const vma = sma(base, view.weekly?10:50, b=>b.v);
-  const bA = alignBench(base);
+  const bx = rsBenchSym(), bA = alignBench(base, bx ? benchX.get(bx) : null);
   const rs = bA ? base.map((b,i)=> bA[i] ? b.c/bA[i] : null) : null;
   const nVis = Math.min(base.length, Math.round(view.months*(view.weekly?4.33:21)));
-  return {base, mas, vma, bA, rs, s0: base.length - nVis};
+  return {base, mas, vma, bA, rs, st: studies(base), s0: base.length - nVis};
 }
 
 function draw(){
   const dpr = window.devicePixelRatio||1; const W = cv.clientWidth;
   if(!W) return;
-  const wantH = W < 640 ? 540 : Math.round(Math.max(520, Math.min(760, W*0.47)));
+  const nPanes = cfg.ind.panes.length, paneH = W < 640 ? 74 : 92;
+  const wantH = (W < 640 ? 540 : Math.round(Math.max(520, Math.min(760, W*0.47)))) + nPanes*(paneH+4) - (cfg.ind.vol ? 0 : 40);
   if(Math.abs(cv.clientHeight - wantH) > 1) cv.style.height = wantH + "px";
   const H = wantH;
   if(cv.width!==Math.round(W*dpr) || cv.height!==Math.round(H*dpr)){ cv.width=Math.round(W*dpr); cv.height=Math.round(H*dpr); }
@@ -362,18 +517,20 @@ function draw(){
   ctx.fillStyle = C.plate; ctx.fillRect(0,0,W,H);
   if(!S || !S.px.length) return;
   const F = S.fund || {};
-  const sr = series(); const {base,mas,vma,s0} = sr; const bA = view.idx ? sr.bA : null; const rs = view.rsl ? sr.rs : null;
+  const sr = series(); const {base,mas,vma,s0,st} = sr; const bA = view.idx ? sr.bA : null; const rs = view.rsl ? sr.rs : null;
   const vis = base.slice(s0); const n = vis.length;
   const narrow = W < 600;
   const L=6, R= narrow?50:66, T=20, B=18;
   const plotW = W-L-R;
   const Q = (F.quarters||[]).map(q=>({...q, end:qEnd(q.q)})).filter(q=>q.end);
   const hasMargin = Q.some(q=>q.margin);
-  const rowH = narrow?11:13, stripRows = Q.length ? (narrow? 3 : (hasMargin?4:3)) : 0;
+  const rowH = narrow?11:13, stripRows = Q.length && cfg.ind.strip ? (narrow? 3 : (hasMargin?4:3)) : 0;
   const stripH = stripRows*rowH + (stripRows?4:0);
-  const totalH = H-T-B-stripH-(stripH?4:0);
-  const priceH = Math.round(totalH*0.72), volH = totalH-priceH-4;
-  const pTop=T, pBot=T+priceH, vTop=pBot+4, vBot=vTop+volH, sTop=vBot+4, sBot=sTop+stripH;
+  const panesH = nPanes*(paneH+4);
+  const totalH = H-T-B-stripH-(stripH?4:0)-panesH;
+  const showVol = cfg.ind.vol;
+  const priceH = showVol ? Math.round(totalH*0.72) : totalH, volH = showVol ? totalH-priceH-4 : 0;
+  const pTop=T, pBot=T+priceH, vTop=showVol ? pBot+4 : pBot, vBot=vTop+volH, paneTop=vBot+4, aBot=vBot+panesH, sTop=aBot+4, sBot=sTop+stripH;
   const hasIdx = !!bA;
   const prTop = pTop + (hasIdx ? priceH*0.13 : 12), prBot = rs ? pTop + priceH*0.86 : pBot - 24;
   const rsTop = pTop + priceH*0.78, rsBot = pBot - 24;
@@ -400,7 +557,7 @@ function draw(){
   const skipM = (narrow && view.months>12) || view.months>24 ? 2 : 1;
   ctx.textBaseline="alphabetic"; ctx.textAlign="center"; let lastLabelX=-99;
   monthStarts.forEach(ms=>{ const x = Math.round(L + ms.i*bw)+.5; const isJan=ms.d.getUTCMonth()===0;
-    if(ms.i>0 && gridOn){ ctx.beginPath(); ctx.moveTo(x,pTop); ctx.lineTo(x,vBot); ctx.stroke(); }
+    if(ms.i>0 && gridOn){ ctx.beginPath(); ctx.moveTo(x,pTop); ctx.lineTo(x,aBot); ctx.stroke(); }
     if((ms.d.getUTCMonth()%skipM===0 || isJan) && x-lastLabelX>(narrow?28:34)){
       ctx.fillStyle = isJan? C.ink : C.ink2; ctx.font = `${isJan?700:600} ${narrow?10:11}px ${FONT_L}`;
       ctx.fillText(isJan? String(ms.d.getUTCFullYear()) : MON[ms.d.getUTCMonth()], Math.min(x+14, L+plotW-12), H-5); lastLabelX=x; } });
@@ -412,7 +569,7 @@ function draw(){
     ctx.strokeStyle=C.grid; if(gridOn){ ctx.beginPath(); ctx.moveTo(L,Math.round(y)+.5); ctx.lineTo(L+plotW,Math.round(y)+.5); ctx.stroke(); }
     ctx.fillStyle=C.ink2; ctx.fillText(fmtP(t), L+plotW+5, y); }
   ctx.setLineDash([]);
-  ctx.strokeStyle=C.ink; ctx.lineWidth=1; ctx.strokeRect(L+.5,pTop+.5,plotW,priceH); ctx.strokeRect(L+.5,vTop+.5,plotW,volH);
+  ctx.strokeStyle=C.ink; ctx.lineWidth=1; ctx.strokeRect(L+.5,pTop+.5,plotW,priceH); if(showVol) ctx.strokeRect(L+.5,vTop+.5,plotW,volH);
 
   ctx.save(); ctx.beginPath(); ctx.rect(L,pTop,plotW,priceH); ctx.clip();
 
@@ -422,7 +579,7 @@ function draw(){
       ctx.strokeStyle=C.idx; ctx.lineWidth=1; ctx.beginPath(); let on=false;
       for(let i=0;i<n;i++){ const v=bA[s0+i]; if(v==null){on=false;continue;} on?ctx.lineTo(xOf(i),iy(v)):ctx.moveTo(xOf(i),iy(v)); on=true; } ctx.stroke();
       ctx.fillStyle=C.idx; ctx.font=`600 11px ${FONT_L}`; ctx.textAlign="right"; ctx.textBaseline="bottom";
-      ctx.fillText("S&P 500", L+plotW-4, Math.max(ixTop+10, iy(bA[base.length-1])-4)); } }
+      ctx.fillText(rsBenchName(), L+plotW-4, Math.max(ixTop+10, iy(bA[base.length-1])-4)); } }
 
   // auto-detected base: pivot line, buy zone, label
   const bs = S.base;
@@ -447,19 +604,24 @@ function draw(){
     }
   }
 
-  // user lines
-  const marks = S.marks.slice(); if(drag && drag.cur) marks.push({...drag.cur, k:"line", preview:true});
-  for(const ln of marks.filter(m=>m.k==="line")){
-    if(ln.t2 < vis[0].t) continue; const y=yOf(ln.p);
-    ctx.strokeStyle=C.ink; ctx.lineWidth=1.4; ctx.setLineDash([4,3]); ctx.globalAlpha=ln.preview?.55:1;
-    ctx.beginPath(); ctx.moveTo(xAtT(ln.t1)-bw/2,y); ctx.lineTo(xAtT(ln.t2)+bw/2,y); ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha=1; }
+  // user drawings: horizontal lines, trendlines and rectangles
+  const marks = S.marks.slice(); if(drag && drag.cur) marks.push({...drag.cur, preview:true});
+  drawMarks(ctx, marks, {xAtT, yOf, bw, L, plotW, pTop, pBot, vis});
 
   drawAlerts(ctx, yOf, L, plotW, pTop, pBot);
 
   // moving averages
   const line = (arr, color, w) => { if(!arr) return; ctx.strokeStyle=color; ctx.lineWidth=w; ctx.beginPath(); let on=false;
     for(let i=0;i<n;i++){ const v=arr[s0+i]; if(v==null){on=false;continue;} const x=xOf(i), y=yOf(v); on? ctx.lineTo(x,y) : ctx.moveTo(x,y); on=true; } ctx.stroke(); };
-  for(const m of mas) line(m.data, m.color, m.k==="d50" ? 1.4 : 1.3);
+  for(const m of mas) line(m.data, m.color, m.lw);
+  // studies on the price: bands (Bollinger, Keltner) and the anchored VWAP
+  for(const o of st.over){
+    if(o.kind === "band"){ ctx.globalAlpha = .08; ctx.fillStyle = o.c; ctx.beginPath(); let on=false;
+        for(let i=0;i<n;i++){ const v=o.up[s0+i]; if(v==null) continue; on ? ctx.lineTo(xOf(i),yOf(v)) : ctx.moveTo(xOf(i),yOf(v)); on=true; }
+        for(let i=n-1;i>=0;i--){ const v=o.lo[s0+i]; if(v==null) continue; ctx.lineTo(xOf(i),yOf(v)); } ctx.closePath(); ctx.fill(); ctx.globalAlpha = 1;
+      line(o.up, o.c, 1); line(o.lo, o.c, 1); ctx.setLineDash([3,3]); line(o.mid, o.c, 1); ctx.setLineDash([]); }
+    else line(o.data, o.c, 1.6);
+  }
 
   // swing pivots
   if(view.piv){
@@ -553,6 +715,7 @@ function draw(){
   ctx.restore();
 
   // volume
+  if(showVol){
   ctx.save(); ctx.beginPath(); ctx.rect(L,vTop,plotW,volH); ctx.clip();
   for(let i=0;i<n;i++){ const b=vis[i]; const prev = s0+i>0 ? base[s0+i-1].c : b.o; const x=xOf(i);
     ctx.fillStyle = b.c<prev ? C.vdown : C.vup; const w=Math.max(1,Math.round(bw*0.62)); const y=Math.round(vY(b.v)); ctx.fillRect(Math.round(x-w/2), y, w, vBot-y); }
@@ -567,6 +730,33 @@ function draw(){
   ctx.fillStyle=C.ink2; ctx.font=`${narrow?10:11}px ${FONT_D}`; ctx.textAlign="left"; ctx.textBaseline="middle";
   for(const f of [1,0.5]){ const v=vMax*1.28*f*0.78; const y=vY(v); if(y>vTop+6) ctx.fillText(fmtV(v), L+plotW+5, y); }
   ctx.fillText("Vol.", L+plotW+5, vBot-6);
+  }
+
+  // study panels under the price (RSI, MACD, ADR %, ATR, relative volume)
+  st.panes.forEach((pn, k)=>{
+    const top = paneTop + k*(paneH+4), bot = top + paneH, inT = top + 16, inB = bot - 4;
+    ctx.strokeStyle=C.ink; ctx.lineWidth=1; ctx.strokeRect(L+.5, top+.5, plotW, paneH);
+    let lo = Infinity, hi = -Infinity; const scan = a => { for(let i=s0;i<base.length;i++){ const v=a[i]; if(v!=null && isFinite(v)){ lo=Math.min(lo,v); hi=Math.max(hi,v); } } };
+    (pn.lines||[]).forEach(l=>scan(l.d)); if(pn.hist) scan(pn.hist); if(pn.bars){ scan(pn.bars); lo = Math.min(lo, 0); }
+    (pn.guides||[]).forEach(g=>{ lo=Math.min(lo,g); hi=Math.max(hi,g); });
+    if(pn.fix){ lo = pn.fix[0]; hi = pn.fix[1]; }
+    if(!isFinite(lo) || hi <= lo){ hi = (isFinite(hi) ? hi : 1) + 1; lo = hi - 2; }
+    const y = v => inB - (v-lo)/(hi-lo)*(inB-inT);
+    ctx.save(); ctx.beginPath(); ctx.rect(L, top, plotW, paneH); ctx.clip();
+    (pn.guides||[]).forEach(g=>{ ctx.strokeStyle=C.grid; ctx.setLineDash([3,3]); ctx.beginPath(); ctx.moveTo(L, Math.round(y(g))+.5); ctx.lineTo(L+plotW, Math.round(y(g))+.5); ctx.stroke(); ctx.setLineDash([]); });
+    if(pn.hist){ const y0 = y(0); for(let i=0;i<n;i++){ const v=pn.hist[s0+i]; if(v==null) continue; ctx.fillStyle = v>=0 ? "rgba(29,63,196,.45)" : "rgba(224,51,127,.45)";
+      const w=Math.max(1,Math.round(bw*0.62)); ctx.fillRect(Math.round(xOf(i)-w/2), Math.min(y0,y(v)), w, Math.max(1,Math.abs(y(v)-y0))); } }
+    if(pn.bars){ const y0 = y(0); for(let i=0;i<n;i++){ const v=pn.bars[s0+i]; if(v==null) continue; ctx.fillStyle = v>=1.5 ? C.blue : v>=1 ? "rgba(29,63,196,.55)" : "rgba(90,93,102,.45)";
+      const w=Math.max(1,Math.round(bw*0.62)); ctx.fillRect(Math.round(xOf(i)-w/2), y(v), w, y0-y(v)); } }
+    (pn.lines||[]).forEach(l=>{ ctx.strokeStyle=l.c; ctx.lineWidth=1.3; ctx.beginPath(); let on=false;
+      for(let i=0;i<n;i++){ const v=l.d[s0+i]; if(v==null){ on=false; continue; } on ? ctx.lineTo(xOf(i),y(v)) : ctx.moveTo(xOf(i),y(v)); on=true; } ctx.stroke(); });
+    ctx.restore();
+    const hiI = hover>=0 && hover<n ? s0+hover : base.length-1, main = pn.lines ? pn.lines[0].d[hiI] : pn.bars[hiI];
+    ctx.font=`600 ${narrow?10:11}px ${FONT_L}`; ctx.fillStyle=C.ink; ctx.textAlign="left"; ctx.textBaseline="top";
+    ctx.fillText(TX(pn.name) + (main!=null && isFinite(main) ? "  " + pn.fmt(main) : ""), L+5, top+3);
+    ctx.font=`${narrow?9:10}px ${FONT_D}`; ctx.fillStyle=C.ink2; ctx.textBaseline="middle";
+    (pn.guides && pn.guides.length ? pn.guides : [lo + (hi-lo)/2]).forEach(g=>{ const yy=y(g); if(yy>inT && yy<inB+2) ctx.fillText(pn.fmt(g), L+plotW+5, yy); });
+  });
 
   // quarterly strip
   if(stripRows){
@@ -601,38 +791,126 @@ function draw(){
   ctx.fillText(narrow ? txt.split("  Vol")[0] : txt, L+2, 10);
   if(rsNewHigh && !narrow){ ctx.fillStyle=C.rs; ctx.textAlign="right"; ctx.fillText(TX("● RS LINE AT NEW HIGH"), L+plotW, 10); }
   if(hover>=0 && hover<n){ const x=Math.round(xOf(hover))+.5; ctx.strokeStyle="rgba(21,23,28,.35)"; ctx.lineWidth=1; ctx.setLineDash([2,3]);
-    ctx.beginPath(); ctx.moveTo(x,pTop); ctx.lineTo(x,vBot); ctx.stroke(); ctx.setLineDash([]); }
+    ctx.beginPath(); ctx.moveTo(x,pTop); ctx.lineTo(x,aBot); ctx.stroke(); ctx.setLineDash([]); }
 
-  geo = {L,plotW,pTop,pBot,bw,n,vis,yOf,pOf,narrow};
+  geo = {L,plotW,pTop,pBot,bw,n,vis,yOf,pOf,narrow,xAtT,base,s0,isLog};
 }
 
 /* ---------- drawing tools ---------- */
+// marks: {k:"line"} horizontal level, {k:"tl"} trendline, {k:"rect"} rectangle, {k:"note"} note with an arrow.
+// Style per mark: c color, w width (1-3), s "solid" | "dash" | "dot", a arrow at the end, x extend to the right edge.
+const DRAW_COLORS = ["#15171c","#1f3c6e","#1d3fc4","#2f7d32","#e0337f","#d23a2a","#e07b1f","#7b4bb3"];
+const DRAW_DASH = {solid:[], dash:[7,4], dot:[2,3]}, DRAW_W = {1:1.1, 2:1.9, 3:2.9};
+const normDraw = d => { d = d && typeof d === "object" ? d : {}; return {c: DRAW_COLORS.includes(d.c) ? d.c : DRAW_COLORS[0], w: [1,2,3].includes(d.w) ? d.w : 2,
+  s: DRAW_DASH[d.s] ? d.s : "solid", a: !!d.a, x: !!d.x}; };
+cfg.draw = normDraw(cfg.draw);
+let sel = -1;   // index of the selected drawing in S.marks
+function markStyle(g, m){ const legacy = m.k === "line" && !m.c;
+  g.strokeStyle = legacy ? C.ink : m.c; g.lineWidth = legacy ? 1.4 : DRAW_W[m.w] || 1.9; g.setLineDash(legacy ? [4,3] : DRAW_DASH[m.s] || []); }
+function markPts(m, G){   // screen coordinates of a mark
+  if(m.k === "line"){ const y = G.yOf(m.p); return {x1: G.xAtT(m.t1) - G.bw/2, y1: y, x2: G.xAtT(m.t2) + G.bw/2, y2: y}; }
+  const p = {x1: G.xAtT(m.t1), y1: G.yOf(m.p1), x2: G.xAtT(m.t2), y2: G.yOf(m.p2)};
+  if(m.k === "tl" && m.x && p.x2 !== p.x1){ const xe = G.L + G.plotW; if(xe > p.x2){ p.y2 = p.y1 + (p.y2 - p.y1) * (xe - p.x1) / (p.x2 - p.x1); p.x2 = xe; } }
+  return p;
+}
+function drawMarks(g, marks, G){
+  marks.forEach((m, idx)=>{
+    if(m.k === "note") return;
+    const t2 = m.k === "line" ? m.t2 : Math.max(m.t1, m.t2); if(t2 < G.vis[0].t && !(m.k === "tl" && m.x)) return;
+    const P = markPts(m, G); g.globalAlpha = m.preview ? .6 : 1; markStyle(g, m);
+    if(m.k === "rect"){ const x = Math.min(P.x1, P.x2), y = Math.min(P.y1, P.y2), w = Math.abs(P.x2 - P.x1), h = Math.abs(P.y2 - P.y1);
+      g.fillStyle = m.c; g.globalAlpha = (m.preview ? .6 : 1) * .1; g.fillRect(x, y, w, h); g.globalAlpha = m.preview ? .6 : 1; g.strokeRect(x, y, w, h); }
+    else { g.beginPath(); g.moveTo(P.x1, P.y1); g.lineTo(P.x2, P.y2); g.stroke();
+      if(m.a && m.k === "tl"){ const ang = Math.atan2(P.y2 - P.y1, P.x2 - P.x1), s = 6 + (m.w || 2) * 2; g.setLineDash([]); g.fillStyle = m.c; g.beginPath();
+        g.moveTo(P.x2, P.y2); g.lineTo(P.x2 - s*Math.cos(ang - .45), P.y2 - s*Math.sin(ang - .45)); g.lineTo(P.x2 - s*Math.cos(ang + .45), P.y2 - s*Math.sin(ang + .45)); g.closePath(); g.fill(); } }
+    g.setLineDash([]); g.globalAlpha = 1;
+    if(idx === sel && !m.preview){ g.fillStyle = "#fff"; g.strokeStyle = C.navy; g.lineWidth = 1.5;
+      for(const [x, y] of [[P.x1, P.y1], [P.x2, P.y2]]){ g.fillRect(x-4, y-4, 8, 8); g.strokeRect(x-4, y-4, 8, 8); } }
+  });
+}
+function hitMark(x, y){
+  if(!geo || !S) return -1; let best = -1, bd = 7;
+  const segD = (P) => { const dx = P.x2 - P.x1, dy = P.y2 - P.y1, L2 = dx*dx + dy*dy; let t = L2 ? ((x - P.x1)*dx + (y - P.y1)*dy) / L2 : 0; t = Math.max(0, Math.min(1, t));
+    return Math.hypot(x - (P.x1 + t*dx), y - (P.y1 + t*dy)); };
+  S.marks.forEach((m, i)=>{ if(m.k === "note") return; const P = markPts(m, geo); let d;
+    if(m.k === "rect"){ const xa = Math.min(P.x1,P.x2), xb = Math.max(P.x1,P.x2), ya = Math.min(P.y1,P.y2), yb = Math.max(P.y1,P.y2);
+      d = Math.min(segD({x1:xa,y1:ya,x2:xb,y2:ya}), segD({x1:xa,y1:yb,x2:xb,y2:yb}), segD({x1:xa,y1:ya,x2:xa,y2:yb}), segD({x1:xb,y1:ya,x2:xb,y2:yb})); }
+    else d = segD(P);
+    if(d < bd){ bd = d; best = i; } });
+  return best;
+}
 function idxAt(x){ if(!geo) return -1; const i=Math.floor((x-geo.L)/geo.bw); return i<0||i>=geo.n ? -1 : i; }
+function idxClamp(x){ return Math.max(0, Math.min(geo.n-1, Math.floor((x-geo.L)/geo.bw))); }
 function snapPrice(i,y){ const b=geo.vis[i]; let p=geo.pOf(y); for(const v of [b.h,b.l,b.c]){ if(Math.abs(geo.yOf(v)-y)<8){ p=v; break; } } return p; }
 function saveMarks(){ if(S){ store.set(marksKey(S.symbol), S.marks); push("marks:"+S.symbol, S.marks); } }
+const ptAt = (x, y) => { const i = idxClamp(x); return {t: geo.vis[i].t, p: snapPrice(i, Math.max(geo.pTop, Math.min(geo.pBot, y))), i}; };
+function dragShape(x, y){   // the mark being drawn, from the start point to the pointer
+  const D = cfg.draw, a = drag.a, b = ptAt(x, y);
+  if(drag.k === "hl"){ const i = idxClamp(x); return {k:"line", t1: geo.vis[Math.min(a.i,i)].t, t2: geo.vis[Math.max(a.i,i)].t, p: a.p, c: D.c, w: D.w, s: D.s}; }
+  if(drag.k === "rect") return {k:"rect", t1: a.t, p1: a.p, t2: b.t, p2: b.p, c: D.c, w: D.w, s: D.s};
+  return {k:"tl", t1: a.t, p1: a.p, t2: b.t, p2: b.p, c: D.c, w: D.w, s: D.s, a: D.a, x: D.x};
+}
+function finishDrag(x, y){
+  let m = drag.cur || dragShape(x, y);
+  if(drag.k === "hl" && !drag.moved) m = {...m, t2: geo.vis[geo.n-1].t};   // a click draws the level to today
+  if(m.k !== "line" && m.t1 === m.t2 && Math.abs(geo.yOf(m.p1) - geo.yOf(m.p2)) < 4){ drag = null; draw(); return; }   // nothing drawn
+  if(m.k !== "line" && m.t1 > m.t2) m = {...m, t1: m.t2, p1: m.p2, t2: m.t1, p2: m.p1};
+  delete m.preview; S.marks.push(m); sel = -1; drag = null; saveMarks(); draw(); updDrawBar();
+}
 cv.addEventListener("pointermove", e=>{ if(!S) return;
-  const r=cv.getBoundingClientRect(); const x=e.clientX-r.left; hover=idxAt(x);
-  if(drag && geo){ const i=Math.max(0,Math.min(geo.n-1,Math.floor((x-geo.L)/geo.bw))); const a=drag.i0;
-    drag.cur={t1:geo.vis[Math.min(a,i)].t, t2:geo.vis[Math.max(a,i)].t, p:drag.p}; drag.moved = Math.abs(x-drag.x0)>5; }
+  const r=cv.getBoundingClientRect(); const x=e.clientX-r.left, y=e.clientY-r.top; hover=idxAt(x);
+  if(drag && geo){ drag.cur = dragShape(x, y); if(Math.abs(x-drag.x0)>5 || Math.abs(y-drag.y0)>5) drag.moved = true; }
+  cv.style.cursor = tool ? "crosshair" : (geo && hitMark(x, y) >= 0 ? "pointer" : "");
   draw(); });
 cv.addEventListener("pointerleave", ()=>{ if(!drag){ hover=-1; draw(); } });
 cv.addEventListener("pointerdown", e=>{
-  if(!tool || !geo) return; const r=cv.getBoundingClientRect(); const x=e.clientX-r.left, y=e.clientY-r.top;
-  if(y<geo.pTop || y>geo.pBot) return; const i=idxAt(x); if(i<0) return;
-  if(tool==="line"){ cv.setPointerCapture(e.pointerId); drag={i0:i,x0:x,p:snapPrice(i,y)}; drag.cur={t1:geo.vis[i].t,t2:geo.vis[i].t,p:drag.p}; }
+  if(!geo || !S) return; const r=cv.getBoundingClientRect(); const x=e.clientX-r.left, y=e.clientY-r.top;
+  if(!tool){ const h = hitMark(x, y); if(h !== sel){ sel = h; draw(); updDrawBar(); } return; }
+  if(y<geo.pTop || y>geo.pBot) return; const i=idxAt(x); if(i<0 && !drag) return;
   if(tool==="note"){ pendingNote={t:geo.vis[i].t, p:snapPrice(i,y)}; const inp=$("#noteIn"); inp.hidden=false; inp.value="";
-    inp.style.left = Math.max(4, Math.min(x-20, cv.clientWidth-230))+"px"; inp.style.top = Math.max(4, y-40)+"px"; setTimeout(()=>inp.focus(),0); } });
-cv.addEventListener("pointerup", ()=>{ if(!drag) return;
-  const ln = drag.moved ? drag.cur : {t1:drag.cur.t1, t2:geo.vis[geo.n-1].t, p:drag.p};
-  S.marks.push({k:"line",...ln}); drag=null; saveMarks(); draw(); });
+    inp.style.left = Math.max(4, Math.min(x-20, cv.clientWidth-230))+"px"; inp.style.top = Math.max(4, y-40)+"px"; setTimeout(()=>inp.focus(),0); return; }
+  if(drag && drag.two){ finishDrag(x, y); return; }   // second click of a two-click trendline or rectangle
+  cv.setPointerCapture(e.pointerId);
+  drag = {k: tool, x0: x, y0: y, a: ptAt(x, y)}; drag.cur = dragShape(x, y); });
+cv.addEventListener("pointerup", e=>{ if(!drag || !geo) return; const r=cv.getBoundingClientRect(); const x=e.clientX-r.left, y=e.clientY-r.top;
+  if(!drag.moved && drag.k !== "hl"){ drag.two = true; return; }   // a click without dragging: the next click sets the end point
+  finishDrag(x, y); });
 function commitNote(inp){ const v=inp.value.trim(); if(v && pendingNote){ S.marks.push({k:"note",...pendingNote,text:v}); saveMarks(); } pendingNote=null; inp.hidden=true; draw(); }
 $("#noteIn").addEventListener("keydown", e=>{ if(e.key==="Enter") commitNote(e.target); if(e.key==="Escape"){ pendingNote=null; e.target.hidden=true; } });
 $("#noteIn").addEventListener("blur", e=>setTimeout(()=>{ if(!e.target.hidden) commitNote(e.target); },120));
-function setTool(t){ tool = tool===t ? null : t; $("#bLine").classList.toggle("on",tool==="line"); $("#bNote").classList.toggle("on",tool==="note"); }
-$("#bLine").onclick=()=>setTool("line");
-$("#bNote").onclick=()=>setTool("note");
-$("#bUndo").onclick=()=>{ if(!S) return; S.marks.pop(); saveMarks(); draw(); };
-$("#bClr").onclick=()=>{ if(!S) return; S.marks=[]; saveMarks(); draw(); };
+const TOOL_BTN = {tl:"#bTrend", hl:"#bLine", rect:"#bRect", note:"#bNote"};
+function setTool(t){ tool = tool===t ? null : t; drag = null; Object.entries(TOOL_BTN).forEach(([k,id])=>{ $(id).classList.toggle("on", tool===k); $(id).setAttribute("aria-pressed", tool===k); });
+  if(tool){ sel = -1; } updDrawBar(); draw(); }
+Object.entries(TOOL_BTN).forEach(([k,id])=>$(id).onclick=()=>setTool(k));
+function delSel(){ if(!S || sel < 0 || !S.marks[sel]) return; S.marks.splice(sel, 1); sel = -1; saveMarks(); draw(); updDrawBar(); }
+$("#bUndo").onclick=()=>{ if(!S) return; S.marks.pop(); sel = -1; saveMarks(); draw(); updDrawBar(); };
+$("#bClr").onclick=()=>{ if(!S || !S.marks.length) return; if(!confirm(TX("Delete every drawing on this chart?"))) return; S.marks=[]; sel = -1; saveMarks(); draw(); updDrawBar(); };
+$("#bDel").onclick = delSel;
+// the style bar: color, width, line style, arrow and extend. It styles the next drawing, or the selected one.
+function updDrawBar(){
+  const m = S && sel >= 0 ? S.marks[sel] : null, D = m && m.k !== "note" ? {...cfg.draw, ...normDraw(m)} : cfg.draw;
+  $("#bDel").hidden = !m;
+  $("#dSw").style.background = D.c;
+  const pop = $("#drawPop");
+  pop.innerHTML = `<div class="dprow">${DRAW_COLORS.map(c=>`<button class="dcol ${D.c===c?"on":""}" data-dc="${c}" style="--c:${c}" aria-label="${esc(TX("Color"))} ${c}"></button>`).join("")}</div>
+    <div class="dprow"><span>${esc(TX("Width"))}</span>${[1,2,3].map(w=>`<button class="dopt ${D.w===w?"on":""}" data-dw="${w}" aria-label="${esc(TX("Line width"))} ${w}"><i style="border-top-width:${w}px"></i></button>`).join("")}</div>
+    <div class="dprow"><span>${esc(TX("Style"))}</span>${Object.keys(DRAW_DASH).map(s=>`<button class="dopt ${D.s===s?"on":""}" data-ds="${s}" aria-label="${esc(TX(s==="solid"?"Solid":s==="dash"?"Dashed":"Dotted"))}"><i style="border-top-style:${s==="solid"?"solid":s==="dash"?"dashed":"dotted"}"></i></button>`).join("")}</div>
+    <div class="dprow"><label class="chk"><input type="checkbox" data-da ${D.a?"checked":""}> ${esc(TX("Arrow at the end"))}</label><label class="chk"><input type="checkbox" data-dx ${D.x?"checked":""}> ${esc(TX("Extend to the right"))}</label></div>
+    <p class="fine">${esc(TX(m ? "Changes apply to the selected drawing." : "Applies to your next drawing. Click a drawing to select it."))}</p>`;
+}
+function setDraw(k, v){
+  cfg.draw = normDraw({...cfg.draw, [k]: v}); store.set("ink:cfg", cfg); push("cfg", cfg);
+  if(S && sel >= 0 && S.marks[sel] && S.marks[sel].k !== "note"){ const m = S.marks[sel]; if(k === "a" || k === "x"){ if(m.k === "tl") m[k] = v; } else m[k] = v; saveMarks(); }
+  updDrawBar(); draw();
+}
+$("#dStyle").onclick = e => { e.stopPropagation(); const p = $("#drawPop"); p.hidden = !p.hidden; $("#dStyle").setAttribute("aria-expanded", !p.hidden); if(!p.hidden) updDrawBar(); };
+$("#drawPop").addEventListener("click", e=>{ e.stopPropagation(); const b = e.target.closest("button"); if(!b) return;
+  if(b.dataset.dc) setDraw("c", b.dataset.dc); if(b.dataset.dw) setDraw("w", +b.dataset.dw); if(b.dataset.ds) setDraw("s", b.dataset.ds); });
+$("#drawPop").addEventListener("change", e=>{ const t = e.target; if(t.matches("[data-da]")) setDraw("a", t.checked); if(t.matches("[data-dx]")) setDraw("x", t.checked); });
+document.addEventListener("click", e=>{ const p = $("#drawPop"); if(!p.hidden && !e.composedPath().includes(p)){ p.hidden = true; $("#dStyle").setAttribute("aria-expanded", false); } });
+$("#bInd").onclick = openInd;
+updDrawBar();
+syncBox();
 
 /* ---------- panels ---------- */
 function renderPanels(){
@@ -721,8 +999,11 @@ function renderPanels(){
     : `<div class="empty">No base detected. The stock is either trending at new highs without a 5-week consolidation, or has too little history.</div>`;
 
   const nm = view.weekly? ["10-week","40-week","10-week"] : ["50-day","200-day","50-day"];
-  $("#legend").innerHTML = MAS.filter(m=>cfg.ma[m.k] && (!view.weekly || m.w)).map(m=>`<span><span class="sw" style="border-color:${maCol(m)}"></span><b>${view.weekly?m.wl:m.d}</b></span>`).join("") +
-    `<span><span class="sw" style="border-color:${C.rs}"></span><b>RS line</b> vs S&amp;P 500</span><span><span class="sw" style="border-color:${C.idx};border-top-width:1px"></span><b>S&amp;P 500</b></span>` +
+  const bnm = esc(rsBenchName()), ov = [cfg.ind.bb.on && [cfg.ind.bb.c, `Bollinger (${cfg.ind.bb.n}, ${cfg.ind.bb.k})`], cfg.ind.kc.on && [cfg.ind.kc.c, `Keltner (${cfg.ind.kc.n}, ${cfg.ind.kc.k})`],
+    cfg.ind.vwap.on && [cfg.ind.vwap.c, `VWAP from ${VWAP_A[cfg.ind.vwap.a]}`]].filter(Boolean);
+  $("#legend").innerHTML = cfg.ind.mas.filter(m=>!view.weekly || maOnWeekly(m)).map(m=>`<span><span class="sw" style="border-color:${m.c};border-top-width:${m.w+1}px"></span><b>${esc(maName(m, view.weekly))}</b></span>`).join("") +
+    ov.map(([c,t])=>`<span><span class="sw" style="border-color:${c}"></span><b>${esc(t)}</b></span>`).join("") +
+    `<span><span class="sw" style="border-color:${C.rs}"></span><b>RS line</b> vs ${bnm}</span><span><span class="sw" style="border-color:${C.idx};border-top-width:1px"></span><b>${bnm}</b></span>` +
     `<span><span class="sw" style="border-color:${C.vavg}"></span><b>${nm[2]} avg volume</b></span><span><span class="sw" style="border-color:${C.piv};border-top-style:dotted"></span><b>Unbroken swing</b></span>` +
     `<span><span class="sw" style="border-color:${C.navy};border-top-style:dashed"></span><b>Pivot · buy zone</b></span>${cfg.ants!=="off"&&!view.weekly?`<span><b style="color:#2f9e44">●</b><b style="color:#c99a06">●</b> <b>Ants</b> 12/15 up days on rising volume</span>`:""}<span><b style="color:${C.up}">Up</b> / <b style="color:${C.down}">down</b> bars: close above / below prior close · ${cfg.scale==="linear"?"linear":"log"} scale</span>`;
   renderDbox();
@@ -911,7 +1192,7 @@ $("#pD").onclick=()=>{ view.weekly=false; $("#pD").classList.add("on"); $("#pW")
 $("#pW").onclick=()=>{ view.weekly=true; $("#pW").classList.add("on"); $("#pD").classList.remove("on"); renderPanels(); draw(); };
 $$("#rangeSeg button").forEach(b=>b.onclick=()=>{ view.months=+b.dataset.r; $$("#rangeSeg button").forEach(x=>x.classList.toggle("on",x===b)); draw(); });
 for(const [id,key] of [["#tBox","box"],["#tPiv","piv"],["#tBase","base"],["#tIdx","idx"],["#tRs","rsl"]]){
-  $(id).onclick=()=>{ view[key]=!view[key]; $(id).classList.toggle("on",view[key]); $(id).setAttribute("aria-pressed",view[key]); draw(); renderDbox(); }; }
+  $(id).onclick=()=>{ view[key]=!view[key]; if(key === "box"){ cfg.ind.box = view.box; saveInd(); } $(id).classList.toggle("on",view[key]); $(id).setAttribute("aria-pressed",view[key]); draw(); renderDbox(); }; }
 function step(d){ const cur = CUR || (S && S.symbol); if(!cur) return; const L = order.length ? order : ROWS.map(r=>r.symbol); const i=L.indexOf(cur); if(i<0) return; go(L[(i+d+L.length)%L.length]); }
 function setNavPos(){   // "3 of 30 · Trade ideas" next to the ‹ › arrows
   const el = $("#bPos"); if(!el || !S) return; const L = order.length ? order : ROWS.map(r=>r.symbol); const i = L.indexOf(S.symbol);
@@ -919,22 +1200,30 @@ function setNavPos(){   // "3 of 30 · Trade ideas" next to the ‹ › arrows
   el.textContent = i < 0 ? "" : `${i+1} of ${L.length}${name ? " · " + name : ""}`;
 }
 $("#bPrev").onclick=()=>step(-1); $("#bNext").onclick=()=>step(1);
+// keyboard: ← → next ticker, T/H/R/N drawing tools, Delete removes the selected drawing, Ctrl+Z undo, D/W daily/weekly, I indicators, A alert
 document.addEventListener("keydown", e=>{
-  if(e.target.closest("input") || TOUR_ON()) return;
-  if(e.key==="Escape" && drag){ drag=null; draw(); }
+  if(e.target.closest('input:not([type=checkbox]):not([type=color]),select,textarea') || TOUR_ON() || !$("#dlg").hidden) return;
+  if(e.key==="Escape"){ if(drag){ drag=null; draw(); } else if(tool) setTool(tool); else if(sel >= 0){ sel = -1; draw(); updDrawBar(); } }
   if($("#vChart").hidden) return;
-  if(e.key==="ArrowRight") step(1); if(e.key==="ArrowLeft") step(-1);
+  const k = e.key.toLowerCase();
+  if((e.ctrlKey || e.metaKey) && k === "z"){ e.preventDefault(); $("#bUndo").click(); return; }
+  if(e.ctrlKey || e.metaKey || e.altKey) return;
+  if(e.key==="ArrowRight") step(1); else if(e.key==="ArrowLeft") step(-1);
+  else if((e.key==="Delete" || e.key==="Backspace") && sel >= 0){ e.preventDefault(); delSel(); }
+  else if(k==="t") setTool("tl"); else if(k==="h") setTool("hl"); else if(k==="r") setTool("rect"); else if(k==="n") setTool("note");
+  else if(k==="d") $("#pD").click(); else if(k==="w") $("#pW").click(); else if(k==="i") openInd(); else if(k==="a") openAlert();
 });
 
 async function openChart(sym){
   $("#vScreener").hidden = true; $("#vHome").hidden = true; $("#vChart").hidden = false; $("#loading").hidden = false;
-  CUR = sym; updateStar();
+  CUR = sym; updateStar(); sel = -1; drag = null;
   window.scrollTo(0,0);
   try{
-    const [bundle] = await Promise.all([getJSON(`t/${encodeURIComponent(sym.replace(/=/g,"_"))}.json`), BENCH ? null : getJSON("bench.json").then(b=>{ BENCH = b.prices.map(([d,c])=>({t:iso(d),c})); })]);
+    const [bundle] = await Promise.all([getJSON(`t/${encodeURIComponent(sym.replace(/=/g,"_"))}.json`), BENCH ? null : getJSON("bench.json").then(b=>{ BENCH = b.prices.map(([d,c])=>({t:iso(d),c})); }), cfg.ind.rs === "qqq" ? loadBenchX() : null]);
     S = { symbol: bundle.symbol, name: bundle.name, fund: bundle.fund||{}, stats: bundle.stats||{}, base: bundle.base,
       px: bundle.prices.map(([d,o,h,l,c,v])=>({t:iso(d),o,h,l,c,v})), marks: store.get(marksKey(bundle.symbol)) || [] };
     CUR = S.symbol; updateStar(); renderTkNote(); $("#bAlert").classList.toggle("on", ALERTS.some(a=>a.symbol===CUR && !a.fired)); patchS(); hover=-1; renderPanels(); draw(); renderDbox(); setShare(); setEarnChip(); setNavPos();
+    if(cfg.ind.rs === "sector" && rsBenchSym() && !benchX.has(rsBenchSym())) loadBenchX().then(()=>{ if(S && S.symbol === CUR){ draw(); renderPanels(); } });
   }catch(e){
     S=null; draw(); $("#sym").textContent = sym; $("#cname").textContent = "";
     toast(inWL(sym) ? `${sym} is in your watchlist: its chart loads after the next nightly update.` : `No data for ${sym} yet. Tap ☆ to add it to your watchlist: it loads after the next nightly update.`);
@@ -1676,7 +1965,7 @@ async function pullData(fresh, isNew){
   else { WL = fresh && WL ? WL.slice() : []; store.set("tt:wl", WL); push("watchlist", WL); if(!(fresh && LISTS)) LISTS = null; ensureLists(); activeList().t = WL.slice(); saveLists(); }   // accounts never use the sample list; lists made before signing up are kept
   if(d.notes && typeof d.notes === "object"){ NOTES = fresh ? {...d.notes, ...NOTES} : d.notes; store.set("tt:notes", NOTES); if(fresh) push("notes", NOTES); }
   else if(fresh && Object.keys(NOTES).length) push("notes", NOTES);   // new accounts start empty; the sample list is only for visitors
-  if(d.cfg && typeof d.cfg==="object"){ cfg = normCfg(d.cfg); store.set("ink:cfg", cfg); redrawAll(); renderScreenBtns(); applyCols();
+  if(d.cfg && typeof d.cfg==="object"){ cfg = normCfg(d.cfg); cfg.ind = normInd(cfg.ind); cfg.tpl = normTpl(cfg.tpl); cfg.draw = normDraw(cfg.draw); syncBox(); store.set("ink:cfg", cfg); redrawAll(); renderScreenBtns(); applyCols();
     if(cfg.lang && cfg.lang !== I18N.lang && I18N.setLang) I18N.setLang(cfg.lang); }
   else if(fresh){ push("cfg", cfg); }
   const remote = new Set();
@@ -1799,7 +2088,7 @@ function dlg(title, html, bind){
   if(bind) bind($("#dlgB"));
   const f = $("#dlgB").querySelector("input:not([type=checkbox]),textarea,select,button.on"); if(f) setTimeout(()=>f.focus(), 30);
 }
-function closeDlg(){ $("#dlg").hidden = true; $("#dlgB").innerHTML = ""; }
+function closeDlg(){ $("#dlg").hidden = true; $("#dlg").classList.remove("wide"); $("#dlgB").innerHTML = ""; }
 $("#dlgX").onclick = closeDlg;
 $("#dlg").addEventListener("click", e=>{ if(e.target.id === "dlg") closeDlg(); });
 document.addEventListener("keydown", e=>{ if(e.key === "Escape" && !$("#dlg").hidden) closeDlg(); });
@@ -1912,6 +2201,7 @@ $("#tkNoteBtn").onclick = openNote;
 let ALERTS = [], VERIFIED = true;
 const MA_LBL = {e21:"21-day EMA", d50:"50-day line", d200:"200-day line"};
 function alertDesc(a){
+  if(a.kind === "trend") return `${a.dir === "above" ? "Crosses above" : "Crosses below"} a trendline (${fmtP(a.level)} when set)`;
   if(a.kind === "ma") return `${a.dir === "above" ? "Crosses above" : "Crosses below"} the ${MA_LBL[a.ma]}`;
   if(a.kind === "pivot") return `Breakout above the ${fmtP(a.level)} pivot`;
   return `Price ${a.dir === "above" ? "above" : "below"} ${fmtP(a.level)}`;
@@ -1928,20 +2218,33 @@ function chartRefs(){
   const px = S.px, last = px[px.length-1].c, at = arr => arr[arr.length-1];
   return {last, e21: at(ema(px,21,b=>b.c)), d50: at(sma(px,50,b=>b.c)), d200: at(sma(px,200,b=>b.c)), pivot: S.base && S.base.pivot};
 }
+// a trendline as the server needs it: the two prices, the trading days between them, the end date and the scale
+function trendRef(m){
+  const px = S.px, idx = t => { let j = 0; for(let i=0;i<px.length;i++){ if(px[i].t <= t) j = i; else break; } return j; };
+  const i1 = idx(m.t1), i2 = idx(m.t2); if(i2 <= i1) return null;
+  const log = cfg.scale !== "linear", N = px.length - 1, k = N - i2;
+  const f = log ? Math.exp(Math.log(m.p2) + (Math.log(m.p2) - Math.log(m.p1)) / (i2 - i1) * k) : m.p2 + (m.p2 - m.p1) / (i2 - i1) * k;
+  if(!(f > 0)) return null;
+  const d = new Date(px[i2].t).toISOString().slice(0, 10);
+  return {p1: +m.p1.toPrecision(7), p2: +m.p2.toPrecision(7), nb: i2 - i1, t2: d, log, now: f};
+}
 function openAlert(){
   if(!S) return;
   if(!auth.token){ toast("Create a free account or sign in to set alerts."); openAuth("up"); return; }
   const sym = S.symbol, R = chartRefs(), mine = ALERTS.filter(a=>a.symbol===sym && !a.fired);
   const lines = (S.marks||[]).filter(m=>m.k==="line").map(m=>m.p).filter((v,i,a)=>a.indexOf(v)===i).slice(-6);
-  const st = {kind:"price", ma:"d50", level: +R.last.toFixed(R.last < 20 ? 3 : 2), dir:null};
+  const st = {kind:"price", ma:"d50", level: +R.last.toFixed(R.last < 20 ? 3 : 2), dir:null, tl:0};
+  const tls = (S.marks||[]).filter(m=>m.k==="tl").map(m=>({m, r: trendRef(m)})).filter(x=>x.r).slice(-6);
   const dirFor = lv => lv >= R.last ? "above" : "below";
   const body = () => {
     const maV = R[st.ma];
     const maDir = st.dir || (R.last > maV ? "below" : "above");
-    return `<div class="seg aseg">${[["price","Price"],["ma","Moving average"],["pivot","Pivot breakout"]].map(([k,l])=>`<button data-k="${k}" class="${st.kind===k?"on":""}" ${k==="pivot"&&!R.pivot?"disabled":""}>${esc(TX(l))}</button>`).join("")}</div>
+    return `<div class="seg aseg">${[["price","Price"],["trend","Trendline"],["ma","Moving average"],["pivot","Pivot breakout"]].map(([k,l])=>`<button data-k="${k}" class="${st.kind===k?"on":""}" ${(k==="pivot"&&!R.pivot)||(k==="trend"&&!tls.length)?"disabled":""} ${k==="trend"&&!tls.length?`title="${esc(TX("Draw a trendline on the chart first"))}"`:""}>${esc(TX(l))}</button>`).join("")}</div>
       ${st.kind==="price" ? `<label class="fld"><span>${esc(TX("Price level"))}</span><input id="aLv" type="number" step="any" min="0" value="${st.level}"></label>
         <p class="msub ahint" id="aHint"></p>
         ${lines.length ? `<p class="msub">${esc(TX("Your lines on this chart"))}: ${lines.map(v=>`<button class="lnk aline" data-v="${v}">${fmtP(v)}</button>`).join(" · ")}</p>` : ""}`
+      : st.kind==="trend" ? `<div class="seg aseg2">${tls.map((x,i)=>`<button data-tl="${i}" class="${st.tl===i?"on":""}"><i class="dsw" style="background:${x.m.c}"></i> ${esc(TX("Line"))} ${i+1} · ${fmtP(x.r.now)}</button>`).join("")}</div>
+        <p class="msub">${esc(TX(`Fires when ${sym} ${R.last < tls[st.tl].r.now ? "rises above" : "falls below"} the line, which is at ${fmtP(tls[st.tl].r.now)} today and moves with it every session (now ${fmtP(R.last)}).`))}</p>`
       : st.kind==="ma" ? `<div class="seg aseg2">${Object.keys(MA_LBL).map(k=>`<button data-ma="${k}" class="${st.ma===k?"on":""}" ${R[k]==null?"disabled":""}>${esc(TX(MA_LBL[k]))}</button>`).join("")}</div>
         <div class="seg aseg2">${["above","below"].map(d=>`<button data-d="${d}" class="${maDir===d?"on":""}">${esc(TX(d==="above"?"Crosses above":"Crosses below"))}</button>`).join("")}</div>
         <p class="msub">${esc(TX("Today"))}: ${esc(TX(MA_LBL[st.ma]))} ${fmtP(maV)} · ${esc(TX("last"))} ${fmtP(R.last)}</p>`
@@ -1958,6 +2261,7 @@ function openAlert(){
     B.querySelectorAll(".aseg button").forEach(b=>b.onclick = ()=>{ st.kind = b.dataset.k; st.dir = null; bind(B); });
     B.querySelectorAll("[data-ma]").forEach(b=>b.onclick = ()=>{ st.ma = b.dataset.ma; st.dir = null; bind(B); });
     B.querySelectorAll("[data-d]").forEach(b=>b.onclick = ()=>{ st.dir = b.dataset.d; bind(B); });
+    B.querySelectorAll("[data-tl]").forEach(b=>b.onclick = ()=>{ st.tl = +b.dataset.tl; bind(B); });
     B.querySelectorAll(".aline").forEach(b=>b.onclick = ()=>{ B.querySelector("#aLv").value = b.dataset.v; st.level = +b.dataset.v; hint(); });
     const lv = B.querySelector("#aLv"); if(lv){ lv.oninput = ()=>{ st.level = parseFloat(lv.value); hint(); }; hint(); }
     B.querySelectorAll("[data-del]").forEach(b=>b.onclick = async ()=>{ try{ await api("/alerts/"+b.dataset.del, {method:"DELETE"}); await loadAlerts(); openAlert(); }catch(e){ toast(e.message); } });
@@ -1966,6 +2270,7 @@ function openAlert(){
       let req;
       if(st.kind === "price"){ const v = parseFloat(B.querySelector("#aLv").value); if(!(v > 0)){ toast("Enter a valid price."); return; } req = {kind:"price", level:v, dir:dirFor(v)}; }
       else if(st.kind === "ma") req = {kind:"ma", ma:st.ma, dir: st.dir || (R.last > R[st.ma] ? "below" : "above")};
+      else if(st.kind === "trend"){ const r = tls[st.tl].r; req = {kind:"trend", level: +r.now.toPrecision(7), dir: R.last < r.now ? "above" : "below", line: {p1:r.p1, p2:r.p2, nb:r.nb, t2:r.t2, log:r.log}}; }
       else req = {kind:"pivot", level:R.pivot, dir:"above"};
       const ok = B.querySelector("#aOk"); ok.disabled = true;
       try{ await api("/alerts", {method:"POST", body: JSON.stringify({symbol:sym, note: note || null, email, ...req})}); await loadAlerts(); closeDlg();
@@ -1991,7 +2296,7 @@ function openAlertsList(){
 // active price and pivot alerts drawn on the chart
 function drawAlerts(g, yOf, L, plotW, pTop, pBot){
   if(!S) return;
-  for(const a of ALERTS){ if(a.symbol !== S.symbol || a.fired || a.kind === "ma" || !a.level) continue;
+  for(const a of ALERTS){ if(a.symbol !== S.symbol || a.fired || a.kind === "ma" || a.kind === "trend" || !a.level) continue;
     const y = Math.round(yOf(a.level)) + .5; if(y < pTop || y > pBot) continue;
     g.strokeStyle = "#a86a00"; g.lineWidth = 1; g.setLineDash([6,4]); g.beginPath(); g.moveTo(L, y); g.lineTo(L+plotW, y); g.stroke(); g.setLineDash([]);
     g.font = `600 10px ${FONT_L}`; g.fillStyle = "#a86a00"; g.textAlign = "right"; g.textBaseline = "bottom"; g.fillText(`🔔 ${fmtP(a.level)}`, L+plotW-4, y-2); }
@@ -2002,7 +2307,7 @@ let NOTIF = {items:[], unread:0}, notifSeen = +store.get("tt:notifSeen") || 0, n
 function notifText(n){
   let o; try{ o = JSON.parse(n.msg); }catch(e){ return n.msg; }
   const lv = fmtP(o.lv);
-  const s = o.k === "ma" ? `${o.s} crossed ${o.d} its ${MA_LBL[o.ma]} (${lv})` : o.k === "pivot" ? `${o.s} broke out above its ${lv} pivot` : `${o.s} ${o.d === "above" ? "rose above" : "fell below"} ${lv}`;
+  const s = o.k === "trend" ? `${o.s} crossed ${o.d} your trendline (${lv})` : o.k === "ma" ? `${o.s} crossed ${o.d} its ${MA_LBL[o.ma]} (${lv})` : o.k === "pivot" ? `${o.s} broke out above its ${lv} pivot` : `${o.s} ${o.d === "above" ? "rose above" : "fell below"} ${lv}`;
   return {txt: TX(s), last: fmtP(o.px), note: o.n};
 }
 function renderBell(){
@@ -2273,13 +2578,31 @@ const CMP_PRESETS = [
   {name:"Equal vs cap weight", hint:"ratios: rising = the average stock leads", s:["RSP:SPY","QQQE:QQQ"]},
   {name:"Risk appetite", hint:"ratios: rising = risk on", s:["XLY:XLP","SPHB:SPLV","HYG:IEF"]},
   {name:"Growth vs value", hint:"Russell 1000 growth and value", s:["IWF","IWD","IWF:IWD"]},
-  {name:"Cross-asset", hint:"stocks, bonds, gold and the dollar", s:["SPY","TLT","GLD","UUP"]}];
+  {name:"Cross-asset", hint:"stocks, bonds, gold and the dollar", s:["SPY","TLT","GLD","UUP"]},
+  {name:"Semis leadership", hint:"ratios: rising = chips lead the market", s:["SMH","SMH:SPY","SOXX:QQQ"]},
+  {name:"Small vs large", hint:"ratios: rising = small caps lead", s:["IWM:SPY","IWM:QQQ"]},
+  {name:"Offense vs defense", hint:"ratios: rising = growth sectors over utilities and staples", s:["XLK:XLU","XLF:XLU","XLY:XLP"]},
+  {name:"Credit", hint:"ratios: rising = investors take credit risk", s:["HYG:LQD","HYG:IEF"]},
+  {name:"Global growth", hint:"copper over gold and emerging markets over the U.S.", s:["HG=F:GC=F","EEM:SPY"]},
+  {name:"Gold and miners", hint:"ratios: miners vs gold, gold vs stocks", s:["GDX:GLD","GLD:SPY"]},
+  {name:"Inflation", hint:"ratios: rising = inflation expectations up", s:["TIP:IEF","DBC:SPY"]},
+  {name:"Cyclicals", hint:"energy, homebuilders and regional banks", s:["XLE:SPY","XHB:SPY","KRE:XLF"]},
+  {name:"Momentum", hint:"ratios: rising = momentum and high beta lead", s:["MTUM:SPY","SPHB:SPLV"]},
+  {name:"International", hint:"developed, Brazil and Argentina against their benchmarks", s:["EFA:SPY","EWZ:EEM","ARGT:SPY"]},
+  {name:"Crypto", hint:"Bitcoin against stocks", s:["IBIT","IBIT:SPY"]}];
+const CMP_PRE_SHOW = 6;
+let cmpPreAll = false, cmpAnchor = null;   // anchor: the day the Performance % view starts from (null = start of the range)
 const CMP_DEF = {items:[{s:"SPY",c:CMP_PAL[0]},{s:"RSP",c:CMP_PAL[1]},{s:"MAGS",c:CMP_PAL[2]}], ind:[{t:"sma",n:50,c:CMP_MA_PAL[0]}]};
 function normCmp(c){
   c = c && typeof c === "object" ? c : {};
-  const items = Array.isArray(c.items) ? c.items.filter(x=>x && CMP_SYM.test(x.s||"")).slice(0, CMP_MAX).map((x,i)=>({s:x.s, c: HEX.test(x.c||"") ? x.c : CMP_PAL[i % CMP_PAL.length]})) : null;
-  const ind = Array.isArray(c.ind) ? c.ind.filter(m=>m && (m.t==="sma" || m.t==="ema") && m.n>=2 && m.n<=400).slice(0, CMP_MAX_IND)
-    .map((m,i)=>({t:m.t, n:Math.round(m.n), c: HEX.test(m.c||"") ? m.c : CMP_MA_PAL[i % CMP_MA_PAL.length]})) : null;
+  const normMas = a => a.filter(m=>m && (m.t==="sma" || m.t==="ema") && m.n>=2 && m.n<=400).slice(0, CMP_MAX_IND)
+    .map((m,i)=>({t:m.t, n:Math.round(m.n), c: HEX.test(m.c||"") ? m.c : CMP_MA_PAL[i % CMP_MA_PAL.length]}));
+  const items = Array.isArray(c.items) ? c.items.filter(x=>x && CMP_SYM.test(x.s||"")).slice(0, CMP_MAX).map((x,i)=>{
+    const o = {s:x.s, c: HEX.test(x.c||"") ? x.c : CMP_PAL[i % CMP_PAL.length]};
+    if(Array.isArray(x.ind)) o.ind = normMas(x.ind);   // its own moving averages (an empty list = none); missing = the default ones
+    if(x.vol && !x.s.includes(":")) o.vol = true;      // volume under the price (tickers only)
+    return o; }) : null;
+  const ind = Array.isArray(c.ind) ? normMas(c.ind) : null;
   return {items: items || CMP_DEF.items.map(x=>({...x})), ind: ind || CMP_DEF.ind.map(m=>({...m})),
     range: CMP_RANGES[c.range] ? +c.range : 252, mode: c.mode === "perf" ? "perf" : "panels", style: c.style === "line" ? "line" : "bars",
     color: c.color === "ud" ? "ud" : "sym", scale: c.scale === "linear" ? "linear" : c.scale === "log" ? "log" : (cfg.scale === "linear" ? "linear" : "log")};
@@ -2288,6 +2611,7 @@ let CMP = normCmp(cfg.cmp), CM = null, cmpTok = 0, cmpHover = -1, cmpY = -1;
 function saveCmp(){ cfg.cmp = JSON.parse(JSON.stringify(CMP)); saveCfg(); }
 const cmpNextColor = () => CMP_PAL.find(c=>!CMP.items.some(x=>x.c===c)) || CMP_PAL[CMP.items.length % CMP_PAL.length];
 const maLabel = m => `${m.t.toUpperCase()}(${m.n})`;
+const itemInd = it => Array.isArray(it.ind) ? it.ind : CMP.ind;
 function cmpPx(bd, sym){
   const px = bd.prices.map(([d,o,h,l,c,v])=>({t:iso(d),o,h,l,c,v}));
   const q = LIVE && LIVE.q[sym];   // delayed intraday price for today's bar
@@ -2300,6 +2624,7 @@ function renderCmpCtl(){
   $("#cChips").innerHTML = CMP.items.map((it,i)=>{ const ratio = it.s.includes(":");
     return `<span class="cchip" style="--c:${it.c}"><input type="color" class="swatch" data-ccol="${i}" value="${it.c}" title="Color" aria-label="${esc(it.s)} color">`
       + (ratio ? `<b>${esc(it.s)}</b>` : `<a href="/chart/${esc(it.s)}/" title="Open chart">${esc(it.s)}</a>`)
+      + `<button class="cgear ${Array.isArray(it.ind) || it.vol ? "on" : ""}" data-cset="${i}" title="${esc(TX("Moving averages and volume for this chart"))}" aria-label="${esc(TX("Settings for"))} ${esc(it.s)}">⚙</button>`
       + `<button class="cmv" data-cmv="${i}" title="Move up" aria-label="Move ${esc(it.s)} up" ${i?"":"disabled"}>↑</button><button class="cx" data-cdel="${i}" title="Remove" aria-label="Remove ${esc(it.s)}">×</button></span>`; }).join("")
     || `<span class="fine">${esc(TX("Add a ticker to start comparing."))}</span>`;
   $("#cInd").innerHTML = CMP.ind.map((m,i)=>`<span class="cma" style="--c:${m.c}">
@@ -2316,7 +2641,10 @@ function renderCmpCtl(){
   ["#cScale","#cStyle","#cColor"].forEach(s=>$(s).hidden = perf);
   $("#cIndRow").classList.toggle("off", perf);
   $("#cIndNote").hidden = !perf;
-  $("#cPre").innerHTML = CMP_PRESETS.map((p,i)=>`<button class="cpre" data-pre="${i}"><b>${esc(TX(p.name))}</b><span>${esc(p.s.join(" · "))}</span><small>${esc(TX(p.hint))}</small></button>`).join("");
+  $("#cAnchor").hidden = !perf; $("#cAnchor").innerHTML = cmpAnchor != null ? `${esc(TX("Starting at zero from"))} <b>${esc(fmtLong(cmpAnchor))}</b> <button class="lnk" id="cAnchorX">${esc(TX("Back to the start of the range"))}</button>` : esc(TX("Click a day on the chart to start every line at zero from there."));
+  $("#cPre").closest(".ihead").classList.toggle("preall", cmpPreAll);
+  $("#cPre").innerHTML = CMP_PRESETS.slice(0, cmpPreAll ? CMP_PRESETS.length : CMP_PRE_SHOW).map((p,i)=>`<button class="cpre" data-pre="${i}"><b>${esc(TX(p.name))}</b><span>${esc(p.s.map(x=>x.replace(/=F/g,"")).join(" · "))}</span><small>${esc(TX(p.hint))}</small></button>`).join("")
+    + `<button class="cpremore" id="cPreMore">${esc(TX(cmpPreAll ? "Show fewer presets" : `Show all ${CMP_PRESETS.length} presets`))}</button>`;
   $("#cTitle").textContent = CMP.items.length ? CMP.items.map(x=>x.s).join(" · ") : TX("Comparative charts");
 }
 
@@ -2340,8 +2668,12 @@ async function renderCmp(){
   rows.forEach(r=>{ if(!r.px) return;
     r.px.forEach((b,j)=>{ b.pc = j ? r.px[j-1].c : b.c; });
     r.bars = new Array(D.length).fill(null); r.px.forEach(b=>{ r.bars[pos.get(b.t)] = b; });
-    r.mas = CMP.ind.map(m=>{ const v = m.t === "ema" ? ema(r.px, m.n, b=>b.c) : sma(r.px, m.n, b=>b.c), out = new Array(D.length).fill(null);
-      r.px.forEach((b,j)=>{ out[pos.get(b.t)] = v[j]; }); return out; }); });
+    const it = CMP.items.find(x=>x.s === r.s) || {};
+    const calc = m => { const v = m.t === "ema" ? ema(r.px, m.n, b=>b.c) : sma(r.px, m.n, b=>b.c), out = new Array(D.length).fill(null);
+      r.px.forEach((b,j)=>{ out[pos.get(b.t)] = v[j]; }); return out; };
+    r.ind = itemInd(it); r.mas = r.ind.map(calc); r.gmas = CMP.ind.map(calc);
+    r.vol = !!it.vol && !r.ratio;
+    if(r.vol){ r.v = new Array(D.length).fill(null); r.px.forEach(b=>{ r.v[pos.get(b.t)] = b.v; }); const va = sma(r.px, 50, b=>b.v); r.vavg = new Array(D.length).fill(null); r.px.forEach((b,j)=>{ r.vavg[pos.get(b.t)] = va[j]; }); } });
   CM = {D, rows}; cmpHover = -1;
   const last = D.length ? D[D.length-1] : null;
   $("#cAsOf").textContent = last ? TX("as of") + " " + fmtLong(last) + (LIVE && iso(LIVE.date) === last ? ` · ${TX("live")} ${liveTime()} ET` : "") : "";
@@ -2417,7 +2749,8 @@ function drawCmp(){
 
   if(perf){
     const p = P[0], inT = p.top + 8, inB = p.top + p.h - 8;
-    rows.forEach(r=>{ r.base = null; if(!r.bars) return; for(let i=s0;i<s0+n;i++) if(r.bars[i]){ r.base = r.bars[i].c; break; } });
+    const aI = cmpAnchor != null ? D.findIndex(t=>t >= cmpAnchor) : -1, b0 = aI >= s0 ? aI : s0;
+    rows.forEach(r=>{ r.base = null; if(!r.bars) return; for(let i=b0;i<s0+n;i++) if(r.bars[i]){ r.base = r.bars[i].c; break; } });
     const pv = (r, i) => { const b = r.bars && r.bars[i]; return b && r.base ? (b.c / r.base - 1) * 100 : null; };
     let lo = 0, hi = 0; rows.forEach(r=>{ for(let i=s0;i<s0+n;i++){ const v = pv(r, i); if(v != null){ lo = Math.min(lo, v); hi = Math.max(hi, v); } } });
     const pad = (hi - lo) * .07 || 1, a = lo - pad, z = hi + pad, y = v => inT + (z - v) / (z - a) * (inB - inT);
@@ -2426,6 +2759,8 @@ function drawCmp(){
     g.strokeStyle = C.ink2; g.lineWidth = 1; g.beginPath(); g.moveTo(Lm, Math.round(y(0)) + .5); g.lineTo(Lm + plotW, Math.round(y(0)) + .5); g.stroke();
     g.save(); g.beginPath(); g.rect(Lm, p.top, plotW, p.h); g.clip();
     rows.forEach(r=>{ if(r.bars) lineOf(i=>pv(r, i), y, r.color, 1.8); });
+    if(b0 > s0){ const xa = Math.round(x(b0 - s0)) + .5; g.strokeStyle = C.navy; g.setLineDash([5,4]); g.lineWidth = 1.2; g.beginPath(); g.moveTo(xa, p.top); g.lineTo(xa, p.top + p.h); g.stroke(); g.setLineDash([]);
+      g.fillStyle = C.navy; g.font = `700 11px ${FONT_L}`; g.textAlign = xa > Lm + plotW - 120 ? "right" : "left"; g.textBaseline = "bottom"; g.fillText(`${TX("From")} ${fmtLong(D[b0])}`, xa + (g.textAlign === "left" ? 5 : -5), p.top + p.h - 6); }
     g.restore();
     legend(p, rows.flatMap(r=>{ if(!r.bars) return [[r.color, `${r.s} ${TX("no data")}`]]; const j = lastIdx(r.bars, s0, at), v = j >= 0 ? pv(r, j) : null;
       return [[r.color, `${r.s} ${fmtPct(v, 1)}`]]; }));
@@ -2433,7 +2768,7 @@ function drawCmp(){
       return {y: v == null ? null : y(v), col: r.color, txt: (v > 0 ? "+" : "") + (v == null ? "" : v.toFixed(1)) + "%"}; }));
     p.inv = yy => a + (inB - yy) / (inB - inT) * (z - a); p.fmt = v => (v > 0 ? "+" : "") + v.toFixed(2) + "%";
   } else rows.forEach((r, pi)=>{
-    const p = P[pi], inT = p.top + 26, inB = p.top + p.h - 6;
+    const p = P[pi], inT = p.top + 26, vH = r.vol ? Math.round(p.h * .2) : 0, inB = p.top + p.h - 6 - (vH ? vH + 6 : 0);
     if(!r.bars){ legend(p, [[r.color, r.s, true]]);
       say(r.missing.length ? `${TX("No data for")} ${r.missing.join(", ")} ${TX("yet. Add it to a watchlist with ☆ and it loads after the next nightly update.")}` : TX("No data yet."), p.top + 30);
       g.strokeStyle = C.ink; g.lineWidth = 1; g.strokeRect(Lm + .5, p.top + .5, plotW, p.h); return; }
@@ -2452,7 +2787,14 @@ function drawCmp(){
     const small = hi < 20 && r.ratio || hi < 1;
     hGrid(p, ticks, y, tickFmt(ticks), inT, inB);
     g.save(); g.beginPath(); g.rect(Lm, p.top, plotW, p.h); g.clip();
-    r.mas.forEach((m, k)=>lineOf(i=>m[i], y, CMP.ind[k].c, 1.4));
+    r.mas.forEach((m, k)=>lineOf(i=>m[i], y, r.ind[k].c, 1.4));
+    if(vH){ const vT = inB + 6, vB = p.top + p.h - 2; let vm = 0; for(let i=s0;i<s0+n;i++) if(r.v[i]) vm = Math.max(vm, r.v[i]);
+      const vy = v => vB - v / (vm * 1.08 || 1) * (vB - vT), w = Math.max(1, Math.round(bw * .62));
+      g.strokeStyle = C.grid; g.beginPath(); g.moveTo(Lm, vT - 3 + .5); g.lineTo(Lm + plotW, vT - 3 + .5); g.stroke();
+      for(let i=0;i<n;i++){ const b = r.bars[s0+i], v = r.v[s0+i]; if(!b || !v) continue; g.fillStyle = b.c >= b.pc ? C.vup : C.vdown; g.globalAlpha = .75;
+        g.fillRect(Math.round(x(i) - w/2), vy(v), w, vB - vy(v)); }
+      g.globalAlpha = 1; lineOf(i=>r.vavg[i], vy, C.vavg, 1);
+      g.fillStyle = C.ink2; g.font = `10px ${FONT_D}`; g.textAlign = "left"; g.textBaseline = "middle"; g.fillText(fmtV(vm), Lm + plotW + 5, vT + 4); g.fillText("Vol.", Lm + plotW + 5, vB - 6); }
     if(useLine) lineOf(i=>r.bars[i] && r.bars[i].c, y, r.color, 1.6);
     else {
       const lw = cfg.weight === "thin" ? 1 : cfg.weight === "normal" ? 1.3 : 1.8, tk = Math.max(1, Math.min(4, bw * .4));
@@ -2473,11 +2815,11 @@ function drawCmp(){
     const parts = [[r.color, r.s, true]];
     if(r.name && !narrow && !r.ratio) parts.push([null, r.name]);
     if(b){ parts.push([null, `${hv >= 0 ? fmtD(D[j]) + "  " : ""}${valFmt(b.c, small)}  ${fmtPct((b.c / b.pc - 1) * 100, 2)}`]); }
-    r.mas.forEach((m, k)=>{ const v = j >= 0 ? m[j] : null; parts.push([CMP.ind[k].c, `${maLabel(CMP.ind[k])} ${v == null ? "—" : valFmt(v, small)}`]); });
+    r.mas.forEach((m, k)=>{ const v = j >= 0 ? m[j] : null; parts.push([r.ind[k].c, `${maLabel(r.ind[k])} ${v == null ? "—" : valFmt(v, small)}`]); });
     legend(p, parts);
     const jl = lastIdx(r.bars, s0, s0 + n - 1);
     tagsAt(p, [{y: y(r.bars[jl].c), col: r.color, txt: valFmt(r.bars[jl].c, small)},
-      ...r.mas.map((m, k)=>{ const v = m[jl]; return {y: v == null ? null : y(v), col: CMP.ind[k].c, txt: v == null ? "" : valFmt(v, small)}; })]);
+      ...r.mas.map((m, k)=>{ const v = m[jl]; return {y: v == null ? null : y(v), col: r.ind[k].c, txt: v == null ? "" : valFmt(v, small)}; })]);
     p.inv = inv; p.fmt = v => valFmt(v, small);
     g.strokeStyle = C.ink; g.lineWidth = 1; g.strokeRect(Lm + .5, p.top + .5, plotW, p.h);
   });
@@ -2513,8 +2855,39 @@ function renderCmpTable(){
     const small = r.ratio || b.c < 1;
     return `<tr ${r.ratio ? "" : `data-go="${esc(r.s)}" tabindex="0"`}><td><span class="csw" style="--c:${r.color}"></span><b>${esc(r.s)}</b></td><td class="nm">${esc(r.name)}</td>
       <td>${small ? b.c.toFixed(4) : fmtP(b.c)}</td>${cell((b.c / b.pc - 1) * 100)}${cell(base ? (b.c / base - 1) * 100 : null)}
-      ${r.mas.map(m=>cell(m[j] ? (b.c / m[j] - 1) * 100 : null)).join("")}${cell(isFinite(hi) ? (b.c / hi - 1) * 100 : null)}</tr>`; }).join("");
+      ${r.gmas.map(m=>cell(m[j] ? (b.c / m[j] - 1) * 100 : null)).join("")}${cell(isFinite(hi) ? (b.c / hi - 1) * 100 : null)}</tr>`; }).join("");
   el.innerHTML = `<table class="tbl ctbl"><thead>${head}</thead><tbody>${body}</tbody></table>`;
+}
+
+// one chart's own moving averages and volume
+function openCmpItem(i){
+  const it = CMP.items[i]; if(!it) return;
+  const ratio = it.s.includes(":");
+  let L = JSON.parse(JSON.stringify(itemInd(it))), own = Array.isArray(it.ind), vol = !!it.vol;
+  const save = () => { if(own) it.ind = L; else delete it.ind; if(vol && !ratio) it.vol = true; else delete it.vol; saveCmp(); renderCmp(); };
+  const body = () => `<div class="seg aseg2"><button data-own="0" class="${own?"":"on"}">${esc(TX("Same as the others"))}</button><button data-own="1" class="${own?"on":""}">${esc(TX("Own moving averages"))}</button></div>
+    ${own ? `<div class="indmas">${L.map((m,k)=>`<div class="indma"><input type="color" class="swatch" data-qc="${k}" value="${m.c}" aria-label="${esc(TX("Color"))}">
+      <select data-qt="${k}" aria-label="${esc(TX("Type"))}"><option value="sma" ${m.t==="sma"?"selected":""}>SMA</option><option value="ema" ${m.t==="ema"?"selected":""}>EMA</option></select>
+      <input type="number" min="2" max="400" data-qn="${k}" value="${m.n}" aria-label="${esc(TX("Length (days)"))}"><span class="fine">${esc(TX("days"))}</span>
+      <button class="cx" data-qdel="${k}" aria-label="${esc(TX("Remove"))}">×</button></div>`).join("") || `<p class="fine">${esc(TX("No moving averages on this chart."))}</p>`}
+      ${L.length < CMP_MAX_IND ? `<button class="btn sm" id="qAdd">＋ ${esc(TX("Add moving average"))}</button>` : ""}</div>`
+      : `<p class="msub">${esc(TX("This chart uses the moving averages set for every chart:"))} <b>${CMP.ind.map(maLabel).join(", ") || esc(TX("none"))}</b></p>`}
+    <label class="chk"><input type="checkbox" id="qVol" ${vol?"checked":""} ${ratio?"disabled":""}> ${esc(TX("Show volume under the price"))}${ratio ? ` <small>(${esc(TX("not for ratios"))})</small>` : ""}</label>
+    <div class="indft"><button class="btn on" id="qDone">${esc(TX("Done"))}</button></div>`;
+  const bind = B => {
+    B.innerHTML = body();
+    const re = () => { save(); bind(B); };
+    B.querySelectorAll("[data-own]").forEach(b=>b.onclick = ()=>{ own = b.dataset.own === "1"; if(own && !Array.isArray(it.ind)) L = JSON.parse(JSON.stringify(CMP.ind)); re(); });
+    B.querySelector("#qAdd")?.addEventListener("click", ()=>{ const opts = [{t:"sma",n:50},{t:"sma",n:200},{t:"ema",n:21},{t:"sma",n:10},{t:"sma",n:150}];
+      const nx = opts.find(o=>!L.some(m=>m.t === o.t && m.n === o.n)) || {t:"sma", n:100}; L.push({...nx, c: CMP_MA_PAL.find(c=>!L.some(m=>m.c === c)) || CMP_MA_PAL[0]}); re(); });
+    B.querySelectorAll("[data-qdel]").forEach(b=>b.onclick = ()=>{ L.splice(+b.dataset.qdel, 1); re(); });
+    B.querySelectorAll("[data-qt]").forEach(x=>x.onchange = ()=>{ L[+x.dataset.qt].t = x.value; re(); });
+    B.querySelectorAll("[data-qn]").forEach(x=>x.onchange = ()=>{ const v = clampN(x.value, 2, 400, null); if(v == null){ toast(TX("Use a length between 2 and 400 days.")); x.value = L[+x.dataset.qn].n; return; } L[+x.dataset.qn].n = v; re(); });
+    B.querySelectorAll("[data-qc]").forEach(x=>x.onchange = ()=>{ L[+x.dataset.qc].c = x.value; re(); });
+    B.querySelector("#qVol").onchange = e => { vol = e.target.checked; re(); };
+    B.querySelector("#qDone").onclick = closeDlg;
+  };
+  dlg(`${it.s} · ${TX("chart settings")}`, "", bind);
 }
 
 // controls
@@ -2531,14 +2904,17 @@ $("#vCmp").addEventListener("click", e=>{
   const t = e.target.closest("button,[data-go]"); if(!t || !$("#vCmp").contains(t)) return;
   const d = t.dataset;
   if(d.cdel != null){ CMP.items.splice(+d.cdel, 1); saveCmp(); renderCmp(); return; }
+  if(d.cset != null){ openCmpItem(+d.cset); return; }
+  if(t.id === "cPreMore"){ cmpPreAll = !cmpPreAll; renderCmpCtl(); return; }
+  if(t.id === "cAnchorX"){ cmpAnchor = null; renderCmpCtl(); drawCmp(); return; }
   if(d.cmv != null){ const i = +d.cmv; if(i > 0){ const [it] = CMP.items.splice(i, 1); CMP.items.splice(i - 1, 0, it); saveCmp(); renderCmp(); } return; }
   if(d.idel != null){ CMP.ind.splice(+d.idel, 1); saveCmp(); renderCmp(); return; }
   if(t.id === "cIndAdd"){ const opts = [{t:"sma",n:200},{t:"ema",n:21},{t:"sma",n:10},{t:"sma",n:150},{t:"sma",n:50}];
     const nx = opts.find(o=>!CMP.ind.some(m=>m.t === o.t && m.n === o.n)) || {t:"sma", n:100};
     CMP.ind.push({...nx, c: CMP_MA_PAL.find(c=>!CMP.ind.some(m=>m.c === c)) || CMP_MA_PAL[0]}); saveCmp(); renderCmp(); return; }
-  if(d.pre != null){ const p = CMP_PRESETS[+d.pre]; CMP.items = p.s.map((s,i)=>({s, c:CMP_PAL[i]})); saveCmp(); renderCmp(); window.scrollTo({top:0, behavior:"smooth"}); return; }
+  if(d.pre != null){ const p = CMP_PRESETS[+d.pre]; cmpAnchor = null; CMP.items = p.s.map((s,i)=>({s, c:CMP_PAL[i]})); saveCmp(); renderCmp(); window.scrollTo({top:0, behavior:"smooth"}); return; }
   if(d.m){ CMP.mode = d.m; saveCmp(); renderCmpCtl(); drawCmp(); return; }
-  if(d.r){ CMP.range = +d.r; saveCmp(); renderCmpCtl(); drawCmp(); renderCmpTable(); return; }
+  if(d.r){ CMP.range = +d.r; cmpAnchor = null; saveCmp(); renderCmpCtl(); drawCmp(); renderCmpTable(); return; }
   if(t.closest("#cScale")){ CMP.scale = d.s; saveCmp(); renderCmpCtl(); drawCmp(); return; }
   if(t.closest("#cStyle")){ CMP.style = d.s; saveCmp(); renderCmpCtl(); drawCmp(); return; }
   if(t.closest("#cColor")){ CMP.color = d.c; saveCmp(); renderCmpCtl(); drawCmp(); return; }
@@ -2568,6 +2944,8 @@ $("#vCmp").addEventListener("input", e=>{   // live color preview while the pick
   let raf = 0; const mv = e => { cmpHover = at(e); cancelAnimationFrame(raf); raf = requestAnimationFrame(drawCmp); };
   c.addEventListener("mousemove", mv); c.addEventListener("touchmove", mv, {passive:true});
   c.addEventListener("mouseleave", ()=>{ cmpHover = -1; cmpY = -1; drawCmp(); });
+  c.addEventListener("click", e=>{ if(CMP.mode !== "perf" || !CM) return; const i = at(e); if(i < 0) return;   // Performance %: start every line at zero from this day
+    const {s0} = cmpWindow(); cmpAnchor = CM.D[s0 + i]; renderCmpCtl(); drawCmp(); });
   c.addEventListener("dblclick", ()=>{ const b = c._cx; if(!b || CMP.mode === "perf") return; const i = b.P.findIndex(p=>cmpY >= p.top && cmpY <= p.top + p.h), r = b.rows[i];
     if(r && !r.ratio) go(r.s); });
 })();
@@ -2712,8 +3090,10 @@ const TOUR = [
    b:"Up bars closed higher than the day before, down bars closed lower. The colored lines are the moving averages. The dark line under the price is the RS line against the S&P 500, with the RS Rating at its end. The dashed line marks the pivot, and each E is an earnings report. Volume sits underneath."},
   {v:"c", sel:"#pD", up:true, t:"Daily or weekly",
    b:"Switch between daily and weekly bars, and pick the time range next to it: 6 months to 3 years."},
-  {v:"c", sel:"#bLine", up:true, t:"Draw and take notes",
-   b:"Line: drag across the chart to draw a trendline. Note: click a bar and type. Your drawings stay with the chart, and sync to your account when you are signed in."},
+  {v:"c", sel:"#bInd", t:"Your own indicators",
+   b:"Add any moving average, Bollinger Bands, Keltner Channels, an anchored VWAP, and panels with RSI, MACD, ADR %, ATR or relative volume. Save your setup as a template."},
+  {v:"c", sel:"#bTrend", up:true, t:"Draw and take notes",
+   b:"Trend, Level and Box draw on the chart; pick the color, width and style with the swatch. Click a drawing to restyle or delete it. Shortcuts: T, H, R, N, Delete and Ctrl+Z. Your drawings sync to your account."},
   {v:"c", sel:".boxes", t:"Fundamentals under the chart",
    b:"Peers, chart statistics, annual and quarterly earnings and sales, the base analysis, analysts and news. Further down: insider buying and selling, and the largest institutional holders."},
   {v:"*", sel:"#gear", t:"Make the chart yours",

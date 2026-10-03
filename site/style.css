@@ -1036,3 +1036,53 @@ button.w2new{cursor:pointer}
   .w2hero .ctas{display:grid;grid-template-columns:1fr;gap:10px}.w2hero .ctas .btn{text-align:center;justify-content:center}}
 .on-welcome #asof{display:none}
 .w2hero h1,.w2 h2,.w2404 h1{text-wrap:balance}
+
+/* ===== chart: indicators dialog ===== */
+#dlg.wide .mbox{width:min(620px,100%);max-height:calc(100vh - 32px);overflow:auto}
+.indtpl{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end;margin:0 16px 6px;padding-bottom:12px;border-bottom:1px solid var(--rule)}
+.indtpl label{display:grid;gap:3px;font:600 11px var(--f-label);letter-spacing:.06em;text-transform:uppercase;color:var(--ink2)}
+.indtpl select,.indma select,.indma input[type=number],.inum input,.inum select{font:700 13px var(--f-data);border:1px solid var(--rule);background:var(--plate);color:var(--ink);padding:3px 4px}
+.indh{margin:14px 16px 8px;font:700 12px var(--f-label);letter-spacing:.12em;text-transform:uppercase;color:var(--navy);border-bottom:1px solid var(--rule);padding-bottom:4px}
+.indh small{font-weight:600;letter-spacing:.02em;text-transform:none;color:var(--ink2)}
+.indmas{display:grid;gap:6px;margin:0 16px 6px;justify-items:start}
+.indma{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.indma input[type=number]{width:4.4em}
+.wseg button{padding:4px 7px;display:inline-flex;align-items:center}
+.wseg i{display:block;width:16px;background:currentColor}
+.indrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 16px 8px}
+.indrow .chk{margin:0;min-width:11em}
+.inum{display:inline-flex;align-items:center;gap:4px;font-size:12px;color:var(--ink2)}
+.inum input{width:4em}
+#dlg .mbox>.fine,#dlgB>.fine{margin:2px 16px 8px;display:block}
+#dlgB>.seg{margin:0 16px 6px}
+.indft{display:flex;justify-content:space-between;gap:10px;margin:16px 16px 0;padding-top:12px;border-top:1px solid var(--rule)}
+/* ===== chart: drawing tools ===== */
+.dstyle{position:relative;display:inline-flex}
+.dsw{display:inline-block;width:14px;height:14px;border:1px solid var(--ink);vertical-align:-2px;margin-right:4px}
+.drawpop{position:absolute;top:calc(100% + 6px);left:0;z-index:40;background:var(--plate);border:1px solid var(--ink);box-shadow:6px 6px 0 rgba(21,23,28,.15);padding:10px 12px;width:248px;display:grid;gap:8px;font-family:var(--f-label)}
+.dprow{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:12px;color:var(--ink2)}
+.dprow>span{min-width:3.6em}
+.dprow .chk{margin:0;font-size:12px}
+.dcol{width:22px;height:22px;border:1px solid var(--rule);background:var(--c);cursor:pointer;padding:0}
+.dcol.on{outline:2px solid var(--ink);outline-offset:1px}
+.dopt{width:40px;height:24px;border:1px solid var(--rule);background:var(--plate);cursor:pointer;display:grid;place-items:center;padding:0}
+.dopt i{display:block;width:26px;border-top:2px solid var(--ink)}
+.dopt.on{border-color:var(--ink);background:var(--soft)}
+.drawpop .fine{margin:0}
+.btn[aria-pressed="true"]{background:var(--navy);color:#fff;border-color:var(--navy)}
+/* ===== compare: per-chart settings, presets, anchor ===== */
+.cgear{border:0;background:none;cursor:pointer;font:14px/1 var(--f-label);color:var(--ink2);padding:2px 3px}
+.cgear:hover,.cgear.on{color:var(--navy)}
+.cgear.on{font-weight:700}
+.cpremore{grid-column:1/-1;border:0;border-top:1px dotted var(--rule);background:var(--soft);padding:7px 10px;cursor:pointer;font:700 12px var(--f-label);letter-spacing:.06em;text-transform:uppercase;color:var(--navy)}
+.cpremore:hover{background:#e8edf7}
+.canchor{margin-left:4px}
+.canchor .lnk{font-size:12px}
+.cindhint{margin:2px 0 0;flex-basis:100%}
+.clbl small{font-weight:400;text-transform:none;letter-spacing:0;color:var(--ink2)}
+.ihead.preall{grid-template-columns:1fr}
+.ihead.preall .cprelist{grid-template-columns:repeat(4,minmax(0,1fr))}
+.ihead.preall .cpre,.ihead.preall .cpre:nth-child(odd),.ihead.preall .cpre:nth-child(-n+2){border-top:1px dotted var(--rule);border-left:1px dotted var(--rule)}
+.ihead.preall .cpre:nth-child(4n+1){border-left:0}.ihead.preall .cpre:nth-child(-n+4){border-top:0}
+@media (max-width:900px){.ihead.preall .cprelist{grid-template-columns:1fr 1fr}.ihead.preall .cpre:nth-child(4n+1){border-left:1px dotted var(--rule)}.ihead.preall .cpre:nth-child(odd){border-left:0}}
+@media (max-width:600px){.indrow .chk{min-width:100%}.drawpop{left:auto;right:0}}

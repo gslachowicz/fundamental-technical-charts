@@ -23,7 +23,7 @@
 <meta name="description" content="O'Neil-style charts, RS Ratings, screeners, market breadth, trade ideas and earnings for every U.S. stock and ADR, all in one place. Built by traders, for traders.">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&family=Archivo+Narrow:wght@400;600;700&family=Libre+Franklin:wght@600;800&family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&display=swap">
-<link rel="stylesheet" href="/style.css?v=20261011a">
+<link rel="stylesheet" href="/style.css?v=20261012a">
 <style id="colcss"></style>
 </head>
 <body>
@@ -174,10 +174,12 @@
     <section class="cctl" aria-label="Tickers and moving averages">
       <div class="crow"><span class="clbl">Tickers</span><div class="cchips" id="cChips"></div>
         <form id="cAdd" class="cadd" autocomplete="off"><label class="vh" for="cIn">Add a ticker or a ratio</label><input id="cIn" placeholder="Add ticker or A:B" maxlength="31" spellcheck="false" list="symlist"><button class="btn sm">Add</button></form></div>
-      <div class="crow" id="cIndRow"><span class="clbl">Moving averages</span><div class="cinds" id="cInd"></div><span class="fine" id="cIndNote" hidden>Moving averages show on the stacked view.</span></div>
+      <div class="crow" id="cIndRow"><span class="clbl">Moving averages <small>(every chart)</small></span><div class="cinds" id="cInd"></div><span class="fine" id="cIndNote" hidden>Moving averages show on the stacked view.</span></div>
+      <p class="fine cindhint">These moving averages apply to every chart. Use ⚙ on a ticker to give it its own averages or add volume.</p>
     </section>
     <div class="bar">
       <div class="seg" role="group" aria-label="View" id="cMode"><button data-m="panels">Stacked</button><button data-m="perf">Performance %</button></div>
+      <span class="canchor fine" id="cAnchor" hidden></span>
       <div class="seg" role="group" aria-label="Range" id="cRange"><button data-r="63">3M</button><button data-r="126">6M</button><button data-r="252">1Y</button><button data-r="504">2Y</button><button data-r="756">3Y</button></div>
       <div class="seg" role="group" aria-label="Price scale" id="cScale"><button data-s="log">Log</button><button data-s="linear">Linear</button></div>
       <div class="seg" role="group" aria-label="Price bars" id="cStyle"><button data-s="bars">Bars</button><button data-s="line">Line</button></div>
@@ -458,9 +460,16 @@
         <button class="btn on" id="tRs" aria-pressed="true" title="Relative strength line vs the S&amp;P 500">RS line</button>
       </span>
       <span class="grp">
-        <button class="btn" id="bLine" title="Drag on the chart to draw a dotted line">Line</button>
-        <button class="btn" id="bNote" title="Click a bar and type a note with an arrow">Note</button>
-        <button class="btn" id="bUndo">Undo</button>
+        <button class="btn" id="bInd" title="Moving averages and studies (I)">Indicators</button>
+      </span>
+      <span class="grp drawgrp" role="group" aria-label="Drawing tools">
+        <button class="btn" id="bTrend" aria-pressed="false" title="Trendline (T): drag on the chart, or click two points">Trend</button>
+        <button class="btn" id="bLine" aria-pressed="false" title="Horizontal line (H): drag along a price level, or click once to draw it to today">Level</button>
+        <button class="btn" id="bRect" aria-pressed="false" title="Rectangle (R): drag over a base or a zone">Box</button>
+        <button class="btn" id="bNote" aria-pressed="false" title="Note (N): click a bar and type a note with an arrow">Note</button>
+        <span class="dstyle"><button class="btn" id="dStyle" aria-haspopup="true" aria-expanded="false" title="Color, width and style"><i class="dsw" id="dSw"></i>▾</button><div class="drawpop" id="drawPop" hidden></div></span>
+        <button class="btn" id="bDel" hidden title="Delete the selected drawing (Delete)">Delete</button>
+        <button class="btn" id="bUndo" title="Undo (Ctrl+Z)">Undo</button>
         <button class="btn" id="bClr">Clear drawings</button>
       </span>
       <span class="grp">
@@ -600,7 +609,7 @@
   </div>
 </div>
 <div class="toast" id="toast" hidden></div>
-<script src="/i18n.js?v=20261011a"></script>
-<script src="/app.js?v=20261011a"></script>
+<script src="/i18n.js?v=20261012a"></script>
+<script src="/app.js?v=20261012a"></script>
 </body>
 </html>
