@@ -2025,14 +2025,13 @@ function renderAcct(){
 }
 function toggleMenu(on){
   const m = $("#acctMenu"); on = on==null ? m.hidden : on; m.hidden = !on; $("#acct").setAttribute("aria-expanded", on);
-  if(on) m.innerHTML = `<div class="who">Signed in as<br><b>${esc(auth.email)}</b></div><button data-a="alerts" role="menuitem">My alerts</button><button data-a="pw" role="menuitem">Change password</button><button data-a="out" role="menuitem">Sign out</button><button data-a="del" role="menuitem" class="danger">Delete account</button>`;
+  if(on) m.innerHTML = `<div class="who">Signed in as<br><b>${esc(auth.email)}</b></div><button data-a="alerts" role="menuitem">My alerts</button><button data-a="pw" role="menuitem">Change password</button><button data-a="out" role="menuitem">Sign out</button>`;
 }
 $("#acct").onclick = e => { e.stopPropagation(); if(auth.token) toggleMenu(); else openAuth("in"); };
 $("#acctMenu").addEventListener("click", async e=>{
   const a = e.target.closest("button[data-a]"); if(!a) return; toggleMenu(false);
   if(a.dataset.a==="pw") openAuth("pw");
   if(a.dataset.a==="alerts") openAlertsList();
-  if(a.dataset.a==="del") openDelete();
   if(a.dataset.a==="out"){ try{ await api("/auth/logout", {method:"POST"}); }catch(err){} signedOut(); toast("Signed out."); }
 });
 document.addEventListener("click", e=>{ const m=$("#acctMenu"); if(!m.hidden && !e.composedPath().includes(m)) toggleMenu(false); });
