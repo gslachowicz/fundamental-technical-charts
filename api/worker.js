@@ -117,6 +117,9 @@ function alertText(a, lang) {
   if (a.kind === "ma") return { en: `${a.symbol} crossed ${up ? "above" : "below"} its ${MA_NAME.en[a.ma]} (${lv}) · last ${last}`,
     es: `${a.symbol} cruzó ${up ? "por encima de" : "por debajo de"} su ${MA_NAME.es[a.ma]} (${lv}) · último ${last}`,
     pt: `${a.symbol} cruzou ${up ? "acima da" : "abaixo da"} sua ${MA_NAME.pt[a.ma]} (${lv}) · último ${last}` }[L];
+  if (a.kind === "trend") return { en: `${a.symbol} crossed ${up ? "above" : "below"} your trendline (${lv}) · last ${last}`,
+    es: `${a.symbol} cruzó ${up ? "por encima de" : "por debajo de"} tu línea de tendencia (${lv}) · último ${last}`,
+    pt: `${a.symbol} cruzou ${up ? "acima da" : "abaixo da"} sua linha de tendência (${lv}) · último ${last}` }[L];
   if (a.kind === "pivot") return { en: `${a.symbol} broke out above its ${lv} pivot · last ${last}`,
     es: `${a.symbol} rompió sobre su pivot de ${lv} · último ${last}`, pt: `${a.symbol} rompeu acima do pivô de ${lv} · último ${last}` }[L];
   return { en: `${a.symbol} ${up ? "rose above" : "fell below"} ${lv} · last ${last}`,
@@ -137,6 +140,17 @@ function alertEmail(to, lang, fired) {
 <p style="color:#5a5d66;font-size:12px">${T[3]} <a href="${SITE}/#alerts" style="color:#1f3c6e">${T[5]}</a></p></div>`,
     text: fired.map(a => alertText(a, L) + `  ${SITE}/#${a.symbol}`).join("\n") };
 }
+function weekdaysBetween(a, b) {   // Mon-Fri days after date a up to date b ("YYYY-MM-DD")
+  const d0 = Date.parse(a + "T12:00:00Z"), d1 = Date.parse(b + "T12:00:00Z"); if (!(d1 > d0)) return 0;
+  let n = 0; for (let t = d0 + 864e5; t <= d1; t += 864e5) { const w = new Date(t).getUTCDay(); if (w !== 0 && w !== 6) n++; } return n;
+}
+function trendLevel(json, today) {
+  let l; try { l = JSON.parse(json); } catch { return null; }
+  if (!l || !(l.p1 > 0) || !(l.p2 > 0) || !(l.nb > 0)) return null;
+  const k = weekdaysBetween(l.t2, today);
+  const v = l.log ? Math.exp(Math.log(l.p2) + (Math.log(l.p2) - Math.log(l.p1)) / l.nb * k) : l.p2 + (l.p2 - l.p1) / l.nb * k;
+  return isFinite(v) && v > 0 ? v : null;
+}
 async function checkAlerts(env) {
   const { results: active } = await env.DB.prepare(
     "SELECT a.*, u.email AS uemail, u.verified FROM alerts a JOIN users u ON u.id = a.user_id WHERE a.fired IS NULL").all();
@@ -155,6 +169,7 @@ async function checkAlerts(env) {
     const last = q[3], vol = q[4], R = ref && ref.s ? ref.s[a.symbol] : null;
     let level = a.level;
     if (a.kind === "ma") { level = R ? R[MA_IDX[a.ma]] : null; if (level == null) continue; }
+    if (a.kind === "trend") { level = trendLevel(a.ma, et.date); if (level == null) continue; level = Math.round(level * 100) / 100; }
     if (level == null || !isFinite(last)) continue;
     let hit = a.dir === "above" ? last >= level : last <= level;
     if (hit && a.kind === "pivot" && R && R[4]) hit = vol / frac >= 1.4 * R[4];   // breakout needs volume running 40%+ above average
@@ -168,7 +183,7 @@ async function checkAlerts(env) {
   const stmts = [];
   for (const a of fired) {
     stmts.push(env.DB.prepare("UPDATE alerts SET fired = ?, fired_px = ?, fired_level = ? WHERE id = ? AND fired IS NULL").bind(t, a.fired_px, a.fired_level, a.id));
-    const msg = JSON.stringify({ k: a.kind, s: a.symbol, d: a.dir, lv: a.fired_level, px: a.fired_px, ma: a.ma || null, n: a.note || null });
+    const msg = JSON.stringify({ k: a.kind, s: a.symbol, d: a.dir, lv: a.fired_level, px: a.fired_px, ma: a.kind === "ma" ? a.ma : null, n: a.note || null });
     const wantMail = a.email && a.verified;
     if (wantMail) { if (!byUser.has(a.user_id)) byUser.set(a.user_id, { to: a.uemail, list: [] }); byUser.get(a.user_id).list.push(a); }
     a._msg = msg;
@@ -193,7 +208,10 @@ async function checkAlerts(env) {
 function validAlert(b) {
   const sym = String(b.symbol || "").toUpperCase();
   if (!SYM_RE.test(sym)) return "Invalid ticker.";
-  if (!["price", "ma", "pivot"].includes(b.kind)) return "Unknown alert type.";
+  if (!["price", "ma", "pivot", "trend"].includes(b.kind)) return "Unknown alert type.";
+  if (b.kind === "trend") { const l = b.line;
+    if (!l || typeof l !== "object" || !(l.p1 > 0) || !(l.p2 > 0) || !(Number.isInteger(l.nb) && l.nb > 0 && l.nb < 5000) || !/^\d{4}-\d{2}-\d{2}$/.test(String(l.t2)))
+      return "That trendline can't be used for an alert."; }
   if (!["above", "below"].includes(b.dir)) return "Choose above or below.";
   if (b.kind === "ma" && !MA_IDX.hasOwnProperty(b.ma)) return "Choose a moving average.";
   if (b.kind !== "ma" && !(typeof b.level === "number" && isFinite(b.level) && b.level > 0 && b.level < 1e7)) return "Enter a valid price.";
@@ -592,7 +610,8 @@ export default {
         const c = await env.DB.prepare("SELECT COUNT(*) AS n FROM alerts WHERE user_id = ? AND fired IS NULL").bind(user.id).first();
         if (c && c.n >= ALERT_MAX) return fail(req, `You can have up to ${ALERT_MAX} active alerts. Delete one to add another.`);
         const r = await env.DB.prepare("INSERT INTO alerts (user_id, symbol, kind, level, ma, dir, note, email, created) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")
-          .bind(user.id, String(b.symbol).toUpperCase(), b.kind, b.kind === "ma" ? null : b.level, b.kind === "ma" ? b.ma : null, b.dir,
+          .bind(user.id, String(b.symbol).toUpperCase(), b.kind, b.kind === "ma" ? null : b.level,
+            b.kind === "ma" ? b.ma : b.kind === "trend" ? JSON.stringify({ p1: +b.line.p1, p2: +b.line.p2, nb: b.line.nb, t2: String(b.line.t2), log: !!b.line.log }) : null, b.dir,
             b.note ? String(b.note).trim() : null, b.email === false ? 0 : 1, now()).run();
         return json(req, { ok: true, id: r.meta.last_row_id });
       }
