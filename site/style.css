@@ -916,15 +916,6 @@ details.howto > p{margin:8px 0 0}
 .w2pillars b{font:700 16px var(--f-label);color:var(--ink)}
 .w2pillars span{font-size:14.5px;line-height:1.5;color:var(--ink2)}
 /* methodology / sources */
-.w2trustblk{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:40px;align-items:start;padding:40px 0;border-top:3px double var(--ink);border-bottom:1px solid var(--rule)}
-.w2quote h2{font-size:clamp(34px,4vw,52px)}
-.w2quote>p:not(.w2kick){font:400 18px/1.6 var(--f-label);color:#2c2f36;margin:6px 0 18px;max-width:32em}
-.w2src{margin:0;border:1px solid var(--ink);background:var(--plate)}
-.w2src div{display:grid;grid-template-columns:9.5em 1fr;gap:12px;padding:12px 16px;border-bottom:1px dotted var(--rule)}
-.w2src div:last-child{border-bottom:0}
-.w2src dt{font:700 11px var(--f-label);letter-spacing:.16em;text-transform:uppercase;color:var(--ink2);padding-top:3px}
-.w2src dd{margin:0;font:14px/1.5 var(--f-data);color:var(--ink)}
-/* how + cta */
 .w2how{padding:40px 0 10px}
 .w2how ol{margin:18px 0 0;padding:0;list-style:none;counter-reset:s;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
 .w2how li{counter-increment:s;border-top:3px solid var(--navy);padding-top:14px;font-size:15.5px;line-height:1.5}
@@ -942,11 +933,10 @@ details.howto > p{margin:8px 0 0}
   .w2term{transform:none}
   .w2ledger{grid-template-columns:1fr}
   .w2ledger li,.w2ledger li:not(:nth-child(3n+1)){padding:18px 0;border-left:0}
-  .w2trustblk{grid-template-columns:1fr;gap:24px}
   .w2how ol{grid-template-columns:1fr}
 }
 @media (max-width:600px){.w2tiles{grid-template-columns:1fr 1fr}.w2tiles>div{border-right:0!important;border-top:1px dotted var(--trule)}.w2tiles>div:nth-child(odd){border-right:1px dotted var(--trule)!important}
-  .w2pillars{grid-template-columns:1fr}.w2src div{grid-template-columns:1fr;gap:2px}.w2lede{font-size:17px}}
+  .w2pillars{grid-template-columns:1fr}.w2lede{font-size:17px}}
 
 /* paper variant: printed quote pages instead of a screen */
 .w2.paper .w2tape{border-top:1px solid var(--ink);border-bottom:3px double var(--ink)}
@@ -982,3 +972,67 @@ button.w2new{cursor:pointer}
 #wCap{min-height:2.9em}
 @media (prefers-reduced-motion:reduce){.w2stage img{transition:opacity .2s;transform:none}.w2tabs button.on i{animation:none;transform:scaleX(1)}}
 @media (max-width:600px){.w2tabs button{flex:1 1 25%;font-size:10px;letter-spacing:.06em}}
+
+/* welcome: board tiles while their numbers load */
+.w2tiles b:empty::before{content:"";display:inline-block;width:3.2em;height:.62em;border-radius:3px;background:currentColor;opacity:.22;animation:w2pend 1.4s ease-in-out infinite}
+@keyframes w2pend{50%{opacity:.08}}
+.w2tiles>div.w2off{display:none}
+/* welcome: today's trade ideas */
+.w2ideas{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:32px;align-items:center;padding:40px 0 8px}
+.w2ideas-h h2{margin-bottom:8px}
+.w2ideas-h>p:not(.w2kick){margin:0;font:400 16px/1.55 var(--f-label);color:#2c2f36}
+.w2icards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.w2icard{display:grid;gap:6px;align-content:start;background:var(--plate);border:1px solid var(--ink);padding:14px;color:var(--ink);text-decoration:none;box-shadow:4px 4px 0 rgba(31,60,110,.1)}
+.w2icard:hover{border-color:var(--navy);box-shadow:5px 5px 0 rgba(31,60,110,.18)}
+.w2icard header{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.w2icard .sym{font:700 20px var(--f-data);color:var(--navy)}
+.w2icard .rsv{font:700 13px var(--f-data);color:#fff;background:var(--navy);padding:2px 7px;border-radius:3px}
+.w2icard .nm{font:13px var(--f-label);color:var(--ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.w2icard .st{font:600 12px var(--f-label);letter-spacing:.08em;text-transform:uppercase;color:var(--green)}
+.w2icard .pv{display:flex;justify-content:space-between;font:13px var(--f-label);color:var(--ink2);border-top:1px dotted var(--rule);padding-top:6px}
+.w2icard .pv b{font:700 14px var(--f-data);color:var(--ink);filter:blur(5px);user-select:none}
+.w2icard.more{place-content:center;text-align:center;background:var(--navy);color:#fff;border-color:var(--navy);cursor:pointer;font:inherit}
+.w2icard.more b{font:700 30px var(--f-serif);color:var(--amber)}
+.w2icard.more span{font:600 14px var(--f-label)}
+/* welcome: newsletter right under the board (the footer one is hidden on this page) */
+.w2nl{margin:34px 0 0}
+.on-welcome .foot .nlform{display:none}
+/* welcome: note from the founder, on a navy panel that breaks up the page */
+.w2founder{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:14px 48px;margin:40px 0 0;padding:46px 40px 42px;background:var(--navy);color:#fff;border-top:6px double var(--amber);box-shadow:8px 8px 0 rgba(31,60,110,.14)}
+.w2founder .w2kick{grid-column:1/-1;margin:0;color:var(--amber)}
+.w2founder .w2kick span+span::before{background:var(--amber)}
+.w2founder h2{font-size:clamp(32px,3.8vw,50px);margin:0;color:#fff}
+.w2letter p{font:400 18px/1.65 var(--f-label);color:#dfe5f1;margin:0 0 14px;max-width:36em}
+.w2letter .w2sig{display:grid;gap:2px;margin:24px 0 0;padding-top:14px;border-top:1px solid rgba(242,177,52,.45);max-width:22em}
+.w2sig-n{font:italic 400 25px var(--f-serif);color:#fff}
+.w2sig-r{font:700 11px var(--f-label);letter-spacing:.16em;text-transform:uppercase;color:var(--amber)}
+.w2.paper .w2founder{border-top-color:var(--down)}
+/* welcome: FAQ */
+.w2faq{padding:44px 0 6px}
+.w2faq-l{border-top:3px double var(--ink);display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:40px}
+.w2faq details{border-bottom:1px solid var(--rule)}
+.w2faq summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;gap:16px;padding:16px 0;font:700 17px/1.35 var(--f-label);color:var(--ink)}
+.w2faq summary::-webkit-details-marker{display:none}
+.w2faq summary::after{content:"+";font:400 24px/1 var(--f-serif);color:var(--navy);transition:transform .2s}
+.w2faq details[open] summary::after{transform:rotate(45deg)}
+.w2faq summary:hover{color:var(--navy)}
+.w2faq details p{margin:-4px 0 16px;font:400 15.5px/1.6 var(--f-label);color:#2c2f36}
+.w2faq a{color:var(--navy)}
+/* welcome: sign-up bar that slides in once the hero buttons scroll away */
+.w2sticky{position:fixed;top:0;left:0;right:0;z-index:70;display:flex;align-items:center;gap:14px;padding:8px max(16px,calc((100vw - 1728px)/2 + 16px));background:var(--navy);color:#fff;border-bottom:3px double #f2b134;box-shadow:0 8px 24px -12px rgba(31,60,110,.6);transform:translateY(-110%);transition:transform .25s ease;visibility:hidden}
+.w2sticky.on{transform:none;visibility:visible}
+.w2sticky .brand{color:#fff;font-size:18px}
+.w2sticky-t{font:600 14px var(--f-label);color:#c9d3e6}
+.w2sticky .sp{flex:1}
+.w2sticky .btn{border-color:#fff;background:transparent;color:#fff}
+.w2sticky .btn.on{background:#fff;color:var(--navy);box-shadow:3px 3px 0 #f2b134}
+/* not found */
+.w2404{padding:70px 0 50px;max-width:760px}
+.w2404 h1{font:700 clamp(36px,5vw,60px)/1.05 var(--f-serif);color:var(--navy);margin:0 0 16px}
+@media (max-width:1000px){.w2ideas{grid-template-columns:1fr;gap:18px}}
+@media (max-width:900px){.w2founder{grid-template-columns:1fr;padding:34px 22px}.w2faq-l{grid-template-columns:1fr}.w2sticky-t{display:none}}
+@media (max-width:600px){.w2icards{grid-template-columns:1fr 1fr}.w2icards .w2icard:nth-child(3):not(.more){display:none}.w2icard.more{grid-column:1/-1}
+  .w2sticky .brand{font-size:0;gap:0}.w2sticky .btn[data-ws="in"]{display:none}.w2letter p{font-size:16.5px}
+  .w2hero .ctas{display:grid;grid-template-columns:1fr;gap:10px}.w2hero .ctas .btn{text-align:center;justify-content:center}}
+.on-welcome #asof{display:none}
+.w2hero h1,.w2 h2,.w2404 h1{text-wrap:balance}

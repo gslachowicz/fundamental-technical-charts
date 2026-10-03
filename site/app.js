@@ -970,6 +970,10 @@ function route(){
   if(/^reset=[0-9a-f]{48}$/.test(raw)){   // link from the password reset email
     resetToken = raw.slice(6); history.replaceState(null, "", location.pathname); openAuth("reset"); raw = ""; }
   if(raw.toLowerCase() === "alerts"){ history.replaceState(null, "", location.pathname); raw = ""; setTimeout(()=>{ if(auth.token) loadAlerts().then(openAlertsList); else openAuth("in"); }, 300); }
+  // a path the site doesn't know (old or mistyped link): page not found, for visitors and members alike
+  if(!location.hash && raw === "" && !/^\/(index\.html)?$/.test(location.pathname)){
+    ["#vWelcome","#vHome","#vScreener","#vChart","#vHeat","#vIdeas","#vEarn","#vBreadth","#vGroups","#vWall","#vCmp"].forEach(id=>$(id).hidden = true);
+    $("#vNotFound").hidden = false; document.body.classList.add("on-welcome"); setTab(""); document.title = TX("Page not found · Ticker&Tape"); window.scrollTo(0,0); return; }
   if(location.hash) history.replaceState(null, "", keyToPath(raw));   // old #links → clean URL
   // signed-out visitors only get the welcome page, except for a chart link (shared on X, found on Google), which opens with a sign-up bar
   { const l = raw.toLowerCase(), chartish = chartPath || (raw !== "" && l !== "home" && !SECTIONS.includes(l) && !l.startsWith("compare/"));
@@ -978,11 +982,11 @@ function route(){
   const isList = raw === low && ROUTES[low];
   track(low === "" || low === "home" ? "home" : isList ? low : ["groups","heatmap","breadth","ideas","earnings","wall","welcome"].includes(low) ? low : low === "compare" || low.startsWith("compare/") ? "compare" : "chart", raw.toUpperCase());
   const isHome = raw === "" || raw === "home";
-  ["#vWelcome","#vHome","#vScreener","#vChart","#vHeat","#vIdeas","#vEarn","#vBreadth","#vGroups","#vWall","#vCmp"].forEach(id=>$(id).hidden = true); $("#hmTip").hidden = true; $("#gateBar").hidden = true;
-  document.body.classList.toggle("on-welcome", raw === "welcome");
+  ["#vWelcome","#vHome","#vScreener","#vChart","#vHeat","#vIdeas","#vEarn","#vBreadth","#vGroups","#vWall","#vCmp","#vNotFound"].forEach(id=>$(id).hidden = true); $("#hmTip").hidden = true; $("#gateBar").hidden = true;
+  $("#vNotFound").hidden = true; document.body.classList.toggle("on-welcome", raw === "welcome"); if(raw !== "welcome") $("#wSticky").classList.remove("on");
   document.body.classList.toggle("on-home", isHome);
   if(chartPath && raw){ setTab(""); $("#gateBar").hidden = !!auth.token; openChart(raw.toUpperCase()); return; }
-  if(raw === "welcome"){ $("#vWelcome").hidden = false; setTab(""); document.title = "Ticker&Tape · Wall Street's chart room, open to everyone"; window.scrollTo(0,0); renderWelcome(); return; }
+  if(raw === "welcome"){ $("#vWelcome").hidden = false; setTab(""); document.title = "Ticker&Tape · The complete research platform for stock traders"; window.scrollTo(0,0); renderWelcome(); return; }
   if(low === "earnings"){ lastList = "earnings"; $("#vEarn").hidden = false; setTab("earn"); document.title = "Earnings calendar · Ticker&Tape"; window.scrollTo(0,0); renderEarn(); return; }
   if(low === "ideas"){ lastList = "ideas"; $("#vIdeas").hidden = false; setTab("ideas"); document.title = "Trade ideas · Ticker&Tape"; window.scrollTo(0,0); renderIdeas(); return; }
   if(low === "groups"){ lastList = "groups"; $("#vGroups").hidden = false; setTab("groups"); document.title = "Industry groups · Ticker&Tape"; window.scrollTo(0,0); renderGroups(); return; }
@@ -2590,8 +2594,14 @@ const SHOW = [
 const show = {i:0, list:SHOW.slice(), timer:0, paused:false, dur:5500, built:false};
 function showImg(k){ let im = $(`#wStage img[data-k="${k}"]`);
   if(!im){ im = new Image(); im.dataset.k = k; im.width = 1440; im.height = 900; im.alt = (SHOW.find(x=>x.k===k)||{}).t || "";
-    im.onerror = () => { show.list = show.list.filter(x=>x.k!==k); im.remove(); buildShowTabs(); if(!show.list.length) noShow(); }; im.src = `/img/showcase/${k}.jpg`; $("#wStage").appendChild(im); }
+    im.decoding = "async"; showSrc(im, k); $("#wStage").appendChild(im); }
   return im; }
+// WebP (about a third of the size) when the nightly build made it, else the JPEG; a slide with neither is dropped
+function showSrc(im, k){
+  im.onerror = () => { if(/\.webp$/.test(im.src)){ im.src = `/img/showcase/${k}.jpg`; return; }
+    show.list = show.list.filter(x=>x.k!==k); im.remove(); buildShowTabs(); if(!show.list.length) noShow(); };
+  if(!im.src || !/\/img\/showcase\//.test(im.src)) im.src = `/img/showcase/${k}.webp`;
+}
 function noShow(){ clearTimeout(show.timer); $("#wStage").innerHTML = `<img class="on" src="/img/hero-chart.jpg" alt="Ticker&Tape daily chart of NVDA" width="1380" height="654" style="object-fit:contain">`; $("#wTabs").innerHTML = ""; $("#wShowName").textContent = "NVDA · Daily";
   $("#wCap").textContent = TX("NVDA, daily: cup base with pivot and buy zone, 50- and 200-day lines, RS line, labeled volume and the quarterly earnings strip."); }
 function buildShowTabs(){ const cur = show.list[show.i] && show.list[show.i].k;
@@ -2612,8 +2622,8 @@ function startShow(){
     const pause = on => { show.paused = on; fig.classList.toggle("w2show-paused", on); if(on) clearTimeout(show.timer); else setShow(show.i, true); };
     fig.addEventListener("mouseenter", ()=>pause(true)); fig.addEventListener("mouseleave", ()=>pause(false));
     $("#wTabs").addEventListener("click", e=>{ const b = e.target.closest("button[data-k]"); if(b) setShow(show.list.findIndex(x=>x.k===b.dataset.k)); });
-    $("#wStage img").onerror = () => { show.list = show.list.filter(x=>x.k!=="wall"); $("#wStage img").remove(); buildShowTabs(); if(!show.list.length) noShow(); };
-    const first = $("#wStage img"); if(first && first.complete && !first.naturalWidth) first.onerror();
+    const first = $("#wStage img");
+    if(first){ showSrc(first, "wall"); if(first.complete && !first.naturalWidth) first.onerror(); }
     buildShowTabs(); return; }
   setShow(show.i);
 }
@@ -2640,8 +2650,34 @@ function renderWelcome(){
     if(META.groups) tiles[3].querySelector("b").textContent = META.groups;
     $("#wBoardAsOf").textContent = `${TX("As of")} ${fmtLong(iso(META.dataDate))} ${TX("close")}`;
   }
-  loadIdeas().then(()=>{ const n = (IDEAS && IDEAS.ideas || []).length; tiles[4].querySelector("b").textContent = n || "—"; }).catch(()=>{});
+  loadIdeas().then(()=>{ const L = (IDEAS && IDEAS.ideas || []), n = L.length;
+    tiles[4].querySelector("b").textContent = n; if(!n) tiles[4].querySelector("small").textContent = TX("a quiet tape: no setups today");
+    renderWelcomeIdeas(L); }).catch(()=>{});
+  // a tile whose number never arrives is hidden instead of showing an empty slot
+  clearTimeout(renderWelcome.t); renderWelcome.t = setTimeout(()=>tiles.forEach(t=>t.classList.toggle("w2off", !t.querySelector("b").textContent.trim())), 9000);
+  stickyWatch();
 }
+// three of today's ideas as a teaser; the buy points stay hidden until the visitor has an account
+function renderWelcomeIdeas(L){
+  const box = $("#wIdeas"); if(!L.length){ box.hidden = true; return; }
+  const top = L.slice().sort((a,b)=>(b.rs||0)-(a.rs||0)).slice(0, 3), rest = L.length - top.length;
+  $("#wIdeasT").textContent = L.length === 1 ? TX("1 leader near a buy point today") : `${L.length} ${TX("leaders near a buy point today")}`;
+  $("#wIcards").innerHTML = top.map(it=>`<a class="w2icard" href="/chart/${esc(it.symbol)}/">
+      <header><span class="sym">${esc(it.symbol)}</span><span class="rsv" title="RS Rating">RS ${it.rs ?? ""}</span></header>
+      <span class="nm">${esc(it.name || "")}</span><span class="st">${esc(TX(it.status || ""))}</span>
+      <span class="pv">${esc(TX("Buy point"))}<b aria-hidden="true">000.00</b></span></a>`).join("")
+    + `<button class="w2icard more" data-w="up"><b>${rest > 0 ? "+" + rest : "→"}</b><span>${esc(TX(rest > 0 ? "more, with buy points and stops" : "See buy points and stops"))}</span><span>${esc(TX("Open a free account"))}</span></button>`;
+  box.hidden = false;
+}
+// once the hero buttons scroll out of view, a slim sign-up bar slides in at the top
+let stickyObs = null;
+function stickyWatch(){
+  if(stickyObs || !("IntersectionObserver" in window)) return;
+  stickyObs = new IntersectionObserver(([e])=>{ const on = !e.isIntersecting && e.boundingClientRect.top < 0 && !$("#vWelcome").hidden, bar = $("#wSticky");
+    bar.classList.toggle("on", on); bar.setAttribute("aria-hidden", !on); bar.querySelectorAll("button").forEach(b=>b.tabIndex = on ? 0 : -1); });
+  stickyObs.observe($("#wCtas"));
+}
+$("#wSticky").addEventListener("click", e=>{ const b = e.target.closest("[data-ws]"); if(b) openAuth(b.dataset.ws); });
 $("#gateBar").addEventListener("click", e=>{ const b = e.target.closest("[data-g]"); if(b) openAuth(b.dataset.g); });
 $("#vWelcome").addEventListener("click", e=>{
   const b = e.target.closest("[data-w]"); if(!b) return;
