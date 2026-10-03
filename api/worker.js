@@ -61,16 +61,36 @@ async function currentUser(req, env) {
 const cleanEmail = e => String(e || "").trim().toLowerCase();
 
 /* ================= EMAIL VERIFICATION ================= */
-async function sendVerify(env, userId, email) {
+async function sendVerify(env, userId, email, welcome = false) {
   const token = hex(crypto.getRandomValues(new Uint8Array(24)));
   await env.DB.prepare("UPDATE users SET verify_token = ? WHERE id = ?").bind(await sha256(token), userId).run();
   const link = `${API_BASE}/verify?t=${token}`;
-  await sendEmails(env, [{ from: FROM, to: [email], reply_to: REPLY_TO, subject: "Confirm your Ticker&Tape email",
-    html: `<div style="font:16px/1.5 Arial,sans-serif;color:#15171c;max-width:520px"><h2 style="color:#1f3c6e">Welcome to Ticker&amp;Tape</h2>
-<p>Confirm this address so your price alerts can reach you by email.</p>
-<p><a href="${link}" style="display:inline-block;background:#1f3c6e;color:#fff;padding:10px 16px;text-decoration:none;font-weight:700">Confirm my email</a></p>
-<p style="color:#5a5d66;font-size:13px">If you did not create an account, ignore this email.</p></div>`,
-    text: `Confirm your Ticker&Tape email: ${link}` }]);
+  const btn = `<p style="margin:22px 0"><a href="${link}" style="display:inline-block;background:#1f3c6e;color:#fff;padding:12px 20px;text-decoration:none;font-weight:700;box-shadow:3px 3px 0 #f2b134">Confirm my email</a></p>`;
+  const msg = welcome ? {
+    // one email at sign-up: a short welcome from the founder, the confirmation button and three things to do on day one
+    subject: "Welcome to Ticker&Tape",
+    html: `<div style="font:16px/1.6 Arial,sans-serif;color:#15171c;max-width:560px">
+<p style="font:700 11px Arial,sans-serif;letter-spacing:.2em;text-transform:uppercase;color:#5a5d66;margin:0 0 6px">Ticker&amp;Tape</p>
+<h2 style="font:700 28px Georgia,serif;color:#1f3c6e;margin:0 0 14px">Welcome to the room.</h2>
+<p>Thanks for joining Ticker&amp;Tape. Everything a stock trader needs is now on one desk: charts, ratings, breadth, trade ideas and earnings.</p>
+<p>First, confirm this address so your price alerts can reach you by email:</p>${btn}
+<p style="font:700 13px Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#1f3c6e;margin:26px 0 6px;border-bottom:1px solid #d9d6cc;padding-bottom:4px">Three things to do today</p>
+<ol style="padding-left:20px;margin:0 0 18px">
+<li style="margin-bottom:8px"><b>Build your watchlist.</b> Open any chart and tap the star. Your list follows you to every device. <a href="${SITE}/screener/" style="color:#1f3c6e">Find stocks in the screener →</a></li>
+<li style="margin-bottom:8px"><b>Check today's trade ideas.</b> Leaders with an RS Rating of 80 or more near a buy point, with the pivot and a stop. <a href="${SITE}/ideas/" style="color:#1f3c6e">See the trade ideas →</a></li>
+<li style="margin-bottom:8px"><b>Set your first alert.</b> Draw a level or a trendline on any chart and get an email when it trades. <a href="${SITE}/chart/NVDA/" style="color:#1f3c6e">Open a chart →</a></li>
+</ol>
+<p>If anything looks off, or there's a tool you'd like to see, just reply to this email. I read every one.</p>
+<p style="margin:22px 0 0;font:italic 20px Georgia,serif;color:#1f3c6e">Gonzalo Sanchez Lachowicz</p>
+<p style="margin:0;font:700 11px Arial,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#5a5d66">Founder, Ticker&amp;Tape</p>
+<p style="color:#5a5d66;font-size:12px;margin-top:28px;border-top:1px solid #d9d6cc;padding-top:10px">If you did not create an account, ignore this email. Ticker&amp;Tape is a charting and research tool, not investment advice.</p></div>`,
+    text: `Welcome to Ticker&Tape.\n\nConfirm your email so your alerts can reach you: ${link}\n\nThree things to do today:\n1. Build your watchlist: ${SITE}/screener/\n2. Check today's trade ideas: ${SITE}/ideas/\n3. Set your first alert: ${SITE}/chart/NVDA/\n\nJust reply to this email with any question or idea.\n\nGonzalo Sanchez Lachowicz\nFounder, Ticker&Tape` }
+  : { subject: "Confirm your Ticker&Tape email",
+    html: `<div style="font:16px/1.5 Arial,sans-serif;color:#15171c;max-width:520px"><h2 style="color:#1f3c6e">Confirm your email</h2>
+<p>Confirm this address so your price alerts can reach you by email.</p>${btn}
+<p style="color:#5a5d66;font-size:13px">If you did not ask for this, ignore this email.</p></div>`,
+    text: `Confirm your Ticker&Tape email: ${link}` };
+  await sendEmails(env, [{ from: FROM, to: [email], reply_to: REPLY_TO, ...msg }]);
   await env.DB.prepare("UPDATE users SET verify_sent = ? WHERE id = ?").bind(now(), userId).run();   // only once the email went out
 }
 
@@ -467,7 +487,7 @@ export default {
         const r = await env.DB.prepare("INSERT INTO users (email, pw_hash, pw_salt, created) VALUES (?, ?, ?, ?)")
           .bind(em, hash, salt, new Date().toISOString()).run();
         const id = r.meta.last_row_id;
-        try { await sendVerify(env, id, em); } catch (e) { console.log("verify email failed:", e.message); }
+        try { await sendVerify(env, id, em, true); } catch (e) { console.log("verify email failed:", e.message); }
         return json(req, { token: await newSession(env, id), email: em, isNew: true, verified: false });
       }
       if (path === "/auth/login" && req.method === "POST") {
