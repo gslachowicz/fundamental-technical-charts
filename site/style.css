@@ -1201,7 +1201,7 @@ button.w2new{cursor:pointer}
 .pfempty h3{margin:0 0 8px;font:800 24px var(--f-head);color:var(--navy)}
 .pfempty p{max-width:60ch;margin:0 auto 14px;font:15px/1.5 var(--f-label)}
 .pfempty .ctas{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:12px}
-.pfempty .fine{font-size:13px;color:var(--ink2);margin:0}
+.pfempty .fine{font-size:13px;color:var(--ink2);margin:0 auto}
 .pfcols{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
 .pfcols .in{padding:10px}
 .pfbar{display:grid;grid-template-columns:150px 1fr 52px;align-items:center;gap:8px;font:13px var(--f-label);padding:3px 0}
