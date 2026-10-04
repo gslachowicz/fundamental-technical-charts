@@ -30,6 +30,9 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+sys.path.insert(0, str(Path(__file__).parent))
+import financials as FIN  # noqa: E402
+
 ROOT = Path(__file__).resolve().parents[1]
 OUT_DEFAULT = ROOT / "site" / "data"
 CACHE = ROOT / "cache"
@@ -767,7 +770,8 @@ def sec_cik(sym: str):
     return _sec_map.get(sym)
 
 
-def sec_facts(sym: str):
+def sec_company(sym: str):
+    """The whole XBRL company facts file (U.S. GAAP and IFRS) from SEC EDGAR."""
     import requests
     cik = sec_cik(sym)
     if not cik:
@@ -777,7 +781,36 @@ def sec_facts(sym: str):
                      headers={"User-Agent": SEC_UA}, timeout=60)
     if r.status_code != 200:
         return None
-    return (r.json().get("facts") or {}).get("us-gaap")
+    return r.json()
+
+
+def sec_facts(sym: str):
+    j = sec_company(sym)
+    if not j:
+        return None
+    try:   # the same download also gives the full financial statements (data/f/SYM.json)
+        fin = FIN.statements(j)
+        if fin:
+            fin_cache_put(sym, fin)
+    except Exception as e:  # noqa: BLE001
+        log(f"{sym}: statements failed: {e}")
+    return (j.get("facts") or {}).get("us-gaap")
+
+
+def fin_cache_get(sym: str):
+    p = CACHE / "fin" / f"{sym}.json"
+    if not p.exists():
+        return None, 0
+    try:
+        d = json.loads(p.read_text())
+        return d.get("fin"), d.get("ts", 0)
+    except Exception:  # noqa: BLE001
+        return None, 0
+
+
+def fin_cache_put(sym: str, fin: dict) -> None:
+    (CACHE / "fin").mkdir(parents=True, exist_ok=True)
+    (CACHE / "fin" / f"{sym}.json").write_text(jdumps({"ts": time.time(), "fin": fin}, separators=(",", ":")))
 
 
 def sec_periods(g: dict, tags: list[str], unit: str, take_max: bool = True) -> dict:
@@ -1475,6 +1508,41 @@ def fund_cache_put(sym: str, fund: dict) -> None:
     (CACHE / "fund" / f"{sym}.json").write_text(jdumps({"ts": time.time(), "v": FUND_VERSION, "fund": fund}, separators=(",", ":")))
 
 
+FIN_BUDGET_SEC = int(__import__("os").environ.get("INK_FIN_BUDGET", "600"))   # seconds per run spent filling missing statements
+FIN_MAX_AGE_DAYS = 45
+
+
+def build_financials(out: Path, syms: list[str]) -> None:
+    """Financial statements for every stock: refreshed with the fundamentals rotation; companies still missing
+    (or older than FIN_MAX_AGE_DAYS) are fetched here within a time budget, the most traded first."""
+    t0, got, tried = time.time(), 0, 0
+    for s in syms:
+        if time.time() - t0 > FIN_BUDGET_SEC:
+            break
+        fin, ts = fin_cache_get(s)
+        if fin is not None and time.time() - ts < FIN_MAX_AGE_DAYS * 86400:
+            continue
+        if not sec_cik(s):
+            continue
+        tried += 1
+        try:
+            j = sec_company(s)
+            f = FIN.statements(j) if j else None
+            if f:
+                fin_cache_put(s, f)
+                got += 1
+        except Exception as e:  # noqa: BLE001
+            log(f"{s}: statements failed: {e}")
+    (out / "f").mkdir(parents=True, exist_ok=True)
+    n = 0
+    for s in syms:
+        fin, _ = fin_cache_get(s)
+        if fin:
+            (out / "f" / f"{file_symbol(s)}.json").write_text(jdumps({"symbol": s, **fin}, separators=(",", ":")))
+            n += 1
+    log(f"financial statements: {got} fetched of {tried} tried, {n} published")
+
+
 def has_fund_data(f: dict | None) -> bool:
     return bool(f and (f.get("quarters") or f.get("annual") or f.get("mktCap")))
 
@@ -1901,6 +1969,7 @@ SITE_URL = "https://tickerandtape.com"
 SECTION_PAGES = {
     "watchlist": ("Watchlist · Ticker&Tape", "Your watchlist with RS Ratings, EPS and sales growth, bases, pivots and buy-zone status, updated every trading day.", False),
     "portfolio": ("Portfolio and trade journal · Ticker&Tape", "Track your positions, P&L by day, week, month and year, your stats as a trader and your performance against SPY, QQQ and IWM. Private to your account.", False),
+    "fundamentals": ("Financial statements: income statement, balance sheet and cash flow · Ticker&Tape", "Up to 15 years of income statements, balance sheets and cash flows from SEC filings for every U.S. stock, annual and quarterly. Chart any line and compare companies.", False),
     "screener": ("Stock screener: RS Rating, Composite, bases and pivots · Ticker&Tape", "Screen every U.S. stock and ADR worth $1 billion or more by RS Rating, Composite Rating, EPS and sales growth, distance from the high and base status.", False),
     "etfs": ("ETF screener: sectors, industries, bonds, commodities · Ticker&Tape", "Sector, industry, factor, bond, commodity and country ETFs ranked by relative strength and performance, with O'Neil-style charts.", False),
     "groups": ("Industry group rankings · Ticker&Tape", "Every GICS sub-industry ranked by the relative strength of its stocks, with rank changes over 1, 3 and 6 weeks and the leaders of each group.", False),
@@ -2254,6 +2323,14 @@ def main():
         except Exception as e:  # noqa: BLE001
             log(f"{s}: universe row failed: {e}")
     log(f"universe screener: {len(uni_rows)} stocks, {with_fund + len(watch)} with fundamentals")
+
+    # ---------- 3b) financial statements (SEC): fill the gaps, biggest companies first, then publish data/f/SYM.json
+    if demo_fund is None:
+        try:
+            build_financials(out, [r["symbol"] for r in sorted(uni_rows, key=lambda r: -(r.get("dollarVol50") or 0))])
+        except Exception as e:  # noqa: BLE001
+            traceback.print_exc()
+            log(f"financial statements failed: {e}")
 
     # ---------- 4) futures: chart files only (not in the screener, RS or group ranks)
     for f_sym, (f_grp, f_name, f_unit) in FUTURES.items():
