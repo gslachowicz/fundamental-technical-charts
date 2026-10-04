@@ -120,26 +120,22 @@ def parse_ics(text: str):
 
 
 def census_events():
-    import pandas as pd
+    """Rows of the Census release schedule (indicator, date, time, period), read straight from the HTML table."""
     from zoneinfo import ZoneInfo
-    html = get("https://www.census.gov/economic-indicators/calendar-listview.html").text
+    import html as _h
+    page = get("https://www.census.gov/economic-indicators/calendar-listview.html").text
     out = []
-    for tb in pd.read_html(io.StringIO(html)):
-        cols = [str(c).lower() for c in tb.columns]
-        if not any("release" in c for c in cols):
+    for row in re.findall(r"<tr[^>]*>(.*?)</tr>", page, flags=re.S | re.I):
+        cells = [re.sub(r"\s+", " ", _h.unescape(re.sub(r"<[^>]+>", " ", c))).strip() for c in re.findall(r"<t[dh][^>]*>(.*?)</t[dh]>", row, flags=re.S | re.I)]
+        if len(cells) < 3:
             continue
-        for _, r in tb.iterrows():
-            vals = [str(v) for v in r.values]
-            if len(vals) < 3:
-                continue
-            title, date_s, time_s = vals[0], vals[1], vals[2]
-            period = vals[3] if len(vals) > 3 else ""
-            try:
-                d = dt.datetime.strptime(date_s.strip(), "%B %d, %Y")
-                t = dt.datetime.strptime(time_s.strip(), "%I:%M %p")
-            except ValueError:
-                continue   # "Suspended" or a missing date
-            out.append((title, d.replace(hour=t.hour, minute=t.minute, tzinfo=ZoneInfo(NY)), period))
+        try:
+            d = dt.datetime.strptime(cells[1], "%B %d, %Y")
+            t = dt.datetime.strptime(cells[2].upper().replace(".", ""), "%I:%M %p")
+        except ValueError:
+            continue   # header, "Suspended" or a missing date
+        out.append((cells[0], d.replace(hour=t.hour, minute=t.minute, tzinfo=ZoneInfo(NY)), cells[3] if len(cells) > 3 else ""))
+    log(f"Census: {len(out)} releases")
     return out
 
 
@@ -187,7 +183,9 @@ def build_calendar(today: dt.date, demo=False):
         for src, url in (("BLS", "https://www.bls.gov/schedule/news_release/bls.ics"),
                          ("BEA", "https://www.bea.gov/news/schedule/ics/online-calendar-subscription.ics")):
             try:
-                for title, when in parse_ics(get(url).text):
+                evs = parse_ics(get(url).text)
+                log(f"{src}: {len(evs)} releases")
+                for title, when in evs:
                     m = match(title)
                     if m and not (src == "BEA" and m[0] in ("trade",)):
                         period = (re.search(r"(January|February|March|April|May|June|July|August|September|October|November|December|[1-4]\w* Quarter)[^,]*\d{4}", title) or [""])[0]
