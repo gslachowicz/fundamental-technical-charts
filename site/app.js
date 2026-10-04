@@ -1708,7 +1708,7 @@ function normPf(o){
   o = o && typeof o === "object" ? o : {};
   const T = Array.isArray(o.trades) ? o.trades.filter(t=>t && /^[A-Z0-9.\-^=]{1,15}$/.test(t.s||"") && (t.side==="buy"||t.side==="sell") && /^\d{4}-\d{2}-\d{2}$/.test(t.d||"") && t.q>0 && t.p>0) : [];
   return {trades: T.map(t=>({id: t.id || Math.random().toString(36).slice(2,10), s:t.s, side:t.side, d:t.d, q:+t.q, p:+t.p, fee:+t.fee||0,
-    stop: t.stop>0 ? +t.stop : null, setup: String(t.setup||"").slice(0,40), note: String(t.note||"").slice(0,500)})),
+    stop: t.stop>0 ? +t.stop : null, setup: String(t.setup||"").slice(0,40), note: String(t.note||"").slice(0,500), ...(t.est ? {est: true} : {})})),
     bench: PF_BENCH.includes(o.bench) ? o.bench : "SPY", hide: !!o.hide};
 }
 let pfWarned = false;
@@ -1808,7 +1808,7 @@ async function renderPortfolio(){
   if(!PF.trades.length){
     $("#pfKpis").innerHTML = ""; $("#pfChartBox").hidden = true; $("#pfBody").innerHTML = `<div class="pfempty"><h3>${esc(TX("Start your portfolio"))}</h3>
       <p>${esc(TX("Add your trades (date, price and quantity) and Ticker&Tape keeps your positions, P&L, stats and journal up to date, and compares you with the market."))}</p>
-      <div class="ctas"><button class="btn on" data-pf="add">＋ ${esc(TX("Add a trade"))}</button><button class="btn" data-pf="import">${esc(TX("Import a CSV from your broker"))}</button></div>
+      <div class="ctas"><button class="btn on" data-pf="add">＋ ${esc(TX("Add a trade"))}</button><button class="btn" data-pf="quick">${esc(TX("Quick build"))}</button><button class="btn" data-pf="import">${esc(TX("Import a CSV from your broker"))}</button></div>
       <p class="fine">${esc(TX("Your portfolio is private: only you can see it."))}</p></div>`; return; }
   if(!pfCalc){ $("#pfBody").innerHTML = `<div class="empty">${esc(TX("Loading…"))}</div>`; const c = await pfCompute(); if(!c) return; pfCalc = c; }
   const c = pfCalc, S = c.series, nowT = S.length ? S[S.length-1].t : Date.now(), dd = new Date(nowT);
@@ -1834,7 +1834,7 @@ async function renderPortfolio(){
   } else if(pfTab === "journal"){
     const T = PF.trades.slice().sort((a,b)=>b.d.localeCompare(a.d));
     $("#pfBody").innerHTML = `<div class="tablewrap"><table class="tbl pftbl"><thead><tr><th>${esc(TX("Date"))}</th><th>${esc(TX("Side"))}</th><th>${esc(TX("Ticker"))}</th><th>${esc(TX("Qty"))}</th><th>${esc(TX("Price"))}</th><th>${esc(TX("Fee"))}</th><th>${esc(TX("Stop"))}</th><th class="l">${esc(TX("Setup"))}</th><th>${esc(TX("Realized"))}</th><th class="l">${esc(TX("Note"))}</th><th></th></tr></thead><tbody>
-      ${T.map(t=>`<tr><td>${esc(fmtLong(iso(t.d)))}</td><td><span class="pfside ${t.side}">${esc(TX(t.side === "buy" ? "Buy" : "Sell"))}</span></td><td><b>${esc(t.s)}</b></td><td>${pfQty(t.q)}</td><td>${fmtP(t.p)}</td><td>${t.fee ? pfMoney(t.fee) : ""}</td>
+      ${T.map(t=>`<tr><td>${esc(fmtLong(iso(t.d)))}</td><td><span class="pfside ${t.side}">${esc(TX(t.side === "buy" ? "Buy" : "Sell"))}</span></td><td><b>${esc(t.s)}</b></td><td>${pfQty(t.q)}</td><td>${t.est ? `<small class="pfest" title="${esc(TX("Estimated price: the average of that day"))}">≈</small> ` : ""}${fmtP(t.p)}</td><td>${t.fee ? pfMoney(t.fee) : ""}</td>
         <td>${t.stop ? fmtP(t.stop) : ""}</td><td class="l">${esc(t.setup)}</td><td class="${cls_(c.realizedBy[t.id])}">${c.realizedBy[t.id] != null ? pfSigned(c.realizedBy[t.id]) : ""}</td><td class="pfnote">${esc(t.note)}</td>
         <td class="pfact"><button class="lnk" data-pfedit="${t.id}">${esc(TX("Edit"))}</button></td></tr>`).join("")}</tbody></table></div>`;
   } else {
@@ -1877,6 +1877,60 @@ function drawPfChart(){
   g.lineWidth = 1;
 }
 
+// the prices of a day (or of the next session when the market was closed), as they were that day: before any later split
+async function pfDayPx(sym, d){
+  const b = await getBundle(sym); if(!b || !b.prices || !b.prices.length) return null;
+  const P = b.prices; if(P[0][0] > d) return null;
+  const i = P.findIndex(x=>x[0] >= d);
+  if(i < 0){ const q = LIVE && LIVE.q && LIVE.q[sym]; if(q && LIVE.date >= d) return {d: LIVE.date, o:q[0], h:q[1], l:q[2], c:q[3], avg:(q[1]+q[2]+q[3])/3, shifted: LIVE.date !== d}; return null; }
+  const [bd, o, h, l, c] = P[i], f = splitFactor(b, bd);
+  return {d: bd, o: o*f, h: h*f, l: l*f, c: c*f, avg: (h + l + c) / 3 * f, shifted: bd !== d};
+}
+// shares for an amount: whole shares, or a fraction when the amount buys less than one
+const pfShares = (amt, px) => { const q = amt / px; return q >= 1 ? Math.floor(q) : +q.toFixed(4); };
+// "NVDA", "AAPL 2026-03-15", "MSFT, 15/01/2026, 25000", "AMZN 10k"
+function pfQuickParse(txt, defD, defA){
+  const dayFirst = I18N.lang !== "en";
+  const date = v => { let m = v.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/); if(m) return `${m[1]}-${m[2].padStart(2,"0")}-${m[3].padStart(2,"0")}`;
+    m = v.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{2}|\d{4})$/); if(!m) return null;
+    let [a, b2, y] = [+m[1], +m[2], m[3].length === 2 ? 2000 + +m[3] : +m[3]]; let dd = dayFirst ? a : b2, mm = dayFirst ? b2 : a; if(mm > 12 && dd <= 12) [dd, mm] = [mm, dd];
+    if(mm < 1 || mm > 12 || dd < 1 || dd > 31) return null; return `${y}-${String(mm).padStart(2,"0")}-${String(dd).padStart(2,"0")}`; };
+  const amount = v => { v = v.toLowerCase().replace(/usd|u\$s|\$/g, ""); const k = /k$/.test(v) ? 1000 : /m$/.test(v) ? 1e6 : 1; v = v.replace(/[km]$/, "");
+    if(/^\d{1,3}([.,]\d{3})+$/.test(v)) v = v.replace(/[.,]/g, ""); else v = v.replace(",", "."); const n = parseFloat(v); return isFinite(n) && n > 0 && /^[\d.]+$/.test(v) ? n * k : null; };
+  const out = [];
+  for(const line of txt.split(/\n/)){ const toks = line.split(/[,;\t ]+/).map(x=>x.trim()).filter(Boolean); if(!toks.length) continue;
+    const s = toks[0].toUpperCase().replace(/\./g, "-"); let d = null, a = null, bad = !/^[A-Z0-9\-^=]{1,15}$/.test(s);
+    for(const x of toks.slice(1)){ const dt = date(x); if(dt && !d){ d = dt; continue; } const am = amount(x); if(am && !a){ a = am; continue; } bad = true; }
+    out.push({s, d: d || defD, a: a || defA, bad}); }
+  return out;
+}
+function pfQuickDlg(){
+  dlg(TX("Quick build"), `<p class="msub">${esc(TX("One line per position: the ticker and, if you want, the purchase date and the amount invested. Ticker&Tape uses the average price of that day, so you can build your portfolio in a minute."))}</p>
+    <div class="pfform"><label class="fld"><span>${esc(TX("Purchase date"))}</span><input id="qD" type="date" value="${esc(nyToday())}" max="${esc(nyToday())}"></label>
+      <label class="fld"><span>${esc(TX("Amount per position (USD)"))}</span><input id="qA" type="number" min="0" step="any" value="10000"></label>
+      <label class="fld pfwide"><span>${esc(TX("Positions"))}</span><textarea id="qT" rows="6" spellcheck="false" placeholder="NVDA&#10;AAPL 2026-03-15&#10;MSFT, 2026-01-10, 25000"></textarea></label></div>
+    <div class="pfqprev" id="qPrev"></div>
+    <button class="btn on wide" id="qOk" disabled>${esc(TX("Add trades"))}</button>`, B=>{
+    let rows = [], tok = 0;
+    const run = async () => { const my = ++tok, defD = B.querySelector("#qD").value, defA = +B.querySelector("#qA").value || null;
+      const L = pfQuickParse(B.querySelector("#qT").value, defD, defA);
+      const R = await Promise.all(L.map(async r=>{ if(r.bad || !r.a || !r.d || r.d > nyToday()) return {...r, err: r.bad ? "Could not read this line" : !r.a ? "Missing the amount" : "Invalid date"};
+        const b = await pfDayPx(r.s, r.d); if(!b) return {...r, err: "No price for this ticker and date"};
+        return {...r, bar: b, q: pfShares(r.a, b.avg)}; }));
+      if(my !== tok) return; rows = R.filter(r=>r.bar);
+      B.querySelector("#qPrev").innerHTML = R.length ? `<div class="tablewrap"><table class="tbl pftbl"><thead><tr><th>${esc(TX("Ticker"))}</th><th>${esc(TX("Date"))}</th><th>${esc(TX("Day average"))}</th><th>${esc(TX("Shares"))}</th><th>${esc(TX("Amount"))}</th></tr></thead><tbody>
+        ${R.map(r=>r.bar ? `<tr><td><b>${esc(r.s)}</b></td><td>${esc(fmtLong(iso(r.bar.d)))}</td><td>${fmtP(r.bar.avg)}</td><td>${r.q.toLocaleString("en-US")}</td><td>$${Math.round(r.q * r.bar.avg).toLocaleString("en-US")}</td></tr>`
+          : `<tr class="pfqbad"><td><b>${esc(r.s)}</b></td><td colspan="4" class="l">${esc(TX(r.err))}</td></tr>`).join("")}</tbody></table></div>` : "";
+      const ok = B.querySelector("#qOk"); ok.disabled = !rows.length; ok.textContent = rows.length ? `${TX("Add trades")} (${rows.length})` : TX("Add trades"); };
+    let t0; const later = () => { clearTimeout(t0); t0 = setTimeout(run, 350); };
+    ["#qT","#qD","#qA"].forEach(id=>B.querySelector(id).addEventListener("input", later));
+    B.querySelector("#qOk").onclick = ()=>{ if(!rows.length) return;
+      PF.trades = [...PF.trades, ...rows.map(r=>({id: Math.random().toString(36).slice(2,10), s: r.s, side: "buy", d: r.bar.d, q: r.q, p: +r.bar.avg.toFixed(2), fee: 0, stop: null, setup: "", note: "", est: true}))];
+      PF = normPf(PF); savePf(); closeDlg(); toast(`${rows.length} ${TX("trades added.")}`); renderPortfolio(); };
+    setTimeout(()=>B.querySelector("#qT").focus(), 50);
+  });
+}
+
 // add, edit, sell, stop
 function pfTradeDlg(init){
   const t = {side:"buy", d: nyToday(), q:"", p:"", fee:"", stop:"", setup:"", note:"", s:"", ...(init||{})}, editing = !!(init && init.id);
@@ -1885,11 +1939,13 @@ function pfTradeDlg(init){
     <div class="pfform">
       <label class="fld"><span>${esc(TX("Ticker"))}</span><input id="tS" value="${esc(t.s)}" maxlength="15" spellcheck="false" autocomplete="off" list="symlist" style="text-transform:uppercase"></label>
       <label class="fld"><span>${esc(TX("Date"))}</span><input id="tD" type="date" value="${esc(t.d)}" max="${esc(nyToday())}"></label>
-      <label class="fld"><span>${esc(TX("Quantity"))}</span><input id="tQ" type="number" min="0" step="any" value="${esc(t.q)}"></label>
+      <div class="pfpx pfwide" id="tPx" hidden></div>
       <label class="fld"><span>${esc(TX("Price"))}</span><input id="tP" type="number" min="0" step="any" value="${esc(t.p)}"></label>
+      <label class="fld"><span>${esc(TX("Amount invested (optional)"))}</span><input id="tA" type="number" min="0" step="any" placeholder="${esc(TX("USD, calculates the shares"))}"></label>
+      <label class="fld"><span>${esc(TX("Quantity"))}</span><input id="tQ" type="number" min="0" step="any" value="${esc(t.q)}"></label>
       <label class="fld"><span>${esc(TX("Fees (optional)"))}</span><input id="tF" type="number" min="0" step="any" value="${esc(t.fee || "")}"></label>
       <label class="fld"><span>${esc(TX("Stop (optional)"))}</span><input id="tStop" type="number" min="0" step="any" value="${esc(t.stop || "")}" placeholder="${esc(TX("7–8% below your price"))}"></label>
-      <label class="fld pfwide"><span>${esc(TX("Setup"))}</span><input id="tSet" value="${esc(t.setup)}" list="pfSetups" maxlength="40"><datalist id="pfSetups">${PF_SETUPS.map(x=>`<option value="${esc(x)}">`).join("")}</datalist></label>
+      <label class="fld"><span>${esc(TX("Setup"))}</span><input id="tSet" value="${esc(t.setup)}" list="pfSetups" maxlength="40"><datalist id="pfSetups">${PF_SETUPS.map(x=>`<option value="${esc(x)}">`).join("")}</datalist></label>
       <label class="fld pfwide"><span>${esc(TX("Note (optional)"))}</span><input id="tN" value="${esc(t.note)}" maxlength="500" placeholder="${esc(TX("Why you took it, what you expect, what you learned"))}"></label>
     </div>
     <label class="chk" id="tAlertRow"><input type="checkbox" id="tAlert" ${auth.token ? "checked" : "disabled"}> ${esc(TX("Alert me if the price falls to my stop"))}</label>
@@ -1898,14 +1954,33 @@ function pfTradeDlg(init){
     let side = t.side;
     const sync = () => { B.querySelectorAll("[data-side]").forEach(b=>b.classList.toggle("on", b.dataset.side === side)); B.querySelector("#tAlertRow").hidden = side !== "buy"; };
     B.querySelectorAll("[data-side]").forEach(b=>b.onclick = ()=>{ side = b.dataset.side; sync(); }); sync();
-    B.querySelector("#tP").addEventListener("change", e=>{ const st = B.querySelector("#tStop"); if(side === "buy" && !st.value && +e.target.value > 0) st.value = (+e.target.value * 0.92).toFixed(2); });
+    const $b = q => B.querySelector(q), sP = $b("#tP"), sA = $b("#tA"), sQ = $b("#tQ");
+    let est = !!t.est, pxTok = 0;
+    const autoStop = () => { const st = $b("#tStop"); if(side === "buy" && !st.value && +sP.value > 0) st.value = (+sP.value * 0.92).toFixed(2); };
+    const fromAmount = () => { const a = +sA.value, pr = +sP.value; if(a > 0 && pr > 0) sQ.value = pfShares(a, pr); };
+    const setPx = (v, isEst) => { sP.value = (+v).toFixed(2); est = isEst; fromAmount(); autoStop(); paint(); };
+    let bar = null;
+    const paint = () => { const box = $b("#tPx"); if(!bar){ box.hidden = true; return; } box.hidden = false;
+      const chip = (k, l, v) => `<button type="button" class="pfchip ${est && Math.abs(+sP.value - v) < 0.005 ? "on" : ""}" data-px="${v}">${esc(TX(l))} <b>${fmtP(v)}</b></button>`;
+      box.innerHTML = `<span class="pfpxh">${esc(TX("Don't remember the price?"))}${bar.shifted ? ` <small>${esc(TX("Market closed that day: prices of"))} ${esc(fmtLong(iso(bar.d)))}</small>` : ""}</span>
+        ${chip("avg", "Day average", bar.avg)}${chip("o", "At the open", bar.o)}${chip("c", "At the close", bar.c)}<span class="pfrng">${esc(TX("Day range"))} ${fmtP(bar.l)} – ${fmtP(bar.h)}</span>`;
+      box.querySelectorAll("[data-px]").forEach(x=>x.onclick = ()=> setPx(+x.dataset.px, true)); };
+    const lookUp = async () => { const sym = $b("#tS").value.trim().toUpperCase().replace(/\./g, "-"), d = $b("#tD").value, tok = ++pxTok;
+      if(!/^[A-Z0-9\-^=]{1,15}$/.test(sym) || !/^\d{4}-\d{2}-\d{2}$/.test(d)){ bar = null; paint(); return; }
+      const r = await pfDayPx(sym, d); if(tok !== pxTok) return; bar = r; 
+      if(bar && (!(+sP.value > 0) || est)) setPx(bar.avg, true); else paint();
+      if(!bar){ const box = $b("#tPx"); box.hidden = false; box.innerHTML = `<span class="pfpxh"><small>${esc(TX("No price for this ticker and date yet: enter it by hand."))}</small></span>`; } };
+    $b("#tS").addEventListener("change", lookUp); $b("#tD").addEventListener("change", lookUp);
+    sP.addEventListener("input", ()=>{ est = false; fromAmount(); paint(); }); sP.addEventListener("change", autoStop);
+    sA.addEventListener("input", fromAmount);
+    if(t.s && t.d) lookUp();
     B.querySelector("#tOk").onclick = async ()=>{
       const s = B.querySelector("#tS").value.trim().toUpperCase().replace(/\./g, "-"), d = B.querySelector("#tD").value, q = +B.querySelector("#tQ").value, p = +B.querySelector("#tP").value;
       if(!/^[A-Z0-9\-^=]{1,15}$/.test(s)){ toast(TX("Enter a valid ticker.")); return; }
       if(!/^\d{4}-\d{2}-\d{2}$/.test(d) || d > nyToday()){ toast(TX("Enter a valid date.")); return; }
       if(!(q > 0) || !(p > 0)){ toast(TX("Enter the quantity and the price.")); return; }
       const rec = {id: t.id || Math.random().toString(36).slice(2,10), s, side, d, q, p, fee: +B.querySelector("#tF").value || 0, stop: +B.querySelector("#tStop").value || null,
-        setup: B.querySelector("#tSet").value.trim(), note: B.querySelector("#tN").value.trim()};
+        setup: B.querySelector("#tSet").value.trim(), note: B.querySelector("#tN").value.trim(), ...(est ? {est: true} : {})};
       if(side === "sell" && !editing){ const held = PF.trades.filter(x=>x.s === s && x.d <= d).reduce((a,x)=>a + (x.side === "buy" ? x.q : -x.q), 0);
         if(q > held + 1e-9){ toast(`${TX("You only hold")} ${held} ${s}.`); return; } }
       PF.trades = editing ? PF.trades.map(x=>x.id === rec.id ? rec : x) : [...PF.trades, rec];
@@ -1960,6 +2035,7 @@ $("#vPortfolio").addEventListener("click", e=>{
   const b = e.target.closest("button,[data-go]"); if(!b) return; const d = b.dataset;
   if(d.pf === "add" || b.id === "pfAdd") pfTradeDlg();
   else if(d.pf === "import" || b.id === "pfImport") pfImport();
+  else if(d.pf === "quick" || b.id === "pfQuick") pfQuickDlg();
   else if(b.id === "pfExport") pfExport();
   else if(b.id === "pfHide"){ PF.hide = !PF.hide; savePf(); renderPortfolio(); }
   else if(d.t){ pfTab = d.t; renderPortfolio(); }
