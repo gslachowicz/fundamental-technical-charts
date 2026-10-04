@@ -152,6 +152,79 @@ function trendLevel(json, today) {
   const v = l.log ? Math.exp(Math.log(l.p2) + (Math.log(l.p2) - Math.log(l.p1)) / l.nb * k) : l.p2 + (l.p2 - l.p1) / l.nb * k;
   return isFinite(v) && v > 0 ? v : null;
 }
+// ---------- web push (alerts on the phone or desktop through the installed app)
+// VAPID keys are created on first use and kept in D1 (table kv); subscriptions live in push_subs.
+const b64u = buf => { let s = ""; const a = new Uint8Array(buf); for (let i = 0; i < a.length; i++) s += String.fromCharCode(a[i]); return btoa(s).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""); };
+const unb64u = str => { str = String(str).replace(/-/g, "+").replace(/_/g, "/"); while (str.length % 4) str += "="; const b = atob(str), a = new Uint8Array(b.length); for (let i = 0; i < b.length; i++) a[i] = b.charCodeAt(i); return a; };
+const cat = (...arrs) => { const n = arrs.reduce((s, a) => s + a.length, 0), out = new Uint8Array(n); let o = 0; for (const a of arrs) { out.set(a, o); o += a.length; } return out; };
+const utf8 = s => new TextEncoder().encode(s);
+async function ensurePush(env) {
+  await env.DB.batch([
+    env.DB.prepare("CREATE TABLE IF NOT EXISTS kv (k TEXT PRIMARY KEY, v TEXT NOT NULL)"),
+    env.DB.prepare("CREATE TABLE IF NOT EXISTS push_subs (endpoint TEXT PRIMARY KEY, user_id INTEGER NOT NULL, p256dh TEXT NOT NULL, auth TEXT NOT NULL, created INTEGER NOT NULL)"),
+    env.DB.prepare("CREATE INDEX IF NOT EXISTS push_subs_user ON push_subs (user_id)")]);
+}
+let VAPID = null;
+async function vapidKeys(env) {
+  if (VAPID) return VAPID;
+  await ensurePush(env);
+  let row = await env.DB.prepare("SELECT v FROM kv WHERE k = 'vapid'").first();
+  if (!row) {
+    const kp = await crypto.subtle.generateKey({ name: "ECDSA", namedCurve: "P-256" }, true, ["sign", "verify"]);
+    const v = JSON.stringify({ priv: await crypto.subtle.exportKey("jwk", kp.privateKey), pub: b64u(await crypto.subtle.exportKey("raw", kp.publicKey)) });
+    await env.DB.prepare("INSERT OR IGNORE INTO kv (k, v) VALUES ('vapid', ?)").bind(v).run();
+    row = await env.DB.prepare("SELECT v FROM kv WHERE k = 'vapid'").first();
+  }
+  const v = JSON.parse(row.v);
+  VAPID = { pub: v.pub, key: await crypto.subtle.importKey("jwk", v.priv, { name: "ECDSA", namedCurve: "P-256" }, false, ["sign"]) };
+  return VAPID;
+}
+async function vapidAuth(env, endpoint) {
+  const { pub, key } = await vapidKeys(env);
+  const aud = new URL(endpoint).origin;
+  const head = b64u(utf8(JSON.stringify({ typ: "JWT", alg: "ES256" })));
+  const body = b64u(utf8(JSON.stringify({ aud, exp: Math.floor(Date.now() / 1000) + 12 * 3600, sub: "mailto:contacto@tickerandtape.com" })));
+  const sig = await crypto.subtle.sign({ name: "ECDSA", hash: "SHA-256" }, key, utf8(`${head}.${body}`));
+  return `vapid t=${head}.${body}.${b64u(sig)}, k=${pub}`;
+}
+async function hkdf(salt, ikm, info, len) {
+  const k = await crypto.subtle.importKey("raw", ikm, "HKDF", false, ["deriveBits"]);
+  return new Uint8Array(await crypto.subtle.deriveBits({ name: "HKDF", hash: "SHA-256", salt, info }, k, len * 8));
+}
+// RFC 8291 message encryption (aes128gcm), one record
+async function encryptPush(payload, p256dh, authSecret) {
+  const ua = unb64u(p256dh), auth = unb64u(authSecret);
+  const eph = await crypto.subtle.generateKey({ name: "ECDH", namedCurve: "P-256" }, true, ["deriveBits"]);
+  const as = new Uint8Array(await crypto.subtle.exportKey("raw", eph.publicKey));
+  const uaKey = await crypto.subtle.importKey("raw", ua, { name: "ECDH", namedCurve: "P-256" }, false, []);
+  const secret = new Uint8Array(await crypto.subtle.deriveBits({ name: "ECDH", public: uaKey }, eph.privateKey, 256));
+  const ikm = await hkdf(auth, secret, cat(utf8("WebPush: info\0"), ua, as), 32);
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const cek = await hkdf(salt, ikm, utf8("Content-Encoding: aes128gcm\0"), 16);
+  const nonce = await hkdf(salt, ikm, utf8("Content-Encoding: nonce\0"), 12);
+  const key = await crypto.subtle.importKey("raw", cek, "AES-GCM", false, ["encrypt"]);
+  const ct = new Uint8Array(await crypto.subtle.encrypt({ name: "AES-GCM", iv: nonce }, key, cat(utf8(payload), new Uint8Array([2]))));
+  const rs = new Uint8Array([0, 0, 16, 0]);   // record size 4096
+  return cat(salt, rs, new Uint8Array([as.length]), as, ct);
+}
+async function sendPush(env, sub, msg) {
+  const body = await encryptPush(JSON.stringify(msg), sub.p256dh, sub.auth);
+  const r = await fetch(sub.endpoint, { method: "POST", body, headers: {
+    Authorization: await vapidAuth(env, sub.endpoint), "Content-Encoding": "aes128gcm", "Content-Type": "application/octet-stream", TTL: "86400", Urgency: "high" } });
+  if (r.status === 404 || r.status === 410) await env.DB.prepare("DELETE FROM push_subs WHERE endpoint = ?").bind(sub.endpoint).run();
+  return r.status;
+}
+async function pushToUsers(env, byUser) {
+  // byUser: Map(user_id → [msg, ...]); every device of the user gets each message
+  if (!byUser.size) return 0;
+  await ensurePush(env);
+  const ids = [...byUser.keys()];
+  const { results } = await env.DB.prepare(`SELECT * FROM push_subs WHERE user_id IN (${ids.map(() => "?").join(",")})`).bind(...ids).all();
+  let n = 0;
+  for (const s of results) for (const m of byUser.get(s.user_id) || []) { try { if ((await sendPush(env, s, m)) < 300) n++; } catch (e) { console.log("push failed:", e.message); } }
+  return n;
+}
+
 async function checkAlerts(env) {
   const { results: active } = await env.DB.prepare(
     "SELECT a.*, u.email AS uemail, u.verified FROM alerts a JOIN users u ON u.id = a.user_id WHERE a.fired IS NULL").all();
@@ -204,7 +277,26 @@ async function checkAlerts(env) {
       .bind(a.user_id, a.id, a.symbol, a._msg, t, mailUsers.has(a.user_id) ? 1 : 0));
   await env.DB.batch(stmts);
   if (mails.length) { try { await sendEmails(env, mails); } catch (e) { console.log("alert emails failed:", e.message); } }
-  return { checked: active.length, fired: fired.length, emailed: mails.length };
+  let pushed = 0;
+  try { pushed = await pushToUsers(env, await alertPushes(env, fired)); } catch (e) { console.log("alert pushes failed:", e.message); }
+  return { checked: active.length, fired: fired.length, emailed: mails.length, pushed };
+}
+// the push notification text for each fired alert, in the user's language
+async function alertPushes(env, fired) {
+  const W = { en: ["rose to", "fell to", "price alert", "50-day line", "21-day EMA", "200-day line", "trendline", "breakout above the pivot", "alert at"],
+              es: ["subió a", "bajó a", "alerta de precio", "media de 50 días", "EMA de 21 días", "media de 200 días", "línea de tendencia", "ruptura del pivot", "alerta en"],
+              pt: ["subiu para", "caiu para", "alerta de preço", "média de 50 dias", "MME de 21 dias", "média de 200 dias", "linha de tendência", "rompimento do pivô", "alerta em"] };
+  const langs = new Map(), out = new Map();
+  for (const a of fired) {
+    if (!langs.has(a.user_id)) { let l = "en"; try { const cf = await env.DB.prepare("SELECT value FROM user_data WHERE user_id = ? AND key = 'cfg'").bind(a.user_id).first(); if (cf) l = JSON.parse(cf.value).lang || "en"; } catch {} langs.set(a.user_id, W[l] ? l : "en"); }
+    const w = W[langs.get(a.user_id)], px = n => "$" + (+n).toFixed(n < 20 ? 3 : 2);
+    const what = a.kind === "ma" ? w[{ d50: 3, e21: 4, d200: 5 }[a.ma] || 3] : a.kind === "trend" ? w[6] : a.kind === "pivot" ? w[7] : w[2];
+    const msg = { title: `${a.symbol} · ${what}`, body: `${a.symbol} ${a.dir === "above" ? w[0] : w[1]} ${px(a.fired_px)} (${w[8]} ${px(a.fired_level)})${a.note ? " · " + a.note : ""}`,
+      url: `/chart/${a.symbol}/`, tag: `alert-${a.id}` };
+    if (!out.has(a.user_id)) out.set(a.user_id, []);
+    out.get(a.user_id).push(msg);
+  }
+  return out;
 }
 function validAlert(b) {
   const sym = String(b.symbol || "").toUpperCase();
@@ -596,7 +688,8 @@ export default {
         const u = await env.DB.prepare("SELECT pw_hash, pw_salt FROM users WHERE id = ?").bind(user.id).first();
         const { hash } = await hashPassword(String(password || ""), u.pw_salt);
         if (!safeEqual(hash, u.pw_hash)) return fail(req, "Your current password is not correct.", 401);
-        await env.DB.batch(["sessions", "user_data", "alerts", "notifications", "password_resets"].map(tb =>
+        await ensurePush(env);
+        await env.DB.batch(["sessions", "user_data", "alerts", "notifications", "password_resets", "push_subs"].map(tb =>
           env.DB.prepare(`DELETE FROM ${tb} WHERE user_id = ?`).bind(user.id)).concat([env.DB.prepare("DELETE FROM users WHERE id = ?").bind(user.id)]));
         return json(req, { ok: true });
       }
@@ -620,6 +713,29 @@ export default {
       if (am && req.method === "DELETE") {
         await env.DB.prepare("DELETE FROM alerts WHERE id = ? AND user_id = ?").bind(+am[1], user.id).run();
         return json(req, { ok: true });
+      }
+      // ---------- push notifications
+      if (path === "/push/key" && req.method === "GET") return json(req, { key: (await vapidKeys(env)).pub });
+      if (path === "/push/subscribe" && req.method === "POST") {
+        const b = await body(req), ep = String(b.endpoint || ""), k = b.keys || {};
+        if (!/^https:\/\/[^\s]{10,900}$/.test(ep) || !/^[\w-]{80,100}$/.test(String(k.p256dh || "")) || !/^[\w-]{16,30}$/.test(String(k.auth || ""))) return fail(req, "Invalid subscription.");
+        await ensurePush(env);
+        const c = await env.DB.prepare("SELECT COUNT(*) AS n FROM push_subs WHERE user_id = ?").bind(user.id).first();
+        if (c && c.n >= 10) await env.DB.prepare("DELETE FROM push_subs WHERE user_id = ? AND endpoint IN (SELECT endpoint FROM push_subs WHERE user_id = ? ORDER BY created LIMIT 1)").bind(user.id, user.id).run();
+        await env.DB.prepare("INSERT INTO push_subs (endpoint, user_id, p256dh, auth, created) VALUES (?, ?, ?, ?, ?) ON CONFLICT(endpoint) DO UPDATE SET user_id = excluded.user_id, p256dh = excluded.p256dh, auth = excluded.auth")
+          .bind(ep, user.id, String(k.p256dh), String(k.auth), now()).run();
+        return json(req, { ok: true });
+      }
+      if (path === "/push/unsubscribe" && req.method === "POST") {
+        const b = await body(req); await ensurePush(env);
+        await env.DB.prepare("DELETE FROM push_subs WHERE endpoint = ? AND user_id = ?").bind(String(b.endpoint || ""), user.id).run();
+        return json(req, { ok: true });
+      }
+      if (path === "/push/test" && req.method === "POST") {
+        const b = await body(req), l = ["es", "pt"].includes(b.lang) ? b.lang : "en";
+        const T = { en: ["Notifications are on", "You'll get your Ticker&Tape alerts on this device."], es: ["Notificaciones activadas", "Vas a recibir tus alertas de Ticker&Tape en este dispositivo."], pt: ["Notificações ativadas", "Você vai receber seus alertas do Ticker&Tape neste dispositivo."] }[l];
+        const n = await pushToUsers(env, new Map([[user.id, [{ title: T[0], body: T[1], url: "/", tag: "test" }]]]));
+        return json(req, { ok: true, sent: n });
       }
       if (path === "/notifications" && req.method === "GET") {
         const { results } = await env.DB.prepare("SELECT id, symbol, msg, created, read FROM notifications WHERE user_id = ? ORDER BY created DESC LIMIT 40").bind(user.id).all();
