@@ -344,6 +344,9 @@ def map_gics(uni: dict) -> int:
 
 
 # ---------------------------------------------------------------- prices
+SPLITS: dict[str, list] = {}   # symbol -> [[date, ratio]] stock splits in the price history (portfolio quantities are adjusted with them)
+
+
 def download_prices(symbols: list[str], period: str = "3y") -> dict[str, pd.DataFrame]:
     import yfinance as yf
 
@@ -353,7 +356,7 @@ def download_prices(symbols: list[str], period: str = "3y") -> dict[str, pd.Data
         batch = symbols[i : i + chunk]
         for attempt in (1, 2):
             try:
-                df = yf.download(batch, period=period, interval="1d", auto_adjust=False,
+                df = yf.download(batch, period=period, interval="1d", auto_adjust=False, actions=True,
                                  group_by="ticker", threads=True, progress=False, multi_level_index=True)
                 break
             except Exception as e:  # noqa: BLE001
@@ -365,6 +368,11 @@ def download_prices(symbols: list[str], period: str = "3y") -> dict[str, pd.Data
         for s in batch:
             try:
                 sub = df[s] if isinstance(df.columns, pd.MultiIndex) else df
+                if "Stock Splits" in sub.columns:
+                    sp = sub["Stock Splits"].dropna()
+                    sp = sp[sp > 0]
+                    if len(sp):
+                        SPLITS[s] = [[pd.Timestamp(d).strftime("%Y-%m-%d"), round(float(r), 6)] for d, r in sp.items()]
                 sub = sub[["Open", "High", "Low", "Close", "Volume"]].dropna(subset=["Close"])
                 if len(sub) >= 30:
                     sub.index = pd.to_datetime(sub.index).tz_localize(None).normalize()
@@ -1892,6 +1900,7 @@ SITE_URL = "https://tickerandtape.com"
 # home page (welcome for visitors) and the chart pages are offered to search engines
 SECTION_PAGES = {
     "watchlist": ("Watchlist · Ticker&Tape", "Your watchlist with RS Ratings, EPS and sales growth, bases, pivots and buy-zone status, updated every trading day.", False),
+    "portfolio": ("Portfolio and trade journal · Ticker&Tape", "Track your positions, P&L by day, week, month and year, your stats as a trader and your performance against SPY, QQQ and IWM. Private to your account.", False),
     "screener": ("Stock screener: RS Rating, Composite, bases and pivots · Ticker&Tape", "Screen every U.S. stock and ADR worth $1 billion or more by RS Rating, Composite Rating, EPS and sales growth, distance from the high and base status.", False),
     "etfs": ("ETF screener: sectors, industries, bonds, commodities · Ticker&Tape", "Sector, industry, factor, bond, commodity and country ETFs ranked by relative strength and performance, with O'Neil-style charts.", False),
     "groups": ("Industry group rankings · Ticker&Tape", "Every GICS sub-industry ranked by the relative strength of its stocks, with rank changes over 1, 3 and 6 weeks and the leaders of each group.", False),
@@ -2137,6 +2146,8 @@ def main():
                        for d, r in df.iterrows()],
             "fund": fund, "stats": st, "base": base, "row": row,
         }
+        if SPLITS.get(s):
+            bundle["splits"] = SPLITS[s]
         return row, bundle, base
 
     def write_bundle(s, bundle, keep_cache=False):
