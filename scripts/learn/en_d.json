@@ -1,0 +1,1051 @@
+[
+ {
+  "slug": "what-is-a-base",
+  "title": "What is a base?",
+  "desc": "Learn what a base is in a stock chart: a rest after an advance, how long it lasts, how deep it gets and why tight weekly closes matter.",
+  "intro": "Stocks do not go up in a straight line. After a strong run they pause, pull back and move sideways for a while. That resting area is called a **base**, and the best buy points come out of it.",
+  "sections": [
+   {
+    "h": "Why stocks pause",
+    "p": [
+     "When a stock rises a lot, early buyers want to lock in profits and some holders sell on any weakness. That selling pushes the price down or sideways. At the same time, large investors such as mutual funds and pension funds may be quietly buying, because they need weeks to build a full position.",
+     "A **base** is that tug of war: a correction and consolidation after an advance. Sellers slowly run out of shares to sell. When supply is gone, even modest buying can push the stock to new highs. That move out of the base is the **breakout**."
+    ],
+    "diagram": "cup-handle"
+   },
+   {
+    "h": "What a proper base needs",
+    "p": [
+     "Not every sideways area is a base worth buying. Traders who follow the approach popularized by William O'Neil look for a few things:"
+    ],
+    "list": [
+     "**A prior uptrend.** The stock should be up at least 30% from its last low before the base begins. A base is a rest after a climb, not a bottom after a fall.",
+     "**Enough time.** Most bases last at least 5 weeks on a weekly chart (7 weeks for a cup). Shorter pauses rarely shake out enough weak holders.",
+     "**Sensible depth.** The pullback should fit the market. In a healthy market most good bases correct 10% to 33%. In a bear market even leaders can drop 40% to 50%.",
+     "**A clear high on the left.** The top of the base is the level the stock must clear to break out."
+    ]
+   },
+   {
+    "h": "Depth is measured against the market",
+    "p": [
+     "Always compare a base with what the S&P 500 and Nasdaq did over the same weeks. A stock that corrected 12% while the Nasdaq fell 15% is showing strength. A stock that dropped 35% while the indexes slipped 5% is showing weakness, even if the pattern looks nice.",
+     "As a rule of thumb, a base should not be much more than two to two and a half times as deep as the market's correction. Very deep, wide and loose bases fail more often."
+    ]
+   },
+   {
+    "h": "Tight weekly closes",
+    "p": [
+     "Look at the weekly chart near the right side of the base. Constructive bases often show several weeks that close within 1% to 2% of each other, with volume drying up. That **tight** action means few people are willing to sell.",
+     "The opposite is **wide and loose** action: big weekly swings, closes all over the range and heavy volume on down weeks. That is a sign the stock is not ready."
+    ],
+    "diagram": "flat-base"
+   },
+   {
+    "h": "How Ticker&Tape shows bases",
+    "p": [
+     "On every [chart](/chart/SPY/) the platform draws the outline of the current base, marks the pivot and shades the buy zone. It labels the base by depth: a **flat base** (15% deep or less), a **cup with handle** (15% to 50% deep with a handle in the upper half), a **cup** (no handle, price back within 10% of the old high) or a **deep correction** (more than 50%, which is not a buyable base).",
+     "The label is a starting point. You still judge the prior uptrend, the volume and the market. The next lesson explains the [pivot and buy zone](lesson:pivot-and-buy-zone)."
+    ]
+   }
+  ],
+  "mistakes": [
+   "Calling any sideways move a base, even without a prior uptrend of 30% or more.",
+   "Buying a stock that is still falling inside the base, before it clears the pivot.",
+   "Ignoring the market: judging base depth without comparing it to the indexes.",
+   "Looking only at the daily chart and missing loose, sloppy action on the weekly."
+  ],
+  "takeaways": [
+   "A base is a rest and correction after an advance, usually 5 weeks or longer.",
+   "Good bases are tight on the right side, with volume drying up.",
+   "Judge depth against the market: a base much deeper than the indexes' correction is a warning."
+  ],
+  "live": "base:Cup with handle",
+  "try": {
+   "label": "Open a chart",
+   "href": "/chart/SPY/"
+  },
+  "related": [
+   "pivot-and-buy-zone",
+   "cup-with-handle",
+   "flat-base",
+   "daily-and-weekly-charts"
+  ]
+ },
+ {
+  "slug": "pivot-and-buy-zone",
+  "title": "The pivot and the buy zone",
+  "desc": "What a pivot point is, why traders buy within 5% of it, why chasing extended stocks hurts, and intraday vs closing breakouts.",
+  "intro": "Every base has one price that matters most: the **pivot**. It is the level where the stock breaks out of its base. Buying close to the pivot keeps your risk small and your odds better.",
+  "sections": [
+   {
+    "h": "What the pivot is",
+    "p": [
+     "The **pivot**, or buy point, is the price the stock must clear to leave its base. It sits at the top of the last area of resistance: the high of the handle in a [cup with handle](lesson:cup-with-handle), the left-side high in a cup without a handle, or the top of the range in a flat base.",
+     "Above the pivot there are few trapped sellers left. That is why a stock that clears it on strong volume often moves quickly. On Ticker&Tape the pivot is the handle high (or left-side high) plus $0.10, so a handle that peaked at $50.00 gives a pivot of $50.10."
+    ],
+    "diagram": "pivot-zone"
+   },
+   {
+    "h": "The buy zone: pivot to 5% above",
+    "p": [
+     "The **buy zone** runs from the pivot up to 5% above it. With a $50.10 pivot, the zone ends at about $52.60. The chart shades this area so you can see at a glance whether a stock is still buyable.",
+     "Why 5%? Because traders using this method cut losses at about 7% to 8% below their purchase price. If you buy right at the pivot, a normal pullback toward the pivot does not hurt you. If you buy 10% above it, a routine dip back to the breakout level already costs you 9%, and you get stopped out of a stock that may be fine."
+    ]
+   },
+   {
+    "h": "Don't chase extended stocks",
+    "p": [
+     "A stock more than 5% above its pivot is **extended**. It may keep going, but the easy, low-risk entry is gone. Chasing usually means buying from people who bought at the pivot and are happy to take a quick profit.",
+     "If you miss a breakout, let it go and wait. Leaders often give a second chance: a pullback to the 10-week or [50-day line](lesson:the-50-day-line), or a new base later on."
+    ],
+    "diagram": "extended"
+   },
+   {
+    "h": "Intraday vs closing breakouts",
+    "p": [
+     "Some traders buy the moment the price trades above the pivot during the day, using a price or pivot alert. This gets the best price, but the stock can reverse and close back below the pivot.",
+     "Others wait for the close, or for the last hour, to confirm the stock held the breakout on strong volume. You pay a bit more, but you avoid many false moves. Whichever you choose, check that [volume on the breakout](lesson:volume-on-breakouts) is running at least 40% to 50% above the 50-day average."
+    ]
+   },
+   {
+    "h": "The status labels on Ticker&Tape",
+    "list": [
+     "**Near pivot**: up to 5% below the pivot. Time to put it on your watchlist and set an alert.",
+     "**Breakout**: the stock just cleared the pivot.",
+     "**In buy zone**: between the pivot and 5% above it.",
+     "**Extended**: more than 5% above the pivot.",
+     "**Below pivot**: still well inside the base.",
+     "**Failed breakout**: it broke out, then closed more than 3% below the pivot.",
+     "**Correcting**: the stock is falling and no valid base has formed yet."
+    ],
+    "p": [
+     "You can find stocks near a buy point every day on the [ideas page](/ideas/)."
+    ]
+   }
+  ],
+  "mistakes": [
+   "Buying more than 5% above the pivot because the stock looks strong.",
+   "Buying before the pivot is cleared, while the stock is still inside the base.",
+   "Ignoring volume: a breakout on below-average volume is far less reliable.",
+   "Setting the stop based on the pivot after buying far above it."
+  ],
+  "takeaways": [
+   "The pivot is the price where the stock leaves its base.",
+   "The buy zone runs from the pivot to 5% above it; beyond that the stock is extended.",
+   "Confirm breakouts with volume at least 40% to 50% above average."
+  ],
+  "live": "status:Near pivot",
+  "try": {
+   "label": "See stocks near a buy point",
+   "href": "/ideas/"
+  },
+  "related": [
+   "what-is-a-base",
+   "volume-on-breakouts",
+   "failed-breakouts",
+   "order-types"
+  ]
+ },
+ {
+  "slug": "cup-with-handle",
+  "title": "The cup with handle",
+  "desc": "The full rules of the cup with handle: prior uptrend, 7 to 65 weeks, 12% to 33% deep, a handle in the upper half and a breakout on heavy volume.",
+  "intro": "The **cup with handle** is the classic growth-stock base. On a chart it looks like a teacup seen from the side: a rounded bowl followed by a small dip, the handle, near the top.",
+  "sections": [
+   {
+    "h": "How the pattern forms",
+    "p": [
+     "The stock has been rising and then starts to correct. The left side of the cup is the decline. The bottom is where selling dries up and the stock moves sideways for a few weeks. The right side is the recovery back toward the old high.",
+     "Near the old high, some buyers from the left side are glad to get out at break-even. That selling creates the **handle**: a short, gentle pullback on light volume. Once those last sellers are gone, the stock can break out through the top of the handle."
+    ],
+    "diagram": "cup-handle"
+   },
+   {
+    "h": "The cup",
+    "p": [
+     "Start with the bowl. A sound cup meets these guidelines:"
+    ],
+    "list": [
+     "**Prior uptrend**: at least 30% before the base begins.",
+     "**Length**: 7 to 65 weeks from the left-side high to the breakout. Most last 7 to 25 weeks.",
+     "**Depth**: usually 12% to 33% from high to low. In a bear market strong stocks can correct up to 40% or 50%.",
+     "**Shape**: a rounded bottom, a U rather than a V. The rounding shows time spent shaking out weak holders. A sharp V means the stock rushed back without that cleanup."
+    ]
+   },
+   {
+    "h": "The handle",
+    "p": [
+     "The handle is where the pattern earns its name and where most mistakes happen. A good handle:"
+    ],
+    "list": [
+     "Lasts at least 1 week, often 1 to 4 weeks on the weekly chart.",
+     "Forms in the **upper half** of the cup, ideally above the 10-week line. A handle in the lower half is a sign of weakness.",
+     "**Drifts down**, or sideways, rather than up. A handle that climbs along its lows does not shake out enough sellers.",
+     "Pulls back about 8% to 12%, and not much more.",
+     "Shows **volume drying up**, often to well below average near its low."
+    ]
+   },
+   {
+    "h": "The pivot and the breakout",
+    "p": [
+     "The pivot is the highest price in the handle. Ticker&Tape adds $0.10 to it, so a handle high of $80.00 gives a pivot of $80.10. The buy zone runs to 5% above, about $84.10.",
+     "On the breakout day, volume should be at least 40% to 50% above its 50-day average, and often much more. A strong close in the upper part of the day's range adds confidence. Check the [RS line](lesson:rs-line) too: when it is at or near a new high as the stock breaks out, that is a strong sign."
+    ]
+   },
+   {
+    "h": "How Ticker&Tape detects it",
+    "p": [
+     "The platform labels a base a cup with handle when it is **15% to 50% deep** and has a handle in the upper half of the pattern. Shallower patterns, up to 15%, are labeled a [flat base](lesson:flat-base), and anything deeper than 50% is a deep correction. So a classic 12% to 15% cup may show as a flat base: the pivot logic is the same, so treat it the same way.",
+     "The label never replaces your own review. Look at the weekly chart, the volume in the handle and the [market direction](lesson:market-direction) before you act."
+    ]
+   }
+  ],
+  "rules": {
+   "title": "The rules of a cup with handle",
+   "rows": [
+    [
+     "Prior uptrend",
+     "At least 30% before the base starts"
+    ],
+    [
+     "Length",
+     "7 to 65 weeks, most 7 to 25"
+    ],
+    [
+     "Depth",
+     "12% to 33%; up to 50% in a bear market (platform: 15% to 50%)"
+    ],
+    [
+     "Shape",
+     "Rounded U bottom, not a sharp V"
+    ],
+    [
+     "Handle length",
+     "At least 1 week"
+    ],
+    [
+     "Handle position",
+     "Upper half of the cup, ideally above the 10-week line"
+    ],
+    [
+     "Handle action",
+     "Drifts down or sideways, 8% to 12% deep, on light volume"
+    ],
+    [
+     "Pivot",
+     "Handle high + $0.10"
+    ],
+    [
+     "Buy zone",
+     "Pivot to 5% above"
+    ],
+    [
+     "Breakout volume",
+     "At least 40% to 50% above the 50-day average"
+    ]
+   ]
+  },
+  "mistakes": [
+   "Buying a handle that forms in the lower half of the cup.",
+   "Accepting a handle that wedges upward along its lows.",
+   "Buying a V-shaped cup that rushed straight back to the highs.",
+   "Buying a breakout on light volume or in a market in correction."
+  ],
+  "takeaways": [
+   "A cup with handle is a rounded correction of 12% to 33% with a short handle near the top.",
+   "The handle must sit in the upper half, drift down and show drying volume.",
+   "Buy as the stock clears the handle high on heavy volume, within 5% of the pivot."
+  ],
+  "live": "base:Cup with handle",
+  "try": {
+   "label": "Find cups on the screener",
+   "href": "/screener/"
+  },
+  "related": [
+   "cup-without-handle",
+   "pivot-and-buy-zone",
+   "volume-on-breakouts",
+   "what-is-a-base"
+  ]
+ },
+ {
+  "slug": "cup-without-handle",
+  "title": "The cup without handle",
+  "desc": "The cup without handle: the same rounded base but no handle, a pivot at the left-side high, and why it carries a bit more risk.",
+  "intro": "Sometimes a stock forms a nice rounded cup and then goes straight through the old high without stopping to build a handle. That is a **cup without handle**, also called simply a cup.",
+  "sections": [
+   {
+    "h": "What it looks like",
+    "p": [
+     "The left side, bottom and right side are the same as in a [cup with handle](lesson:cup-with-handle). The stock was in an uptrend, corrected in a rounded U shape and climbed back up the right side. The difference is at the top: instead of a pause and a light-volume dip, the stock pushes right to the left-side high.",
+     "This happens most often in strong markets, when demand is so heavy that there is no time for a shakeout near the highs."
+    ],
+    "diagram": "cup"
+   },
+   {
+    "h": "Where the pivot is",
+    "p": [
+     "With no handle, the pivot is the **left-side high**: the peak just before the cup started. Ticker&Tape adds $0.10, so a left-side high of $60.00 gives a pivot of $60.10 and a buy zone up to about $63.10.",
+     "Some traders buy a little earlier on a cup without handle, as the stock clears a smaller high on the right side. That is an advanced entry with more risk. For beginners, the left-side high is the clearer and safer level."
+    ]
+   },
+   {
+    "h": "Why it carries more risk",
+    "p": [
+     "The handle has a job: it shakes out the last nervous holders before the breakout. Without it, some of those sellers are still around. When the stock reaches the old high, people who bought there months ago may sell to get their money back, and the breakout can stall.",
+     "That does not make the pattern bad. Many big winners broke out of cups with no handle. It means you should be stricter about the other clues:"
+    ],
+    "list": [
+     "Volume on the breakout should be clearly heavy, 40% to 50% above average or more.",
+     "The right side should rise in an orderly way, with up weeks on higher volume than down weeks.",
+     "The [RS line](lesson:rs-line) should be near a new high.",
+     "The general market should be in a confirmed uptrend."
+    ]
+   },
+   {
+    "h": "How Ticker&Tape detects it",
+    "p": [
+     "The platform labels a base a **cup** when it has the depth of a cup, 15% to 50%, has no handle, and the price is back within 10% of the left-side high. That last condition means the right side is mostly built and the stock is getting close to its pivot.",
+     "If the stock later pauses for a week or more in the upper half and pulls back, the label can change to cup with handle and the pivot moves to the new handle high. Always use the pivot shown on the latest chart."
+    ]
+   }
+  ],
+  "rules": {
+   "title": "The rules of a cup without handle",
+   "rows": [
+    [
+     "Prior uptrend",
+     "At least 30% before the base starts"
+    ],
+    [
+     "Length",
+     "At least 7 weeks"
+    ],
+    [
+     "Depth",
+     "12% to 33%; up to 50% in a bear market (platform: 15% to 50%)"
+    ],
+    [
+     "Shape",
+     "Rounded U bottom, no handle"
+    ],
+    [
+     "Platform label",
+     "Price back within 10% of the left-side high"
+    ],
+    [
+     "Pivot",
+     "Left-side high + $0.10"
+    ],
+    [
+     "Buy zone",
+     "Pivot to 5% above"
+    ],
+    [
+     "Breakout volume",
+     "At least 40% to 50% above the 50-day average"
+    ]
+   ]
+  },
+  "mistakes": [
+   "Buying on the way up the right side long before the pivot.",
+   "Accepting a breakout on light volume, which is even riskier without a handle.",
+   "Forgetting that the pivot moves if a handle forms later."
+  ],
+  "takeaways": [
+   "A cup without handle is a rounded base where the stock goes straight back to its old high.",
+   "The pivot is the left-side high plus $0.10.",
+   "With no shakeout near the top, demand strong volume and a healthy market."
+  ],
+  "live": "base:Cup",
+  "try": {
+   "label": "See stocks near a buy point",
+   "href": "/ideas/"
+  },
+  "related": [
+   "cup-with-handle",
+   "pivot-and-buy-zone",
+   "volume-on-breakouts"
+  ]
+ },
+ {
+  "slug": "flat-base",
+  "title": "The flat base",
+  "desc": "The flat base: a tight sideways base of at least 5 weeks, no more than 15% deep, that often forms after a stock's earlier breakout.",
+  "intro": "A **flat base** is a quiet, tight sideways range. The stock barely corrects, moving within a band of 15% or less for at least five weeks. It is often the sign of a leader that is resting, not tiring.",
+  "sections": [
+   {
+    "h": "What it looks like",
+    "p": [
+     "On a weekly chart a flat base looks like a short, narrow box. The price drifts sideways, the weekly bars are small and volume tends to fall. There is no big decline and no rounded bowl, just a pause.",
+     "Flat bases often appear after a stock has already broken out of a deeper base, such as a [cup with handle](lesson:cup-with-handle), and advanced 20% or more. Instead of giving back the gain, the stock holds it. That is why traders see the flat base as a sign of strength."
+    ],
+    "diagram": "flat-base"
+   },
+   {
+    "h": "The rules",
+    "p": [
+     "A flat base should meet these guidelines:"
+    ],
+    "list": [
+     "**Length**: at least 5 weeks.",
+     "**Depth**: 15% or less from the high to the low of the base. Many of the best ones are 8% to 12%.",
+     "**Prior uptrend**: the stock should be up at least 20% to 30%, often from a previous breakout.",
+     "**Tight action**: small weekly ranges and closes near each other, with volume drying up.",
+     "**Pivot**: the highest point of the base plus $0.10."
+    ]
+   },
+   {
+    "h": "Why it works",
+    "p": [
+     "A shallow correction means few holders are selling. Large investors who own the stock are sitting tight, and new buyers step in on every small dip. When the stock clears the top of the range, there is very little overhead supply to slow it down.",
+     "A flat base also offers a natural stop. Because the base is shallow, the distance from the pivot to the base low is small. Many traders place their stop just below the low of the base or use the usual 7% to 8% limit, whichever comes first."
+    ]
+   },
+   {
+    "h": "How to trade it",
+    "p": [
+     "Set an alert at the pivot. When the stock trades through it, check that volume is running at least 40% to 50% above the 50-day average and that the market is in a confirmed uptrend. Buy within 5% of the pivot.",
+     "Pay attention to the [base count](lesson:base-count). A flat base that follows a first breakout is usually a second-stage base and can work very well. A flat base after a long run with three or four earlier bases carries more risk."
+    ]
+   },
+   {
+    "h": "How Ticker&Tape detects it",
+    "p": [
+     "The platform labels any base **15% deep or less** as a flat base, and draws the pivot at the top of the range plus $0.10. This includes some shallow cups and handles that the classic rules would call a cup with handle; the trading plan is the same either way: buy near the pivot on volume.",
+     "Use the weekly chart to confirm the base lasted at least five weeks and that the weekly closes are tight."
+    ]
+   }
+  ],
+  "rules": {
+   "title": "The rules of a flat base",
+   "rows": [
+    [
+     "Prior uptrend",
+     "At least 20% to 30%, often after an earlier breakout"
+    ],
+    [
+     "Length",
+     "At least 5 weeks"
+    ],
+    [
+     "Depth",
+     "15% or less (platform: 15% or less)"
+    ],
+    [
+     "Action",
+     "Tight weekly closes, volume drying up"
+    ],
+    [
+     "Pivot",
+     "Highest price of the base + $0.10"
+    ],
+    [
+     "Buy zone",
+     "Pivot to 5% above"
+    ],
+    [
+     "Breakout volume",
+     "At least 40% to 50% above the 50-day average"
+    ]
+   ]
+  },
+  "mistakes": [
+   "Buying a flat base that lasted only two or three weeks.",
+   "Treating a wide, choppy range as a flat base.",
+   "Ignoring that a late-stage flat base fails more often."
+  ],
+  "takeaways": [
+   "A flat base is at least 5 weeks long and no more than 15% deep.",
+   "It often forms after a prior breakout and shows a leader holding its gains.",
+   "Buy as it clears the top of the range plus $0.10, on strong volume."
+  ],
+  "live": "base:Flat base",
+  "try": {
+   "label": "Find flat bases on the screener",
+   "href": "/screener/"
+  },
+  "related": [
+   "what-is-a-base",
+   "base-on-base",
+   "base-count",
+   "pivot-and-buy-zone"
+  ]
+ },
+ {
+  "slug": "double-bottom",
+  "title": "The double bottom",
+  "desc": "The double bottom: a W-shaped base where the second low undercuts the first to shake out sellers, with the pivot at the middle peak.",
+  "intro": "A **double bottom** looks like the letter W. The stock falls, bounces, falls again to a slightly lower low and then rallies. That second dip scares out the last weak holders.",
+  "sections": [
+   {
+    "h": "What it looks like",
+    "p": [
+     "After a prior advance, the stock corrects to a first low. It bounces partway up, forming the middle peak of the W, then sells off again. The key detail is that the second low goes slightly **below** the first one. That is called an **undercut**.",
+     "From the second low, the stock rallies back up through the middle peak. That is the breakout."
+    ],
+    "diagram": "double-bottom"
+   },
+   {
+    "h": "Why the undercut matters",
+    "p": [
+     "Many traders place stops just below an obvious low. When the stock dips under the first low, those stops are triggered and nervous holders sell. This is called a **shakeout**. Once those sellers are gone, the stock has fewer people left who want out.",
+     "A second low that holds well above the first is not a true double bottom in this method. It can still work, but it has not done the cleanup that the undercut provides."
+    ]
+   },
+   {
+    "h": "The rules",
+    "p": [
+     "A sound double bottom meets these guidelines:"
+    ],
+    "list": [
+     "**Prior uptrend** of at least 30%.",
+     "**Length**: at least 7 weeks.",
+     "**Depth**: usually 20% to 30%, up to 40% to 50% in a bear market.",
+     "**Undercut**: the second low is slightly lower than the first, often by a few percent.",
+     "**Pivot**: the high of the middle peak of the W, plus $0.10.",
+     "**Optional handle**: some double bottoms form a short handle near the middle-peak level; then the handle high is the pivot."
+    ]
+   },
+   {
+    "h": "How to trade it",
+    "p": [
+     "Mark the middle peak with the horizontal level tool and set a price alert just above it. When the stock clears that level on volume at least 40% to 50% above average, it is breaking out. Buy within 5% of the pivot and place your stop no more than 7% to 8% below your entry.",
+     "Watch the [volume](lesson:reading-volume) on the second low. Heavy volume as the stock undercuts, followed by a quick recovery, is a sign that the shakeout worked and buyers absorbed the selling."
+    ]
+   },
+   {
+    "h": "How it appears on Ticker&Tape",
+    "p": [
+     "The platform does not have a separate double bottom label. It classifies every base by depth and handle, so a W of 20% to 30% usually shows as a **cup** or a **cup with handle**, and its pivot is set at the left-side or handle high.",
+     "That pivot can sit higher than the middle peak of the W. If you trade the double bottom, draw the middle-peak level yourself and use it as your pivot, then compare it with the platform's pivot to see where resistance remains."
+    ]
+   }
+  ],
+  "rules": {
+   "title": "The rules of a double bottom",
+   "rows": [
+    [
+     "Prior uptrend",
+     "At least 30%"
+    ],
+    [
+     "Length",
+     "At least 7 weeks"
+    ],
+    [
+     "Depth",
+     "Usually 20% to 30%, up to 50% in a bear market"
+    ],
+    [
+     "Shape",
+     "W: second low undercuts the first"
+    ],
+    [
+     "Pivot",
+     "Middle peak of the W + $0.10 (or handle high if a handle forms)"
+    ],
+    [
+     "Buy zone",
+     "Pivot to 5% above"
+    ],
+    [
+     "Breakout volume",
+     "At least 40% to 50% above the 50-day average"
+    ]
+   ]
+  },
+  "mistakes": [
+   "Calling it a double bottom when the second low holds above the first.",
+   "Using the left-side high as the pivot instead of the middle peak.",
+   "Buying on the way down to the second low, before the stock proves itself."
+  ],
+  "takeaways": [
+   "A double bottom is a W where the second low undercuts the first.",
+   "The undercut shakes out weak holders before the advance.",
+   "The pivot is the middle peak plus $0.10; draw it yourself on the chart."
+  ],
+  "try": {
+   "label": "Open a chart",
+   "href": "/chart/SPY/"
+  },
+  "related": [
+   "cup-with-handle",
+   "pivot-and-buy-zone",
+   "support-and-resistance"
+  ]
+ },
+ {
+  "slug": "ascending-base",
+  "title": "The ascending base",
+  "desc": "The ascending base: three pullbacks of 10% to 20% with higher lows and higher highs, usually formed while the general market corrects.",
+  "intro": "An **ascending base** is a staircase. The stock pulls back three times, but each low and each high is higher than the one before. It usually forms while the market is correcting, which makes it a mark of real strength.",
+  "sections": [
+   {
+    "h": "What it looks like",
+    "p": [
+     "Picture a stock that rallies, drops 10% to 20%, rallies to a higher high, drops again, rallies to a higher high again and drops a third time. Each pullback stops above the low of the previous one. On a weekly chart this looks like three small steps climbing upward.",
+     "The whole pattern usually takes 9 to 18 weeks."
+    ],
+    "diagram": "ascending-base"
+   },
+   {
+    "h": "Why it forms during a correction",
+    "p": [
+     "When the general market is weak, most stocks fall hard. Even leaders get pulled down, which causes the pullbacks. But because large investors keep buying them on dips, they keep making higher lows while other stocks make lower lows.",
+     "That is why an ascending base is so useful: it shows you which stocks are resisting a weak market. When the market turns up again with a [follow-through day](lesson:follow-through-day), these stocks are often among the first to break out."
+    ]
+   },
+   {
+    "h": "The rules",
+    "p": [
+     "The classic guidelines for an ascending base are:"
+    ],
+    "list": [
+     "**Prior uptrend**: the stock should already be in an uptrend.",
+     "**Three pullbacks** of roughly 10% to 20% each, measured from each high to the following low.",
+     "**Higher lows and higher highs** at every step.",
+     "**Length**: about 9 to 18 weeks.",
+     "**Pivot**: the highest high, the peak before the third pullback, plus $0.10."
+    ]
+   },
+   {
+    "h": "How to trade it",
+    "p": [
+     "Mark the peak before the third pullback and set an alert there. A breakout through that level on heavy volume, ideally with the market back in a confirmed uptrend, is the buy signal. Buy within 5% of the pivot.",
+     "Because each pullback can be sharp, it is important to wait for the breakout. Buying in the middle of a pullback is guessing where the low will be. Check the [RS line](lesson:rs-line) too: in an ascending base it often holds near its highs while the market drops."
+    ]
+   },
+   {
+    "h": "How it appears on Ticker&Tape",
+    "p": [
+     "The platform has no separate ascending base label. Depending on how deep the last pullback is, the outline usually shows a **flat base** or a **cup with handle**, and the platform's pivot is the high of the most recent pattern.",
+     "Often that pivot is the same as the classic one: the peak before the third pullback. If it is not, draw the level yourself and use the [breadth page](/breadth/) to confirm the market has turned before you act."
+    ]
+   }
+  ],
+  "rules": {
+   "title": "The rules of an ascending base",
+   "rows": [
+    [
+     "Prior uptrend",
+     "Already in an uptrend"
+    ],
+    [
+     "Pullbacks",
+     "Three, each about 10% to 20%"
+    ],
+    [
+     "Structure",
+     "Each low and each high above the previous one"
+    ],
+    [
+     "Length",
+     "About 9 to 18 weeks"
+    ],
+    [
+     "Context",
+     "Usually forms during a general market correction"
+    ],
+    [
+     "Pivot",
+     "Peak before the third pullback + $0.10"
+    ],
+    [
+     "Buy zone",
+     "Pivot to 5% above"
+    ]
+   ]
+  },
+  "mistakes": [
+   "Buying during one of the pullbacks instead of waiting for the breakout.",
+   "Calling it an ascending base when one of the lows breaks below the previous low.",
+   "Buying the breakout while the market is still in a correction."
+  ],
+  "takeaways": [
+   "An ascending base has three pullbacks of 10% to 20% with higher lows each time.",
+   "It usually forms during a market correction, a sign the stock is being supported.",
+   "Buy the breakout above the highest peak, ideally once the market turns up."
+  ],
+  "try": {
+   "label": "Check market breadth",
+   "href": "/breadth/"
+  },
+  "related": [
+   "what-is-a-base",
+   "market-direction",
+   "rs-line"
+  ]
+ },
+ {
+  "slug": "high-tight-flag",
+  "title": "The high tight flag",
+  "desc": "The high tight flag: a rare pattern where a stock doubles in 4 to 8 weeks, then rests 10% to 25% over 3 to 5 weeks before breaking out.",
+  "intro": "The **high tight flag** is the rarest and most powerful base. A stock roughly doubles in a few weeks and then barely gives anything back. It is also one of the hardest patterns to trade.",
+  "sections": [
+   {
+    "h": "What it looks like",
+    "p": [
+     "First comes the **pole**: a huge advance of 100% or more in just 4 to 8 weeks, usually driven by big news such as a new product or explosive earnings. Then comes the **flag**: a short, tight sideways or slightly downward drift that corrects only 10% to 25% over about 3 to 5 weeks.",
+     "On a chart it looks like a flag at the top of a tall pole. The pause is small compared with the run before it."
+    ],
+    "diagram": "htf"
+   },
+   {
+    "h": "Why it is so rare",
+    "p": [
+     "After a stock doubles, most holders are sitting on big gains and are eager to sell. A normal stock would give back a large part of the move. When a stock instead holds near its highs, it means buyers are absorbing almost every share offered. Only a handful of stocks do this in a typical year, and usually only in strong markets.",
+     "Some of the biggest winners in market history started with a high tight flag. But many look-alikes fail, so the rules are strict."
+    ]
+   },
+   {
+    "h": "The rules",
+    "p": [
+     "The numbers here are strict, and that is the point:"
+    ],
+    "list": [
+     "**Pole**: an advance of 100% to 120% or more in 4 to 8 weeks.",
+     "**Flag**: a correction of 10% to 25%, no more.",
+     "**Flag length**: about 3 to 5 weeks.",
+     "**Volume**: heavy on the pole, drying up during the flag.",
+     "**Pivot**: the highest price in the flag plus $0.10."
+    ]
+   },
+   {
+    "h": "Trading it carefully",
+    "p": [
+     "A high tight flag is volatile. Daily moves of 5% or more are normal, so a breakout can quickly turn into a sharp pullback. Many traders take a smaller position than usual and use the [ATR](lesson:atr-and-adr) to size it, so a normal swing does not exceed their planned risk.",
+     "Buy only as the stock clears the flag's high on heavy volume, within 5% of the pivot. If the flag corrects more than 25%, it is no longer a high tight flag; wait for a proper base to form."
+    ]
+   },
+   {
+    "h": "How it appears on Ticker&Tape",
+    "p": [
+     "The platform does not have a separate high tight flag label. Because the flag is shallow, it usually appears as a **flat base** (15% or less) or, if deeper, as a short base with a handle, with the pivot at the top of the flag.",
+     "Check the pole yourself: open the daily chart, measure the run from the low before the move to the high, and confirm it doubled in 8 weeks or less."
+    ]
+   }
+  ],
+  "rules": {
+   "title": "The rules of a high tight flag",
+   "rows": [
+    [
+     "Pole",
+     "Up 100% or more in 4 to 8 weeks"
+    ],
+    [
+     "Flag depth",
+     "10% to 25%"
+    ],
+    [
+     "Flag length",
+     "About 3 to 5 weeks"
+    ],
+    [
+     "Volume",
+     "Heavy on the pole, drying up in the flag"
+    ],
+    [
+     "Pivot",
+     "Flag high + $0.10"
+    ],
+    [
+     "Buy zone",
+     "Pivot to 5% above"
+    ],
+    [
+     "Position size",
+     "Often smaller than usual because of volatility"
+    ]
+   ]
+  },
+  "mistakes": [
+   "Calling any strong run a high tight flag without checking the 100% in 8 weeks rule.",
+   "Accepting a flag that corrects 30% or more.",
+   "Using a full-size position on such a volatile stock."
+  ],
+  "takeaways": [
+   "A high tight flag is a 100%+ run in 4 to 8 weeks followed by a 10% to 25% rest.",
+   "It is rare and powerful, but also volatile and easy to misread.",
+   "Buy only above the flag high on heavy volume and size the position carefully."
+  ],
+  "try": {
+   "label": "Size a trade",
+   "href": "/portfolio/"
+  },
+  "related": [
+   "what-is-a-base",
+   "atr-and-adr",
+   "position-sizing"
+  ]
+ },
+ {
+  "slug": "base-on-base",
+  "title": "The base on base",
+  "desc": "A base on base forms when a stock's breakout stalls because the market corrects, and it builds a new base on top of the old one.",
+  "intro": "Sometimes a stock breaks out, the market turns down, and the stock simply builds a new base right on top of the old one. That **base on base** is often a sign of a strong stock waiting for the market.",
+  "sections": [
+   {
+    "h": "How it forms",
+    "p": [
+     "The stock completes a first base and breaks out, or gets close to breaking out. Then the general market starts to correct. Instead of advancing 20% or more, the stock stalls a little above or near its old pivot and moves sideways.",
+     "Rather than falling back into the middle of the first base, it holds near the top. Over the next few weeks it forms a second, usually shallow base, often a flat base, sitting on top of the first."
+    ],
+    "diagram": "base-on-base"
+   },
+   {
+    "h": "Why it can be a sign of strength",
+    "p": [
+     "When the market corrects, most stocks give back their gains. A stock that holds its ground near the highs is being supported by large buyers. Once the market recovers, that stock has already done its resting and is ready to move.",
+     "The pattern is like a coiled spring: two layers of consolidation, each absorbing supply. When the second base breaks out, the advance can be strong. Compare the stock with the indexes during the second base. If the Nasdaq fell 10% and the stock held within 8%, that is relative strength."
+    ]
+   },
+   {
+    "h": "What to look for",
+    "p": [
+     "A good base on base usually shows these signs:"
+    ],
+    "list": [
+     "A first base that was valid on its own: prior uptrend, proper length and depth.",
+     "A market correction that started around the time of the first breakout.",
+     "A second base that holds near the top of the first one and does not fall deep into it.",
+     "Tight weekly closes and volume drying up in the second base.",
+     "A [RS line](lesson:rs-line) that holds near its highs while the market falls."
+    ]
+   },
+   {
+    "h": "Where to buy",
+    "p": [
+     "The pivot is the high of the upper base plus $0.10. Buy as the stock clears it on volume at least 40% to 50% above average, within 5% of the pivot, ideally once the market is back in a confirmed uptrend.",
+     "On Ticker&Tape the base outline and pivot are drawn for the current, upper base. Its label depends on depth, usually a [flat base](lesson:flat-base) or a cup with handle. Look back on the weekly chart to see the first base below it."
+    ]
+   },
+   {
+    "h": "Counting bases on base",
+    "p": [
+     "Because the stock barely advanced between the two bases, many traders count a base on base as part of the same stage, rather than adding a new one to the [base count](lesson:base-count). Either way, it often comes early in a move, which is when bases work best."
+    ]
+   }
+  ],
+  "mistakes": [
+   "Confusing a base on base with a failed breakout that fell back deep into the first base.",
+   "Buying the breakout of the upper base while the market is still in a correction.",
+   "Missing the setup by looking only at the daily chart."
+  ],
+  "takeaways": [
+   "A base on base is a new base built on top of a prior one while the market corrects.",
+   "Holding near the highs during a market drop shows strength.",
+   "The pivot is the high of the upper base plus $0.10."
+  ],
+  "try": {
+   "label": "Check market direction",
+   "href": "/breadth/"
+  },
+  "related": [
+   "flat-base",
+   "base-count",
+   "market-direction"
+  ]
+ },
+ {
+  "slug": "ipo-base",
+  "title": "The IPO base",
+  "desc": "The IPO base: why recently listed companies can lead the market, how their short bases of a few weeks form and how to handle the volatility.",
+  "intro": "An **IPO**, or initial public offering, is when a company first sells its shares on the stock market. Recent IPOs can become huge winners, and their first base is often short and volatile.",
+  "sections": [
+   {
+    "h": "Why new companies can lead",
+    "p": [
+     "Many of the market's biggest winners were young companies with a new product, a new kind of service or a fast-growing market. They often went public within the previous few years. They grow quickly, and investors are still discovering them.",
+     "Another reason is supply. A new issue has no years of old buyers sitting at higher prices, waiting to sell at break-even. Once the stock gets going, there is little overhead supply to hold it back."
+    ]
+   },
+   {
+    "h": "What an IPO base looks like",
+    "p": [
+     "After listing, a new stock usually trades wildly for a while as early holders and new buyers settle on a price. Then, often within a few weeks to a few months, it forms its first base: a sideways range, often 3 to 5 weeks long, that can be 20% to 30% deep or more, especially in the early days.",
+     "The pivot is the high of that range plus $0.10. A breakout to new all-time highs on heavy volume is the signal traders watch for."
+    ],
+    "diagram": "ipo-base"
+   },
+   {
+    "h": "The volatility problem",
+    "p": [
+     "New issues swing a lot. They have short histories, fewer shares available to trade, and often no earnings yet. A 10% move in a day is not unusual. That means:"
+    ],
+    "list": [
+     "Use smaller positions, sized with the [ATR](lesson:atr-and-adr), so normal swings fit your planned risk.",
+     "Be careful around the end of the **lock-up** period, usually about six months after the IPO, when insiders are first allowed to sell.",
+     "Expect fewer data points: the [RS Rating](lesson:rs-rating) and moving averages need history, so treat them with caution in the first months.",
+     "Make sure the stock trades enough shares and dollars each day for you to get in and out easily."
+    ]
+   },
+   {
+    "h": "How it appears on Ticker&Tape",
+    "p": [
+     "The base detection needs enough price history, so a very new stock may show no base at all for a while. Once a range forms, the platform labels it by depth like any other base and draws the pivot. Use the daily chart for timing, since the weekly chart has only a few bars.",
+     "Look at the quarterly EPS and sales table too. For young companies, fast-growing sales are often the clearest sign of real demand."
+    ]
+   }
+  ],
+  "mistakes": [
+   "Buying on the first day of trading, before any base forms.",
+   "Using a full-size position on a stock that moves 10% a day.",
+   "Ignoring the lock-up expiry date.",
+   "Treating a short base as a weakness when it is normal for new issues."
+  ],
+  "takeaways": [
+   "Recent IPOs can become leaders because they are fast-growing and have little overhead supply.",
+   "Their first bases are often short, a few weeks, and volatile.",
+   "Size positions smaller and buy only on a breakout to new highs with volume."
+  ],
+  "try": {
+   "label": "Open the screener",
+   "href": "/screener/"
+  },
+  "related": [
+   "what-is-a-base",
+   "atr-and-adr",
+   "sales-and-margins"
+  ]
+ },
+ {
+  "slug": "base-count",
+  "title": "Base count: early vs late stage",
+  "desc": "How to count bases: why first and second-stage bases work best, why third and fourth-stage bases fail more, and when the count resets.",
+  "intro": "Every time a stock builds a new base during a long advance, the **base count** goes up by one. Early bases offer the best odds. Late ones are riskier, because by then everyone knows the story.",
+  "sections": [
+   {
+    "h": "How to count",
+    "p": [
+     "The first base after a stock emerges from a long decline or a long sideways period is the **stage 1** base, or first-stage base. If the stock breaks out, advances and then forms another base, that one is **stage 2**. The next is stage 3, and so on.",
+     "Count on the weekly chart. A new base counts when the stock has advanced meaningfully, usually 20% or more, above the previous base's pivot before correcting again."
+    ],
+    "diagram": "base-count"
+   },
+   {
+    "h": "Why early bases work best",
+    "p": [
+     "In the first and second stages, few investors have noticed the stock. Large funds are still building positions, which means steady demand for months. The company's story is new, and expectations are still moderate.",
+     "By the third or fourth base, the stock has probably doubled or tripled. It is well known, many funds already own it and expectations are high. One disappointing quarter can trigger heavy selling. Late-stage bases also tend to be wider and looser, a sign the stock is tiring."
+    ]
+   },
+   {
+    "h": "A practical guide",
+    "p": [
+     "A simple way to use the count:"
+    ],
+    "list": [
+     "**Stage 1 and 2**: the best odds. These are the bases to focus on.",
+     "**Stage 3**: still possible, but be more selective and quicker to sell if it fails.",
+     "**Stage 4 and later**: these fail often. Many traders skip them or use smaller positions."
+    ]
+   },
+   {
+    "h": "When the count resets",
+    "p": [
+     "The count goes back to one when the stock undercuts the low of its previous base. That means the stock has given back its prior advance and is starting a new cycle.",
+     "A deep correction, often 40% to 50% or more, during a bear market usually resets the count as well. On Ticker&Tape, a decline of more than 50% is labeled a **deep correction**, which is a clear sign to restart your count.",
+     "A [base on base](lesson:base-on-base) is often treated as part of the same stage, since the stock barely advanced between the two."
+    ]
+   },
+   {
+    "h": "Using base count with other tools",
+    "p": [
+     "Base count is not a rule by itself. Combine it with the market: early-stage bases often form right after a market correction, when a new uptrend begins. That is why a new uptrend, confirmed on the [breadth page](/breadth/), is a good time to look for first and second-stage bases among the strongest stocks."
+    ]
+   }
+  ],
+  "mistakes": [
+   "Forgetting to count and buying a fourth-stage base as if it were a first.",
+   "Not resetting the count after the stock undercuts its previous base low.",
+   "Counting every small pause as a new base."
+  ],
+  "takeaways": [
+   "First and second-stage bases have the best odds; third and later fail more often.",
+   "Count on the weekly chart; a new base follows an advance of about 20% or more.",
+   "The count resets when the stock undercuts its prior base low or after a deep correction."
+  ],
+  "try": {
+   "label": "Open a weekly chart",
+   "href": "/chart/SPY/"
+  },
+  "related": [
+   "what-is-a-base",
+   "the-four-stages",
+   "base-on-base"
+  ]
+ },
+ {
+  "slug": "failed-breakouts",
+  "title": "Failed breakouts",
+  "desc": "What a failed breakout looks like, the sell rules that protect you, and why a breakout that fails tells you something about the stock and market.",
+  "intro": "Not every breakout works. Sometimes a stock clears its pivot and then falls right back into the base. Knowing what a **failed breakout** looks like, and acting quickly, is what keeps small losses small.",
+  "sections": [
+   {
+    "h": "What failure looks like",
+    "p": [
+     "A healthy breakout moves away from the pivot and holds above it. A failed breakout reverses. The stock drops back below the pivot and keeps sliding into the base, often on rising volume.",
+     "On Ticker&Tape, a stock is labeled **Failed breakout** when it broke out and then closed more than 3% below the pivot. With a $50.10 pivot, a close below about $48.60 would trigger the label."
+    ],
+    "diagram": "failed-breakout"
+   },
+   {
+    "h": "Warning signs",
+    "p": [
+     "Failures often give clues early. Watch for these:"
+    ],
+    "list": [
+     "The breakout came on light volume, below 40% above average.",
+     "The stock closed near the low of the day on the breakout day.",
+     "The stock falls back below the pivot within a few days, especially on heavy volume.",
+     "It breaks the 10-day or [50-day line](lesson:the-50-day-line) soon after the breakout.",
+     "The general market starts to show [distribution days](lesson:distribution-days)."
+    ]
+   },
+   {
+    "h": "Sell rules",
+    "p": [
+     "The most important rule is simple: cut every loss at no more than **7% to 8%** below your purchase price, with no exceptions. If you bought in the buy zone, a failed breakout usually hits that limit or triggers your stop below a key level.",
+     "Many traders also sell earlier, when the stock closes well back inside the base, before the full 7% to 8% is reached. A stock that closes more than 3% below the pivot has failed, and there is no reason to wait for a bigger loss. Never average down, which means buying more of a losing stock to lower your average price."
+    ],
+    "diagram": "stop-loss"
+   },
+   {
+    "h": "A failed breakout is information",
+    "p": [
+     "A failure is not only a loss; it is a message. If many breakouts fail at the same time, the market may be weakening. That is often an earlier warning than the index itself. Check the [breadth page](/breadth/) and consider reducing exposure.",
+     "For the stock itself, a failure means demand was not strong enough yet. It may need more time. Many good stocks fail once and then build a better base and break out later. Keep it on your watchlist, but wait for a new, proper setup."
+    ]
+   },
+   {
+    "h": "Re-entering",
+    "p": [
+     "If a stock you sold rebounds and clears the pivot again on strong volume, you can buy it back. That is not a mistake; it is following the rules. Use the same plan: buy within 5% of the pivot and set your stop. The [stop-loss lesson](lesson:stop-losses) covers how to place it."
+    ]
+   }
+  ],
+  "mistakes": [
+   "Holding a failed breakout and hoping it comes back.",
+   "Buying more shares as the stock falls back into the base.",
+   "Ignoring a wave of failed breakouts across many stocks.",
+   "Refusing to buy back a stock that sets up again after a failure."
+  ],
+  "takeaways": [
+   "A breakout fails when the stock falls back below the pivot; on the platform, a close more than 3% below it.",
+   "Cut losses at no more than 7% to 8% below your purchase price.",
+   "Many failures at once are a warning about the market."
+  ],
+  "live": "status:Failed breakout",
+  "try": {
+   "label": "Open your portfolio",
+   "href": "/portfolio/"
+  },
+  "related": [
+   "pivot-and-buy-zone",
+   "stop-losses",
+   "volume-on-breakouts",
+   "distribution-days"
+  ]
+ }
+]

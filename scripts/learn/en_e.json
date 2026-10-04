@@ -1,0 +1,594 @@
+[
+ {
+  "slug": "earnings-growth",
+  "title": "Earnings growth: what to look for in EPS",
+  "desc": "Learn how growth traders read earnings per share: quarterly EPS growth vs a year ago, acceleration, annual growth and surprises, with the EPS table.",
+  "intro": "Big stock moves are usually powered by big earnings growth. Learning to read a company's earnings per share takes a few minutes and helps you separate real leaders from stocks that are only moving on a story.",
+  "sections": [
+   {
+    "h": "What EPS means",
+    "p": [
+     "**EPS** stands for earnings per share. It is the company's profit for a period divided by the number of shares. If a company earns $10 million in a quarter and has 10 million shares, EPS is $1.00.",
+     "Companies in the U.S. report every quarter (every three months). Growth traders care less about the size of the profit and more about how fast it is growing."
+    ]
+   },
+   {
+    "h": "Compare a quarter with the same quarter a year ago",
+    "p": [
+     "Always compare a quarter with the **same quarter one year earlier**, not with the quarter just before it. Many businesses are seasonal, so a strong holiday quarter followed by a quiet spring quarter tells you nothing. Year-over-year growth removes that effect.",
+     "In the growth-stock method popularized by William O'Neil, many of the biggest winners showed quarterly EPS growth of **25% or more** before their major advance. Higher is better, and 50% to 100% is common among true leaders."
+    ],
+    "list": [
+     "Last quarter $0.50, same quarter a year ago $0.40: growth is 25%.",
+     "Last quarter $0.50, same quarter a year ago $0.20: growth is 150%.",
+     "Be careful with tiny bases: going from $0.01 to $0.05 is 400%, but it means little."
+    ],
+    "diagram": "eps-growth"
+   },
+   {
+    "h": "Acceleration and annual growth",
+    "p": [
+     "**Acceleration** means the growth rate is getting faster: for example 20%, then 35%, then 60% over three quarters. Accelerating earnings often show up just before or during a stock's strongest run. A clear slowdown for two quarters in a row, like 80% then 40% then 15%, is a warning.",
+     "Quarterly numbers can be noisy, so also look at **annual EPS growth** over the last three years. A steady record, ideally 25% or more per year, shows the growth is not a one-time event."
+    ]
+   },
+   {
+    "h": "Surprises and estimates",
+    "p": [
+     "Analysts publish estimates of what a company will earn. When the reported EPS is above the estimate, it is a **beat** or positive surprise; below is a **miss**. A string of beats and rising estimates tells you the business is doing better than expected. Still, the price reaction matters more than the beat itself. See [reading an earnings report](lesson:reading-an-earnings-report)."
+    ]
+   },
+   {
+    "h": "Using the EPS table on the chart",
+    "p": [
+     "Every chart on Ticker&Tape shows a quarterly table with EPS and sales and their growth versus a year ago, plus earnings markers on the price bars. The data box also shows the latest EPS growth. Scan the last four to six quarters: you want large numbers that are steady or rising, backed up by [sales growth](lesson:sales-and-margins)."
+    ]
+   }
+  ],
+  "rules": {
+   "title": "Earnings checklist for growth stocks",
+   "rows": [
+    [
+     "Latest quarterly EPS growth",
+     "25% or more vs the same quarter a year ago"
+    ],
+    [
+     "Trend of growth",
+     "Steady or accelerating over the last 2 to 3 quarters"
+    ],
+    [
+     "Annual EPS growth",
+     "Ideally 25%+ per year over 3 years"
+    ],
+    [
+     "Sales growth",
+     "Rising too, ideally 20%+ (confirms the earnings)"
+    ],
+    [
+     "Surprises",
+     "Beats and rising estimates are a plus"
+    ]
+   ]
+  },
+  "mistakes": [
+   "Comparing a quarter with the previous quarter instead of the same quarter a year ago.",
+   "Getting excited about huge percentages that come from a tiny or negative base.",
+   "Ignoring two quarters of sharp slowdown because the stock is still going up.",
+   "Buying on earnings alone without checking the chart and the [market direction](lesson:market-direction)."
+  ],
+  "takeaways": [
+   "Look for quarterly EPS growth of 25% or more vs a year ago, ideally accelerating.",
+   "Back up quarterly numbers with solid annual growth and rising sales.",
+   "Strong earnings make a good stock; the chart tells you when to buy it."
+  ],
+  "live": "eps-leaders",
+  "try": {
+   "label": "Open the screener",
+   "href": "/screener/"
+  },
+  "related": [
+   "sales-and-margins",
+   "reading-an-earnings-report",
+   "rs-rating"
+  ]
+ },
+ {
+  "slug": "sales-and-margins",
+  "title": "Sales growth, margins and the SMR grade",
+  "desc": "Why sales growth confirms earnings, how expanding profit margins and return on equity point to quality, and how to read the SMR grade A to E.",
+  "intro": "Earnings can be boosted by cost cuts or accounting, but sales are much harder to fake. Rising sales, widening margins and a high return on equity tell you the growth is real.",
+  "sections": [
+   {
+    "h": "Sales growth confirms earnings",
+    "p": [
+     "**Sales**, also called revenue, is the total money a company takes in before costs. Earnings are what is left after costs. A company can grow earnings for a while by cutting expenses or buying back shares, but it cannot do that forever. Lasting earnings growth needs growing sales.",
+     "As with [EPS](lesson:earnings-growth), compare each quarter with the same quarter a year ago. Many strong growth stocks show sales growth of **20% to 25% or more**, and accelerating sales are an excellent sign. If EPS is up 40% but sales are up only 3%, ask where the growth is coming from."
+    ],
+    "diagram": "sales-margins"
+   },
+   {
+    "h": "Profit margins",
+    "p": [
+     "The **profit margin** is the share of each sales dollar that becomes profit. If a company sells $100 million and earns $15 million after tax, its net margin is 15%.",
+     "**Expanding margins** mean the company keeps more of every dollar as it grows. That usually comes from pricing power, scale or a better product mix, and it lets earnings grow faster than sales. Shrinking margins can mean rising costs or more competition, even while sales still look good."
+    ],
+    "list": [
+     "Gross margin: sales minus the direct cost of the product, as a % of sales.",
+     "Operating margin: profit from the business after operating costs.",
+     "Net (after-tax) margin: final profit as a % of sales."
+    ]
+   },
+   {
+    "h": "Return on equity (ROE)",
+    "p": [
+     "**ROE** is yearly net profit divided by shareholders' equity, the money owners have invested in the business. It measures how efficiently a company turns that capital into profit. Many leading growth companies have an ROE of **17% or higher**. A low ROE with high growth can still work, but it deserves a closer look."
+    ]
+   },
+   {
+    "h": "The SMR grade",
+    "p": [
+     "To save you time, Ticker&Tape combines these three measures, **S**ales growth, **M**argins and **R**eturn on equity, into one grade from **A to E**. A is the top 20% of all stocks, E the bottom 20%. You will find it in the chart's data box and in the [screener](/screener/).",
+     "Growth traders usually prefer an A or B. A D or E does not mean a stock cannot rise, but it means the business itself is not giving the move much support."
+    ]
+   },
+   {
+    "h": "How to use it",
+    "p": [
+     "Read the quarterly table on the chart from left to right: are sales and EPS both growing, and is growth steady or speeding up? Then check the SMR grade and the [RS Rating](lesson:rs-rating). The best setups combine strong fundamentals with strong price action and a sound [base](lesson:what-is-a-base)."
+    ]
+   }
+  ],
+  "mistakes": [
+   "Trusting strong EPS growth when sales are flat or falling.",
+   "Ignoring shrinking margins because the headline numbers still look big.",
+   "Treating the SMR grade as a buy signal by itself instead of one filter among several."
+  ],
+  "takeaways": [
+   "Sales growth of 20%+ confirms that earnings growth is real.",
+   "Expanding margins and an ROE of 17%+ point to a high-quality business.",
+   "The SMR grade sums up sales, margins and ROE; A and B are preferred."
+  ],
+  "try": {
+   "label": "Filter by SMR in the screener",
+   "href": "/screener/"
+  },
+  "related": [
+   "earnings-growth",
+   "reading-an-earnings-report",
+   "institutional-ownership"
+  ]
+ },
+ {
+  "slug": "reading-an-earnings-report",
+  "title": "How to read an earnings report as a trader",
+  "desc": "Earnings dates, beats and misses, guidance, and why the market's reaction in price and volume matters more than the numbers. Plus holding through earnings.",
+  "intro": "Four times a year every company reports its results, and the stock can move 10% or more in a single day. Knowing when earnings come out and how to judge the reaction is a basic risk skill.",
+  "sections": [
+   {
+    "h": "Know the date",
+    "p": [
+     "Companies announce their earnings date in advance. Most report **before the open** or **after the close**, so the price reaction appears as a gap at the next session's open. Check the [earnings calendar](/earnings/) and the earnings markers on the chart before every trade, so a report never surprises you."
+    ]
+   },
+   {
+    "h": "Beats, misses and guidance",
+    "p": [
+     "The report shows EPS and sales for the quarter. Traders compare them with analysts' estimates: above is a **beat**, below is a **miss**.",
+     "Just as important is **guidance**: what management expects for the next quarter or year. A company can beat estimates and still fall hard if it lowers guidance. It can also miss slightly and rise if the outlook improves. The market looks ahead, not back."
+    ]
+   },
+   {
+    "h": "The reaction matters more than the numbers",
+    "p": [
+     "You do not need to judge every line of the report. The market does it for you. Watch the price and volume:",
+     "A big gap up on very heavy volume that holds through the day, closing near the high, shows that large investors are buying. Some of the strongest moves start this way. A gap down on heavy volume, especially below the [50-day line](lesson:the-50-day-line), shows the opposite."
+    ],
+    "list": [
+     "Strong reaction: gap up, volume two to three times average or more, close in the upper part of the day's range.",
+     "Weak reaction: great numbers but the stock sells off and closes near its low.",
+     "Danger: gap down through support on heavy volume."
+    ],
+    "diagram": "earnings-gap"
+   },
+   {
+    "h": "Holding through earnings",
+    "p": [
+     "Holding a stock into its report is a gamble on a gap you cannot control. A [stop-loss](lesson:stop-losses) will not protect you from a gap: if you set a stop at $47 and the stock opens at $40, you sell near $40.",
+     "Many growth traders follow simple rules. If you have a solid profit cushion, you may hold a smaller position through the report. If the trade is new or near breakeven, reduce it or sell before the report. Avoid opening a new position a few days before earnings unless you accept the risk."
+    ]
+   },
+   {
+    "h": "After the report",
+    "p": [
+     "A strong earnings gap can become a new buy point, sometimes with a [gap](lesson:gaps) that holds for days or weeks. Look at the new quarterly numbers in the chart's EPS table and ask whether growth is still strong or [accelerating](lesson:earnings-growth)."
+    ]
+   }
+  ],
+  "mistakes": [
+   "Forgetting to check the earnings date before buying.",
+   "Holding a new position with no cushion through the report.",
+   "Arguing with the market: buying more because the numbers were good while the stock keeps falling on heavy volume.",
+   "Ignoring guidance and looking only at the headline beat."
+  ],
+  "takeaways": [
+   "Check the earnings calendar before every trade; stops do not protect against gaps.",
+   "Guidance and the price and volume reaction matter more than the beat or miss.",
+   "Hold through earnings only with a profit cushion and a size you can live with."
+  ],
+  "try": {
+   "label": "Open the earnings calendar",
+   "href": "/earnings/"
+  },
+  "related": [
+   "earnings-growth",
+   "gaps",
+   "stop-losses",
+   "sales-and-margins"
+  ]
+ },
+ {
+  "slug": "institutional-ownership",
+  "title": "Institutional ownership: follow the big money",
+  "desc": "Why mutual funds, pension funds and other institutions drive big stock moves, why a growing number of owners helps, and when ownership becomes too much.",
+  "intro": "Stocks do not double because individual traders buy a few hundred shares. They double because large institutions buy millions of shares over weeks and months. Learning to see that demand gives you an edge.",
+  "sections": [
+   {
+    "h": "Who the institutions are",
+    "p": [
+     "**Institutions** are professional investors that manage huge sums: mutual funds, pension funds, hedge funds, insurance companies, banks and endowments. They account for most of the trading volume in the U.S. market.",
+     "Because their positions are so large, a fund cannot buy everything it wants in one day without pushing the price up. It buys in pieces, day after day. That steady buying is what lifts a stock out of a base and keeps it rising."
+    ],
+    "diagram": "ownership"
+   },
+   {
+    "h": "Rising ownership is a good sign",
+    "p": [
+     "Large investors must report their holdings every quarter. What matters most is the **trend**: is the number of funds owning the stock rising over recent quarters? A growing list of owners means more buyers are getting interested.",
+     "Quality also counts. A few well-known funds with good recent records owning the stock is better than many weak holders. On Ticker&Tape the chart shows the **top holders**, so you can see who owns the stock and how ownership is changing."
+    ]
+   },
+   {
+    "h": "You can also see it on the chart",
+    "p": [
+     "Ownership filings are published weeks after the quarter ends, so the chart gives you a faster read. Heavy-volume up days, a rising up/down volume ratio and a strong [RS line](lesson:rs-line) are footprints of institutional buying. See [accumulation and distribution](lesson:accumulation-and-distribution).",
+     "Breakouts on volume well above average are a classic sign of institutions stepping in. A strong [earnings](lesson:earnings-growth) report is often the trigger that brings new funds into a stock."
+    ]
+   },
+   {
+    "h": "When ownership is too much",
+    "p": [
+     "There is such a thing as too much. When nearly every fund already owns a stock, there are few new buyers left, and many potential sellers. If the story disappoints, those large holders can all head for the exit at once, causing sharp drops.",
+     "Very low ownership can also be a warning: it may mean professionals have looked at the company and passed. The sweet spot is a stock with some quality sponsorship and a rising number of owners, but not one that is fully crowded."
+    ],
+    "list": [
+     "Good: ownership rising for two or more quarters, including strong funds.",
+     "Caution: very few institutional owners at all.",
+     "Caution: a widely held, mature leader where ownership has started to fall."
+    ]
+   }
+  ],
+  "mistakes": [
+   "Assuming that because a famous fund owns a stock, it must go up.",
+   "Relying on old ownership data instead of watching price and volume now.",
+   "Ignoring heavy-volume selling in a stock that is widely held by funds."
+  ],
+  "takeaways": [
+   "Institutions drive the big moves because they buy and sell in huge size.",
+   "Look for a rising number of quality owners, not a crowded, fully owned stock.",
+   "Price and volume show institutional buying faster than quarterly filings."
+  ],
+  "live": "ud-leaders",
+  "related": [
+   "accumulation-and-distribution",
+   "earnings-growth",
+   "volume-on-breakouts"
+  ]
+ },
+ {
+  "slug": "market-direction",
+  "title": "Market direction: check it before every trade",
+  "desc": "About three out of four stocks follow the general market. Learn the three market states, uptrend, under pressure and correction, and how to read them.",
+  "intro": "You can pick a great stock with a perfect chart and still lose money if the general market is falling. Checking market direction first is the single most useful habit for a new trader.",
+  "sections": [
+   {
+    "h": "Why the market matters so much",
+    "p": [
+     "Studies of past market cycles, popularized by William O'Neil, found that **about three out of four stocks** move in the same direction as the general market. When the major indexes fall, most stocks fall with them, including many leaders. Breakouts fail more often, and gains are harder to keep.",
+     "That is why growth traders watch the main indexes, the S&P 500 and the Nasdaq Composite, every day, even though they trade individual stocks. See [stocks, ETFs and indexes](lesson:stocks-etfs-indexes)."
+    ],
+    "diagram": "market-cycle"
+   },
+   {
+    "h": "The three market states",
+    "p": [
+     "Ticker&Tape shows the market in one of three states, based on index price action, [distribution days](lesson:distribution-days) and [follow-through days](lesson:follow-through-day):"
+    ],
+    "list": [
+     "**Confirmed uptrend**: the indexes are rising and buyers are in control. This is the time to buy breakouts and build positions.",
+     "**Uptrend under pressure**: the uptrend is intact, but selling is building (several distribution days, indexes struggling near highs or at the 50-day line). Be more selective, tighten up and buy less.",
+     "**Market in correction**: the indexes have fallen meaningfully and sellers are in control. Protect capital, raise cash and avoid new buys until a new uptrend is confirmed."
+    ]
+   },
+   {
+    "h": "How a cycle unfolds",
+    "p": [
+     "Markets move in cycles. A correction ends with a low, then a rally attempt, then a [follow-through day](lesson:follow-through-day) that confirms a new uptrend. As the uptrend matures, distribution days pile up, the market comes under pressure, and eventually a new correction begins. Recognizing each phase helps you know when to be aggressive and when to wait.",
+     "Corrections come in all sizes, from a quick 8% dip to a long bear market that cuts the indexes by a third or more. You do not need to know in advance which one it will be. You only need to follow the signals as they appear."
+    ]
+   },
+   {
+    "h": "Check it before every trade",
+    "p": [
+     "Make it a habit: before you place any order, look at the market direction chip on the dashboard or the [Market breadth](/breadth/) page. Then decide how much to invest. In a confirmed uptrend you might be fully invested; under pressure, partly; in a correction, mostly in cash. The lesson on [exposure](lesson:exposure) covers this in detail.",
+     "The market state is a guide, not a guarantee. It tells you where the odds are, so you can adjust your size and your expectations."
+    ]
+   }
+  ],
+  "mistakes": [
+   "Buying breakouts during a correction because one stock looks strong.",
+   "Staying fully invested when the market slips to under pressure.",
+   "Waiting for the news to confirm a turn; price and volume usually turn first.",
+   "Trying to predict the bottom instead of waiting for a follow-through day."
+  ],
+  "takeaways": [
+   "About three out of four stocks follow the general market.",
+   "Know the state: confirmed uptrend, under pressure or correction.",
+   "Check market direction before every trade and size your exposure to it."
+  ],
+  "try": {
+   "label": "Open Market breadth",
+   "href": "/breadth/"
+  },
+  "related": [
+   "distribution-days",
+   "follow-through-day",
+   "market-breadth",
+   "exposure"
+  ]
+ },
+ {
+  "slug": "distribution-days",
+  "title": "Distribution days: spotting institutional selling",
+  "desc": "A distribution day is an index drop of 0.2% or more on higher volume. Learn how to count them over 25 sessions and why 5 or 6 signal trouble.",
+  "intro": "Market tops rarely happen in a single day. They build as large investors quietly sell over a few weeks. Distribution days are a simple way to count that selling.",
+  "sections": [
+   {
+    "h": "What a distribution day is",
+    "p": [
+     "A **distribution day** is a session when a major index, such as the S&P 500 or the Nasdaq, **falls 0.2% or more on higher volume than the day before**. The higher volume shows that big players were selling, not just that buyers stepped away.",
+     "A related signal is **stalling**: the index ends roughly flat or only slightly up on higher volume, often after a good run. It shows heavy selling into strength, and some traders count it as distribution too.",
+     "Volume is compared with the prior session on the same exchange, so the S&P 500 and the Nasdaq can have different counts."
+    ],
+    "diagram": "distribution-days"
+   },
+   {
+    "h": "Counting over 25 sessions",
+    "p": [
+     "One distribution day means little. What matters is how many pile up in a short time. Traders count them over the last **25 trading sessions**, about five weeks."
+    ],
+    "list": [
+     "0 to 3: normal in a healthy uptrend.",
+     "4: worth watching closely.",
+     "5 to 6: the market is under real pressure; many tops have formed this way.",
+     "Clusters: several distribution days in a week or two are more serious than the same number spread out."
+    ]
+   },
+   {
+    "h": "Distribution days expire",
+    "p": [
+     "A distribution day drops off the count after **25 sessions**. It is also often removed early if the index rallies about **5% above** that day's close, because the market has clearly absorbed the selling. So the count can fall even without new action, and a market under pressure can return to a healthy uptrend."
+    ]
+   },
+   {
+    "h": "How to use the count",
+    "p": [
+     "The [Market breadth](/breadth/) page shows the distribution-day count for the S&P 500 and the Nasdaq and marks each day on the index chart. As the count rises, become more careful: take some profits, avoid weaker setups and be quicker to sell laggards.",
+     "The count feeds the [market direction](lesson:market-direction) status: a rising count can move a confirmed uptrend to under pressure. Watch your own stocks too. When the market is distributing, leaders often start to show heavy-volume [distribution](lesson:accumulation-and-distribution) of their own.",
+     "Remember that the count is a measure of risk, not a sell order for every stock. A market with five distribution days can still rally for a while, but the odds of new breakouts working are lower, so you should expect less and protect your gains more."
+    ]
+   }
+  ],
+  "rules": {
+   "title": "Distribution day rules",
+   "rows": [
+    [
+     "Price",
+     "Index down 0.2% or more from the prior close"
+    ],
+    [
+     "Volume",
+     "Higher than the previous session"
+    ],
+    [
+     "Window",
+     "Counted over the last 25 sessions"
+    ],
+    [
+     "Expiration",
+     "After 25 sessions, or when the index rises about 5% above that close"
+    ],
+    [
+     "Warning level",
+     "5 to 6 days in the window, especially in clusters"
+    ]
+   ]
+  },
+  "mistakes": [
+   "Panicking over a single distribution day.",
+   "Ignoring a cluster of five or six because your stocks still look fine.",
+   "Counting down days on lower volume, which are not distribution.",
+   "Forgetting that old distribution days expire."
+  ],
+  "takeaways": [
+   "A distribution day is an index drop of 0.2%+ on higher volume.",
+   "Five or six in 25 sessions is a serious warning that a top may be forming.",
+   "Days expire after 25 sessions or a 5% rally, so keep the count current."
+  ],
+  "try": {
+   "label": "See the distribution-day count",
+   "href": "/breadth/"
+  },
+  "related": [
+   "market-direction",
+   "follow-through-day",
+   "accumulation-and-distribution"
+  ]
+ },
+ {
+  "slug": "follow-through-day",
+  "title": "The follow-through day: confirming a new uptrend",
+  "desc": "How a follow-through day confirms a new market uptrend: the rally attempt, day 4 or later, a 1.2%+ gain on higher volume, and why not every one works.",
+  "intro": "After a correction, nobody rings a bell at the bottom. The follow-through day is a simple, objective signal that a new uptrend may have started and it is time to start buying again, carefully.",
+  "sections": [
+   {
+    "h": "Step 1: the rally attempt",
+    "p": [
+     "During a correction, the indexes make lower lows. A **rally attempt** begins on the first day an index closes higher after a new low. That is day 1. It can also begin when the index closes in the upper half of its range after a down open.",
+     "As long as the index stays **above the low** of the correction, the rally attempt is alive and you keep counting days. If it undercuts that low, the count resets and you wait for a new day 1."
+    ]
+   },
+   {
+    "h": "Step 2: the follow-through day",
+    "p": [
+     "A **follow-through day** (FTD) usually comes on **day 4 or later** of a rally attempt. One of the major indexes must **gain about 1.2% or more on higher volume than the previous session**. Some traders use 1% for calm markets and a higher bar for volatile ones.",
+     "Why wait until day 4? The first few days of any bounce can be short covering or bargain hunting. A big gain on rising volume a few days in shows that institutions are buying with conviction. Many FTDs come between day 4 and day 7, but some come later."
+    ],
+    "diagram": "ftd"
+   },
+   {
+    "h": "Not every FTD works",
+    "p": [
+     "A follow-through day confirms a possible new uptrend, it does not guarantee one. Some fail within days, often when the index quickly falls below the FTD's low or when [distribution days](lesson:distribution-days) pile up right away. Still, history shows that almost every major new uptrend started with one.",
+     "So treat an FTD as a green light to **start** buying, not to go all in."
+    ]
+   },
+   {
+    "h": "How to act on it",
+    "list": [
+     "Start with one or two of the strongest stocks breaking out of sound [bases](lesson:what-is-a-base) with volume.",
+     "Use smaller positions and add only if those first trades work.",
+     "Watch for leaders with an [RS line](lesson:rs-line) already at new highs; they often lead the new uptrend.",
+     "If the index undercuts the FTD low, cut back and wait."
+    ],
+    "p": [
+     "The [Market breadth](/breadth/) page marks rally attempts and follow-through days on the index chart, and the [market direction](lesson:market-direction) status changes to confirmed uptrend when one occurs."
+    ]
+   }
+  ],
+  "rules": {
+   "title": "Follow-through day rules",
+   "rows": [
+    [
+     "Rally attempt",
+     "Starts on the first up close after a new low (day 1)"
+    ],
+    [
+     "Timing",
+     "Day 4 or later of the rally attempt"
+    ],
+    [
+     "Price",
+     "An index gains about 1.2% or more"
+    ],
+    [
+     "Volume",
+     "Higher than the previous session"
+    ],
+    [
+     "Reset",
+     "If the index undercuts the correction low"
+    ]
+   ]
+  },
+  "mistakes": [
+   "Buying heavily on day 1 or 2 of a bounce before any confirmation.",
+   "Going fully invested on the FTD instead of building step by step.",
+   "Ignoring a failed FTD when the index breaks below its low.",
+   "Missing the new uptrend because you stay bearish after the signal."
+  ],
+  "takeaways": [
+   "A follow-through day is a 1.2%+ index gain on higher volume, day 4 or later.",
+   "It confirms a possible new uptrend; it does not guarantee one.",
+   "Start buying leaders gradually and add only as your trades work."
+  ],
+  "try": {
+   "label": "Check for a follow-through day",
+   "href": "/breadth/"
+  },
+  "related": [
+   "market-direction",
+   "distribution-days",
+   "market-breadth"
+  ]
+ },
+ {
+  "slug": "market-breadth",
+  "title": "Market breadth: how many stocks join the move",
+  "desc": "Learn to read market breadth: % of stocks above the 50 and 200-day lines, new highs vs new lows, the advance/decline line, McClellan and RSP vs SPY.",
+  "intro": "An index can rise while most stocks fall. Breadth measures how many stocks take part in a move, and it often warns you before the index does.",
+  "sections": [
+   {
+    "h": "What breadth means",
+    "p": [
+     "Big indexes like the S&P 500 are **weighted by market value**, so a handful of giant companies can carry the index higher on their own. **Breadth** looks at all stocks equally and asks: how many are actually going up?",
+     "A **broad** rally, with most stocks rising, is healthy and gives you many good setups. A **narrow** rally, led by a few big names while most stocks lag, is fragile and often ends sooner."
+    ],
+    "diagram": "breadth"
+   },
+   {
+    "h": "Percent of stocks above the 50 and 200-day",
+    "p": [
+     "This shows the share of stocks trading above their [50-day](lesson:the-50-day-line) and [200-day](lesson:the-200-day-line) moving averages. Above about 70% means strength is widespread, but the market can be stretched in the short term. Below about 30% means most stocks are weak, often near the late stage of a correction.",
+     "Watch the direction too. If the index makes a new high while fewer stocks stay above their 50-day, the rally is narrowing."
+    ]
+   },
+   {
+    "h": "New highs vs new lows",
+    "p": [
+     "Count the stocks making new 52-week highs and compare them with those making new lows. In a healthy uptrend, new highs clearly outnumber new lows. When the index climbs but new highs shrink and new lows grow, it is a warning sign."
+    ]
+   },
+   {
+    "h": "Advance/decline line and McClellan",
+    "list": [
+     "**Advance/decline (A/D) line**: a running total of advancing stocks minus declining stocks each day. A rising A/D line confirms the index; an index at new highs with a falling A/D line is a negative divergence.",
+     "**McClellan oscillator**: a measure of the short-term momentum of advances minus declines. Readings far above zero show strong, broad buying; deep negative readings show heavy selling and often appear near short-term lows."
+    ],
+    "p": [
+     "Both appear on the [Market breadth](/breadth/) page next to the distribution-day count."
+    ]
+   },
+   {
+    "h": "Equal weight vs cap weight",
+    "p": [
+     "A quick test is to compare an equal-weight S&P 500 ETF (RSP) with the regular, cap-weighted one (SPY). On the [Compare](/compare/) page, plot the ratio RSP:SPY. A rising ratio means the average stock is doing better than the giants, so participation is broad. A falling ratio means a few big stocks are doing the work."
+    ]
+   },
+   {
+    "h": "How to use breadth",
+    "p": [
+     "Breadth is a confirming tool. Use it alongside [market direction](lesson:market-direction) and [distribution days](lesson:distribution-days), not as a timing signal on its own. When price and breadth agree, you can trade with more confidence; when they diverge, reduce risk."
+    ]
+   }
+  ],
+  "mistakes": [
+   "Trusting an index at new highs without checking how many stocks are participating.",
+   "Using one breadth reading as an exact buy or sell signal.",
+   "Shorting just because breadth looks stretched in a strong uptrend."
+  ],
+  "takeaways": [
+   "Breadth measures how many stocks join a move; broad rallies are healthier.",
+   "Watch for divergences: index up while breadth weakens is a warning.",
+   "Use RSP:SPY, new highs vs lows and the A/D line to confirm the market's trend."
+  ],
+  "try": {
+   "label": "Open Market breadth",
+   "href": "/breadth/"
+  },
+  "related": [
+   "market-direction",
+   "distribution-days",
+   "the-200-day-line"
+  ]
+ }
+]

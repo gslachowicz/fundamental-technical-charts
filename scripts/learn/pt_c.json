@@ -1,0 +1,543 @@
+[
+ {
+  "slug": "rsi",
+  "title": "RSI: o Índice de Força Relativa explicado",
+  "desc": "Entenda o que o RSI mede, por que ações fortes continuam sobrecompradas, como identificar divergências e por que usá-lo só como ferramenta secundária.",
+  "intro": "O RSI é um medidor de momentum que oscila entre 0 e 100. Ele mostra com que força uma ação vem subindo ou caindo ultimamente. É útil, mas sozinho não é sinal de compra nem de venda.",
+  "sections": [
+   {
+    "h": "O que o RSI mede",
+    "p": [
+     "O **Índice de Força Relativa (RSI)** compara o tamanho dos dias de alta recentes de uma ação com o tamanho dos seus dias de baixa, normalmente nas últimas 14 barras. Se a maior parte do movimento recente foi para cima, o RSI sobe em direção a 100. Se foi para baixo, cai em direção a 0.",
+     "Não confunda com **força relativa** no sentido de O'Neil. O RSI só compara a ação com o próprio passado. A [linha RS](lesson:rs-line) e o [RS Rating](lesson:rs-rating) comparam a ação com o mercado e com outras ações, e isso importa muito mais para encontrar líderes."
+    ],
+    "diagram": "rsi"
+   },
+   {
+    "h": "Como ler o 70 e o 30",
+    "p": [
+     "Os livros dizem que um RSI acima de **70** indica sobrecompra e abaixo de **30**, sobrevenda. Muitos iniciantes leem isso como vender acima de 70 e comprar abaixo de 30. Em ações de crescimento, isso costuma ser ao contrário.",
+     "Uma verdadeira líder que rompe uma base (um breakout, ou rompimento) muitas vezes leva o RSI acima de 70 e o mantém lá por semanas. Sobrecompra aqui significa demanda forte, não um topo. Vender uma líder só porque o RSI chegou a 75 pode encurtar uma grande vencedora. Enquanto isso, uma ação presa abaixo de 30 costuma estar fraca por algum motivo, e ações fracas tendem a continuar fracas."
+    ],
+    "list": [
+     "Acima de 50 e subindo: o momentum está do lado dos compradores.",
+     "Acima de 70 por muito tempo: muitas vezes sinal de uma tendência de alta poderosa.",
+     "Abaixo de 50 e caindo: os vendedores estão no controle.",
+     "Abaixo de 30: fraca; espere a ação se recuperar antes de dar atenção a ela."
+    ]
+   },
+   {
+    "h": "Divergências",
+    "p": [
+     "Uma **divergência** acontece quando o preço e o RSI discordam. Uma **divergência de baixa** ocorre quando o preço faz uma nova máxima, mas o RSI faz uma máxima mais baixa. Ela indica que o impulso está perdendo energia. Uma **divergência de alta** é o oposto: o preço faz uma mínima mais baixa enquanto o RSI faz uma mínima mais alta.",
+     "Divergências são avisos, não ordens. Uma ação pode mostrar divergência de baixa por semanas e continuar subindo. Trate isso como motivo para observar mais de perto o volume e a [média de 50 dias](lesson:the-50-day-line), não para vender na hora."
+    ]
+   },
+   {
+    "h": "Como os traders usam",
+    "p": [
+     "Neste método, preço, volume e base vêm primeiro. O RSI é uma segunda opinião. Alguns traders gostam de ver o RSI se mantendo acima de 50 durante uma base e subindo à medida que a ação se aproxima do pivot (o ponto de compra). Outros usam um pico forte do RSI depois de uma longa alta como uma pista, entre outras, de que a ação está ficando esticada.",
+     "Na plataforma, abra qualquer gráfico, clique em **Indicators** e adicione o painel de RSI. Compare como ele se comporta em uma líder e em uma retardatária."
+    ]
+   }
+  ],
+  "mistakes": [
+   "Vender um breakout forte só porque o RSI está acima de 70.",
+   "Comprar uma ação em queda porque o RSI está abaixo de 30.",
+   "Agir com base em uma divergência sem nenhuma confirmação do preço ou do volume.",
+   "Confundir o RSI com a linha RS ou com o RS Rating."
+  ],
+  "takeaways": [
+   "O RSI mede o momentum de uma ação em relação ao próprio passado, numa escala de 0 a 100.",
+   "Ações de crescimento fortes podem ficar sobrecompradas por semanas; isso é uma qualidade, não um defeito.",
+   "Use o RSI como ferramenta secundária, depois do preço, do volume e da força relativa."
+  ],
+  "try": {
+   "label": "Adicione o RSI a um gráfico",
+   "href": "/chart/SPY/"
+  },
+  "related": [
+   "macd",
+   "rs-line",
+   "bollinger-and-keltner"
+  ]
+ },
+ {
+  "slug": "macd",
+  "title": "MACD: linhas, histograma e cruzamentos",
+  "desc": "Guia do MACD para iniciantes: a linha MACD e a linha de sinal, o histograma, os cruzamentos, a linha zero e por que o MACD sempre fica atrás do preço.",
+  "intro": "O MACD transforma duas médias móveis em uma única imagem do momentum. Ele ajuda você a ver quando uma tendência está acelerando ou desacelerando, mas, como é feito de médias, sempre reage depois do preço.",
+  "sections": [
+   {
+    "h": "Como o MACD é construído",
+    "p": [
+     "MACD significa **Moving Average Convergence Divergence** (convergência e divergência de médias móveis). A configuração padrão usa três números: 12, 26 e 9.",
+     "Se as [médias móveis](lesson:moving-averages-basics) são novidade para você, leia essa lição primeiro. O MACD usa médias móveis exponenciais (MME, ou EMA em inglês), que dão mais peso aos preços recentes."
+    ],
+    "list": [
+     "**Linha MACD**: a EMA de 12 dias menos a EMA de 26 dias. Quando a média curta está acima da longa, a linha é positiva.",
+     "**Linha de sinal**: uma EMA de 9 dias da linha MACD. É uma versão mais suave e mais lenta.",
+     "**Histograma**: a linha MACD menos a linha de sinal, desenhado em barras. Barras altas indicam que a distância está aumentando; barras diminuindo indicam que ela está encolhendo."
+    ],
+    "diagram": "macd"
+   },
+   {
+    "h": "Cruzamentos e linha zero",
+    "p": [
+     "Um **cruzamento de alta** acontece quando a linha MACD cruza acima da linha de sinal. Um **cruzamento de baixa**, quando cruza abaixo. No mesmo momento, o histograma passa de negativo para positivo (ou o contrário).",
+     "A **linha zero** também importa. Quando a linha MACD está acima de zero, a média de 12 dias está acima da de 26, então a tendência de curto prazo é de alta. Um cruzamento acima de zero, dentro de uma tendência de alta, é mais forte do que um muito abaixo de zero numa tendência de baixa."
+    ]
+   },
+   {
+    "h": "Por que o MACD atrasa",
+    "p": [
+     "O MACD é uma média de médias. Quando ele cruza, o preço já se moveu. Num breakout rápido saindo de uma base, a ação pode estar de 5% a 10% acima do pivot antes de o MACD ficar positivo. Por isso os traders deste método não compram em cruzamentos do MACD. O ponto de compra vem da base e do [pivot](lesson:pivot-and-buy-zone), com volume.",
+     "O MACD também dá muitos sinais falsos quando a ação anda de lado. Numa faixa estreita, as linhas se cruzam para lá e para cá a cada poucos dias e significam muito pouco."
+    ]
+   },
+   {
+    "h": "Como os traders usam",
+    "p": [
+     "Pense no MACD como um velocímetro. Um histograma encolhendo durante uma alta forte indica que o avanço está desacelerando, o que pode ser uma pista antecipada para ajustar seu plano. Uma divergência de baixa, em que o preço faz nova máxima e o MACD faz uma máxima mais baixa, é outro sinal de alerta, assim como no [RSI](lesson:rsi).",
+     "No gráfico semanal, o MACD ajuda a ver se a tendência maior está saudável. Adicione-o pelo botão **Indicators** em qualquer gráfico e compare com a ação do preço que você já está vendo."
+    ]
+   }
+  ],
+  "mistakes": [
+   "Comprar em todo cruzamento de alta, até em ações laterais ou em queda.",
+   "Esperar o MACD confirmar um breakout e comprar muito acima da zona de compra.",
+   "Ignorar a linha zero e tratar todos os cruzamentos como iguais.",
+   "Usar o MACD no lugar do preço, do volume e da base."
+  ],
+  "takeaways": [
+   "O MACD mostra a distância entre uma EMA de 12 dias e uma de 26 dias, mais uma linha de sinal de 9 dias e um histograma.",
+   "Cruzamentos acima da linha zero numa tendência de alta pesam mais.",
+   "O MACD atrasa em relação ao preço; use-o para avaliar o momentum, não para escolher a hora de comprar."
+  ],
+  "try": {
+   "label": "Adicione o MACD a um gráfico",
+   "href": "/chart/QQQ/"
+  },
+  "related": [
+   "rsi",
+   "moving-averages-basics",
+   "bollinger-and-keltner"
+  ]
+ },
+ {
+  "slug": "bollinger-and-keltner",
+  "title": "Bandas de Bollinger e Canais de Keltner",
+  "desc": "Como as Bandas de Bollinger e os Canais de Keltner medem a volatilidade, por que o squeeze antecede grandes movimentos e o que é surfar a banda.",
+  "intro": "As Bandas de Bollinger e os Canais de Keltner desenham um envelope em volta do preço. Quando o envelope fica estreito, a ação ficou quieta, e a calmaria muitas vezes vem logo antes de um grande movimento.",
+  "sections": [
+   {
+    "h": "O que são as bandas",
+    "p": [
+     "As **Bandas de Bollinger** partem de uma média móvel simples de 20 dias. Uma banda superior é desenhada dois desvios-padrão acima dela e uma banda inferior dois desvios-padrão abaixo. O desvio-padrão mede o quanto os preços vêm oscilando. Quando a ação se move com força, as bandas se afastam. Quando ela se acalma, as bandas se aproximam.",
+     "Os **Canais de Keltner** parecem semelhantes, mas são construídos de outro jeito. Eles usam uma média móvel exponencial, normalmente de 20 dias, com bandas a um múltiplo do [average true range](lesson:atr-and-adr) acima e abaixo. Como o ATR muda mais devagar, os Canais de Keltner são mais suaves."
+    ],
+    "diagram": "bollinger"
+   },
+   {
+    "h": "O squeeze",
+    "p": [
+     "A ideia mais útil aqui é o **squeeze** (compressão). Quando as Bandas de Bollinger ficam estreitas fora do normal, a volatilidade secou. Muitos traders definem o squeeze como o momento em que as Bandas de Bollinger ficam dentro dos Canais de Keltner.",
+     "Isso combina com o que os traders no estilo O'Neil procuram numa base: fechamentos semanais apertados e [volume secando](lesson:volume-on-breakouts) perto das mínimas de uma alça ou de uma base plana. Os vendedores se esgotaram. Quando os compradores voltam, o movimento que sai dessa zona calma pode ser rápido."
+    ],
+    "list": [
+     "Um squeeze diz que um movimento é provável, não para qual lado.",
+     "Deixe a base e o pivot mostrarem onde agir.",
+     "Confirme o breakout com volume bem acima da média."
+    ]
+   },
+   {
+    "h": "Surfando a banda",
+    "p": [
+     "Iniciantes costumam achar que uma ação que encosta na banda superior está alta demais e precisa voltar. Numa tendência de alta forte acontece o contrário: o preço pode **surfar a banda superior** por dias ou semanas, fechando perto dela várias vezes. É sinal de demanda persistente.",
+     "O mesmo vale ao contrário. Uma ação que continua colada na banda inferior está em queda constante. Comprá-la só porque encostou na banda inferior é tentar segurar uma faca caindo."
+    ]
+   },
+   {
+    "h": "Como os traders usam",
+    "p": [
+     "Use as bandas como contexto. Uma banda estreita durante uma base reforça a ideia de que a base está apertada. Uma ação que disparou muito acima da banda superior em poucos dias pode estar esticada, então quem quer comprar pode esperar uma entrada mais calma em vez de correr atrás. Um fechamento de volta para dentro das bandas depois de uma longa subida pode ser uma pista antecipada de que a alta está esfriando.",
+     "Na plataforma, adicione Bandas de Bollinger ou Canais de Keltner como sobreposições pelo botão **Indicators**, ou os dois juntos para identificar squeezes."
+    ]
+   }
+  ],
+  "mistakes": [
+   "Vender uma ação forte só porque encostou na banda superior.",
+   "Comprar uma ação fraca porque encostou na banda inferior.",
+   "Tratar o squeeze como sinal de direção em vez de sinal de volatilidade.",
+   "Ignorar o volume quando o preço sai de um squeeze."
+  ],
+  "takeaways": [
+   "As Bandas de Bollinger abrem e fecham com a volatilidade; os Canais de Keltner fazem o mesmo de forma mais suave usando o ATR.",
+   "Um squeeze significa que a ação ficou quieta, o que muitas vezes vem antes de um grande movimento.",
+   "Ações fortes podem surfar a banda superior; isso é força, não sinal de venda."
+  ],
+  "try": {
+   "label": "Adicione bandas a um gráfico",
+   "href": "/chart/SPY/"
+  },
+  "related": [
+   "atr-and-adr",
+   "volume-on-breakouts",
+   "rsi"
+  ]
+ },
+ {
+  "slug": "anchored-vwap",
+  "title": "VWAP ancorado: onde os compradores lucram",
+  "desc": "Entenda o que é o VWAP ancorado, como ancorá-lo no balanço, numa mínima de base ou numa máxima, e como ele mostra se o comprador médio está no lucro.",
+  "intro": "O VWAP ancorado responde a uma pergunta simples: desde um determinado dia, qual preço o comprador médio pagou? Se a ação está acima dessa linha, esses compradores estão no lucro. Se está abaixo, estão no prejuízo.",
+  "sections": [
+   {
+    "h": "O que significa VWAP",
+    "p": [
+     "**VWAP** significa **volume-weighted average price**, o preço médio ponderado pelo volume. Em vez de fazer a média dos preços de fechamento como uma [média móvel](lesson:moving-averages-basics), ele pondera cada preço pela quantidade de ações negociadas ali. Um dia com volume enorme conta muito mais do que um dia calmo.",
+     "Day traders usam um VWAP que zera toda manhã. O **VWAP ancorado** é diferente: você escolhe o dia de início, e a linha vai somando cada barra a partir dali. Ela mostra o custo médio de todo mundo que comprou desde a sua âncora."
+    ],
+    "diagram": "vwap"
+   },
+   {
+    "h": "Onde ancorar",
+    "p": [
+     "A âncora deve ser um dia que mudou a história da ação. Grandes fundos costumam montar posições depois desses eventos, então a linha vira um mapa aproximado do custo deles."
+    ],
+    "list": [
+     "**Um dia de balanço**: principalmente um [gap](lesson:gaps) (salto de preço) grande para cima ou para baixo com volume forte.",
+     "**Uma mínima de base**: o ponto mais baixo de uma xícara ou de uma correção, onde o novo avanço começou.",
+     "**Uma máxima importante**: o pico antes de uma correção. Quem comprou desde então muitas vezes ainda está no prejuízo e pode vender quando voltar ao zero a zero.",
+     "**Um dia de breakout**: para acompanhar se quem comprou o rompimento está mantendo o ganho."
+    ]
+   },
+   {
+    "h": "Como ler",
+    "p": [
+     "Quando o preço se mantém acima de um VWAP ancorado, quem comprou desde a âncora está no lucro e tem pouco motivo para vender. Recuos até a linha costumam encontrar suporte, porque esses compradores defendem seu custo médio.",
+     "Quando o preço cai abaixo da linha, o comprador médio desde a âncora passa a perder dinheiro. Alguns vão vender para sair, o que aumenta a oferta. Uma linha ancorada numa máxima anterior muitas vezes funciona como resistência pelo mesmo motivo. É a mesma lógica por trás de [suporte e resistência](lesson:support-and-resistance): as pessoas lembram quanto pagaram."
+    ]
+   },
+   {
+    "h": "Como os traders usam",
+    "p": [
+     "O VWAP ancorado é uma ferramenta para avaliar suportes, não um sinal de compra. Uma líder que recua até o VWAP ancorado no seu último gap de balanço, com pouco volume, e volta a subir está se comportando bem. Uma ação que fura essa linha com volume forte está dizendo que os compradores pós-balanço estão desistindo.",
+     "Na plataforma, adicione o VWAP ancorado pelo botão **Indicators** e escolha a data da âncora. Experimente ancorar no último marcador de balanço e na mínima da base atual, e veja qual linha o preço respeitou."
+    ]
+   }
+  ],
+  "mistakes": [
+   "Ancorar num dia qualquer, sem notícia nem volume por trás.",
+   "Tratar um toque na linha como compra automática, sem checar o volume.",
+   "Usar o VWAP intradiário, que zera todo dia, para operações que duram semanas.",
+   "Desenhar tantas linhas ancoradas que o gráfico deixa de dizer alguma coisa."
+  ],
+  "takeaways": [
+   "O VWAP ancorado é o preço médio ponderado pelo volume desde o dia que você escolhe.",
+   "Ancore no balanço, numa mínima de base, num breakout ou numa máxima importante.",
+   "Acima da linha, quem comprou desde a âncora está no lucro; abaixo, está no prejuízo."
+  ],
+  "try": {
+   "label": "Adicione o VWAP ancorado a um gráfico",
+   "href": "/chart/SPY/"
+  },
+  "related": [
+   "support-and-resistance",
+   "gaps",
+   "the-50-day-line"
+  ]
+ },
+ {
+  "slug": "atr-and-adr",
+  "title": "ATR e ADR: quanto uma ação se move",
+  "desc": "Average true range e average daily range % explicados: como diferenciar ações voláteis de calmas e usar os números no tamanho da posição e no stop.",
+  "intro": "Cada ação tem seu próprio ritmo. Algumas se movem 1% num dia normal, outras 6%. O ATR e o ADR medem esse ritmo, para que seus stops e o tamanho das suas posições combinem com a ação que você realmente está operando.",
+  "sections": [
+   {
+    "h": "Average true range (ATR)",
+    "p": [
+     "O **true range** (amplitude verdadeira) de um dia é a maior de três distâncias: a máxima de hoje menos a mínima de hoje, a máxima de hoje menos o fechamento de ontem, ou o fechamento de ontem menos a mínima de hoje. Incluir o fechamento de ontem captura os [gaps](lesson:gaps) que uma simples máxima menos mínima deixaria de fora.",
+     "O **ATR** é a média do true range, normalmente de 14 dias. Ele é expresso em dólares. Uma ação de $50 com ATR de $2 se move cerca de $2 num dia típico. A caixa de dados da plataforma também mostra o **ATR %**, o ATR dividido pelo preço, para você comparar ações de preços diferentes."
+    ],
+    "diagram": "atr"
+   },
+   {
+    "h": "Average daily range (ADR %)",
+    "p": [
+     "O **ADR %** é um primo mais simples. Ele faz a média da amplitude entre máxima e mínima de cada dia como porcentagem do preço, normalmente de 20 dias. Ignora os gaps, mas é fácil de ler: um ADR de 4% significa que a ação costuma oscilar cerca de 4% da mínima à máxima num pregão.",
+     "Os dois números respondem à mesma pergunta: quanto esta ação se move normalmente? Use o que achar mais fácil e seja consistente."
+    ]
+   },
+   {
+    "h": "Ações voláteis e calmas",
+    "list": [
+     "**Calmas (ATR % ou ADR % de 1% a 2%)**: empresas grandes e maduras e ETFs de índice como o SPY. Os movimentos são mais lentos e os stops podem ser mais curtos.",
+     "**Moderadas (de 2% a 4%)**: muitas líderes de crescimento já estabelecidas.",
+     "**Voláteis (5% ou mais)**: empresas jovens de crescimento rápido e IPOs recentes. Grandes movimentos possíveis, mas o ruído diário normal pode acionar um stop curto."
+    ]
+   },
+   {
+    "h": "Usando o ATR para stops e tamanho",
+    "p": [
+     "A regra clássica deste método é cortar a perda entre 7% e 8% abaixo do preço de compra. O ATR ajuda você a checar se esse stop (ordem de saída para limitar a perda) faz sentido. Se o ATR % de uma ação é 6%, um stop de 7% é pouco mais que um dia normal, então o ruído pode tirar você da posição. Alguns traders então pegam uma posição menor para dar mais espaço à ação arriscando os mesmos dólares.",
+     "Um exemplo. Você tem uma conta de $100,000 e arrisca 0.5% por operação, ou $500. Uma ação de $50 tem ATR de $2. Um stop 1.5 ATR abaixo da entrada fica a $3, em $47. Ações = $500 ÷ $3 = cerca de 166 ações, aproximadamente $8,300. A lição de [tamanho de posição](lesson:position-sizing) mostra isso em detalhe, e a de [stop-loss](lesson:stop-losses) explica onde colocar o stop."
+    ]
+   }
+  ],
+  "rules": {
+   "title": "Referência rápida do ATR",
+   "rows": [
+    [
+     "ATR",
+     "Average true range em dólares, normalmente de 14 dias, inclui gaps"
+    ],
+    [
+     "ATR %",
+     "ATR dividido pelo preço; compara ações de preços diferentes"
+    ],
+    [
+     "ADR %",
+     "Amplitude média entre máxima e mínima como % do preço, normalmente de 20 dias"
+    ],
+    [
+     "Checagem do stop",
+     "Um stop a menos de cerca de 1 ATR provavelmente será acionado pelo ruído normal"
+    ],
+    [
+     "Regra de tamanho",
+     "Stop mais largo significa menos ações para o mesmo risco em dólares"
+    ]
+   ]
+  },
+  "mistakes": [
+   "Usar o mesmo stop curto numa ação calma e numa muito volátil.",
+   "Manter a mesma quantidade de ações quando o stop precisa ser mais largo.",
+   "Ler um ATR alto como sinal de ação melhor; ele só indica oscilações maiores.",
+   "Esquecer que o ATR sobe depois de um gap grande e volta devagar."
+  ],
+  "takeaways": [
+   "O ATR e o ADR % medem quanto uma ação normalmente se move num dia.",
+   "Compare o ATR % com a distância do seu stop para que o ruído normal não tire você da posição.",
+   "Um stop mais largo pede uma posição menor para manter o mesmo risco em dólares."
+  ],
+  "try": {
+   "label": "Abra a calculadora de tamanho de posição",
+   "href": "/portfolio/"
+  },
+  "related": [
+   "position-sizing",
+   "stop-losses",
+   "bollinger-and-keltner"
+  ]
+ },
+ {
+  "slug": "rs-line",
+  "title": "A linha RS: a ação está batendo o mercado?",
+  "desc": "Como funciona a linha de força relativa, por que uma linha RS subindo indica que a ação supera o mercado e por que uma máxima antecipada é chave.",
+  "intro": "A linha RS é uma das linhas mais simples e úteis num gráfico de ações de crescimento. Ela mostra, num relance, se uma ação está indo melhor ou pior que o mercado.",
+  "sections": [
+   {
+    "h": "O que é a linha RS",
+    "p": [
+     "A **linha de força relativa** (linha RS) é o preço da ação dividido pelo S&P 500, plotado dia a dia. O valor em si não importa. Só a direção importa.",
+     "Se a ação sobe 10% enquanto o S&P 500 sobe 5%, a linha RS sobe. Se a ação fica parada enquanto o índice cai, a linha RS também sobe, porque a ação está segurando melhor que o mercado. Se a ação sobe 3% enquanto o índice sobe 8%, a linha RS cai: a ação está ganhando dinheiro, mas ficando para trás."
+    ],
+    "diagram": "rs-line"
+   },
+   {
+    "h": "Como ler",
+    "list": [
+     "**Linha subindo**: a ação está superando o mercado. As líderes têm linhas RS inclinadas para cima por meses.",
+     "**Linha plana**: a ação anda no mesmo ritmo do mercado.",
+     "**Linha caindo**: a ação está rendendo menos que o mercado, mesmo que o preço suba.",
+     "**Linha em nova máxima**: a ação está superando o mercado mais do que em qualquer momento do período mostrado."
+    ]
+   },
+   {
+    "h": "Nova máxima da linha RS antes do preço",
+    "p": [
+     "Uma das pistas mais fortes deste método é uma linha RS que faz uma **nova máxima antes do preço**. Isso costuma acontecer enquanto a ação ainda está numa base. O mercado pode estar fraco e a ação alguns pontos percentuais abaixo da máxima anterior, mas ela está segurando muito melhor que o índice.",
+     "Isso mostra que grandes compradores estão sustentando a ação. Quando o mercado vira para cima, ações assim costumam ser as primeiras a romper para novas máximas. No gráfico, a plataforma marca essas novas máximas, e a lista **RS new high** abaixo mostra as ações que estão fazendo isso hoje.",
+     "O contrário é um alerta. Uma ação que rompe para uma nova máxima de preço enquanto a linha RS está bem abaixo da própria máxima está ficando para trás do mercado, e o breakout dela é menos confiável."
+    ]
+   },
+   {
+    "h": "Comparando com outras referências",
+    "p": [
+     "Por padrão, a linha RS divide pelo S&P 500. Na plataforma você pode trocar para o Nasdaq-100 ou para o ETF do setor da ação. Contra o Nasdaq-100, você vê se uma ação de tecnologia bate outras grandes de tecnologia. Contra o ETF do setor, você vê se ela lidera o próprio grupo, o que se liga a [líderes e retardatárias](lesson:leaders-and-laggards).",
+     "Você também pode comparar dois tickers (códigos de negociação) diretamente na [página Compare](/compare/). A linha RS é a imagem; o [RS Rating](lesson:rs-rating) transforma a força relativa num único número."
+    ]
+   }
+  ],
+  "mistakes": [
+   "Achar que preço subindo significa linha RS subindo; não é assim se o mercado sobe mais rápido.",
+   "Ler o valor da linha RS em vez da sua direção.",
+   "Comprar um breakout enquanto a linha RS está bem abaixo da máxima anterior.",
+   "Ignorar uma nova máxima da linha RS só porque o preço ainda não rompeu."
+  ],
+  "takeaways": [
+   "A linha RS é o preço dividido pelo S&P 500; só a direção importa.",
+   "Uma linha RS subindo significa que a ação está batendo o mercado.",
+   "Uma nova máxima da linha RS antes do preço é um dos melhores sinais antecipados de uma futura líder."
+  ],
+  "live": "rs-new-high",
+  "try": {
+   "label": "Compare uma ação com o SPY",
+   "href": "/compare/"
+  },
+  "related": [
+   "rs-rating",
+   "leaders-and-laggards",
+   "pivot-and-buy-zone"
+  ]
+ },
+ {
+  "slug": "rs-rating",
+  "title": "O RS Rating: ações de 1 a 99",
+  "desc": "O que é o RS Rating, como o percentil de 1 a 99 é calculado, por que as líderes costumam ter 80 ou mais e como usá-lo junto com a linha RS.",
+  "intro": "O RS Rating transforma o desempenho de preço de uma ação num único número de 1 a 99. Ele permite ordenar milhares de ações em segundos e focar nas que o mercado já está premiando.",
+  "sections": [
+   {
+    "h": "O que o número significa",
+    "p": [
+     "O **RS Rating** é um percentil. Um rating de 90 significa que a ação foi melhor no último ano do que 90% de todas as ações do universo. Um rating de 30 significa que 70% das ações foram melhores.",
+     "É uma nota relativa, não uma previsão. Ela diz como a ação se saiu em comparação com todas as outras, e sozinha não diz nada sobre preço, lucros ou futuro."
+    ],
+    "diagram": "rs-rating"
+   },
+   {
+    "h": "Como é calculado",
+    "p": [
+     "A plataforma mede a variação de preço de cada ação nos últimos 12 meses, dividida em quatro trimestres. O **trimestre mais recente conta em dobro**, então uma ação que está ganhando momentum agora fica mais bem colocada do que uma cujo grande movimento aconteceu há um ano.",
+     "Cada ação recebe uma nota ponderada, todas são ordenadas e cada uma ganha seu percentil de 1 a 99. Como é relativo, os ratings mudam todo dia conforme as ações sobem e caem umas em relação às outras."
+    ]
+   },
+   {
+    "h": "Por que as líderes costumam ter 80+",
+    "p": [
+     "Estudos das ações mais vencedoras ao longo de muitas décadas, popularizados por William O'Neil, mostraram que normalmente elas tinham RS Rating de **80 ou mais** antes de começar sua grande alta, e muitas estavam acima de 90. Grandes movimentos tendem a começar em ações que já estão superando as outras, não nas que ficaram para trás.",
+     "Por isso muitos traders de crescimento usam 80 como filtro mínimo. Uma ação com 50 pode parecer barata, mas na melhor das hipóteses é mediana. O [screener](/screener/) (filtro de ações) permite filtrar por RS Rating para começar sua busca com nomes mais fortes."
+    ]
+   },
+   {
+    "h": "Combinando o rating com a linha RS",
+    "p": [
+     "O rating e a [linha RS](lesson:rs-line) funcionam melhor juntos. O rating é uma foto de 12 meses. A linha mostra a direção agora. Uma ação com 85 e linha RS subindo é forte e está ficando mais forte. Uma ação com 85 e linha RS caindo pode ser uma ex-líder começando a perder fôlego.",
+     "Fique de olho em ratings que sobem rápido. Uma ação que vai de 60 para 85 em poucas semanas, muitas vezes depois de um [gap](lesson:gaps) de balanço, pode estar virando uma nova líder. Confira se o [grupo de indústria](lesson:leaders-and-laggards) dela também está forte."
+    ]
+   }
+  ],
+  "rules": {
+   "title": "Como ler o RS Rating",
+   "rows": [
+    [
+     "90 a 99",
+     "Os 10% melhores de todas as ações; de onde vêm muitas grandes vencedoras"
+    ],
+    [
+     "80 a 89",
+     "Forte; um mínimo comum para candidatas de crescimento"
+    ],
+    [
+     "50 a 79",
+     "Mediana; precisa de um motivo claro para ser interessante"
+    ],
+    [
+     "Abaixo de 50",
+     "Atrás da maioria das ações; normalmente melhor evitar"
+    ],
+    [
+     "Ponderação",
+     "Últimos 12 meses, o trimestre mais recente conta em dobro"
+    ]
+   ]
+  },
+  "mistakes": [
+   "Comprar uma ação com rating baixo porque parece barata.",
+   "Tratar um rating alto como sinal de compra sem uma base e um pivot adequados.",
+   "Ignorar uma linha RS caindo numa ação que ainda tem rating alto.",
+   "Comparar ratings de datas diferentes como se fossem fixos."
+  ],
+  "takeaways": [
+   "O RS Rating classifica o desempenho de 12 meses de uma ação de 1 a 99, com o último trimestre pesando em dobro.",
+   "A maioria das grandes vencedoras tinha RS Rating de 80 ou mais antes dos grandes movimentos.",
+   "Use o rating junto com a linha RS: o rating é a nota, a linha é a direção."
+  ],
+  "live": "rs-leaders",
+  "try": {
+   "label": "Filtre por RS Rating",
+   "href": "/screener/"
+  },
+  "related": [
+   "rs-line",
+   "leaders-and-laggards",
+   "earnings-growth"
+  ]
+ },
+ {
+  "slug": "leaders-and-laggards",
+  "title": "Líderes e retardatárias: compre a melhor, não a mais barata",
+  "desc": "Por que as melhores ações vêm dos melhores grupos de indústria, como funciona o ranking de grupos, por que comprar a líder e como é a rotação setorial.",
+  "intro": "Em cada rali do mercado, um pequeno grupo de ações faz a maior parte do trabalho. Elas costumam vir de um punhado de indústrias fortes. Seu trabalho é encontrar essas líderes, não as ações que parecem pechinchas.",
+  "sections": [
+   {
+    "h": "Ações fortes andam em grupo",
+    "p": [
+     "O dinheiro grande raramente compra uma única empresa. Quando os fundos se animam com uma indústria, compram várias das melhores ações dela. Por isso as vencedoras tendem a se agrupar: um grupo forte puxa seus membros para cima, e um grupo fraco arrasta até boas empresas para baixo.",
+     "Pesquisas popularizadas por William O'Neil mostraram que boa parte das maiores vencedoras veio de indústrias que também estavam entre as líderes do mercado. Checar o grupo é uma forma simples de colocar as probabilidades a seu favor."
+    ]
+   },
+   {
+    "h": "O ranking de grupos na plataforma",
+    "p": [
+     "A plataforma separa as ações em grupos de indústria com base nas subindústrias GICS, a classificação padrão usada no mercado. Cada grupo é classificado pelos [RS Ratings](lesson:rs-rating) das suas ações. A posição 1 é o grupo mais forte.",
+     "O **ranking do grupo** aparece na caixa de dados de cada gráfico. Na [página Groups](/groups/) você vê o ranking completo, quais grupos estão subindo e quais estão caindo. Muitos traders focam em ações de grupos que estão entre os 20% a 40% melhores da lista."
+    ],
+    "diagram": "rs-line"
+   },
+   {
+    "h": "Compre a líder, não a retardatária",
+    "p": [
+     "Dentro de um grupo forte, uma ou duas ações costumam liderar: o melhor crescimento de lucros, o RS Rating mais alto, uma [linha RS](lesson:rs-line) em novas máximas e a base mais limpa. As outras ficam para trás.",
+     "Iniciantes muitas vezes se sentem atraídos pela retardatária. Ela subiu menos, então parece mais barata e com mais espaço para alcançar as outras. Na prática, costuma ficar para trás por algum motivo: vendas mais fracas, margens menores ou menos interesse dos fundos. Quando o grupo esfria, as retardatárias muitas vezes caem primeiro e com mais força.",
+     "Uma líder de $200 não é mais cara que uma retardatária de $20 em nenhum sentido útil. O que importa é como o negócio e a ação estão se saindo."
+    ],
+    "list": [
+     "Compare o RS Rating de cada ação do grupo.",
+     "Veja qual linha RS está fazendo novas máximas.",
+     "Olhe o crescimento trimestral de lucros e vendas.",
+     "Prefira a ação com a base mais limpa perto do pivot."
+    ]
+   },
+   {
+    "h": "Rotação setorial",
+    "p": [
+     "A liderança não fica no mesmo lugar para sempre. O dinheiro **roda** entre setores conforme a economia e os juros mudam. Tecnologia pode liderar por um ano, e depois energia ou indústria assumem.",
+     "O gráfico de rotação setorial na [página Groups](/groups/) mostra quais setores estão ganhando e perdendo força relativa. Quando um novo setor começa a subir no ranking, procure dentro dele ações formando [bases](lesson:what-is-a-base). Quando o seu grupo começa a escorregar, tenha mais cuidado com novas compras ali."
+    ]
+   }
+  ],
+  "mistakes": [
+   "Comprar a ação mais barata de um grupo quente em vez da mais forte.",
+   "Ignorar o ranking do grupo e comprar uma ação que parece forte numa indústria fraca.",
+   "Insistir num setor depois que a liderança claramente mudou de lugar.",
+   "Julgar uma ação como cara ou barata só pelo preço por ação."
+  ],
+  "takeaways": [
+   "A maioria das grandes vencedoras vem dos grupos de indústria mais fortes.",
+   "Dentro de um grupo, compre a líder com melhor RS e melhores lucros, não a retardatária.",
+   "Acompanhe o gráfico de rotação setorial para ver para onde a liderança está indo."
+  ],
+  "live": "top-groups",
+  "try": {
+   "label": "Abra Grupos de indústria",
+   "href": "/groups/"
+  },
+  "related": [
+   "rs-rating",
+   "rs-line",
+   "what-is-a-base"
+  ]
+ }
+]

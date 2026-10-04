@@ -1,0 +1,605 @@
+[
+ {
+  "slug": "support-and-resistance",
+  "title": "Soporte y resistencia: los niveles que importan",
+  "desc": "Aprende qué son el soporte y la resistencia, por qué el precio reacciona en máximos, mínimos y números redondos, y cómo trazar niveles claros.",
+  "intro": "Los precios tienen memoria. Ciertos niveles del gráfico frenan una y otra vez a una acción cuando baja o la contienen cuando sube. Aprender a detectarlos te ayuda a decidir dónde comprar, dónde poner un stop y cuándo tener paciencia.",
+  "sections": [
+   {
+    "h": "Qué son el soporte y la resistencia",
+    "p": [
+     "El **soporte** es una zona de precio donde la compra fue lo bastante fuerte como para frenar una caída. La **resistencia** es una zona donde la venta fue lo bastante fuerte como para frenar una subida. Son zonas, no centavos exactos.",
+     "Imagina una acción de $50 que cae a $45 tres veces y rebota en cada una. Los traders empiezan a ver $45 como un piso. Si la misma acción sube a $55 dos veces y se revierte, $55 se convierte en un techo."
+    ],
+    "diagram": "support-resistance"
+   },
+   {
+    "h": "Por qué funcionan",
+    "p": [
+     "El soporte y la resistencia funcionan porque la gente recuerda los precios. Los inversores que compraron en $55 y vieron caer la acción suelen querer salir sin pérdida. Cuando el precio vuelve a $55, sus ventas crean **oferta**, y eso es resistencia.",
+     "En el soporte pasa lo contrario. Los compradores que se perdieron la acción en $45 se alegran de tener una segunda oportunidad, y los fondos a los que les gusta la empresa suman acciones a un precio que ya conocen. Esa **demanda** sostiene el precio."
+    ]
+   },
+   {
+    "h": "Dónde buscar niveles",
+    "list": [
+     "**Máximos previos**: el pico de una subida anterior, sobre todo el lado izquierdo de una base. Es la resistencia más importante para quienes operan acciones de crecimiento.",
+     "**Mínimos previos**: el fondo de un retroceso o de una base anterior.",
+     "**Números redondos**: $50, $100, $200. Muchas órdenes se acumulan ahí.",
+     "**Zonas con mucho volumen operado**: rangos laterales amplios donde cambiaron de manos muchas acciones.",
+     "**Gaps** (huecos de precio): los bordes de un gap grande suelen actuar como niveles. Mira [gaps](lesson:gaps)."
+    ]
+   },
+   {
+    "h": "Cómo trazar niveles",
+    "p": [
+     "Empieza en el gráfico semanal para ver el panorama general y luego afina en el diario. Usa la herramienta de nivel horizontal en el [gráfico](/chart/SPY/) y trázalo por la zona donde el precio giró varias veces. Los precios de cierre suelen dar niveles más limpios que las mechas intradía.",
+     "Menos es más. Dos o tres niveles bien elegidos valen más que un gráfico lleno de líneas. Cuantas más veces se puso a prueba un nivel, y cuanto más volumen se operó ahí, más importa. Un nivel también se debilita cada vez que se toca, porque la oferta o la demanda que había ahí se va agotando."
+    ]
+   },
+   {
+    "h": "Cómo lo usan los traders",
+    "p": [
+     "En el trading de acciones de crecimiento, el punto de compra clásico es una acción que supera la resistencia en la parte alta de una base, el **pivot** (punto de giro que marca la entrada). Una vez que se rompe el viejo techo, los vendedores que había ahí quedaron absorbidos. Los soportes te ayudan a colocar un stop justo debajo de una zona donde deberían aparecer compradores. Cuando un soporte se rompe con volumen alto, es una señal de que la demanda se agotó."
+    ]
+   }
+  ],
+  "mistakes": [
+   "Tratar un nivel como un precio exacto en lugar de una zona.",
+   "Trazar tantas líneas que cualquier precio parece un soporte.",
+   "Comprar justo debajo de una resistencia fuerte esperando que se rompa.",
+   "Ignorar el volumen: una ruptura con poco volumen es menos confiable."
+  ],
+  "takeaways": [
+   "El soporte frena caídas y la resistencia frena subidas, porque los traders recuerdan los precios.",
+   "Los mejores niveles son máximos y mínimos previos, números redondos y zonas con mucho volumen.",
+   "Una ruptura limpia de la resistencia con volumen fuerte es la base del punto de compra en breakout."
+  ],
+  "try": {
+   "label": "Traza niveles en un gráfico",
+   "href": "/chart/SPY/"
+  },
+  "related": [
+   "role-reversal",
+   "gaps",
+   "trendlines",
+   "pivot-and-buy-zone"
+  ]
+ },
+ {
+  "slug": "role-reversal",
+  "title": "Cambio de rol: cuando la resistencia pasa a soporte",
+  "desc": "Por qué una resistencia rota suele convertirse en soporte, y un soporte en resistencia, y cómo leer el retest que suele seguir a un breakout.",
+  "intro": "Cuando un nivel se rompe, muchas veces cambia de función. El viejo techo pasa a ser el nuevo piso, y el viejo piso pasa a ser el nuevo techo. Esto se llama cambio de rol, y aparece después de muchos breakouts y rupturas a la baja.",
+  "sections": [
+   {
+    "h": "La idea",
+    "p": [
+     "Supón que una acción de $50 lleva meses frenada en $60. Un día supera $60 con mucho volumen y llega a $64. Semanas después retrocede, y vuelven a aparecer compras justo alrededor de $60. El nivel que frenaba la acción ahora la sostiene.",
+     "Lo contrario también se cumple. Si una acción rompe por debajo del soporte de $45 y luego rebota hasta $45, suelen aparecer vendedores ahí. El viejo piso se convirtió en techo."
+    ],
+    "diagram": "role-reversal"
+   },
+   {
+    "h": "Por qué ocurre",
+    "p": [
+     "Todo vuelve a la memoria y al arrepentimiento. Después de un breakout (ruptura alcista) por encima de $60, los traders que vendieron demasiado pronto o nunca compraron quieren entrar, y $60 es el precio que miraron durante meses. Cuando la acción vuelve ahí, compran. Los fondos que compraron en el breakout pueden ampliar su posición en el mismo lugar.",
+     "Después de una ruptura a la baja, quienes compraron en el soporte están perdiendo dinero. Cuando el precio vuelve a su entrada, muchos venden para salir sin pérdida. Esa oferta pone un techo al rebote."
+    ]
+   },
+   {
+    "h": "El retest después de un breakout",
+    "p": [
+     "Un **retest** es un retroceso hasta el nivel de ruptura después de que la acción lo superó. Muchos breakouts fuertes nunca vuelven. Otros bajan hasta la zona del pivot en unos días o semanas y luego retoman la subida.",
+     "Un retest sano tiene algunas señales:"
+    ],
+    "list": [
+     "El volumen en el retroceso es menor que en el breakout.",
+     "El precio se sostiene cerca de la vieja resistencia y no cierra muy por debajo.",
+     "La acción rebota con volumen creciente y la [línea RS](lesson:rs-line) se mantiene firme."
+    ]
+   },
+   {
+    "h": "Cómo lo usan los traders",
+    "p": [
+     "Si te perdiste el breakout original, un retest tranquilo del pivot puede ofrecerte una segunda entrada con menos riesgo, ya que tu stop puede ir justo debajo de la vieja resistencia. Si ya tienes la acción, la vieja resistencia se convierte en una línea natural que no debería perderse.",
+     "Cuidado con confundir un retest con un fracaso. Una acción que vuelve a meterse en su base y cierra muy por debajo del pivot, sobre todo con volumen alto, se comporta como un [breakout fallido](lesson:failed-breakouts). En Ticker&Tape, un breakout que cierra más de 3% por debajo del pivot se marca como fallido."
+    ]
+   }
+  ],
+  "mistakes": [
+   "Esperar un retest que nunca llega y perderse los breakouts más fuertes.",
+   "Dar por hecho que todo retroceso al pivot va a aguantar, incluso con ventas fuertes.",
+   "Comprar un rebote hacia el viejo soporte después de una ruptura a la baja, donde esperan los vendedores."
+  ],
+  "takeaways": [
+   "Una resistencia rota suele convertirse en soporte, y un soporte roto suele convertirse en resistencia.",
+   "Un retroceso con poco volumen que sostiene el nivel de ruptura es un retest sano.",
+   "Un cierre muy por debajo del pivot con volumen alto es un fracaso, no un retest."
+  ],
+  "live": "status:Breakout",
+  "try": {
+   "label": "Ver acciones cerca de un punto de compra",
+   "href": "/ideas/"
+  },
+  "related": [
+   "support-and-resistance",
+   "pivot-and-buy-zone",
+   "failed-breakouts"
+  ]
+ },
+ {
+  "slug": "gaps",
+  "title": "Gaps: de ruptura, rellenados y de agotamiento",
+  "desc": "Entiende los gaps de precio: gaps de ruptura por resultados y noticias, gaps que se sostienen frente a los que se rellenan, y gaps de agotamiento.",
+  "intro": "Un gap es un espacio vacío en el gráfico donde no hubo operaciones. Significa que la acción abrió muy por encima o por debajo del rango del día anterior, casi siempre por una noticia. Los gaps pueden marcar el comienzo de un gran movimiento o su final.",
+  "sections": [
+   {
+    "h": "Qué es un gap",
+    "p": [
+     "Un **gap alcista** ocurre cuando el mínimo de hoy está por encima del máximo de ayer. Un **gap bajista** ocurre cuando el máximo de hoy está por debajo del mínimo de ayer. La mayoría de los gaps vienen de noticias publicadas fuera del horario regular, como un reporte de resultados, una guía de la empresa, el lanzamiento de un producto o un cambio de recomendación de un analista.",
+     "Como la acción salta por encima de un rango de precios, todos los que querían operar en el medio se ven obligados a reaccionar al nuevo precio. Por eso los gaps suelen ir seguidos de movimientos fuertes en la misma dirección."
+    ],
+    "diagram": "gaps"
+   },
+   {
+    "h": "Gaps de ruptura",
+    "p": [
+     "Un **gap de ruptura** (breakaway gap) es un gap que sale de una base o de un rango lateral largo, normalmente por resultados y con un volumen de dos, tres o más veces lo normal. Muestra un cambio repentino en cómo valoran la empresa los grandes inversores. Algunas de las mayores ganadoras empezaron con uno.",
+     "Los mejores gaps de ruptura conservan la mayor parte de la subida hasta el cierre, cerrando en la parte alta del rango del día. Una acción que abre con un gap de 10% y cierra cerca de su mínimo está mostrando venta, no fortaleza."
+    ],
+    "diagram": "earnings-gap"
+   },
+   {
+    "h": "Gaps que se sostienen y gaps que se rellenan",
+    "p": [
+     "Un gap se **rellena** cuando el precio vuelve y atraviesa el espacio vacío hasta el cierre del día anterior. Vas a escuchar que todos los gaps se rellenan. No es cierto. Los gaps de ruptura potentes por buenos resultados muchas veces nunca se rellenan, porque los fondos siguen comprando en cada baja.",
+     "Un buen hábito es vigilar el mínimo del día del gap. Si la acción se mantiene por encima en los días siguientes, los compradores siguen al mando. Si cierra por debajo del mínimo del día del gap, y sobre todo si rellena el gap con volumen alto, la noticia no generó una demanda duradera."
+    ]
+   },
+   {
+    "h": "Gaps de agotamiento",
+    "p": [
+     "Un **gap de agotamiento** aparece al final de una subida larga, cuando la acción ya está muy por encima de su base y de sus medias móviles. Parece emocionante, pero muchas veces marca el último impulso comprador. Algunas señales:"
+    ],
+    "list": [
+     "La acción ya subió durante muchas semanas y tiene varias bases detrás.",
+     "El gap llega con un volumen enorme, pero la acción se frena o se revierte en pocos días.",
+     "El gap se rellena rápido.",
+     "Los gaps más pequeños en medio de una tendencia, llamados gaps de continuación, suelen significar menos."
+    ]
+   },
+   {
+    "h": "Cómo usar los gaps en Ticker&Tape",
+    "p": [
+     "Los marcadores de resultados en el [gráfico](/chart/SPY/) te muestran qué gaps vinieron de reportes. Revisa el [calendario de resultados](/earnings/) para que nunca te sorprenda un gap en contra. Para aprender a evaluar el reporte en sí, lee [cómo leer un reporte de resultados](lesson:reading-an-earnings-report)."
+    ]
+   }
+  ],
+  "mistakes": [
+   "Vender o ir en corto contra un gap fuerte por resultados solo porque los gaps supuestamente se rellenan.",
+   "Perseguir un gap que cierra cerca del mínimo del día.",
+   "Mantener una posición grande antes de resultados sin un plan para un gap bajista."
+  ],
+  "takeaways": [
+   "Los gaps de ruptura que salen de una base con mucho volumen pueden iniciar grandes movimientos.",
+   "No todos los gaps se rellenan; vigila si la acción sostiene el mínimo del día del gap.",
+   "Los gaps al final de una subida extendida pueden indicar agotamiento en lugar de fortaleza."
+  ],
+  "live": "volume-up",
+  "try": {
+   "label": "Abrir el calendario de resultados",
+   "href": "/earnings/"
+  },
+  "related": [
+   "reading-an-earnings-report",
+   "support-and-resistance",
+   "reading-volume"
+  ]
+ },
+ {
+  "slug": "reading-volume",
+  "title": "Cómo leer el volumen",
+  "desc": "Aprende a leer el volumen: compáralo con el promedio de 50 días, usa el volumen relativo y entiende qué dicen los días de subida y de baja.",
+  "intro": "El volumen es la cantidad de acciones operadas en un período. El precio te dice qué pasó; el volumen te dice cuánta convicción hubo detrás. Los movimientos grandes con mucho volumen suelen significar que hay grandes inversores involucrados.",
+  "sections": [
+   {
+    "h": "Qué te dice el volumen",
+    "p": [
+     "Los fondos comunes, los fondos de pensión y otras instituciones compran y venden millones de acciones. No pueden esconder esa actividad, así que aparece como volumen. Cuando una acción sube con mucho volumen, la demanda es fuerte. Cuando cae con mucho volumen, alguien grande está vendiendo.",
+     "Un movimiento con poco volumen dice menos. Una subida con pocas acciones operadas puede desvanecerse rápido porque nadie importante la está empujando."
+    ]
+   },
+   {
+    "h": "Compáralo con el promedio de 50 días",
+    "p": [
+     "Las cifras de volumen por sí solas significan poco. Dos millones de acciones es muchísimo para una empresa y muy poco para otra. Por eso los traders comparan cada día con el **volumen promedio de 50 días**, la línea que atraviesa las barras de volumen en el gráfico de Ticker&Tape.",
+     "El **volumen relativo** es el volumen de hoy dividido por ese promedio. Una lectura de 1,5 significa 50% por encima de lo normal; 0,5 significa la mitad de lo normal. Puedes agregar un panel de volumen relativo en el gráfico con el botón Indicators. Durante el día, ten en cuenta que el volumen se va acumulando a lo largo de la sesión, así que compáralo según la hora del día."
+    ],
+    "diagram": "volume-breakout"
+   },
+   {
+    "h": "Días de subida y días de baja",
+    "p": [
+     "En el gráfico, las barras de volumen se colorean según la dirección del día: color de subida cuando la acción cerró arriba y color de baja cuando cerró abajo. Recorrer los colores de unas cuantas semanas cuenta una historia.",
+     "En una acción sana, las barras de volumen más grandes aparecen en los días de subida y los días de baja son tranquilos. En una acción que está formando un techo, el volumen alto aparece en los días de baja y los rebotes llegan con poco volumen. El cuadro de datos muestra la **relación de volumen alcista/bajista** (up/down volume ratio), que resume esto en 50 días. Mira [acumulación y distribución](lesson:accumulation-and-distribution)."
+    ]
+   },
+   {
+    "h": "El volumen bajo puede ser una buena noticia",
+    "p": [
+     "El volumen bajo no siempre es malo. Cuando una acción está construyendo una base, el volumen suele secarse cerca de los mínimos y en el asa. Eso muestra que los vendedores se agotaron: los que querían salir ya se fueron. Una **sequía de volumen** seguida de un salto de volumen en un breakout es un patrón clásico, que se explica en [volumen en los breakouts](lesson:volume-on-breakouts)."
+    ],
+    "diagram": "volume-dryup"
+   },
+   {
+    "h": "Algunas reglas rápidas",
+    "list": [
+     "Los breakouts deberían llegar con volumen bien por encima del promedio.",
+     "Los retrocesos deberían llegar con volumen por debajo del promedio.",
+     "Mucho volumen con poco avance del precio (churning) es una advertencia.",
+     "Una caída con mucho volumen a través de un soporte o de la media de 50 días merece atención."
+    ]
+   }
+  ],
+  "mistakes": [
+   "Juzgar el volumen por la cantidad bruta de acciones en lugar de compararlo con el promedio de esa acción.",
+   "Comparar el volumen de la mañana con un promedio de día completo y decir que es débil.",
+   "Ignorar el color de las barras de volumen y no ver ventas fuertes."
+  ],
+  "takeaways": [
+   "El volumen mide la convicción; mucho volumen significa que las instituciones están activas.",
+   "Compara siempre el volumen con el promedio de 50 días o con el volumen relativo.",
+   "Las acciones sanas suben con mucho volumen y retroceden con poco volumen."
+  ],
+  "live": "volume-up",
+  "try": {
+   "label": "Abrir un gráfico con volumen",
+   "href": "/chart/QQQ/"
+  },
+  "related": [
+   "volume-on-breakouts",
+   "accumulation-and-distribution",
+   "distribution-days"
+  ]
+ },
+ {
+  "slug": "volume-on-breakouts",
+  "title": "Volumen en los breakouts: la prueba de demanda",
+  "desc": "Por qué un breakout necesita volumen 40 a 50% sobre el promedio, cómo se seca el volumen en una buena base y por qué fallan los breakouts débiles.",
+  "intro": "Un breakout es cuando una acción supera la parte alta de su base, el pivot. El precio solo no alcanza. El movimiento debería llegar con un aumento claro de volumen, que muestra que los grandes inversores están entrando.",
+  "sections": [
+   {
+    "h": "Por qué importa el volumen en el pivot",
+    "p": [
+     "La parte alta de una base es resistencia. Los inversores que compraron cerca del viejo máximo esperan vender sin pérdida. Para atravesar esa oferta, una acción necesita demanda real. Un salto de volumen es la evidencia de que los compradores están absorbiendo cada acción a la venta.",
+     "Cuando una acción asoma por encima de su [pivot](lesson:pivot-and-buy-zone) con un volumen normal, puede que nadie importante esté comprando. Esos breakouts tienen más probabilidades de volver a caer dentro de la base."
+    ]
+   },
+   {
+    "h": "Cuánto volumen es suficiente",
+    "p": [
+     "Una guía común, popularizada por William O'Neil, es que el volumen del día del breakout debería estar **al menos 40% a 50% por encima del promedio de 50 días**. Muchos de los mejores breakouts operan dos o tres veces el volumen normal.",
+     "Durante la sesión, proyecta la cifra del día completo. Si una acción ya operó su volumen diario normal al mediodía, va camino a duplicarlo. El panel de volumen relativo del gráfico hace que esto sea fácil de seguir."
+    ],
+    "diagram": "volume-breakout"
+   },
+   {
+    "h": "La sequía antes del breakout",
+    "p": [
+     "Los mejores breakouts suelen llegar después de un período de operaciones muy tranquilas. En una [taza con asa](lesson:cup-with-handle), el volumen debería reducirse cerca del fondo de la taza y otra vez en el asa. En una base plana, busca unos días de volumen muy bajo cerca de los mínimos del rango.",
+     "Esta **sequía de volumen** te dice que la presión vendedora se apagó. El contraste importa: una acción que pasa de silenciosa a ruidosa en el pivot está mostrando un cambio real en la demanda."
+    ],
+    "diagram": "volume-dryup"
+   },
+   {
+    "h": "Qué vigilar después del breakout",
+    "list": [
+     "Continuidad en los días siguientes, idealmente con volumen sobre el promedio.",
+     "Retrocesos con menos volumen que el día del breakout.",
+     "Un cierre en la mitad superior del rango del día en el propio breakout.",
+     "Señal de alerta: mucho volumen en una caída de vuelta por debajo del pivot."
+    ]
+   },
+   {
+    "h": "Ponerlo en práctica",
+    "p": [
+     "Configura una alerta de pivot en el gráfico para enterarte cuando una acción se acerca a su punto de compra, y revisa el volumen antes de actuar. La [página de ideas](/ideas/) lista cada día acciones cerca de un pivot. Recuerda que el volumen es una pieza de evidencia, junto con la base, la [línea RS](lesson:rs-line) y el mercado en general."
+    ]
+   }
+  ],
+  "mistakes": [
+   "Comprar un breakout con volumen por debajo del promedio porque el precio se ve bien.",
+   "Juzgar el volumen demasiado temprano en la sesión sin proyectar el día completo.",
+   "Pasar por alto una base donde el volumen sigue alto en los días de baja en lugar de secarse."
+  ],
+  "takeaways": [
+   "El volumen del breakout debería estar al menos 40 a 50% sobre el promedio de 50 días.",
+   "El volumen debería secarse cerca de los mínimos de la base y en el asa antes del breakout.",
+   "Los breakouts con poco volumen fallan más seguido, así que trátalos con cautela."
+  ],
+  "live": "status:Breakout",
+  "try": {
+   "label": "Buscar acciones cerca de un pivot",
+   "href": "/ideas/"
+  },
+  "related": [
+   "reading-volume",
+   "pivot-and-buy-zone",
+   "cup-with-handle",
+   "failed-breakouts"
+  ]
+ },
+ {
+  "slug": "accumulation-and-distribution",
+  "title": "Acumulación y distribución en una acción",
+  "desc": "Cómo las compras y ventas institucionales dejan huellas: días de acumulación y de distribución, la relación alcista/bajista y el churning.",
+  "intro": "Los grandes fondos no pueden armar ni desarmar una posición en un solo día. Trabajan durante semanas y meses, y su actividad deja huellas en el precio y el volumen. Leer esas huellas te dice si una acción está siendo acumulada o vendida en silencio.",
+  "sections": [
+   {
+    "h": "Qué significan las palabras",
+    "p": [
+     "**Acumulación** significa que las instituciones están comprando una acción con el tiempo. **Distribución** significa que están vendiendo. Un fondo que quiere tener un millón de acciones tiene que comprar de forma constante, muchas veces en las bajas, sin empujar el precio demasiado alto demasiado rápido. Cuando quiere salir, vende en los rebotes.",
+     "No puedes ver sus órdenes, pero sí el resultado: el patrón de volumen en los días de subida frente a los días de baja."
+    ],
+    "diagram": "accum-dist"
+   },
+   {
+    "h": "Días de acumulación y días de distribución",
+    "p": [
+     "En una acción individual, un **día de acumulación** es una subida fuerte con volumen por encima del promedio, idealmente cerrando cerca del máximo del día. Un **día de distribución** es una baja con volumen por encima del promedio, sobre todo si cierra cerca del mínimo.",
+     "Cuéntalos en los últimos meses. Una líder suele mostrar grupos de semanas de subida con mucho volumen durante su base y pocos días de baja pesados. Una acción que está formando un techo empieza a acumular días de distribución, aunque el precio todavía se vea bien. La misma idea aplicada a los índices se explica en [días de distribución](lesson:distribution-days)."
+    ]
+   },
+   {
+    "h": "La relación de volumen alcista/bajista",
+    "p": [
+     "La **relación de volumen alcista/bajista** (up/down volume ratio) suma el volumen de todos los días de subida de las últimas 50 sesiones y lo divide por el volumen de todos los días de baja. Ticker&Tape la muestra en el cuadro de datos del gráfico.",
+     "Una relación por encima de 1,0 significa más volumen en días de subida que en días de baja. Por encima de 1,5 sugiere una acumulación fuerte. Por debajo de 1,0 significa que los vendedores tuvieron ventaja. Úsala como filtro rápido y luego confírmalo en el gráfico."
+    ]
+   },
+   {
+    "h": "Churning",
+    "p": [
+     "El **churning** es mucho volumen con poco avance del precio. La acción opera un volumen enorme durante varios días pero no va a ningún lado, o cierra cerca del mínimo de un rango amplio. Muchas veces significa que los grandes tenedores están vendiéndoles a compradores entusiasmados. El churning después de una subida larga es una señal común de techo."
+    ]
+   },
+   {
+    "h": "Pistas en el gráfico semanal",
+    "list": [
+     "Semanas de subida con más volumen que las semanas de baja que las rodean.",
+     "Cierres semanales ajustados con volumen decreciente dentro de una base.",
+     "Semanas de baja grandes con el volumen más alto en meses son una advertencia.",
+     "Un precio que se estanca mientras el volumen sube sugiere distribución."
+    ]
+   }
+  ],
+  "mistakes": [
+   "Leer un solo día de mucho volumen como una tendencia en lugar de mirar semanas de comportamiento.",
+   "Tomar una relación alcista/bajista alta como señal de compra por sí sola.",
+   "No ver el churning porque el precio todavía no cayó."
+  ],
+  "takeaways": [
+   "Las instituciones dejan huellas: acumulación en días de subida, distribución en días de baja.",
+   "Una relación de volumen alcista/bajista por encima de 1,5 indica una demanda fuerte.",
+   "Mucho volumen sin avance, llamado churning, suele aparecer cerca de los techos."
+  ],
+  "live": "ud-leaders",
+  "try": {
+   "label": "Buscar demanda fuerte en el screener",
+   "href": "/screener/"
+  },
+  "related": [
+   "reading-volume",
+   "volume-on-breakouts",
+   "distribution-days",
+   "institutional-ownership"
+  ]
+ },
+ {
+  "slug": "moving-averages-basics",
+  "title": "Medias móviles: lo básico",
+  "desc": "Aprende qué son las medias móviles simples y exponenciales, las clásicas de 10, 21, 50 y 200 días, por qué importa la pendiente y cómo se ordenan.",
+  "intro": "Una media móvil suaviza el ruido diario y muestra la dirección de la tendencia. Es una de las herramientas más simples y útiles de un gráfico, y quienes operan acciones de crecimiento miran unas pocas todos los días.",
+  "sections": [
+   {
+    "h": "Qué es una media móvil",
+    "p": [
+     "Una media móvil es el precio de cierre promedio de una cantidad fija de períodos. Una media móvil de 50 días suma los últimos 50 cierres y los divide por 50. Cada día nuevo, el cierre más viejo sale y entra el más nuevo, así que la línea se mueve junto con el precio.",
+     "Una **media móvil simple (SMA)** da el mismo peso a todos los días. Una **media móvil exponencial (EMA)** da más peso a los días recientes, así que reacciona más rápido. Ninguna es mejor. Las EMA sirven para el timing de corto plazo; las SMA son el estándar para las líneas de 50 y 200 días."
+    ],
+    "diagram": "ma-basics"
+   },
+   {
+    "h": "Las más usadas",
+    "list": [
+     "**10 días**: muy corto plazo, acompaña a las acciones más fuertes en subidas rápidas.",
+     "**21 días** (muchas veces EMA): una guía de tendencia de corto plazo muy popular.",
+     "**50 días**: la línea clave de mediano plazo. Mira [la media de 50 días](lesson:the-50-day-line).",
+     "**200 días**: la tendencia de largo plazo. Mira [la media de 200 días](lesson:the-200-day-line).",
+     "**10 y 40 semanas** en el gráfico semanal: equivalen más o menos a las de 50 y 200 días."
+    ],
+    "p": [
+     "El gráfico de Ticker&Tape muestra por defecto las líneas de 50 y 200 días. Puedes agregar cualquier SMA o EMA con el botón Indicators."
+    ]
+   },
+   {
+    "h": "La pendiente importa",
+    "p": [
+     "La dirección de la línea te dice tanto como la posición del precio. Una media de 50 días en alza significa que el comprador promedio de las últimas diez semanas está ganando. Una línea plana significa que la acción va de costado. Una línea en baja significa que los compradores recientes están perdiendo y pueden vender en los rebotes.",
+     "Una acción por encima de una media de 200 días en baja todavía no está en una tendencia alcista real. Una acción que retrocede hacia una media de 50 días en alza es una situación muy distinta a una que se hunde hacia una en baja."
+    ]
+   },
+   {
+    "h": "El orden en una tendencia alcista fuerte",
+    "p": [
+     "En una subida sana, las medias se ordenan: el precio por encima de la de 10 días, la de 10 por encima de la de 21, la de 21 por encima de la de 50 y la de 50 por encima de la de 200, todas en alza. Los traders llaman a esto un **stack** (apilamiento) alcista.",
+     "Cuando el orden empieza a enredarse, con líneas cortas cruzando por debajo de las largas, el impulso se está apagando. Esto encaja muy bien con [las cuatro etapas](lesson:the-four-stages): las acciones en etapa 2 muestran un orden limpio, las de etapa 4 muestran el inverso."
+    ]
+   },
+   {
+    "h": "Ponlas en perspectiva",
+    "p": [
+     "Las medias móviles van rezagadas, porque se construyen con precios pasados. Confirman una tendencia, no la predicen. Úsalas como guías de soporte, de dirección de la tendencia y de reglas de venta, no como líneas mágicas que tienen que aguantar al centavo."
+    ]
+   }
+  ],
+  "mistakes": [
+   "Agregar tantas medias móviles que el gráfico se vuelve ilegible.",
+   "Ignorar la pendiente y solo mirar si el precio está arriba o abajo.",
+   "Esperar que el precio rebote exactamente en la línea cada vez."
+  ],
+  "takeaways": [
+   "Una media móvil suaviza el precio y muestra la tendencia; las EMA reaccionan más rápido que las SMA.",
+   "Las medias de 50 y 200 días, o de 10 y 40 semanas, son las más seguidas.",
+   "En una tendencia alcista fuerte, las medias en alza se ordenan por debajo del precio."
+  ],
+  "try": {
+   "label": "Agregar medias móviles a un gráfico",
+   "href": "/chart/SPY/"
+  },
+  "related": [
+   "the-50-day-line",
+   "the-200-day-line",
+   "the-four-stages",
+   "what-is-a-trend"
+  ]
+ },
+ {
+  "slug": "the-50-day-line",
+  "title": "La media de 50 días: soporte y señal de venta",
+  "desc": "Cómo usar la media de 50 días: primeros retrocesos como oportunidad en líderes, rupturas con volumen como señal de venta y la media de 10 semanas.",
+  "intro": "La media móvil de 50 días es la línea que más miran quienes operan acciones de crecimiento. Las acciones líderes suelen encontrar soporte ahí durante una subida, y una ruptura clara por debajo es una de las advertencias más nítidas de que una tendencia está cambiando.",
+  "sections": [
+   {
+    "h": "Por qué importa la media de 50 días",
+    "p": [
+     "La media de 50 días es el precio promedio de aproximadamente las últimas diez semanas de operaciones. Muchas instituciones la siguen. Cuando una líder que quieren tener retrocede hasta ella, suelen entrar a sumar acciones. Esas compras explican por qué la línea actúa tan seguido como soporte en tendencias alcistas fuertes.",
+     "En el gráfico semanal, la **media móvil de 10 semanas** cumple el mismo papel. Muchos traders la prefieren para decidir si mantener una posición, porque un cierre semanal filtra el ruido diario."
+    ]
+   },
+   {
+    "h": "Primeros retrocesos: una oportunidad de compra",
+    "p": [
+     "Después de que una acción hace breakout desde una base y sube, su primer retroceso a la media de 50 días puede ser una oportunidad para comprar o sumar, sobre todo si te perdiste el breakout. Las mejores situaciones comparten estos rasgos:"
+    ],
+    "list": [
+     "La acción es una verdadera líder con un RS Rating alto y buenas ganancias.",
+     "La media de 50 días está en alza.",
+     "El volumen se seca mientras la acción retrocede.",
+     "La acción rebota en la línea con volumen creciente."
+    ],
+    "diagram": "ma-support"
+   },
+   {
+    "h": "Los toques posteriores son más débiles",
+    "p": [
+     "El primer y el segundo test de la media de 50 días después de un breakout suelen funcionar mejor. Para el tercero o el cuarto, la acción está más avanzada en su recorrido, más tenedores tienen grandes ganancias y es más probable que la línea ceda. Cada test también les da a los vendedores otra oportunidad de aparecer."
+    ]
+   },
+   {
+    "h": "Una ruptura con mucho volumen es señal de venta",
+    "p": [
+     "Cuando una acción que venía respetando la media de 50 días de pronto cierra bien por debajo con volumen sobre el promedio, puede que las instituciones estén saliendo. Muchos traders venden toda o parte de la posición ante una ruptura así, sobre todo si la acción no recupera la línea en pocos días.",
+     "Una baja tranquila apenas por debajo de la línea con poco volumen es menos grave. Lo que cuenta es el cierre, el volumen y si la acción rebota. Un cierre por debajo de la media de 10 semanas con mucho volumen semanal es la versión semanal de la misma advertencia."
+    ],
+    "diagram": "ma-break"
+   },
+   {
+    "h": "Cómo usarla en Ticker&Tape",
+    "p": [
+     "Configura una alerta de media móvil en el gráfico para enterarte de un test de la media de 50 días sin tener que mirar la pantalla. La [página de amplitud](/breadth/) también muestra el porcentaje de acciones por encima de su media de 50 días, un buen termómetro de la salud del mercado. Para las reglas de venta ligadas a esta línea, mira [toma de ganancias](lesson:taking-profits)."
+    ]
+   }
+  ],
+  "mistakes": [
+   "Comprar cada toque de la media de 50 días, incluso en acciones débiles con la línea en baja.",
+   "Ignorar una ruptura con mucho volumen porque la acción fue una gran ganadora.",
+   "Vender en una baja intradía por debajo de la línea en lugar de evaluar el cierre."
+  ],
+  "takeaways": [
+   "Las líderes suelen encontrar soporte en una media de 50 días en alza, sobre todo en el primer retroceso.",
+   "Un cierre bien por debajo de la media de 50 días con mucho volumen es una señal de venta clásica.",
+   "La media de 10 semanas cumple el mismo papel en el gráfico semanal."
+  ],
+  "live": "near-50",
+  "try": {
+   "label": "Configurar una alerta de media móvil",
+   "href": "/chart/QQQ/"
+  },
+  "related": [
+   "moving-averages-basics",
+   "the-200-day-line",
+   "taking-profits",
+   "volume-on-breakouts"
+  ]
+ },
+ {
+  "slug": "the-200-day-line",
+  "title": "La media de 200 días: el filtro de largo plazo",
+  "desc": "Por qué la media de 200 días marca la tendencia de largo plazo, por qué las líderes cotizan por encima y qué dicen los cruces dorado y de la muerte.",
+  "intro": "La media móvil de 200 días abarca unos diez meses de operaciones. Es la forma más simple de saber si una acción, o todo el mercado, está en una tendencia alcista o bajista de largo plazo.",
+  "sections": [
+   {
+    "h": "Un filtro de tendencia de largo plazo",
+    "p": [
+     "Si el precio está por encima de una media de 200 días en alza, la tendencia de largo plazo es alcista. Si está por debajo de una media de 200 días en baja, la tendencia de largo plazo es bajista. Esa prueba simple saca de tu lista una enorme cantidad de acciones débiles.",
+     "En el gráfico semanal, la **media móvil de 40 semanas** es más o menos la misma línea. El análisis por etapas la usa para separar las subidas de etapa 2 de las caídas de etapa 4. Mira [las cuatro etapas](lesson:the-four-stages)."
+    ],
+    "diagram": "ma-200"
+   },
+   {
+    "h": "Las líderes cotizan por encima",
+    "p": [
+     "Las verdaderas líderes del mercado casi siempre cotizan bien por encima de su media de 200 días, con la línea inclinada hacia arriba. Una acción por debajo de su media de 200 días lleva meses rechazada por los grandes inversores. Puede parecer barata, pero no es una líder.",
+     "Un buen hábito es exigir que el precio esté por encima de las medias de 50 y 200 días, con la de 50 por encima de la de 200 y la de 200 en alza durante al menos un mes. Puedes aplicar filtros como estos en el [screener](/screener/)."
+    ]
+   },
+   {
+    "h": "El mercado y la media de 200 días",
+    "p": [
+     "Muchos traders miran dónde están el S&P 500 y el Nasdaq respecto de sus medias de 200 días. Los mercados bajistas largos y dañinos suelen darse por debajo de la línea. La [página de amplitud](/breadth/) también muestra el porcentaje de acciones por encima de su media de 200 días, lo que te dice qué tan amplia es realmente la tendencia alcista de largo plazo."
+    ]
+   },
+   {
+    "h": "Cruce dorado y cruce de la muerte",
+    "p": [
+     "Un **cruce dorado** (golden cross) es cuando la media de 50 días cruza por encima de la de 200. Un **cruce de la muerte** (death cross) es cuando la cruza por debajo. Generan muchos titulares, pero tienen sus salvedades:"
+    ],
+    "list": [
+     "Van muy rezagados. Para cuando las líneas se cruzan, el precio muchas veces ya recorrió un largo camino.",
+     "En mercados laterales y erráticos van y vienen y dan señales falsas.",
+     "Un cruce de la muerte suele aparecer cerca del final de una caída, cuando la venta ya está madura.",
+     "La acción del precio y el volumen, junto con la [dirección del mercado](lesson:market-direction), son mejores guías."
+    ]
+   },
+   {
+    "h": "Cómo la usan los traders",
+    "p": [
+     "Usa la media de 200 días como filtro, no como gatillo. Responde una sola pregunta: ¿esta acción está en una tendencia alcista de largo plazo? Los puntos de compra salen de las bases y los pivots, y las señales de venta suelen llegar antes, desde la media de 50 días o un stop loss. Una acción que cae hasta su media de 200 días normalmente ya rompió varias señales de alerta en el camino."
+    ]
+   }
+  ],
+  "mistakes": [
+   "Comprar una acción por debajo de su media de 200 días porque parece una ganga.",
+   "Operar los cruces dorado y de la muerte como señales de compra y venta por sí solos.",
+   "Esperar a que se rompa la media de 200 días para vender una antigua líder."
+  ],
+  "takeaways": [
+   "Un precio por encima de una media de 200 días en alza indica una tendencia alcista de largo plazo.",
+   "Las verdaderas líderes cotizan por encima de su media de 200 días; las rezagadas, por debajo.",
+   "Los cruces dorado y de la muerte van rezagados y son malas señales por sí solos."
+  ],
+  "live": "below-50",
+  "try": {
+   "label": "Ver acciones sobre su media de 200 días",
+   "href": "/breadth/"
+  },
+  "related": [
+   "moving-averages-basics",
+   "the-50-day-line",
+   "the-four-stages",
+   "market-breadth"
+  ]
+ }
+]

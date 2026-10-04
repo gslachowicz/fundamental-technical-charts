@@ -1,0 +1,385 @@
+[
+ {
+  "slug": "stocks-etfs-indexes",
+  "title": "Acciones, ETF e índices explicados",
+  "desc": "Qué es una acción, un ETF y un índice, cómo funcionan los tickers y por qué los traders de crecimiento compran acciones pero siempre miran los índices.",
+  "intro": "Antes de leer un solo gráfico, necesitas saber qué estás mirando. Casi todo en Ticker&Tape es una de tres cosas: una acción, un ETF o un índice.",
+  "sections": [
+   {"h": "Qué es una acción",
+    "p": ["Una **acción** es una pequeña parte de la propiedad de una empresa. Si una empresa tiene 100 millones de acciones y tú tienes 100, eres dueño de una porción diminuta de ese negocio. Cuando la empresa hace crecer sus ventas y sus ganancias, los inversores suelen estar dispuestos a pagar más por cada acción, y el precio sube.",
+     "Las acciones se negocian en una bolsa, donde se encuentran compradores y vendedores. El precio que ves es simplemente el último precio al que alguien compró y alguien vendió."],
+    "diagram": "stock-etf-index"},
+   {"h": "Qué es un ETF",
+    "p": ["Un **ETF** (fondo cotizado, por sus siglas en inglés) es una canasta de muchas acciones, u otros activos, que se negocia como si fuera una sola acción. Si compras una participación de un ETF, tienes una pequeña parte de todo lo que hay dentro de la canasta.",
+     "Algunos ETF siguen a todo el mercado, como SPY (el S&P 500) o QQQ (el Nasdaq-100). Otros contienen un solo sector, como semiconductores o bancos, o un tema. Puedes explorarlos en la [página de ETF](/etfs/)."]},
+   {"h": "Qué es un índice",
+    "p": ["Un **índice** es un número que mide a un grupo de acciones. Es un marcador, no algo que puedas comprar directamente. Los índices de EE. UU. más seguidos son:"],
+    "list": ["**S&P 500**: 500 grandes empresas de EE. UU., la referencia estándar del mercado.",
+     "**Nasdaq Composite** y **Nasdaq-100**: con mucho peso en tecnología y empresas de crecimiento.",
+     "**Russell 2000**: empresas más pequeñas, que suele seguirse a través del ETF IWM.",
+     "**Dow Jones Industrial Average**: 30 empresas grandes y conocidas."]},
+   {"h": "Tickers",
+    "p": ["Cada acción y cada ETF tiene un **ticker**, un código corto de una a cinco letras que se usa para buscarlo. SPY, QQQ e IWM son tickers de ETF. En Ticker&Tape puedes abrir cualquier gráfico escribiendo el ticker, o yendo directo a una dirección como [/chart/SPY/](/chart/SPY/).",
+     "Un precio bajo no significa que una acción esté barata. Una acción de $20 no es mejor negocio que una de $400; lo que importa es cómo está creciendo la empresa y cómo se comporta el precio."]},
+   {"h": "Por qué los traders de crecimiento operan acciones pero miran los índices",
+    "p": ["El método que se enseña aquí, popularizado por William O'Neil, busca acciones de crecimiento individuales: empresas con ganancias que suben rápido y cuyas acciones lideran el mercado. Históricamente, las mayores subidas vinieron de estas líderes, no de la acción promedio.",
+     "Pero aproximadamente tres de cada cuatro acciones se mueven en la misma dirección que el mercado general. Así que, aunque nunca compres un fondo indexado, revisas el S&P 500 y el Nasdaq todos los días. Si los índices caen con fuerza, incluso las mejores acciones suelen caer con ellos. Aprenderás a evaluarlo en [la dirección del mercado](lesson:market-direction)."]}
+  ],
+  "mistakes": [
+   "Creer que un precio por acción bajo significa que está barata o que tiene más espacio para subir.",
+   "Ignorar los índices y comprar acciones mientras todo el mercado está en corrección.",
+   "Confundir un índice (una medición) con un ETF (algo que realmente puedes comprar)."
+  ],
+  "takeaways": [
+   "Una acción es una parte de una empresa; un ETF es una canasta que se negocia como una acción; un índice es un marcador.",
+   "Cada acción y cada ETF tiene un ticker que usas para encontrar su gráfico.",
+   "Los traders de crecimiento compran líderes individuales pero revisan los índices todos los días."
+  ],
+  "try": {"label": "Abrir el gráfico de SPY", "href": "/chart/SPY/"},
+  "related": ["how-the-market-works", "market-direction", "reading-a-ticker-and-tape-chart"]
+ },
+ {
+  "slug": "how-the-market-works",
+  "title": "Cómo funciona la bolsa: horarios, liquidez, spread",
+  "desc": "Las bolsas de EE. UU., el horario de 9:30 a 4:00 ET, pre-market y after-hours, por qué los resultados salen fuera de hora y qué son liquidez y spread.",
+  "intro": "La bolsa es un punto de encuentro entre compradores y vendedores. Saber cuándo está abierta, quién opera y cómo se forman los precios te ahorrará algunas sorpresas caras de principiante.",
+  "sections": [
+   {"h": "Las bolsas de EE. UU.",
+    "p": ["La mayoría de las acciones de EE. UU. cotizan en la **Bolsa de Nueva York (NYSE)** o en el **Nasdaq**. Hoy casi toda la operatoria es electrónica. Cuando envías una orden a través de tu bróker, se empareja con la orden de alguien del otro lado en una fracción de segundo.",
+     "Un precio solo cambia porque compradores y vendedores acuerdan uno nuevo. Si los compradores tienen más urgencia, pagan más y el precio sube. Si los vendedores tienen más urgencia, aceptan menos y el precio baja."]},
+   {"h": "Horario de negociación",
+    "p": ["La **sesión regular** va de **9:30 a. m. a 4:00 p. m. hora del Este (ET)**, la hora de Nueva York, de lunes a viernes, salvo feriados bursátiles. La mayor parte del volumen del día, y los precios más confiables, se dan en este horario. Los primeros y los últimos 30 minutos suelen ser los más movidos.",
+     "Fuera del horario regular existe la **negociación extendida**:"],
+    "list": ["**Pre-market** (antes de la apertura): aproximadamente de 4:00 a 9:30 a. m. ET.",
+     "**After-hours** (después del cierre): aproximadamente de 4:00 a 8:00 p. m. ET.",
+     "El volumen es mucho más bajo, así que los precios pueden saltar y los spreads son más amplios."],
+    "diagram": "market-hours"},
+   {"h": "Por qué los resultados salen fuera de hora",
+    "p": ["Las empresas suelen publicar sus resultados trimestrales antes de la apertura o después del cierre. Así todos tienen tiempo de leer los números antes de que empiece la sesión regular. Por eso una acción puede abrir muy por encima o por debajo del cierre anterior: un **gap** (hueco en el precio). Revisa el [calendario de resultados](/earnings/) para que un reporte nunca te tome por sorpresa, y mira [gaps](lesson:gaps) para aprender a leerlos."]},
+   {"h": "Liquidez y spread",
+    "p": ["La **liquidez** es la facilidad con la que puedes comprar o vender sin mover el precio. Una acción que negocia millones de acciones por día es líquida. Una que negocia unos pocos miles, no.",
+     "El **bid** es el precio más alto que ofrece un comprador; el **ask** es el precio más bajo que acepta un vendedor. La diferencia entre ambos es el **spread**. En una acción líquida el spread puede ser de un centavo; en una poco negociada puede ser mucho mayor, lo que es un costo oculto cada vez que operas. Los traders de crecimiento prefieren acciones con buen volumen diario en dólares para poder entrar y salir sin problemas."]},
+   {"h": "Precios diferidos vs en tiempo real",
+    "p": ["Algunas fuentes de datos muestran precios con 15 minutos o más de demora. Eso sirve para estudiar gráficos después del cierre, pero antes de enviar una orden confirma siempre el bid y el ask en vivo en tu bróker. Los gráficos diarios se construyen con el cierre oficial final, que es lo que usa la mayor parte de nuestro análisis."]}
+  ],
+  "mistakes": [
+   "Operar en el pre-market o el after-hours sin darte cuenta de lo bajo que es el volumen.",
+   "Mantener una posición durante un reporte de resultados que no sabías que venía.",
+   "Comprar acciones poco líquidas y perder dinero por spreads amplios.",
+   "Enviar una orden basándote en una cotización diferida."
+  ],
+  "takeaways": [
+   "La sesión regular de EE. UU. va de 9:30 a. m. a 4:00 p. m., hora de Nueva York.",
+   "Los resultados se publican fuera del horario regular, y por eso las acciones abren con gaps.",
+   "Las acciones líquidas con spreads ajustados son más baratas y seguras de operar."
+  ],
+  "try": {"label": "Abrir el calendario de resultados", "href": "/earnings/"},
+  "related": ["order-types", "stocks-etfs-indexes", "gaps", "economic-calendar"]
+ },
+ {
+  "slug": "order-types",
+  "title": "Tipos de órdenes: mercado, límite, stop y stop-limit",
+  "desc": "Órdenes de mercado, límite, stop y stop-limit, GTC, slippage, y qué orden usar para comprar un breakout o para proteger una posición.",
+  "intro": "Una orden es tu instrucción al bróker. Elegir el tipo correcto define el precio que obtienes, si se ejecuta o no, y qué tan protegido estás cuando una operación sale mal.",
+  "sections": [
+   {"h": "Los tipos de órdenes básicos",
+    "list": ["**Orden de mercado**: comprar o vender ya mismo al mejor precio disponible. Es casi seguro que se ejecuta, pero no controlas el precio exacto.",
+     "**Orden límite**: comprar a este precio o menos, o vender a este precio o más. Controlas el precio, pero puede que no se ejecute si la acción nunca llega a él.",
+     "**Orden stop (stop-loss)**: una orden en espera que se convierte en orden de mercado cuando el precio toca tu nivel de stop. Se usa sobre todo para cortar una pérdida de forma automática.",
+     "**Orden stop-limit**: cuando se toca el precio de stop, se convierte en una orden límite en lugar de una de mercado. Controlas el precio, pero en una caída rápida puede que nunca se ejecute."],
+    "diagram": "order-types"},
+   {"h": "Cuánto dura una orden",
+    "p": ["Una **orden del día** vence al cierre si no se ejecutó. Una orden **good-till-canceled (GTC)**, válida hasta que la canceles, sigue activa hasta ejecutarse o hasta que la canceles, muchas veces hasta unos meses según el bróker. Los stop-loss suelen cargarse como GTC para que te sigan protegiendo todos los días.",
+     "Fíjate si tu bróker permite que las órdenes funcionen en el pre-market y el after-hours. La mayoría de los stops solo se activan durante la sesión regular."]},
+   {"h": "Slippage",
+    "p": ["El **slippage** (deslizamiento) es la diferencia entre el precio que esperabas y el que obtuviste. Ocurre con órdenes de mercado y stop cuando el precio se mueve rápido o la acción tiene poco volumen. Si tu stop está en $46 y la acción abre con un gap bajista en $43, tu stop se ejecuta cerca de $43, no de $46. Ningún tipo de orden te protege por completo de un gap durante la noche."]},
+   {"h": "Comprar un breakout",
+    "p": ["Un **breakout** (ruptura) es cuando una acción supera su **pivot**, el punto de compra de una base (mira [pivot y zona de compra](lesson:pivot-and-buy-zone)). Muchos traders usan un **buy stop-limit**: para un pivot de $50.10, un stop en $50.10 y un límite cerca de $51. La orden solo se activa si la acción realmente rompe, y el límite evita que la persigas demasiado.",
+     "Si estás mirando en vivo, una orden límite apenas por encima del ask actual también funciona. Evita las órdenes de mercado simples en los primeros minutos después de la apertura, cuando los spreads son amplios."]},
+   {"h": "Proteger una posición",
+    "p": ["Una vez que entraste, decide dónde estás equivocado y coloca un **stop-loss** de inmediato. Un stop simple (que se convierte en orden de mercado) es la forma más confiable de salir cuando la acción está cayendo; un stop-limit puede dejarte con una acción que sigue bajando por debajo de tu límite. Aprende dónde ubicarlo en [stop-loss](lesson:stop-losses) y cuántas acciones comprar en [tamaño de posición](lesson:position-sizing)."]}
+  ],
+  "rules": {"title": "Qué orden usar", "rows": [
+   ["Entrar o salir ya mismo", "Orden de mercado (acciones líquidas, en horario regular)"],
+   ["Comprar solo a un precio dado o mejor", "Orden límite"],
+   ["Comprar un breakout sin perseguirlo", "Buy stop-limit: stop en el pivot, límite un poco más arriba"],
+   ["Cortar una pérdida automáticamente", "Orden stop, cargada como GTC"]
+  ]},
+  "mistakes": [
+   "Usar órdenes de mercado en acciones poco negociadas o en el pre-market y obtener un precio pésimo.",
+   "Usar un stop-limit para proteger una posición y ver cómo el precio atraviesa el límite.",
+   "Entrar a una operación sin stop-loss pensando en decidirlo después.",
+   "Olvidar que una orden del día venció y creer que sigues protegido."
+  ],
+  "takeaways": [
+   "La orden de mercado garantiza la ejecución, la orden límite garantiza el precio; no puedes tener ambas cosas.",
+   "Un buy stop-limit en el pivot es una forma común de comprar un breakout sin perseguirlo.",
+   "Protege cada posición con una orden stop simple, y recuerda que los gaps pueden saltarla."
+  ],
+  "try": {"label": "Abrir la calculadora de tamaño de posición", "href": "/portfolio/"},
+  "related": ["how-the-market-works", "stop-losses", "pivot-and-buy-zone", "position-sizing"]
+ },
+ {
+  "slug": "candlesticks-and-bars",
+  "title": "Cómo leer velas y barras",
+  "desc": "Apertura, máximo, mínimo y cierre: el cuerpo y las mechas de las velas, las barras OHLC y qué indica un cierre cerca del máximo o del mínimo.",
+  "intro": "Todo gráfico se construye con los mismos cuatro precios para cada período: la apertura, el máximo, el mínimo y el cierre. Las velas y las barras son solo dos formas de dibujarlos.",
+  "sections": [
+   {"h": "Los cuatro precios",
+    "list": ["**Apertura**: la primera operación del período.",
+     "**Máximo**: el precio más alto alcanzado.",
+     "**Mínimo**: el precio más bajo alcanzado.",
+     "**Cierre**: la última operación del período. Es el que más miran los traders, porque muestra dónde terminó la pelea entre compradores y vendedores."],
+    "p": ["En un gráfico diario cada vela o barra es un día; en un gráfico semanal cada una es una semana completa."]},
+   {"h": "Anatomía de una vela",
+    "p": ["Una **vela** (candlestick) tiene un **cuerpo** y dos **mechas** (también llamadas sombras). El cuerpo va de la apertura al cierre. Las mechas son líneas finas que llegan hacia arriba hasta el máximo y hacia abajo hasta el mínimo.",
+     "Si el cierre está por encima de la apertura, es una vela alcista, normalmente verde o hueca. Si el cierre está por debajo de la apertura, es una vela bajista, normalmente roja o rellena. Un cuerpo alto indica un movimiento fuerte en una dirección; un cuerpo pequeño indica indecisión."],
+    "diagram": "candle-anatomy"},
+   {"h": "Las barras muestran lo mismo",
+    "p": ["Una **barra OHLC** es una línea vertical del mínimo al máximo, con una pequeña marca a la izquierda para la apertura y otra a la derecha para el cierre. Muchos traders de la tradición de O'Neil prefieren las barras porque ponen el foco en el rango y el cierre y no en los colores. En Ticker&Tape puedes alternar entre velas y barras; usa la que te resulte más fácil de leer."],
+    "diagram": "bars-vs-candles"},
+   {"h": "Dónde queda el cierre",
+    "p": ["Lo más útil para leer en cualquier vela o barra es dónde se ubica el cierre dentro del rango del día."],
+    "list": ["**Cierre cerca del máximo**: los compradores tuvieron el control hasta el final de la sesión. En un día de breakout, es lo que quieres ver.",
+     "**Cierre cerca del mínimo**: los vendedores ganaron el día, aunque la acción haya estado arriba más temprano. Un breakout que cierra cerca del mínimo es una advertencia.",
+     "**Cierre en el medio**: un empate, frecuente en movimientos tranquilos y laterales.",
+     "**Mecha superior larga**: la acción subió pero la vendieron de vuelta hacia abajo, señal de oferta por encima."]},
+   {"h": "El contexto importa más que una vela",
+    "p": ["Los patrones de una sola vela con nombres exóticos reciben mucha atención, pero por sí solos son poco confiables. Una vela significa mucho más cuando la lees junto con el [volumen](lesson:reading-volume) y su lugar en el gráfico: en el pivot de una base, en la [media de 50 días](lesson:the-50-day-line) o después de una larga subida. Un cierre fuerte con mucho volumen en un punto de compra es significativo; la misma vela en medio de la nada, no."]}
+  ],
+  "mistakes": [
+   "Operar patrones de una sola vela sin mirar el volumen ni el gráfico general.",
+   "Juzgar un día por si cerró en alza o en baja en lugar de dónde cerró dentro de su rango.",
+   "Ignorar mechas superiores largas que aparecen una y otra vez cerca del mismo precio."
+  ],
+  "takeaways": [
+   "Cada vela o barra muestra la apertura, el máximo, el mínimo y el cierre.",
+   "Dónde queda el cierre dentro del rango te dice quién ganó el día.",
+   "Lee las velas junto con el volumen y su ubicación en el gráfico."
+  ],
+  "try": {"label": "Abrir un gráfico", "href": "/chart/SPY/"},
+  "related": ["daily-and-weekly-charts", "reading-volume", "reading-a-ticker-and-tape-chart"]
+ },
+ {
+  "slug": "daily-and-weekly-charts",
+  "title": "Gráficos diarios y semanales: por qué usar ambos",
+  "desc": "Por qué usar el gráfico semanal para el panorama general y las bases y el diario para el timing, y cuántos meses de datos mirar en cada uno.",
+  "intro": "La misma acción puede verse tranquila en un gráfico semanal y caótica en uno diario. Usar ambos te permite ver el bosque y los árboles.",
+  "sections": [
+   {"h": "Qué cambia entre los dos",
+    "p": ["En un **gráfico diario** cada vela o barra es una jornada de negociación. En un **gráfico semanal** cada una resume una semana entera: la apertura del lunes, el máximo más alto, el mínimo más bajo y el cierre del viernes. El volumen semanal es el total de los cinco días.",
+     "Como una barra semanal condensa cinco días, filtra mucho ruido. Una caída de dos días que parece dramática en el diario puede ser un pequeño retroceso dentro de una fuerte tendencia alcista semanal."],
+    "diagram": "daily-weekly"},
+   {"h": "El gráfico semanal: el panorama general",
+    "p": ["Empieza por el semanal. Responde las grandes preguntas:"],
+    "list": ["¿La acción está en una tendencia alcista de largo plazo, en una bajista o lateral?",
+     "¿Está formando una base adecuada, y qué tan larga y profunda es? Las bases se miden en semanas.",
+     "¿Los cierres semanales son ajustados (cierres a precios parecidos semana tras semana), señal de que los grandes tenedores no están vendiendo?",
+     "¿Se mantiene por encima de la media móvil de 10 semanas, la prima semanal de la media de 50 días?"]},
+   {"h": "El gráfico diario: el timing",
+    "p": ["Cuando el semanal se ve bien, pasa al diario para planear la operación. El diario muestra el pivot exacto, el volumen del día del breakout, la [media de 50 días](lesson:the-50-day-line) y dónde iría un stop razonable. Las barras de volumen diarias también revelan días de venta o compra fuerte que una barra semanal puede ocultar.",
+     "Una rutina simple: el semanal para decidir si una acción merece tu atención, el diario para decidir cuándo actuar."]},
+   {"h": "Cuánta historia mirar",
+    "list": ["**Gráfico diario**: unos 6 a 12 meses. Suficiente para ver la base actual y la subida previa.",
+     "**Gráfico semanal**: unos 2 a 5 años. Suficiente para ver bases anteriores, la tendencia de largo plazo y en cuál de sus [cuatro etapas](lesson:the-four-stages) está la acción.",
+     "Aleja más el zoom cuando una acción está cerca de máximos históricos o saliendo de una larga caída."],
+    "p": ["Muy poca historia oculta contexto importante; demasiada aplasta la acción reciente que necesitas leer."]},
+   {"h": "Cuando los dos no coinciden",
+    "p": ["A veces el diario se ve roto mientras el semanal se ve bien, o al revés. En general, el semanal marca la tendencia y el diario te avisa antes. Una ruptura diaria por debajo de un nivel clave con mucho volumen merece respeto, pero un día malo dentro de una base semanal sólida suele ser solo ruido. Ante la duda, espera el próximo cierre semanal."]}
+  ],
+  "mistakes": [
+   "Mirar solo gráficos diarios y reaccionar de más ante retrocesos normales.",
+   "Comprar mirando solo el semanal sin revisar el volumen del breakout en el diario.",
+   "Hacer tanto zoom que desaparecen la base y la tendencia alcista previa."
+  ],
+  "takeaways": [
+   "El semanal muestra la tendencia y la base; el diario muestra el timing.",
+   "Mira alrededor de un año de datos diarios y algunos años de datos semanales.",
+   "El semanal marca la dirección, el diario da las primeras advertencias."
+  ],
+  "try": {"label": "Abrir el gráfico de SPY", "href": "/chart/SPY/"},
+  "related": ["candlesticks-and-bars", "log-vs-linear-scale", "what-is-a-base"]
+ },
+ {
+  "slug": "log-vs-linear-scale",
+  "title": "Escala logarítmica vs lineal en los gráficos",
+  "desc": "Escala lineal vs logarítmica: por qué importan más los movimientos porcentuales que en dólares y por qué los gráficos de largo plazo usan escala log.",
+  "intro": "El eje de precios de un gráfico se puede dibujar de dos maneras. Elegir la correcta cambia cómo se ve la historia de una acción y cómo juzgas sus movimientos.",
+  "sections": [
+   {"h": "Escala lineal",
+    "p": ["En una **escala lineal**, cada dólar ocupa el mismo espacio vertical. La distancia de $10 a $20 se ve exactamente igual de alta que la de $100 a $110.",
+     "Suena justo, pero oculta algo importante. Pasar de $10 a $20 duplica tu dinero: una ganancia del 100%. Pasar de $100 a $110 es apenas un 10%. En un gráfico lineal, una acción que subió de $10 a $200 en varios años se ve plana durante mucho tiempo y luego se dispara hacia arriba al final."]},
+   {"h": "Escala logarítmica",
+    "p": ["En una **escala logarítmica (log)**, los movimientos porcentuales iguales ocupan el mismo espacio vertical. Un movimiento de $10 a $20 (+100%) se ve exactamente igual de alto que uno de $100 a $200 (+100%). Cada duplicación tiene la misma altura."],
+    "diagram": "log-linear"},
+   {"h": "Por qué lo que importa son los porcentajes",
+    "p": ["Como trader piensas en porcentajes. Arriesgas un 7% con un stop, apuntas a ganancias del 20% al 25%, y una base con un 30% de profundidad se juzga por su porcentaje, no por su profundidad en dólares. Una caída de $5 es un desastre para una acción de $20 y algo menor para una de $500.",
+     "Un gráfico log muestra esos movimientos de forma honesta a lo largo de toda la historia de una acción, así que una base de hace tres años y la base de hoy se pueden comparar en igualdad de condiciones."]},
+   {"h": "Cuándo usar cada una",
+    "list": ["**Escala log**: gráficos semanales y de largo plazo, acciones que se movieron mucho, comparar bases a lo largo del tiempo. Es el estándar para el análisis de acciones de crecimiento.",
+     "**Escala lineal**: gráficos diarios de corto plazo de unos pocos meses, donde el rango de precios es estrecho. Aquí ambas escalas se ven casi idénticas.",
+     "Las líneas de tendencia pueden verse distintas en cada escala. Una línea que se sostiene en log puede romperse en lineal, así que dibújalas en la escala que realmente usas. Mira [líneas de tendencia](lesson:trendlines)."]},
+   {"h": "Leer un gráfico log en la práctica",
+    "p": ["En un gráfico log, una tendencia alcista constante en la que la acción gana un porcentaje parecido cada mes se ve como una línea recta, mientras que en lineal se curva fuertemente hacia arriba. Si un gráfico log empieza a curvarse hacia arriba, la acción realmente se está acelerando; si se aplana, el impulso se está agotando aunque las ganancias en dólares todavía parezcan grandes.",
+     "En Ticker&Tape puedes cambiar el eje de precios entre log y lineal en cualquier gráfico. Prueba ambos en una acción que haya subido mucho en cinco años y nota qué distintos se ven los primeros años."]}
+  ],
+  "mistakes": [
+   "Juzgar un gráfico de largo plazo en escala lineal y creer que una acción se volvió parabólica recién ahora.",
+   "Comparar el tamaño de bases viejas y nuevas en un gráfico lineal.",
+   "Dibujar una línea de tendencia en una escala y vigilar sus rupturas en la otra."
+  ],
+  "takeaways": [
+   "La escala lineal le da a cada dólar la misma altura; la log le da a cada porcentaje la misma altura.",
+   "Los traders piensan en porcentajes, así que la escala log cuenta la historia más fiel.",
+   "Usa escala log en gráficos semanales y de largo plazo; en diarios cortos la diferencia es pequeña."
+  ],
+  "try": {"label": "Abrir un gráfico semanal", "href": "/chart/QQQ/"},
+  "related": ["daily-and-weekly-charts", "trendlines", "what-is-a-base"]
+ },
+ {
+  "slug": "reading-a-ticker-and-tape-chart",
+  "title": "Cómo leer un gráfico de Ticker&Tape",
+  "desc": "Un recorrido por el gráfico de Ticker&Tape: precio, volumen, medias móviles, línea RS y RS Rating, base y pivot, caja de datos, tabla de EPS y resultados.",
+  "intro": "Un gráfico de Ticker&Tape reúne mucha información en una sola pantalla. Aquí tienes un recorrido rápido, de arriba hacia abajo, con enlaces a la lección que explica cada parte en profundidad.",
+  "sections": [
+   {"h": "Precio y medias móviles",
+    "p": ["El panel principal muestra el precio en velas o barras diarias o semanales (mira [velas y barras](lesson:candlesticks-and-bars)). Por defecto se dibujan dos medias móviles: la de **50 días** y la de **200 días**. Suavizan el precio y muestran la tendencia de mediano y largo plazo. Puedes agregar cualquier media simple o exponencial con el botón **Indicators**.",
+     "Cambia entre diario y semanal en la parte superior del gráfico, y entre escala lineal y log en el eje de precios."],
+    "diagram": "chart-anatomy"},
+   {"h": "Base, pivot y zona de compra",
+    "p": ["Cuando la plataforma detecta una base, como una base plana o una taza con asa, la marca en el gráfico junto con el **pivot**, el punto de compra, y la **zona de compra**, desde el pivot hasta un 5% por encima. Una etiqueta de estado te dice dónde está la acción ahora: cerca del pivot, en zona de compra, breakout, extendida, etc. Aprende más en [qué es una base](lesson:what-is-a-base)."]},
+   {"h": "Volumen",
+    "p": ["Debajo del precio están las barras de volumen, coloreadas según días alcistas y bajistas, con una línea para el **volumen promedio de 50 días**. Las barras muy por encima de esa línea muestran un interés inusual. Los breakouts deberían darse con un volumen bien por encima del promedio. Mira [cómo leer el volumen](lesson:reading-volume)."]},
+   {"h": "Línea RS y RS Rating",
+    "p": ["La **línea RS** (fuerza relativa) divide el precio de la acción por el S&P 500 (puedes cambiar la referencia al Nasdaq-100 o a un ETF sectorial). Una línea que sube significa que la acción le gana al mercado. El **RS Rating**, de 1 a 99, ordena su rendimiento de 12 meses frente a todas las demás acciones. Las líderes suelen tener 80 o más."]},
+   {"h": "Caja de datos, tabla de EPS y marcadores de resultados",
+    "list": ["**Caja de datos**: precio, RS Rating, crecimiento de EPS (ganancia por acción) y de ventas, ranking del grupo de industria, ATR %, ratio de volumen alcista/bajista y más, todo en un solo lugar.",
+     "**Tabla trimestral de EPS y ventas**: el crecimiento reciente de la empresa, trimestre a trimestre, comparado con un año antes.",
+     "**Marcadores de resultados**: pequeñas banderas en el eje de fechas que muestran los reportes de resultados pasados y próximos, para que nunca te tomen por sorpresa."]},
+   {"h": "Herramientas para trabajar",
+    "p": ["Usa las herramientas de dibujo para agregar líneas de tendencia, niveles horizontales, cajas y notas. Configura alertas sobre un precio, una media móvil, una línea de tendencia o el pivot. Cuando estés listo para planear una operación, la calculadora de tamaño de posición convierte tu riesgo de cuenta y tu stop en una cantidad de acciones y puede enviar la operación a tu [portafolio](/portfolio/)."]}
+  ],
+  "takeaways": [
+   "Precio, medias móviles, volumen y línea RS te muestran tendencia, demanda y liderazgo de un vistazo.",
+   "El contorno de la base, el pivot y el estado muestran dónde está una acción respecto de su punto de compra.",
+   "La caja de datos y la tabla de EPS suman los fundamentales sin salir del gráfico."
+  ],
+  "try": {"label": "Abrir el gráfico de SPY", "href": "/chart/SPY/"},
+  "related": ["candlesticks-and-bars", "reading-volume", "rs-line", "what-is-a-base"]
+ },
+ {
+  "slug": "what-is-a-trend",
+  "title": "Qué es una tendencia: alcista, bajista y lateral",
+  "desc": "Cómo identificar una tendencia alcista, una bajista y un rango lateral con máximos y mínimos, y por qué conviene operar a favor del mercado.",
+  "intro": "Una tendencia es simplemente la dirección en la que se mueven los precios. Aprender a reconocerla, y a operar a su favor en lugar de en contra, es la base de todo lo demás en esta escuela.",
+  "sections": [
+   {"h": "Tendencia alcista: máximos y mínimos más altos",
+    "p": ["Los precios nunca se mueven en línea recta. Van en zigzag. En una **tendencia alcista**, cada subida supera el pico anterior (un **máximo más alto**) y cada retroceso se frena por encima del mínimo anterior (un **mínimo más alto**). Los compradores entran a precios cada vez más altos.",
+     "En una tendencia alcista sana, la acción suele mantenerse por encima de una media móvil de 50 días ascendente, y los días alcistas tienden a tener más volumen que los bajistas."],
+    "diagram": "uptrend"},
+   {"h": "Tendencia bajista: máximos y mínimos más bajos",
+    "p": ["Una **tendencia bajista** es la imagen espejo: cada subida fracasa por debajo del último pico (un **máximo más bajo**) y cada caída perfora el último mínimo (un **mínimo más bajo**). Los vendedores están dispuestos a aceptar cada vez menos. Los rebotes en una tendencia bajista suelen verse tentadores, pero tienden a desvanecerse.",
+     "Los traders de crecimiento no compran acciones en tendencia bajista, por más baratas que parezcan. Una acción que cayó un 50% puede caer otro 50%."],
+    "diagram": "downtrend"},
+   {"h": "Lateral: un rango",
+    "p": ["A veces ninguno de los dos lados gana y el precio se mueve **lateralmente** entre un techo y un piso. Es un rango de negociación. Los rangos que se forman después de una subida fuerte suelen ser **bases**, donde la acción digiere sus ganancias antes del siguiente tramo alcista. La ruptura de un rango te dice qué lado ganó finalmente. Mira [soporte y resistencia](lesson:support-and-resistance)."],
+    "diagram": "sideways"},
+   {"h": "La tendencia es tu amiga",
+    "p": ["El viejo dicho \"la tendencia es tu amiga\" existe por una razón. Una tendencia en marcha tiende a continuar más veces de las que se revierte. Comprar acciones que ya están subiendo resulta incómodo para los principiantes, a quienes les gustan las gangas, pero pone las probabilidades de tu lado.",
+     "Hay tendencias en todos los marcos temporales. Una acción puede estar en tendencia alcista semanal mientras retrocede unos días en el diario. Decide qué tendencia estás operando y júzgala en el gráfico correspondiente.",
+     "Una tendencia termina cuando se rompe su patrón. Una tendencia alcista está en problemas cuando un retroceso perfora el mínimo más alto anterior y la siguiente subida no logra un nuevo máximo. Un día rojo no es un cambio de tendencia."]},
+   {"h": "Opera en la dirección del mercado",
+    "p": ["La tendencia más importante es la del mercado general. La mayoría de las acciones la siguen, así que comprar breakouts en un mercado que cae es como nadar contra la corriente. Antes de cada operación, revisa la dirección del mercado en la [página de amplitud](/breadth/) y en la lección sobre [la dirección del mercado](lesson:market-direction)."]}
+  ],
+  "mistakes": [
+   "Comprar una acción en tendencia bajista porque parece barata después de una gran caída.",
+   "Dar por terminada una tendencia tras un día de baja en lugar de esperar un mínimo más bajo.",
+   "Pelear contra la tendencia del mercado general con compras nuevas durante una corrección."
+  ],
+  "takeaways": [
+   "Tendencia alcista = máximos y mínimos más altos; bajista = máximos y mínimos más bajos.",
+   "Los rangos laterales después de una subida suelen convertirse en bases.",
+   "Opera a favor de la tendencia de la acción y del mercado."
+  ],
+  "try": {"label": "Ver la dirección del mercado", "href": "/breadth/"},
+  "related": ["the-four-stages", "trendlines", "market-direction", "support-and-resistance"]
+ },
+ {
+  "slug": "the-four-stages",
+  "title": "Las cuatro etapas de una acción",
+  "desc": "Etapa 1 de base, 2 de avance, 3 de techo y 4 de caída: cómo se ven las medias móviles y el volumen en cada una, y por qué comprar solo en la etapa 2.",
+  "intro": "La mayoría de las acciones atraviesan un ciclo repetido de cuatro etapas. Saber en qué etapa está una acción te dice si siquiera vale la pena comprarla.",
+  "sections": [
+   {"h": "El ciclo de un vistazo",
+    "p": ["Las cuatro etapas describen la vida de un gran movimiento: un largo período tranquilo, un avance fuerte, un techo agitado y una caída. Se ven más fácil en un [gráfico semanal](lesson:daily-and-weekly-charts) con la media móvil de 30 o 40 semanas (más o menos las de 150 y 200 días)."],
+    "diagram": "stages"},
+   {"h": "Etapa 1: base",
+    "p": ["Después de una caída, la venta se agota y la acción se mueve lateralmente durante meses. La media móvil de largo plazo se aplana y el precio la cruza una y otra vez. El volumen suele ser bajo. Ya no hay nada roto, pero tampoco pasa nada. Comprar aquí inmoviliza dinero durante mucho tiempo sin recompensa."]},
+   {"h": "Etapa 2: avance",
+    "p": ["La acción rompe su rango de etapa 1, muchas veces con mucho volumen, y empieza a marcar máximos y mínimos más altos. La media de 50 días sube por encima de la de 200 días y ambas apuntan hacia arriba. El precio se mantiene por encima de ellas y retrocede hacia ellas cada tanto. Las semanas alcistas tienen más volumen que las bajistas.",
+     "La etapa 2 es donde se dan las grandes ganancias, y es la única etapa en la que compran los traders de crecimiento. Durante el avance, la acción hace varias pausas para formar bases, y cada una ofrece un nuevo punto de compra."]},
+   {"h": "Etapa 3: techo",
+    "p": ["El avance pierde fuerza. El precio oscila con violencia, las medias móviles se aplanan y la acción empieza a cerrar por debajo de la media de 50 días. Aparece volumen fuerte en los días bajistas: los grandes tenedores les venden a los que llegan tarde. La acción todavía puede marcar un nuevo máximo, pero los movimientos son erráticos y los breakouts fallan. Es momento de tomar ganancias, no de sumar."]},
+   {"h": "Etapa 4: caída",
+    "p": ["El precio perfora su media móvil de largo plazo, que gira hacia abajo. Siguen máximos y mínimos más bajos. Los rebotes se venden. Las buenas noticias ya no ayudan. Una acción en etapa 4 puede parecer barata durante muchísimo tiempo. Mantente alejado hasta que construya una nueva base de etapa 1, lo que puede llevar muchos meses o incluso años."]},
+   {"h": "Usar las etapas en la práctica",
+    "p": ["Antes de estudiar cualquier configuración, hazte una pregunta: ¿en qué etapa está esta acción? Si la respuesta no es claramente la etapa 2, pasa a otra. Este único filtro elimina la mayoría de las malas operaciones que hacen los principiantes.",
+     "La etapa 2 también tiene una parte temprana y una tardía. La primera y la segunda base después de un breakout de etapa 1 suelen funcionar mejor; las bases más avanzadas fallan más seguido. Aprenderás por qué en [conteo de bases](lesson:base-count)."]}
+  ],
+  "rules": {"title": "Cómo se ve cada etapa", "rows": [
+   ["Etapa 1: base", "Rango lateral, media de 200 días plana, volumen bajo"],
+   ["Etapa 2: avance", "Máximos y mínimos más altos, medias de 50 y 200 días en alza, volumen en semanas alcistas"],
+   ["Etapa 3: techo", "Oscilaciones amplias, medias que se aplanan, volumen fuerte en días bajistas"],
+   ["Etapa 4: caída", "Por debajo de una media de 200 días en baja, máximos y mínimos más bajos"]
+  ]},
+  "mistakes": [
+   "Comprar en etapa 4 porque la acción está muy por debajo de su viejo máximo.",
+   "Comprar demasiado temprano en la etapa 1 y esperar meses a que pase algo.",
+   "Mantener durante la etapa 3 esperando que vuelva el viejo liderazgo."
+  ],
+  "takeaways": [
+   "Las acciones pasan por base, avance, techo y caída.",
+   "Compra solo en la etapa 2, con el precio por encima de medias móviles en alza.",
+   "El volumen fuerte en días bajistas y los breakouts fallidos anticipan la etapa 3."
+  ],
+  "live": "rs-leaders",
+  "related": ["what-is-a-trend", "the-200-day-line", "base-count", "moving-averages-basics"]
+ },
+ {
+  "slug": "trendlines",
+  "title": "Cómo trazar y usar líneas de tendencia",
+  "desc": "Cómo trazar líneas de tendencia sobre los mínimos en una subida y los máximos en una baja, escala log vs lineal, qué significa una ruptura y las alertas.",
+  "intro": "Una línea de tendencia es una línea recta que une una serie de mínimos o de máximos. Convierte una sensación vaga sobre una tendencia en algo que puedes ver, medir y alertar.",
+  "sections": [
+   {"h": "Cómo trazarla",
+    "p": ["En una **tendencia alcista**, une dos o más **mínimos** ascendentes con una línea y extiéndela hacia la derecha. En una **tendencia bajista**, une dos o más **máximos** descendentes. Dos puntos crean una línea; un tercer toque que se sostiene la confirma.",
+     "Usa los puntos de giro principales, no cada pequeña oscilación. La mayoría de los traders la trazan por los mínimos de las velas o barras, y aceptan que alguna mecha la atraviese un poco en lugar de forzar un ajuste perfecto."],
+    "diagram": "trendline"},
+   {"h": "Ángulo y escala",
+    "p": ["Las líneas de tendencia muy empinadas se rompen rápido y dicen poco. Las líneas con una pendiente moderada que fueron tocadas varias veces son las más significativas.",
+     "En gráficos que cubren un período largo, las líneas pueden verse distintas en escala log y lineal (mira [escala log vs lineal](lesson:log-vs-linear-scale)). Una línea que encaja en log puede cortar los precios en lineal. Elige una escala, normalmente log para gráficos semanales, y mantenla."]},
+   {"h": "Qué significa una ruptura",
+    "p": ["Cuando el precio cierra claramente por debajo de una línea de tendencia alcista, la tendencia al menos se desaceleró. No siempre significa que la acción va a caer; puede simplemente moverse de costado un tiempo. Presta atención al volumen: una ruptura con mucho volumen pesa más que un deslizamiento tranquilo a través de la línea.",
+     "Las rupturas de una **línea de tendencia bajista** también son útiles. En una base, la línea que une los máximos descendentes del asa o del lado derecho puede dar una entrada más temprana, aunque está menos probada que el pivot clásico. Mira [pivot y zona de compra](lesson:pivot-and-buy-zone)."]},
+   {"h": "Cómo las usan los traders",
+    "list": ["Para ver de un vistazo si una acción o un índice sigue en tendencia.",
+     "Como guía de dónde podrían encontrar soporte los retrocesos en una tendencia alcista.",
+     "Como advertencia para ajustar un stop o tomar algo de ganancia cuando se rompe una larga línea alcista.",
+     "Junto con niveles de [soporte y resistencia](lesson:support-and-resistance) y medias móviles, nunca solas."]},
+   {"h": "Líneas de tendencia en Ticker&Tape",
+    "p": ["Abre cualquier gráfico, elige la herramienta de línea de tendencia y haz clic en dos puntos. La línea se extiende hacia la derecha automáticamente. Después puedes configurar una **alerta de línea de tendencia** para que la plataforma te avise cuando el precio la cruce, en lugar de tener que mirar la pantalla todo el día."]}
+  ],
+  "mistakes": [
+   "Volver a trazar la línea cada vez que se rompe para que siempre encaje.",
+   "Trazar líneas demasiado empinadas, que se rompen casi de inmediato.",
+   "Tomar cada pequeña ruptura como señal de venta sin revisar el volumen y la tendencia mayor."
+  ],
+  "takeaways": [
+   "Traza las líneas alcistas por los mínimos y las bajistas por los máximos.",
+   "Una ruptura clara, sobre todo con mucho volumen, significa que la tendencia cambia o hace una pausa.",
+   "Configura una alerta de línea de tendencia para que el gráfico vigile la línea por ti."
+  ],
+  "try": {"label": "Trazar una línea de tendencia en SPY", "href": "/chart/SPY/"},
+  "related": ["what-is-a-trend", "log-vs-linear-scale", "support-and-resistance"]
+ }
+]

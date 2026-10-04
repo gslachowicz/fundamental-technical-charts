@@ -1,0 +1,536 @@
+[
+ {
+  "slug": "support-and-resistance",
+  "title": "Support and resistance: the levels that matter",
+  "desc": "Learn what support and resistance are, why price reacts at prior highs, lows and round numbers, and how to draw clean levels on a stock chart.",
+  "intro": "Prices have memory. Certain levels on a chart keep stopping a stock on the way down or holding it back on the way up. Learning to spot them helps you decide where to buy, where to put a stop and when to be patient.",
+  "sections": [
+   {
+    "h": "What support and resistance are",
+    "p": [
+     "**Support** is a price area where buying has been strong enough to stop a decline. **Resistance** is a price area where selling has been strong enough to stop an advance. They are zones, not exact pennies.",
+     "Picture a $50 stock that falls to $45 three times and bounces each time. Traders start to see $45 as a floor. If the same stock rallies to $55 twice and turns back, $55 becomes a ceiling."
+    ],
+    "diagram": "support-resistance"
+   },
+   {
+    "h": "Why they work",
+    "p": [
+     "Support and resistance work because people remember prices. Investors who bought at $55 and watched the stock fall often want to get out at break-even. When the price returns to $55, their selling creates **supply**, which is resistance.",
+     "The opposite happens at support. Buyers who missed the stock at $45 are glad to get a second chance, and funds that like the company add shares at a price they already know. That **demand** holds the price up."
+    ]
+   },
+   {
+    "h": "Where to look for levels",
+    "list": [
+     "**Prior highs**: the peak of an earlier advance, especially the left side of a base. This is the most important resistance for growth traders.",
+     "**Prior lows**: the bottom of a previous pullback or base.",
+     "**Round numbers**: $50, $100, $200. Many orders cluster there.",
+     "**Areas with lots of trading**: wide sideways ranges where many shares changed hands.",
+     "**Gaps**: the edges of a big price gap often act as levels. See [gaps](lesson:gaps)."
+    ]
+   },
+   {
+    "h": "How to draw levels",
+    "p": [
+     "Start on the weekly chart to see the big picture, then refine on the daily. Use the horizontal level tool on the [chart](/chart/SPY/) and draw through the area where price turned several times. Closing prices often give cleaner levels than intraday wicks.",
+     "Less is more. Two or three well-chosen levels are better than a chart covered in lines. The more times a level has been tested, and the more volume traded there, the more it matters. A level also gets weaker each time it is hit, because the supply or demand there gets used up."
+    ]
+   },
+   {
+    "h": "How traders use them",
+    "p": [
+     "In growth-stock trading, the classic buy point is a stock clearing resistance at the top of a base, the **pivot**. Once the old ceiling is broken, the sellers there have been absorbed. Support levels help you place a stop just below a spot where buyers should show up. When support breaks on heavy volume, it is a warning that demand has dried up."
+    ]
+   }
+  ],
+  "mistakes": [
+   "Treating a level as an exact price instead of a zone.",
+   "Drawing so many lines that every price looks like support.",
+   "Buying right under heavy resistance and hoping it breaks.",
+   "Ignoring volume: a break on light volume is less reliable."
+  ],
+  "takeaways": [
+   "Support stops declines, resistance stops advances, because traders remember prices.",
+   "The best levels are prior highs and lows, round numbers and busy trading areas.",
+   "A clean break above resistance on strong volume is the basis of the breakout buy point."
+  ],
+  "try": {"label": "Draw levels on a chart", "href": "/chart/SPY/"},
+  "related": ["role-reversal", "gaps", "trendlines", "pivot-and-buy-zone"]
+ },
+ {
+  "slug": "role-reversal",
+  "title": "Role reversal: when resistance becomes support",
+  "desc": "Why broken resistance often turns into support, and support into resistance, and how to read the retest that frequently follows a breakout.",
+  "intro": "Once a level breaks, it often switches jobs. The old ceiling becomes the new floor, and the old floor becomes the new ceiling. This is called role reversal, and it shows up after many breakouts and breakdowns.",
+  "sections": [
+   {
+    "h": "The idea",
+    "p": [
+     "Say a $50 stock has stalled at $60 for months. One day it clears $60 on big volume and runs to $64. Weeks later it pulls back, and buying appears right around $60 again. The level that held the stock back is now holding it up.",
+     "The reverse is also true. If a stock breaks below $45 support and later rallies back to $45, sellers often show up there. The old floor has become a ceiling."
+    ],
+    "diagram": "role-reversal"
+   },
+   {
+    "h": "Why it happens",
+    "p": [
+     "It comes back to memory and regret. After a breakout above $60, traders who sold too early or never bought want in, and $60 is the price they watched for months. When the stock returns there, they buy. Funds that bought the breakout may add to their position at the same spot.",
+     "After a breakdown, people who bought at support are now losing money. When price comes back to their entry, many sell to get out even. That supply caps the rally."
+    ]
+   },
+   {
+    "h": "The retest after a breakout",
+    "p": [
+     "A **retest** is a pullback to the breakout level after the stock has cleared it. Many strong breakouts never come back. Others dip to the pivot area within a few days or weeks and then resume the advance.",
+     "A healthy retest has a few signs:"
+    ],
+    "list": [
+     "Volume is lighter on the pullback than it was on the breakout.",
+     "Price holds near the old resistance and does not close well below it.",
+     "The stock bounces with rising volume and the [RS line](lesson:rs-line) stays firm."
+    ]
+   },
+   {
+    "h": "How traders use it",
+    "p": [
+     "If you missed the original breakout, a quiet retest of the pivot can offer a second, lower-risk entry, since your stop can sit just below the old resistance. If you already own the stock, the old resistance becomes a natural line in the sand.",
+     "Be careful not to confuse a retest with a failure. A stock that slices back into its base and closes well below the pivot, especially on heavy volume, is acting like a [failed breakout](lesson:failed-breakouts). On Ticker&Tape a breakout that closes more than 3% below the pivot is flagged as failed."
+    ]
+   }
+  ],
+  "mistakes": [
+   "Waiting for a retest that never comes and missing the strongest breakouts.",
+   "Assuming every pullback to the pivot will hold, even on heavy selling.",
+   "Buying a rally into old support after a breakdown, where sellers are waiting."
+  ],
+  "takeaways": [
+   "Broken resistance often becomes support, and broken support often becomes resistance.",
+   "A low-volume pullback that holds the breakout level is a healthy retest.",
+   "A close well below the pivot on heavy volume is a failure, not a retest."
+  ],
+  "live": "status:Breakout",
+  "try": {"label": "See stocks near a buy point", "href": "/ideas/"},
+  "related": ["support-and-resistance", "pivot-and-buy-zone", "failed-breakouts"]
+ },
+ {
+  "slug": "gaps",
+  "title": "Gaps: breakaway, filled and exhaustion",
+  "desc": "Understand price gaps on stock charts: breakaway gaps on earnings and news, gaps that hold versus gaps that fill, and late-stage exhaustion gaps.",
+  "intro": "A gap is an empty space on the chart where no trading happened. It means the stock opened far above or below the prior day's range, usually because of news. Gaps can mark the start of a big move or the end of one.",
+  "sections": [
+   {
+    "h": "What a gap is",
+    "p": [
+     "A **gap up** happens when today's low is above yesterday's high. A **gap down** happens when today's high is below yesterday's low. Most gaps come from news released outside regular hours, such as an earnings report, guidance, a product launch or an analyst change.",
+     "Because the stock jumps past a range of prices, everyone who wanted to trade in between is forced to react at the new price. That is why gaps are often followed by strong moves in the same direction."
+    ],
+    "diagram": "gaps"
+   },
+   {
+    "h": "Breakaway gaps",
+    "p": [
+     "A **breakaway gap** is a gap out of a base or a long sideways range, usually on earnings and with volume two, three or more times normal. It shows a sudden change in how big investors value the company. Some of the biggest winners started with one.",
+     "The best breakaway gaps hold most of their gain into the close, closing in the upper part of the day's range. A stock that gaps up 10% and closes near its low is showing selling, not strength."
+    ],
+    "diagram": "earnings-gap"
+   },
+   {
+    "h": "Gaps that hold vs gaps that fill",
+    "p": [
+     "A gap is **filled** when price comes back and trades through the empty space to the prior day's close. You will hear that all gaps get filled. That is not true. Powerful breakaway gaps on strong earnings often never fill, because funds keep buying on any dip.",
+     "A useful habit is to watch the low of the gap day. If the stock holds above it in the following days, buyers are still in control. If it closes below the gap day's low, and especially if it fills the gap on heavy volume, the news did not create lasting demand."
+    ]
+   },
+   {
+    "h": "Exhaustion gaps",
+    "p": [
+     "An **exhaustion gap** appears late in a long advance, after the stock is already far above its base and its moving averages. It looks exciting, but it often marks the last burst of buying. Signs include:"
+    ],
+    "list": [
+     "The stock has already run up for many weeks with several bases behind it.",
+     "The gap comes with huge volume, but the stock stalls or reverses within days.",
+     "The gap fills quickly.",
+     "Smaller gaps in the middle of a trend, called runaway gaps, tend to be less meaningful."
+    ]
+   },
+   {
+    "h": "Using gaps on Ticker&Tape",
+    "p": [
+     "Earnings markers on the [chart](/chart/SPY/) show you which gaps came from reports. Check the [earnings calendar](/earnings/) so you are never surprised by a gap against you. To learn how to judge the report itself, read [reading an earnings report](lesson:reading-an-earnings-report)."
+    ]
+   }
+  ],
+  "mistakes": [
+   "Shorting or selling a strong earnings gap just because gaps are supposed to fill.",
+   "Chasing a gap that closes near the low of the day.",
+   "Holding a big position into earnings without a plan for a gap down."
+  ],
+  "takeaways": [
+   "Breakaway gaps out of a base on big volume can start major moves.",
+   "Not all gaps fill; watch whether the stock holds the gap day's low.",
+   "Gaps late in an extended run can signal exhaustion rather than strength."
+  ],
+  "live": "volume-up",
+  "try": {"label": "Open the earnings calendar", "href": "/earnings/"},
+  "related": ["reading-an-earnings-report", "support-and-resistance", "reading-volume"]
+ },
+ {
+  "slug": "reading-volume",
+  "title": "How to read volume",
+  "desc": "Learn to read trading volume: compare it with the 50-day average, use relative volume, and tell what up-volume and down-volume days really say.",
+  "intro": "Volume is the number of shares traded in a period. Price tells you what happened, volume tells you how much conviction was behind it. Big moves on big volume usually mean big investors are involved.",
+  "sections": [
+   {
+    "h": "What volume tells you",
+    "p": [
+     "Mutual funds, pension funds and other institutions buy and sell millions of shares. They cannot hide that activity, so it shows up as volume. When a stock rises on heavy volume, demand is strong. When it falls on heavy volume, someone large is selling.",
+     "A move on light volume says less. A price rise with few shares traded can fade quickly because nobody important is pushing it."
+    ]
+   },
+   {
+    "h": "Compare with the 50-day average",
+    "p": [
+     "Raw volume numbers mean little on their own. Two million shares is huge for one stock and tiny for another. That is why traders compare each day with the **50-day average volume**, the line drawn through the volume bars on the Ticker&Tape chart.",
+     "**Relative volume** is today's volume divided by that average. A reading of 1.5 means 50% above normal; 0.5 means half of normal. You can add a relative volume panel on the chart with the Indicators button. Intraday, keep in mind that volume builds through the session, so compare with the time of day."
+    ],
+    "diagram": "volume-breakout"
+   },
+   {
+    "h": "Up days vs down days",
+    "p": [
+     "On the chart, volume bars are colored by the day's direction: up-colored when the stock closed higher, down-colored when it closed lower. Scanning the colors over a few weeks tells a story.",
+     "In a healthy stock, the biggest volume bars come on up days and down days are quiet. In a stock that is topping, heavy volume shows up on down days and rallies are on light volume. The data box shows the **up/down volume ratio**, which sums this up over 50 days. See [accumulation and distribution](lesson:accumulation-and-distribution)."
+    ]
+   },
+   {
+    "h": "Quiet volume can be good news",
+    "p": [
+     "Low volume is not always bad. When a stock is building a base, volume often dries up near the lows and in the handle. That shows sellers are exhausted: the people who wanted out are gone. A **volume dry-up** followed by a jump in volume on a breakout is a classic pattern, covered in [volume on breakouts](lesson:volume-on-breakouts)."
+    ],
+    "diagram": "volume-dryup"
+   },
+   {
+    "h": "A few quick rules",
+    "list": [
+     "Breakouts should come with volume well above average.",
+     "Pullbacks should come with volume below average.",
+     "Heavy volume with little price progress (churning) is a warning.",
+     "A big-volume drop through support or the 50-day line deserves attention."
+    ]
+   }
+  ],
+  "mistakes": [
+   "Judging volume by raw share count instead of against the stock's own average.",
+   "Comparing morning volume with a full-day average and calling it weak.",
+   "Ignoring the color of the volume bars and missing heavy selling."
+  ],
+  "takeaways": [
+   "Volume measures conviction; heavy volume means institutions are active.",
+   "Always compare volume with the 50-day average or relative volume.",
+   "Healthy stocks rise on heavy volume and pull back on light volume."
+  ],
+  "live": "volume-up",
+  "try": {"label": "Open a chart with volume", "href": "/chart/QQQ/"},
+  "related": ["volume-on-breakouts", "accumulation-and-distribution", "distribution-days"]
+ },
+ {
+  "slug": "volume-on-breakouts",
+  "title": "Volume on breakouts: the proof of demand",
+  "desc": "Why a proper breakout needs volume at least 40 to 50% above average, how volume dries up in a good base, and why low-volume breakouts fail more often.",
+  "intro": "A breakout is when a stock clears the top of its base, the pivot. Price alone is not enough. The move should come with a clear surge in volume, which shows big investors are stepping in.",
+  "sections": [
+   {
+    "h": "Why volume matters at the pivot",
+    "p": [
+     "The top of a base is resistance. Investors who bought near the old high are waiting to sell at break-even. To push through that supply, a stock needs real demand. A surge in volume is the evidence that buyers are absorbing every share for sale.",
+     "When a stock pokes above its [pivot](lesson:pivot-and-buy-zone) on ordinary volume, nobody important may be buying. Those breakouts are more likely to slip back into the base."
+    ]
+   },
+   {
+    "h": "How much volume is enough",
+    "p": [
+     "A common guideline, popularized by William O'Neil, is that breakout-day volume should be **at least 40% to 50% above the 50-day average**. Many of the best breakouts trade two or three times normal volume.",
+     "During the session, project the full-day number. If a stock has already traded its normal daily volume by midday, it is on pace for roughly double. The relative volume panel on the chart makes this easy to track."
+    ],
+    "diagram": "volume-breakout"
+   },
+   {
+    "h": "Dry-up before the breakout",
+    "p": [
+     "The best breakouts usually follow a period of very quiet trading. In a [cup with handle](lesson:cup-with-handle), volume should shrink near the bottom of the cup and again in the handle. In a flat base, look for a few days of very low volume near the lows of the range.",
+     "This **volume dry-up** tells you selling pressure has faded. The contrast matters: a stock that goes from quiet to loud at the pivot is showing a real change in demand."
+    ],
+    "diagram": "volume-dryup"
+   },
+   {
+    "h": "What to watch after the breakout",
+    "list": [
+     "Follow-through in the next few days, ideally on above-average volume.",
+     "Pullbacks on lighter volume than the breakout day.",
+     "A close in the upper half of the day's range on the breakout itself.",
+     "Warning sign: heavy volume on a drop back below the pivot."
+    ]
+   },
+   {
+    "h": "Putting it to work",
+    "p": [
+     "Set a pivot alert on the chart so you know when a stock is approaching its buy point, then check volume before acting. The [ideas page](/ideas/) lists stocks near a pivot each day. Remember that volume is one piece of evidence, alongside the base, the [RS line](lesson:rs-line) and the general market."
+    ]
+   }
+  ],
+  "mistakes": [
+   "Buying a breakout on below-average volume because the price looks right.",
+   "Judging volume too early in the session without projecting the full day.",
+   "Ignoring a base where volume stays heavy on down days instead of drying up."
+  ],
+  "takeaways": [
+   "Breakout volume should be at least 40 to 50% above the 50-day average.",
+   "Volume should dry up near the base lows and in the handle before the breakout.",
+   "Low-volume breakouts fail more often, so treat them with caution."
+  ],
+  "live": "status:Breakout",
+  "try": {"label": "Find stocks near a pivot", "href": "/ideas/"},
+  "related": ["reading-volume", "pivot-and-buy-zone", "cup-with-handle", "failed-breakouts"]
+ },
+ {
+  "slug": "accumulation-and-distribution",
+  "title": "Accumulation and distribution in a stock",
+  "desc": "How institutional buying and selling leave footprints on a chart: accumulation days, distribution days, the up/down volume ratio and churning.",
+  "intro": "Big funds cannot build or sell a position in a single day. They work over weeks and months, and their activity leaves footprints in price and volume. Reading those footprints tells you whether a stock is being collected or quietly sold.",
+  "sections": [
+   {
+    "h": "What the words mean",
+    "p": [
+     "**Accumulation** means institutions are buying a stock over time. **Distribution** means they are selling. A fund that wants to own a million shares has to buy steadily, often on dips, without pushing the price too high too fast. When it wants out, it sells into rallies.",
+     "You cannot see their orders, but you can see the result: the pattern of volume on up days versus down days."
+    ],
+    "diagram": "accum-dist"
+   },
+   {
+    "h": "Accumulation days and distribution days",
+    "p": [
+     "In a single stock, an **accumulation day** is a strong up day on volume above average, ideally closing near the high of the day. A **distribution day** is a down day on above-average volume, especially one that closes near the low.",
+     "Count them over the last few months. A leader often shows clusters of big up-volume weeks during its base and few heavy down days. A stock that is topping starts to stack up distribution days, even while the price still looks fine. The same idea applied to the indexes is covered in [distribution days](lesson:distribution-days)."
+    ]
+   },
+   {
+    "h": "The up/down volume ratio",
+    "p": [
+     "The **up/down volume ratio** adds up the volume on all up days over the last 50 sessions and divides it by the volume on all down days. Ticker&Tape shows it in the chart data box.",
+     "A ratio above 1.0 means more volume on up days than down days. Above 1.5 suggests strong accumulation. Below 1.0 means sellers have had the upper hand. Use it as a quick filter, then confirm on the chart."
+    ]
+   },
+   {
+    "h": "Churning",
+    "p": [
+     "**Churning** is heavy volume with little price progress. The stock trades huge volume for several days but goes nowhere, or closes near the low of a wide range. It often means big holders are selling to eager buyers. Churning after a long advance is a common sign of a top."
+    ]
+   },
+   {
+    "h": "Clues on the weekly chart",
+    "list": [
+     "Up weeks on higher volume than the down weeks around them.",
+     "Tight weekly closes with shrinking volume inside a base.",
+     "Large down weeks on the heaviest volume in months are a warning.",
+     "Price stalling while volume climbs suggests distribution."
+    ]
+   }
+  ],
+  "mistakes": [
+   "Reading one big volume day as a trend instead of looking at weeks of action.",
+   "Treating a high up/down ratio as a buy signal on its own.",
+   "Missing churning because the price has not dropped yet."
+  ],
+  "takeaways": [
+   "Institutions leave footprints: accumulation on up days, distribution on down days.",
+   "An up/down volume ratio above 1.5 points to strong demand.",
+   "Heavy volume without progress, called churning, often comes near tops."
+  ],
+  "live": "ud-leaders",
+  "try": {"label": "Screen for strong demand", "href": "/screener/"},
+  "related": ["reading-volume", "volume-on-breakouts", "distribution-days", "institutional-ownership"]
+ },
+ {
+  "slug": "moving-averages-basics",
+  "title": "Moving averages: the basics",
+  "desc": "Learn what simple and exponential moving averages are, the common 10, 21, 50 and 200-day lines, why slope matters and how a strong uptrend stacks them.",
+  "intro": "A moving average smooths out daily noise and shows the direction of the trend. It is one of the simplest and most useful tools on a chart, and growth traders watch a handful of them every day.",
+  "sections": [
+   {
+    "h": "What a moving average is",
+    "p": [
+     "A moving average is the average closing price over a set number of periods. A 50-day moving average adds the last 50 closes and divides by 50. Each new day, the oldest close drops out and the newest is added, so the line moves along with price.",
+     "A **simple moving average (SMA)** weights every day equally. An **exponential moving average (EMA)** gives more weight to recent days, so it reacts faster. Neither is better. EMAs suit short-term timing; SMAs are the standard for the 50 and 200-day lines."
+    ],
+    "diagram": "ma-basics"
+   },
+   {
+    "h": "The common ones",
+    "list": [
+     "**10-day**: very short term, tracks the strongest stocks in fast advances.",
+     "**21-day** (often an EMA): a popular short-term trend guide.",
+     "**50-day**: the key intermediate-term line. See [the 50-day line](lesson:the-50-day-line).",
+     "**200-day**: the long-term trend. See [the 200-day line](lesson:the-200-day-line).",
+     "**10-week and 40-week** on the weekly chart: roughly equal to the 50-day and 200-day."
+    ],
+    "p": [
+     "The Ticker&Tape chart shows the 50 and 200-day lines by default. You can add any SMA or EMA with the Indicators button."
+    ]
+   },
+   {
+    "h": "Slope matters",
+    "p": [
+     "The direction of the line tells you as much as where price sits. A rising 50-day line means the average buyer over the last ten weeks is in profit. A flat line means the stock is going sideways. A falling line means recent buyers are losing money and may sell into rallies.",
+     "A stock above a falling 200-day line is not in a real uptrend yet. A stock pulling back to a rising 50-day line is a very different situation from one sinking toward a falling one."
+    ]
+   },
+   {
+    "h": "The stack in a strong uptrend",
+    "p": [
+     "In a healthy advance, the averages line up in order: price above the 10-day, the 10-day above the 21-day, the 21-day above the 50-day and the 50-day above the 200-day, with all of them rising. Traders call this a bullish **stack**.",
+     "When the stack starts to tangle, with shorter lines crossing below longer ones, momentum is fading. This fits neatly with [the four stages](lesson:the-four-stages): stocks in stage 2 show a clean stack, stocks in stage 4 show the reverse."
+    ]
+   },
+   {
+    "h": "Keep them in perspective",
+    "p": [
+     "Moving averages lag, because they are built from past prices. They confirm a trend rather than predict it. Use them as guides for support, trend direction and selling rules, not as magic lines that must hold to the penny."
+    ]
+   }
+  ],
+  "mistakes": [
+   "Adding so many moving averages that the chart becomes unreadable.",
+   "Ignoring the slope and only checking whether price is above or below.",
+   "Expecting price to bounce exactly on the line every time."
+  ],
+  "takeaways": [
+   "A moving average smooths price and shows trend; EMAs react faster than SMAs.",
+   "The 50-day and 200-day lines, or 10 and 40-week, are the most watched.",
+   "In a strong uptrend, rising averages stack in order beneath price."
+  ],
+  "try": {"label": "Add moving averages to a chart", "href": "/chart/SPY/"},
+  "related": ["the-50-day-line", "the-200-day-line", "the-four-stages", "what-is-a-trend"]
+ },
+ {
+  "slug": "the-50-day-line",
+  "title": "The 50-day line: support and sell signal",
+  "desc": "How growth traders use the 50-day moving average: first pullbacks as buying chances in leaders, heavy-volume breaks as sell signals, and the 10-week line.",
+  "intro": "The 50-day moving average is the line growth traders watch most. Leading stocks often find support there during an advance, and a decisive break below it is one of the clearest warnings that a trend is changing.",
+  "sections": [
+   {
+    "h": "Why the 50-day line matters",
+    "p": [
+     "The 50-day line is the average price of roughly the last ten weeks of trading. Many institutions watch it. When a leader they want to own pulls back to it, they often step in to add shares. That buying is why the line so often acts as support in strong uptrends.",
+     "On the weekly chart, the **10-week moving average** plays the same role. Many traders prefer it for holding decisions because one weekly close filters out daily noise."
+    ]
+   },
+   {
+    "h": "First pullbacks: a buying chance",
+    "p": [
+     "After a stock breaks out of a base and runs up, its first pullback to the 50-day line can be a chance to buy or add, especially if you missed the breakout. The best setups share these traits:"
+    ],
+    "list": [
+     "The stock is a true leader with a high RS Rating and strong earnings.",
+     "The 50-day line is rising.",
+     "Volume dries up as the stock pulls back.",
+     "The stock bounces off the line on rising volume."
+    ],
+    "diagram": "ma-support"
+   },
+   {
+    "h": "Later touches are weaker",
+    "p": [
+     "The first and second tests of the 50-day line after a breakout tend to work best. By the third or fourth, the stock is later in its run, more holders have big profits and the line is more likely to give way. Each test also gives sellers another chance to show up."
+    ]
+   },
+   {
+    "h": "A heavy-volume break is a sell signal",
+    "p": [
+     "When a stock that has been respecting the 50-day line suddenly closes well below it on volume above average, institutions may be leaving. Many traders sell all or part of a position on that kind of break, especially if the stock fails to recover the line within a few days.",
+     "A quiet dip just below the line on light volume is less serious. What counts is the close, the volume and whether the stock bounces back. A close below the 10-week line on heavy weekly volume is the weekly version of the same warning."
+    ],
+    "diagram": "ma-break"
+   },
+   {
+    "h": "Using it on Ticker&Tape",
+    "p": [
+     "Set a moving-average alert on the chart so you hear about a test of the 50-day line without staring at the screen. The [breadth page](/breadth/) also shows the percentage of stocks above their 50-day line, a useful gauge of market health. For selling rules tied to this line, see [taking profits](lesson:taking-profits)."
+    ]
+   }
+  ],
+  "mistakes": [
+   "Buying every touch of the 50-day line, even in weak stocks with a falling line.",
+   "Ignoring a heavy-volume break because the stock was a big winner.",
+   "Selling on an intraday dip below the line instead of judging the close."
+  ],
+  "takeaways": [
+   "Leaders often find support at a rising 50-day line, especially on the first pullback.",
+   "A close well below the 50-day on heavy volume is a classic sell signal.",
+   "The 10-week line plays the same role on the weekly chart."
+  ],
+  "live": "near-50",
+  "try": {"label": "Set a moving average alert", "href": "/chart/QQQ/"},
+  "related": ["moving-averages-basics", "the-200-day-line", "taking-profits", "volume-on-breakouts"]
+ },
+ {
+  "slug": "the-200-day-line",
+  "title": "The 200-day line: the long-term trend filter",
+  "desc": "Why the 200-day moving average defines the long-term trend, why true leaders trade above it, and what golden and death crosses do and do not tell you.",
+  "intro": "The 200-day moving average covers about ten months of trading. It is the simplest way to tell whether a stock, or the whole market, is in a long-term uptrend or a long-term downtrend.",
+  "sections": [
+   {
+    "h": "A long-term trend filter",
+    "p": [
+     "If price is above a rising 200-day line, the long-term trend is up. If price is below a falling 200-day line, the long-term trend is down. That simple test removes a huge number of weak stocks from your list.",
+     "On the weekly chart, the **40-week moving average** is roughly the same line. Stage analysis uses it to separate stage 2 advances from stage 4 declines. See [the four stages](lesson:the-four-stages)."
+    ],
+    "diagram": "ma-200"
+   },
+   {
+    "h": "Leaders trade above it",
+    "p": [
+     "True market leaders almost always trade well above their 200-day line, with the line sloping up. A stock below its 200-day has been rejected by big investors for months. It may look cheap, but it is not a leader.",
+     "A good habit is to require price above both the 50-day and 200-day lines, with the 50-day above the 200-day and the 200-day rising for at least a month. You can apply filters like these on the [screener](/screener/)."
+    ]
+   },
+   {
+    "h": "The market and the 200-day",
+    "p": [
+     "Many traders watch where the S&P 500 and Nasdaq sit relative to their 200-day lines. Long, damaging bear markets tend to happen below the line. The [breadth page](/breadth/) also shows the percentage of stocks above their 200-day, which tells you how broad the long-term uptrend really is."
+    ]
+   },
+   {
+    "h": "Golden cross and death cross",
+    "p": [
+     "A **golden cross** is when the 50-day line crosses above the 200-day. A **death cross** is when it crosses below. They get a lot of headlines, but they come with caveats:"
+    ],
+    "list": [
+     "They lag badly. By the time the lines cross, price has often moved a long way.",
+     "In choppy, sideways markets they flip back and forth and give false signals.",
+     "A death cross often appears near the end of a decline, when selling is already mature.",
+     "Price action and volume, plus [market direction](lesson:market-direction), are better guides."
+    ]
+   },
+   {
+    "h": "How traders use it",
+    "p": [
+     "Use the 200-day line as a filter rather than a trigger. It answers one question: is this stock in a long-term uptrend? Buy points come from bases and pivots, and sell signals usually come earlier, from the 50-day line or a stop loss. A stock that falls to its 200-day line has usually already broken several warning signs on the way down."
+    ]
+   }
+  ],
+  "mistakes": [
+   "Buying a stock below its 200-day line because it looks like a bargain.",
+   "Trading golden and death crosses as stand-alone buy and sell signals.",
+   "Waiting for the 200-day line to break before selling a former leader."
+  ],
+  "takeaways": [
+   "Price above a rising 200-day line means a long-term uptrend.",
+   "Real leaders trade above their 200-day; laggards trade below it.",
+   "Golden and death crosses lag and are poor signals on their own."
+  ],
+  "live": "below-50",
+  "try": {"label": "Check stocks above their 200-day", "href": "/breadth/"},
+  "related": ["moving-averages-basics", "the-50-day-line", "the-four-stages", "market-breadth"]
+ }
+]

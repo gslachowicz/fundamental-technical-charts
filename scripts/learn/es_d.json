@@ -1,0 +1,1051 @@
+[
+ {
+  "slug": "what-is-a-base",
+  "title": "¿Qué es una base?",
+  "desc": "Aprende qué es una base en un gráfico: una pausa tras una subida, cuánto dura, qué tan profunda es y por qué importan los cierres semanales ajustados.",
+  "intro": "Las acciones no suben en línea recta. Después de una subida fuerte hacen una pausa, retroceden y se mueven de lado un tiempo. Esa zona de descanso se llama **base**, y de ella salen los mejores puntos de compra.",
+  "sections": [
+   {
+    "h": "Por qué las acciones hacen una pausa",
+    "p": [
+     "Cuando una acción sube mucho, los primeros compradores quieren asegurar ganancias y algunos tenedores venden ante cualquier debilidad. Esa venta empuja el precio hacia abajo o de lado. Al mismo tiempo, grandes inversores como fondos mutuos y fondos de pensión pueden estar comprando en silencio, porque necesitan semanas para armar una posición completa.",
+     "Una **base** es ese tira y afloja: una corrección y consolidación después de una subida. Los vendedores se van quedando sin acciones para vender. Cuando la oferta se agota, incluso una compra moderada puede llevar la acción a nuevos máximos. Esa salida de la base es el **breakout** (ruptura)."
+    ],
+    "diagram": "cup-handle"
+   },
+   {
+    "h": "Lo que necesita una base válida",
+    "p": [
+     "No toda zona lateral es una base que valga la pena comprar. Los traders que siguen el enfoque popularizado por William O'Neil buscan algunas cosas:"
+    ],
+    "list": [
+     "**Una tendencia alcista previa.** La acción debería haber subido al menos 30% desde su último mínimo antes de empezar la base. Una base es un descanso después de una subida, no un piso después de una caída.",
+     "**Tiempo suficiente.** La mayoría de las bases duran al menos 5 semanas en el gráfico semanal (7 semanas para una taza). Las pausas más cortas rara vez sacan del juego a suficientes tenedores débiles.",
+     "**Profundidad razonable.** El retroceso debe estar en línea con el mercado. En un mercado sano, la mayoría de las buenas bases corrigen entre 10% y 33%. En un mercado bajista, hasta los líderes pueden caer 40% a 50%.",
+     "**Un máximo claro a la izquierda.** El techo de la base es el nivel que la acción debe superar para romper."
+    ]
+   },
+   {
+    "h": "La profundidad se mide contra el mercado",
+    "p": [
+     "Compara siempre una base con lo que hicieron el S&P 500 y el Nasdaq en las mismas semanas. Una acción que corrigió 12% mientras el Nasdaq caía 15% muestra fortaleza. Una acción que cayó 35% mientras los índices bajaban 5% muestra debilidad, aunque el patrón se vea lindo.",
+     "Como regla práctica, una base no debería ser mucho más que dos a dos veces y media más profunda que la corrección del mercado. Las bases muy profundas, anchas y desordenadas fallan más seguido."
+    ]
+   },
+   {
+    "h": "Cierres semanales ajustados",
+    "p": [
+     "Mira el gráfico semanal cerca del lado derecho de la base. Las bases constructivas suelen mostrar varias semanas que cierran a 1% o 2% unas de otras, con el volumen secándose. Esa acción **ajustada** (tight) significa que pocos están dispuestos a vender.",
+     "Lo contrario es la acción **amplia y desordenada**: grandes oscilaciones semanales, cierres por todo el rango y volumen alto en las semanas bajistas. Es una señal de que la acción todavía no está lista."
+    ],
+    "diagram": "flat-base"
+   },
+   {
+    "h": "Cómo muestra las bases Ticker&Tape",
+    "p": [
+     "En cada [gráfico](/chart/SPY/) la plataforma dibuja el contorno de la base actual, marca el pivot y sombrea la zona de compra. Etiqueta la base según su profundidad: **base plana** (flat base, 15% o menos), **taza con asa** (cup with handle, 15% a 50% de profundidad con un asa en la mitad superior), **taza** (sin asa, con el precio de nuevo a menos de 10% del máximo anterior) o **corrección profunda** (más de 50%, que no es una base comprable).",
+     "La etiqueta es un punto de partida. Tú sigues evaluando la tendencia previa, el volumen y el mercado. La próxima lección explica el [pivot y la zona de compra](lesson:pivot-and-buy-zone)."
+    ]
+   }
+  ],
+  "mistakes": [
+   "Llamar base a cualquier movimiento lateral, aunque no haya una subida previa de 30% o más.",
+   "Comprar una acción que sigue cayendo dentro de la base, antes de que supere el pivot.",
+   "Ignorar el mercado: juzgar la profundidad de la base sin compararla con los índices.",
+   "Mirar solo el gráfico diario y no ver la acción floja y desordenada en el semanal."
+  ],
+  "takeaways": [
+   "Una base es un descanso y corrección después de una subida, normalmente de 5 semanas o más.",
+   "Las buenas bases son ajustadas en el lado derecho, con el volumen secándose.",
+   "Juzga la profundidad contra el mercado: una base mucho más profunda que la corrección de los índices es una alerta."
+  ],
+  "live": "base:Cup with handle",
+  "try": {
+   "label": "Abrir un gráfico",
+   "href": "/chart/SPY/"
+  },
+  "related": [
+   "pivot-and-buy-zone",
+   "cup-with-handle",
+   "flat-base",
+   "daily-and-weekly-charts"
+  ]
+ },
+ {
+  "slug": "pivot-and-buy-zone",
+  "title": "El pivot y la zona de compra",
+  "desc": "Qué es el pivot, por qué los traders compran dentro del 5% por encima, por qué perseguir acciones extendidas duele y breakouts intradía vs al cierre.",
+  "intro": "Cada base tiene un precio que importa más que todos: el **pivot** (punto de pivote). Es el nivel donde la acción rompe y sale de su base. Comprar cerca del pivot mantiene tu riesgo bajo y tus probabilidades mejores.",
+  "sections": [
+   {
+    "h": "Qué es el pivot",
+    "p": [
+     "El **pivot**, o punto de compra, es el precio que la acción debe superar para salir de su base. Está en el techo de la última zona de resistencia: el máximo del asa en una [taza con asa](lesson:cup-with-handle), el máximo del lado izquierdo en una taza sin asa o el techo del rango en una base plana.",
+     "Por encima del pivot quedan pocos vendedores atrapados. Por eso una acción que lo supera con volumen fuerte suele moverse rápido. En Ticker&Tape el pivot es el máximo del asa (o del lado izquierdo) más $0.10, así que un asa con máximo en $50.00 da un pivot de $50.10."
+    ],
+    "diagram": "pivot-zone"
+   },
+   {
+    "h": "La zona de compra: del pivot a 5% arriba",
+    "p": [
+     "La **zona de compra** va desde el pivot hasta 5% por encima. Con un pivot de $50.10, la zona termina en unos $52.60. El gráfico sombrea esta área para que veas de un vistazo si una acción todavía es comprable.",
+     "¿Por qué 5%? Porque los traders que usan este método cortan pérdidas a un 7% u 8% por debajo de su precio de compra. Si compras justo en el pivot, un retroceso normal hacia el pivot no te hace daño. Si compras 10% arriba, una baja de rutina hasta el nivel de ruptura ya te cuesta 9%, y te saca el stop de una acción que quizás está bien."
+    ]
+   },
+   {
+    "h": "No persigas acciones extendidas",
+    "p": [
+     "Una acción a más de 5% por encima de su pivot está **extendida**. Puede seguir subiendo, pero la entrada fácil y de bajo riesgo ya pasó. Perseguirla suele significar comprarle a gente que compró en el pivot y está feliz de tomar una ganancia rápida.",
+     "Si te perdiste un breakout, déjalo ir y espera. Los líderes suelen dar una segunda oportunidad: un retroceso a la línea de 10 semanas o a la [línea de 50 días](lesson:the-50-day-line), o una nueva base más adelante."
+    ],
+    "diagram": "extended"
+   },
+   {
+    "h": "Breakouts intradía vs al cierre",
+    "p": [
+     "Algunos traders compran en el momento en que el precio opera por encima del pivot durante el día, usando una alerta de precio o de pivot. Así consiguen el mejor precio, pero la acción puede darse vuelta y cerrar otra vez por debajo del pivot.",
+     "Otros esperan al cierre, o a la última hora, para confirmar que la acción sostuvo la ruptura con volumen fuerte. Pagas un poco más, pero evitas muchos movimientos falsos. Elijas lo que elijas, revisa que el [volumen en el breakout](lesson:volume-on-breakouts) esté al menos 40% a 50% por encima del promedio de 50 días."
+    ]
+   },
+   {
+    "h": "Las etiquetas de estado en Ticker&Tape",
+    "list": [
+     "**Near pivot** (cerca del pivot): hasta 5% por debajo del pivot. Momento de ponerla en tu watchlist y fijar una alerta.",
+     "**Breakout**: la acción acaba de superar el pivot.",
+     "**In buy zone** (en zona de compra): entre el pivot y 5% por encima.",
+     "**Extended** (extendida): más de 5% por encima del pivot.",
+     "**Below pivot** (debajo del pivot): todavía bien adentro de la base.",
+     "**Failed breakout** (breakout fallido): rompió y después cerró más de 3% por debajo del pivot.",
+     "**Correcting** (corrigiendo): la acción está cayendo y todavía no se formó una base válida."
+    ],
+    "p": [
+     "Puedes encontrar acciones cerca de un punto de compra todos los días en la [página de ideas](/ideas/)."
+    ]
+   }
+  ],
+  "mistakes": [
+   "Comprar más de 5% por encima del pivot porque la acción se ve fuerte.",
+   "Comprar antes de que se supere el pivot, con la acción todavía dentro de la base.",
+   "Ignorar el volumen: un breakout con volumen bajo el promedio es mucho menos confiable.",
+   "Poner el stop en función del pivot después de haber comprado muy por encima."
+  ],
+  "takeaways": [
+   "El pivot es el precio donde la acción sale de su base.",
+   "La zona de compra va del pivot a 5% arriba; más allá, la acción está extendida.",
+   "Confirma los breakouts con volumen al menos 40% a 50% sobre el promedio."
+  ],
+  "live": "status:Near pivot",
+  "try": {
+   "label": "Ver acciones cerca de un punto de compra",
+   "href": "/ideas/"
+  },
+  "related": [
+   "what-is-a-base",
+   "volume-on-breakouts",
+   "failed-breakouts",
+   "order-types"
+  ]
+ },
+ {
+  "slug": "cup-with-handle",
+  "title": "La taza con asa",
+  "desc": "Las reglas completas de la taza con asa: subida previa, 7 a 65 semanas, 12% a 33% de profundidad, asa en la mitad superior y breakout con volumen alto.",
+  "intro": "La **taza con asa** (cup with handle) es la base clásica de las acciones de crecimiento. En el gráfico parece una taza de té vista de costado: un cuenco redondeado seguido de una pequeña baja, el asa, cerca de la parte de arriba.",
+  "sections": [
+   {
+    "h": "Cómo se forma el patrón",
+    "p": [
+     "La acción venía subiendo y empieza a corregir. El lado izquierdo de la taza es la caída. El fondo es donde la venta se seca y la acción se mueve de lado unas semanas. El lado derecho es la recuperación hacia el máximo anterior.",
+     "Cerca del máximo anterior, algunos compradores del lado izquierdo se alegran de salir sin pérdida. Esa venta crea el **asa**: un retroceso corto y suave con poco volumen. Una vez que se van esos últimos vendedores, la acción puede romper por el techo del asa."
+    ],
+    "diagram": "cup-handle"
+   },
+   {
+    "h": "La taza",
+    "p": [
+     "Empieza por el cuenco. Una taza sólida cumple estas pautas:"
+    ],
+    "list": [
+     "**Tendencia previa**: al menos 30% antes de empezar la base.",
+     "**Duración**: 7 a 65 semanas desde el máximo izquierdo hasta el breakout. La mayoría dura 7 a 25 semanas.",
+     "**Profundidad**: normalmente 12% a 33% de máximo a mínimo. En un mercado bajista, las acciones fuertes pueden corregir hasta 40% o 50%.",
+     "**Forma**: un fondo redondeado, una U y no una V. El redondeo muestra tiempo dedicado a sacar a los tenedores débiles. Una V cerrada significa que la acción volvió a toda prisa sin esa limpieza."
+    ]
+   },
+   {
+    "h": "El asa",
+    "p": [
+     "El asa es lo que le da nombre al patrón y donde ocurren la mayoría de los errores. Un buen asa:"
+    ],
+    "list": [
+     "Dura al menos 1 semana, a menudo de 1 a 4 semanas en el gráfico semanal.",
+     "Se forma en la **mitad superior** de la taza, idealmente por encima de la línea de 10 semanas. Un asa en la mitad inferior es señal de debilidad.",
+     "**Deriva hacia abajo**, o de lado, en vez de hacia arriba. Un asa que sube por sus mínimos no saca a suficientes vendedores.",
+     "Retrocede alrededor de 8% a 12%, y no mucho más.",
+     "Muestra el **volumen secándose**, a menudo bien por debajo del promedio cerca de su mínimo."
+    ]
+   },
+   {
+    "h": "El pivot y el breakout",
+    "p": [
+     "El pivot es el precio más alto del asa. Ticker&Tape le suma $0.10, así que un máximo del asa en $80.00 da un pivot de $80.10. La zona de compra llega hasta 5% arriba, unos $84.10.",
+     "El día del breakout, el volumen debería estar al menos 40% a 50% por encima de su promedio de 50 días, y a menudo mucho más. Un cierre fuerte en la parte alta del rango del día suma confianza. Revisa también la [línea RS](lesson:rs-line): si está en un nuevo máximo o cerca cuando la acción rompe, es una señal fuerte."
+    ]
+   },
+   {
+    "h": "Cómo la detecta Ticker&Tape",
+    "p": [
+     "La plataforma etiqueta una base como taza con asa cuando tiene **15% a 50% de profundidad** y un asa en la mitad superior del patrón. Los patrones más bajos, hasta 15%, se etiquetan como [base plana](lesson:flat-base), y todo lo que supere 50% es una corrección profunda. Así que una taza clásica de 12% a 15% puede aparecer como base plana: la lógica del pivot es la misma, así que trátala igual.",
+     "La etiqueta nunca reemplaza tu propio análisis. Mira el gráfico semanal, el volumen en el asa y la [dirección del mercado](lesson:market-direction) antes de actuar."
+    ]
+   }
+  ],
+  "rules": {
+   "title": "Las reglas de la taza con asa",
+   "rows": [
+    [
+     "Tendencia previa",
+     "Al menos 30% antes de empezar la base"
+    ],
+    [
+     "Duración",
+     "7 a 65 semanas, la mayoría 7 a 25"
+    ],
+    [
+     "Profundidad",
+     "12% a 33%; hasta 50% en mercado bajista (plataforma: 15% a 50%)"
+    ],
+    [
+     "Forma",
+     "Fondo redondeado en U, no una V cerrada"
+    ],
+    [
+     "Duración del asa",
+     "Al menos 1 semana"
+    ],
+    [
+     "Posición del asa",
+     "Mitad superior de la taza, idealmente sobre la línea de 10 semanas"
+    ],
+    [
+     "Comportamiento del asa",
+     "Deriva hacia abajo o de lado, 8% a 12% de profundidad, con poco volumen"
+    ],
+    [
+     "Pivot",
+     "Máximo del asa + $0.10"
+    ],
+    [
+     "Zona de compra",
+     "Del pivot a 5% arriba"
+    ],
+    [
+     "Volumen del breakout",
+     "Al menos 40% a 50% sobre el promedio de 50 días"
+    ]
+   ]
+  },
+  "mistakes": [
+   "Comprar un asa que se forma en la mitad inferior de la taza.",
+   "Aceptar un asa que sube en cuña por sus mínimos.",
+   "Comprar una taza en forma de V que volvió directo a los máximos.",
+   "Comprar un breakout con poco volumen o con el mercado en corrección."
+  ],
+  "takeaways": [
+   "Una taza con asa es una corrección redondeada de 12% a 33% con un asa corta cerca de la parte alta.",
+   "El asa debe estar en la mitad superior, derivar hacia abajo y mostrar volumen secándose.",
+   "Compra cuando la acción supera el máximo del asa con volumen alto, dentro del 5% sobre el pivot."
+  ],
+  "live": "base:Cup with handle",
+  "try": {
+   "label": "Buscar tazas en el screener",
+   "href": "/screener/"
+  },
+  "related": [
+   "cup-without-handle",
+   "pivot-and-buy-zone",
+   "volume-on-breakouts",
+   "what-is-a-base"
+  ]
+ },
+ {
+  "slug": "cup-without-handle",
+  "title": "La taza sin asa",
+  "desc": "La taza sin asa: la misma base redondeada pero sin asa, con el pivot en el máximo del lado izquierdo, y por qué tiene un poco más de riesgo.",
+  "intro": "A veces una acción forma una linda taza redondeada y después atraviesa el máximo anterior sin detenerse a construir un asa. Eso es una **taza sin asa** (cup without handle), también llamada simplemente taza.",
+  "sections": [
+   {
+    "h": "Cómo se ve",
+    "p": [
+     "El lado izquierdo, el fondo y el lado derecho son iguales que en una [taza con asa](lesson:cup-with-handle). La acción estaba en tendencia alcista, corrigió en forma de U redondeada y volvió a subir por el lado derecho. La diferencia está arriba: en vez de una pausa y una baja con poco volumen, la acción va directo al máximo del lado izquierdo.",
+     "Esto pasa más a menudo en mercados fuertes, cuando la demanda es tan intensa que no hay tiempo para una sacudida cerca de los máximos."
+    ],
+    "diagram": "cup"
+   },
+   {
+    "h": "Dónde está el pivot",
+    "p": [
+     "Sin asa, el pivot es el **máximo del lado izquierdo**: el pico justo antes de que empezara la taza. Ticker&Tape le suma $0.10, así que un máximo izquierdo de $60.00 da un pivot de $60.10 y una zona de compra hasta unos $63.10.",
+     "Algunos traders compran un poco antes en una taza sin asa, cuando la acción supera un máximo menor en el lado derecho. Es una entrada anticipada con más riesgo. Para quien empieza, el máximo del lado izquierdo es el nivel más claro y seguro."
+    ]
+   },
+   {
+    "h": "Por qué tiene más riesgo",
+    "p": [
+     "El asa cumple una función: saca a los últimos tenedores nerviosos antes del breakout. Sin ella, algunos de esos vendedores siguen ahí. Cuando la acción llega al máximo anterior, quienes compraron ahí hace meses pueden vender para recuperar su dinero, y el breakout puede frenarse.",
+     "Eso no hace que el patrón sea malo. Muchos grandes ganadores rompieron desde tazas sin asa. Significa que debes ser más exigente con las otras pistas:"
+    ],
+    "list": [
+     "El volumen en el breakout debe ser claramente alto, 40% a 50% sobre el promedio o más.",
+     "El lado derecho debe subir de forma ordenada, con semanas alcistas de más volumen que las bajistas.",
+     "La [línea RS](lesson:rs-line) debe estar cerca de un nuevo máximo.",
+     "El mercado general debe estar en una tendencia alcista confirmada."
+    ]
+   },
+   {
+    "h": "Cómo la detecta Ticker&Tape",
+    "p": [
+     "La plataforma etiqueta una base como **taza** cuando tiene la profundidad de una taza, 15% a 50%, no tiene asa y el precio volvió a menos de 10% del máximo del lado izquierdo. Esa última condición significa que el lado derecho está casi construido y la acción se acerca a su pivot.",
+     "Si más adelante la acción hace una pausa de una semana o más en la mitad superior y retrocede, la etiqueta puede cambiar a taza con asa y el pivot pasa al nuevo máximo del asa. Usa siempre el pivot que muestra el gráfico más reciente."
+    ]
+   }
+  ],
+  "rules": {
+   "title": "Las reglas de la taza sin asa",
+   "rows": [
+    [
+     "Tendencia previa",
+     "Al menos 30% antes de empezar la base"
+    ],
+    [
+     "Duración",
+     "Al menos 7 semanas"
+    ],
+    [
+     "Profundidad",
+     "12% a 33%; hasta 50% en mercado bajista (plataforma: 15% a 50%)"
+    ],
+    [
+     "Forma",
+     "Fondo redondeado en U, sin asa"
+    ],
+    [
+     "Etiqueta de la plataforma",
+     "Precio de nuevo a menos de 10% del máximo izquierdo"
+    ],
+    [
+     "Pivot",
+     "Máximo del lado izquierdo + $0.10"
+    ],
+    [
+     "Zona de compra",
+     "Del pivot a 5% arriba"
+    ],
+    [
+     "Volumen del breakout",
+     "Al menos 40% a 50% sobre el promedio de 50 días"
+    ]
+   ]
+  },
+  "mistakes": [
+   "Comprar mientras sube el lado derecho, mucho antes del pivot.",
+   "Aceptar un breakout con poco volumen, algo todavía más riesgoso sin asa.",
+   "Olvidar que el pivot cambia si más tarde se forma un asa."
+  ],
+  "takeaways": [
+   "Una taza sin asa es una base redondeada donde la acción vuelve directo a su máximo anterior.",
+   "El pivot es el máximo del lado izquierdo más $0.10.",
+   "Sin sacudida cerca del techo, exige volumen fuerte y un mercado sano."
+  ],
+  "live": "base:Cup",
+  "try": {
+   "label": "Ver acciones cerca de un punto de compra",
+   "href": "/ideas/"
+  },
+  "related": [
+   "cup-with-handle",
+   "pivot-and-buy-zone",
+   "volume-on-breakouts"
+  ]
+ },
+ {
+  "slug": "flat-base",
+  "title": "La base plana",
+  "desc": "La base plana: una base lateral ajustada de al menos 5 semanas y no más de 15% de profundidad, que suele formarse tras un breakout anterior.",
+  "intro": "Una **base plana** (flat base) es un rango lateral tranquilo y ajustado. La acción apenas corrige y se mueve dentro de una banda de 15% o menos durante al menos cinco semanas. Suele ser la señal de un líder que está descansando, no cansándose.",
+  "sections": [
+   {
+    "h": "Cómo se ve",
+    "p": [
+     "En un gráfico semanal, una base plana parece una caja corta y angosta. El precio deriva de lado, las barras semanales son pequeñas y el volumen tiende a bajar. No hay una gran caída ni un cuenco redondeado, solo una pausa.",
+     "Las bases planas suelen aparecer después de que una acción ya rompió desde una base más profunda, como una [taza con asa](lesson:cup-with-handle), y subió 20% o más. En vez de devolver la ganancia, la acción la sostiene. Por eso los traders ven la base plana como una señal de fortaleza."
+    ],
+    "diagram": "flat-base"
+   },
+   {
+    "h": "Las reglas",
+    "p": [
+     "Una base plana debería cumplir estas pautas:"
+    ],
+    "list": [
+     "**Duración**: al menos 5 semanas.",
+     "**Profundidad**: 15% o menos desde el máximo hasta el mínimo de la base. Muchas de las mejores están entre 8% y 12%.",
+     "**Tendencia previa**: la acción debería haber subido al menos 20% a 30%, a menudo desde un breakout anterior.",
+     "**Acción ajustada**: rangos semanales pequeños y cierres cercanos entre sí, con el volumen secándose.",
+     "**Pivot**: el punto más alto de la base más $0.10."
+    ]
+   },
+   {
+    "h": "Por qué funciona",
+    "p": [
+     "Una corrección poco profunda significa que pocos tenedores están vendiendo. Los grandes inversores que tienen la acción se quedan quietos, y aparecen compradores nuevos en cada pequeña baja. Cuando la acción supera el techo del rango, hay muy poca oferta arriba que la frene.",
+     "Una base plana también ofrece un stop natural. Como la base es poco profunda, la distancia del pivot al mínimo de la base es chica. Muchos traders ponen su stop justo debajo del mínimo de la base o usan el límite habitual de 7% a 8%, lo que ocurra primero."
+    ]
+   },
+   {
+    "h": "Cómo operarla",
+    "p": [
+     "Pon una alerta en el pivot. Cuando la acción lo atraviese, revisa que el volumen esté al menos 40% a 50% sobre el promedio de 50 días y que el mercado esté en tendencia alcista confirmada. Compra dentro del 5% sobre el pivot.",
+     "Presta atención al [conteo de bases](lesson:base-count). Una base plana que sigue a un primer breakout suele ser una base de segunda etapa y puede funcionar muy bien. Una base plana después de una larga subida con tres o cuatro bases previas tiene más riesgo."
+    ]
+   },
+   {
+    "h": "Cómo la detecta Ticker&Tape",
+    "p": [
+     "La plataforma etiqueta como base plana a cualquier base de **15% de profundidad o menos**, y dibuja el pivot en el techo del rango más $0.10. Esto incluye algunas tazas con asa poco profundas que las reglas clásicas llamarían taza con asa; el plan es el mismo en ambos casos: comprar cerca del pivot con volumen.",
+     "Usa el gráfico semanal para confirmar que la base duró al menos cinco semanas y que los cierres semanales son ajustados."
+    ]
+   }
+  ],
+  "rules": {
+   "title": "Las reglas de la base plana",
+   "rows": [
+    [
+     "Tendencia previa",
+     "Al menos 20% a 30%, a menudo tras un breakout anterior"
+    ],
+    [
+     "Duración",
+     "Al menos 5 semanas"
+    ],
+    [
+     "Profundidad",
+     "15% o menos (plataforma: 15% o menos)"
+    ],
+    [
+     "Comportamiento",
+     "Cierres semanales ajustados, volumen secándose"
+    ],
+    [
+     "Pivot",
+     "Precio más alto de la base + $0.10"
+    ],
+    [
+     "Zona de compra",
+     "Del pivot a 5% arriba"
+    ],
+    [
+     "Volumen del breakout",
+     "Al menos 40% a 50% sobre el promedio de 50 días"
+    ]
+   ]
+  },
+  "mistakes": [
+   "Comprar una base plana que duró solo dos o tres semanas.",
+   "Tratar un rango amplio y errático como si fuera una base plana.",
+   "Ignorar que una base plana de etapa tardía falla más seguido."
+  ],
+  "takeaways": [
+   "Una base plana dura al menos 5 semanas y no tiene más de 15% de profundidad.",
+   "Suele formarse después de un breakout previo y muestra a un líder sosteniendo sus ganancias.",
+   "Compra cuando supera el techo del rango más $0.10, con volumen fuerte."
+  ],
+  "live": "base:Flat base",
+  "try": {
+   "label": "Buscar bases planas en el screener",
+   "href": "/screener/"
+  },
+  "related": [
+   "what-is-a-base",
+   "base-on-base",
+   "base-count",
+   "pivot-and-buy-zone"
+  ]
+ },
+ {
+  "slug": "double-bottom",
+  "title": "El doble piso",
+  "desc": "El doble piso: una base en forma de W donde el segundo mínimo perfora el primero para sacar a los vendedores, con el pivot en el pico del medio.",
+  "intro": "Un **doble piso** (double bottom) se parece a la letra W. La acción cae, rebota, vuelve a caer a un mínimo un poco más bajo y luego sube. Esa segunda baja asusta a los últimos tenedores débiles.",
+  "sections": [
+   {
+    "h": "Cómo se ve",
+    "p": [
+     "Después de una subida previa, la acción corrige hasta un primer mínimo. Rebota en parte, formando el pico del medio de la W, y vuelve a caer. El detalle clave es que el segundo mínimo va un poco **por debajo** del primero. Eso se llama **undercut** (perforación del mínimo).",
+     "Desde el segundo mínimo, la acción sube de nuevo y atraviesa el pico del medio. Ese es el breakout."
+    ],
+    "diagram": "double-bottom"
+   },
+   {
+    "h": "Por qué importa el undercut",
+    "p": [
+     "Muchos traders ponen sus stops justo debajo de un mínimo evidente. Cuando la acción baja del primer mínimo, esos stops se activan y los tenedores nerviosos venden. Eso se llama **shakeout** (sacudida). Una vez que se van esos vendedores, quedan menos personas que quieren salir.",
+     "Un segundo mínimo que se mantiene bien por encima del primero no es un verdadero doble piso en este método. Puede funcionar igual, pero no hizo la limpieza que aporta el undercut."
+    ]
+   },
+   {
+    "h": "Las reglas",
+    "p": [
+     "Un doble piso sólido cumple estas pautas:"
+    ],
+    "list": [
+     "**Tendencia previa** de al menos 30%.",
+     "**Duración**: al menos 7 semanas.",
+     "**Profundidad**: normalmente 20% a 30%, hasta 40% a 50% en un mercado bajista.",
+     "**Undercut**: el segundo mínimo es un poco más bajo que el primero, a menudo por unos pocos puntos porcentuales.",
+     "**Pivot**: el máximo del pico del medio de la W, más $0.10.",
+     "**Asa opcional**: algunos dobles pisos forman un asa corta cerca del nivel del pico del medio; en ese caso el máximo del asa es el pivot."
+    ]
+   },
+   {
+    "h": "Cómo operarlo",
+    "p": [
+     "Marca el pico del medio con la herramienta de nivel horizontal y pon una alerta de precio justo encima. Cuando la acción supere ese nivel con volumen al menos 40% a 50% sobre el promedio, está rompiendo. Compra dentro del 5% sobre el pivot y pon tu stop a no más de 7% a 8% por debajo de tu entrada.",
+     "Observa el [volumen](lesson:reading-volume) en el segundo mínimo. Un volumen alto cuando la acción perfora, seguido de una recuperación rápida, es señal de que la sacudida funcionó y los compradores absorbieron la venta."
+    ]
+   },
+   {
+    "h": "Cómo aparece en Ticker&Tape",
+    "p": [
+     "La plataforma no tiene una etiqueta separada para el doble piso. Clasifica cada base según su profundidad y su asa, así que una W de 20% a 30% suele aparecer como **taza** o **taza con asa**, con el pivot en el máximo del lado izquierdo o del asa.",
+     "Ese pivot puede estar más arriba que el pico del medio de la W. Si operas el doble piso, dibuja tú mismo el nivel del pico del medio y úsalo como pivot, y compáralo con el pivot de la plataforma para ver dónde queda resistencia."
+    ]
+   }
+  ],
+  "rules": {
+   "title": "Las reglas del doble piso",
+   "rows": [
+    [
+     "Tendencia previa",
+     "Al menos 30%"
+    ],
+    [
+     "Duración",
+     "Al menos 7 semanas"
+    ],
+    [
+     "Profundidad",
+     "Normalmente 20% a 30%, hasta 50% en mercado bajista"
+    ],
+    [
+     "Forma",
+     "W: el segundo mínimo perfora el primero"
+    ],
+    [
+     "Pivot",
+     "Pico del medio de la W + $0.10 (o máximo del asa si se forma una)"
+    ],
+    [
+     "Zona de compra",
+     "Del pivot a 5% arriba"
+    ],
+    [
+     "Volumen del breakout",
+     "Al menos 40% a 50% sobre el promedio de 50 días"
+    ]
+   ]
+  },
+  "mistakes": [
+   "Llamarlo doble piso cuando el segundo mínimo se mantiene por encima del primero.",
+   "Usar el máximo del lado izquierdo como pivot en lugar del pico del medio.",
+   "Comprar en la caída hacia el segundo mínimo, antes de que la acción demuestre algo."
+  ],
+  "takeaways": [
+   "Un doble piso es una W donde el segundo mínimo perfora el primero.",
+   "El undercut saca a los tenedores débiles antes de la subida.",
+   "El pivot es el pico del medio más $0.10; dibújalo tú mismo en el gráfico."
+  ],
+  "try": {
+   "label": "Abrir un gráfico",
+   "href": "/chart/SPY/"
+  },
+  "related": [
+   "cup-with-handle",
+   "pivot-and-buy-zone",
+   "support-and-resistance"
+  ]
+ },
+ {
+  "slug": "ascending-base",
+  "title": "La base ascendente",
+  "desc": "La base ascendente: tres retrocesos de 10% a 20% con mínimos y máximos crecientes, que suele formarse mientras el mercado general corrige.",
+  "intro": "Una **base ascendente** (ascending base) es una escalera. La acción retrocede tres veces, pero cada mínimo y cada máximo es más alto que el anterior. Suele formarse mientras el mercado corrige, lo que la convierte en una marca de fortaleza real.",
+  "sections": [
+   {
+    "h": "Cómo se ve",
+    "p": [
+     "Imagina una acción que sube, cae 10% a 20%, sube a un máximo más alto, vuelve a caer, sube otra vez a un máximo más alto y cae por tercera vez. Cada retroceso se frena por encima del mínimo del anterior. En un gráfico semanal parecen tres escalones pequeños que suben.",
+     "Todo el patrón suele llevar de 9 a 18 semanas."
+    ],
+    "diagram": "ascending-base"
+   },
+   {
+    "h": "Por qué se forma durante una corrección",
+    "p": [
+     "Cuando el mercado general está débil, la mayoría de las acciones cae fuerte. Hasta los líderes son arrastrados, y eso provoca los retrocesos. Pero como los grandes inversores siguen comprándolos en las bajas, siguen haciendo mínimos más altos mientras otras acciones hacen mínimos más bajos.",
+     "Por eso una base ascendente es tan útil: te muestra qué acciones resisten un mercado débil. Cuando el mercado vuelve a subir con un [follow-through day](lesson:follow-through-day) (día de confirmación), estas acciones suelen estar entre las primeras en romper."
+    ]
+   },
+   {
+    "h": "Las reglas",
+    "p": [
+     "Las pautas clásicas de una base ascendente son:"
+    ],
+    "list": [
+     "**Tendencia previa**: la acción ya debería estar en tendencia alcista.",
+     "**Tres retrocesos** de aproximadamente 10% a 20% cada uno, medidos desde cada máximo hasta el mínimo siguiente.",
+     "**Mínimos y máximos más altos** en cada escalón.",
+     "**Duración**: alrededor de 9 a 18 semanas.",
+     "**Pivot**: el máximo más alto, el pico antes del tercer retroceso, más $0.10."
+    ]
+   },
+   {
+    "h": "Cómo operarla",
+    "p": [
+     "Marca el pico anterior al tercer retroceso y pon una alerta ahí. Un breakout a través de ese nivel con volumen alto, idealmente con el mercado de nuevo en tendencia alcista confirmada, es la señal de compra. Compra dentro del 5% sobre el pivot.",
+     "Como cada retroceso puede ser brusco, es importante esperar el breakout. Comprar en medio de un retroceso es adivinar dónde estará el mínimo. Revisa también la [línea RS](lesson:rs-line): en una base ascendente suele mantenerse cerca de sus máximos mientras el mercado cae."
+    ]
+   },
+   {
+    "h": "Cómo aparece en Ticker&Tape",
+    "p": [
+     "La plataforma no tiene una etiqueta separada para la base ascendente. Según la profundidad del último retroceso, el contorno suele mostrar una **base plana** o una **taza con asa**, y el pivot de la plataforma es el máximo del patrón más reciente.",
+     "A menudo ese pivot coincide con el clásico: el pico antes del tercer retroceso. Si no coincide, dibuja tú mismo el nivel y usa la [página de amplitud](/breadth/) para confirmar que el mercado dio la vuelta antes de actuar."
+    ]
+   }
+  ],
+  "rules": {
+   "title": "Las reglas de la base ascendente",
+   "rows": [
+    [
+     "Tendencia previa",
+     "Ya en tendencia alcista"
+    ],
+    [
+     "Retrocesos",
+     "Tres, cada uno de alrededor de 10% a 20%"
+    ],
+    [
+     "Estructura",
+     "Cada mínimo y cada máximo por encima del anterior"
+    ],
+    [
+     "Duración",
+     "Alrededor de 9 a 18 semanas"
+    ],
+    [
+     "Contexto",
+     "Suele formarse durante una corrección del mercado general"
+    ],
+    [
+     "Pivot",
+     "Pico antes del tercer retroceso + $0.10"
+    ],
+    [
+     "Zona de compra",
+     "Del pivot a 5% arriba"
+    ]
+   ]
+  },
+  "mistakes": [
+   "Comprar durante uno de los retrocesos en lugar de esperar el breakout.",
+   "Llamarla base ascendente cuando uno de los mínimos perfora el mínimo anterior.",
+   "Comprar el breakout mientras el mercado sigue en corrección."
+  ],
+  "takeaways": [
+   "Una base ascendente tiene tres retrocesos de 10% a 20% con mínimos más altos cada vez.",
+   "Suele formarse durante una corrección del mercado, señal de que la acción tiene soporte.",
+   "Compra el breakout por encima del pico más alto, idealmente cuando el mercado da la vuelta."
+  ],
+  "try": {
+   "label": "Ver la amplitud del mercado",
+   "href": "/breadth/"
+  },
+  "related": [
+   "what-is-a-base",
+   "market-direction",
+   "rs-line"
+  ]
+ },
+ {
+  "slug": "high-tight-flag",
+  "title": "La bandera alta y ajustada",
+  "desc": "La bandera alta y ajustada: un patrón raro donde una acción se duplica en 4 a 8 semanas y descansa 10% a 25% durante 3 a 5 semanas antes de romper.",
+  "intro": "La **bandera alta y ajustada** (high tight flag) es la base más rara y potente. Una acción se duplica más o menos en pocas semanas y luego casi no devuelve nada. También es uno de los patrones más difíciles de operar.",
+  "sections": [
+   {
+    "h": "Cómo se ve",
+    "p": [
+     "Primero viene el **mástil**: una subida enorme de 100% o más en solo 4 a 8 semanas, normalmente impulsada por una gran noticia, como un producto nuevo o resultados explosivos. Después viene la **bandera**: una deriva corta y ajustada, lateral o levemente bajista, que corrige solo 10% a 25% a lo largo de unas 3 a 5 semanas.",
+     "En el gráfico parece una bandera en la punta de un mástil alto. La pausa es pequeña comparada con la subida previa."
+    ],
+    "diagram": "htf"
+   },
+   {
+    "h": "Por qué es tan rara",
+    "p": [
+     "Después de que una acción se duplica, la mayoría de los tenedores tiene grandes ganancias y está ansiosa por vender. Una acción normal devolvería buena parte del movimiento. Cuando en cambio una acción se mantiene cerca de sus máximos, significa que los compradores absorben casi cada acción que se ofrece. Solo un puñado de acciones hace esto en un año típico, y casi siempre en mercados fuertes.",
+     "Algunos de los mayores ganadores de la historia del mercado empezaron con una bandera alta y ajustada. Pero muchas imitaciones fallan, así que las reglas son estrictas."
+    ]
+   },
+   {
+    "h": "Las reglas",
+    "p": [
+     "Las cifras son estrictas, y justamente de eso se trata:"
+    ],
+    "list": [
+     "**Mástil**: una subida de 100% a 120% o más en 4 a 8 semanas.",
+     "**Bandera**: una corrección de 10% a 25%, no más.",
+     "**Duración de la bandera**: alrededor de 3 a 5 semanas.",
+     "**Volumen**: alto en el mástil, secándose durante la bandera.",
+     "**Pivot**: el precio más alto de la bandera más $0.10."
+    ]
+   },
+   {
+    "h": "Operarla con cuidado",
+    "p": [
+     "Una bandera alta y ajustada es volátil. Movimientos diarios de 5% o más son normales, así que un breakout puede convertirse rápido en un retroceso brusco. Muchos traders toman una posición más chica de lo habitual y usan el [ATR](lesson:atr-and-adr) para dimensionarla, de modo que una oscilación normal no supere el riesgo planeado.",
+     "Compra solo cuando la acción supere el máximo de la bandera con volumen alto, dentro del 5% sobre el pivot. Si la bandera corrige más de 25%, ya no es una bandera alta y ajustada; espera a que se forme una base adecuada."
+    ]
+   },
+   {
+    "h": "Cómo aparece en Ticker&Tape",
+    "p": [
+     "La plataforma no tiene una etiqueta separada para la bandera alta y ajustada. Como la bandera es poco profunda, suele aparecer como **base plana** (15% o menos) o, si es más profunda, como una base corta con asa, con el pivot en el techo de la bandera.",
+     "Verifica el mástil tú mismo: abre el gráfico diario, mide la subida desde el mínimo previo al movimiento hasta el máximo y confirma que se duplicó en 8 semanas o menos."
+    ]
+   }
+  ],
+  "rules": {
+   "title": "Las reglas de la bandera alta y ajustada",
+   "rows": [
+    [
+     "Mástil",
+     "Sube 100% o más en 4 a 8 semanas"
+    ],
+    [
+     "Profundidad de la bandera",
+     "10% a 25%"
+    ],
+    [
+     "Duración de la bandera",
+     "Alrededor de 3 a 5 semanas"
+    ],
+    [
+     "Volumen",
+     "Alto en el mástil, secándose en la bandera"
+    ],
+    [
+     "Pivot",
+     "Máximo de la bandera + $0.10"
+    ],
+    [
+     "Zona de compra",
+     "Del pivot a 5% arriba"
+    ],
+    [
+     "Tamaño de posición",
+     "A menudo más chico de lo habitual por la volatilidad"
+    ]
+   ]
+  },
+  "mistakes": [
+   "Llamar bandera alta y ajustada a cualquier subida fuerte sin verificar la regla del 100% en 8 semanas.",
+   "Aceptar una bandera que corrige 30% o más.",
+   "Usar una posición de tamaño completo en una acción tan volátil."
+  ],
+  "takeaways": [
+   "Una bandera alta y ajustada es una subida de 100% o más en 4 a 8 semanas seguida de un descanso de 10% a 25%.",
+   "Es rara y potente, pero también volátil y fácil de malinterpretar.",
+   "Compra solo por encima del máximo de la bandera con volumen alto y dimensiona la posición con cuidado."
+  ],
+  "try": {
+   "label": "Calcular el tamaño de una operación",
+   "href": "/portfolio/"
+  },
+  "related": [
+   "what-is-a-base",
+   "atr-and-adr",
+   "position-sizing"
+  ]
+ },
+ {
+  "slug": "base-on-base",
+  "title": "Base sobre base",
+  "desc": "Una base sobre base se forma cuando el breakout de una acción se frena porque el mercado corrige, y arma una nueva base encima de la anterior.",
+  "intro": "A veces una acción rompe, el mercado se da vuelta a la baja y la acción simplemente arma una nueva base justo encima de la anterior. Esa **base sobre base** (base on base) suele ser señal de una acción fuerte esperando al mercado.",
+  "sections": [
+   {
+    "h": "Cómo se forma",
+    "p": [
+     "La acción completa una primera base y rompe, o queda cerca de romper. Entonces el mercado general empieza a corregir. En lugar de subir 20% o más, la acción se frena un poco por encima o cerca de su pivot anterior y se mueve de lado.",
+     "En vez de volver a caer al medio de la primera base, se mantiene cerca del techo. Durante las semanas siguientes forma una segunda base, normalmente poco profunda y a menudo una base plana, apoyada encima de la primera."
+    ],
+    "diagram": "base-on-base"
+   },
+   {
+    "h": "Por qué puede ser señal de fortaleza",
+    "p": [
+     "Cuando el mercado corrige, la mayoría de las acciones devuelve sus ganancias. Una acción que se mantiene firme cerca de los máximos tiene el respaldo de grandes compradores. Cuando el mercado se recupera, esa acción ya hizo su descanso y está lista para moverse.",
+     "El patrón es como un resorte comprimido: dos capas de consolidación, cada una absorbiendo oferta. Cuando la segunda base rompe, la subida puede ser fuerte. Compara la acción con los índices durante la segunda base. Si el Nasdaq cayó 10% y la acción se mantuvo dentro de 8%, eso es fuerza relativa."
+    ]
+   },
+   {
+    "h": "Qué buscar",
+    "p": [
+     "Una buena base sobre base suele mostrar estas señales:"
+    ],
+    "list": [
+     "Una primera base válida por sí sola: tendencia previa, duración y profundidad adecuadas.",
+     "Una corrección del mercado que empezó cerca del momento del primer breakout.",
+     "Una segunda base que se mantiene cerca del techo de la primera y no se hunde dentro de ella.",
+     "Cierres semanales ajustados y volumen secándose en la segunda base.",
+     "Una [línea RS](lesson:rs-line) que se mantiene cerca de sus máximos mientras el mercado cae."
+    ]
+   },
+   {
+    "h": "Dónde comprar",
+    "p": [
+     "El pivot es el máximo de la base superior más $0.10. Compra cuando la acción lo supere con volumen al menos 40% a 50% sobre el promedio, dentro del 5% sobre el pivot, idealmente cuando el mercado esté de nuevo en tendencia alcista confirmada.",
+     "En Ticker&Tape, el contorno de la base y el pivot se dibujan para la base actual, la de arriba. Su etiqueta depende de la profundidad, normalmente una [base plana](lesson:flat-base) o una taza con asa. Mira hacia atrás en el gráfico semanal para ver la primera base debajo."
+    ]
+   },
+   {
+    "h": "Cómo contar una base sobre base",
+    "p": [
+     "Como la acción apenas subió entre las dos bases, muchos traders cuentan una base sobre base como parte de la misma etapa, en lugar de sumar una nueva al [conteo de bases](lesson:base-count). De cualquier forma, suele aparecer temprano en un movimiento, que es cuando las bases funcionan mejor."
+    ]
+   }
+  ],
+  "mistakes": [
+   "Confundir una base sobre base con un breakout fallido que volvió a hundirse en la primera base.",
+   "Comprar el breakout de la base superior mientras el mercado sigue en corrección.",
+   "Perderse el setup por mirar solo el gráfico diario."
+  ],
+  "takeaways": [
+   "Una base sobre base es una nueva base construida encima de otra mientras el mercado corrige.",
+   "Mantenerse cerca de los máximos durante una caída del mercado muestra fortaleza.",
+   "El pivot es el máximo de la base superior más $0.10."
+  ],
+  "try": {
+   "label": "Ver la dirección del mercado",
+   "href": "/breadth/"
+  },
+  "related": [
+   "flat-base",
+   "base-count",
+   "market-direction"
+  ]
+ },
+ {
+  "slug": "ipo-base",
+  "title": "La base de IPO",
+  "desc": "La base de IPO: por qué las empresas recién listadas pueden liderar, cómo se forman sus bases cortas de pocas semanas y cómo manejar la volatilidad.",
+  "intro": "Una **IPO**, u oferta pública inicial, es cuando una empresa vende sus acciones por primera vez en la bolsa. Las IPO recientes pueden convertirse en enormes ganadoras, y su primera base suele ser corta y volátil.",
+  "sections": [
+   {
+    "h": "Por qué las empresas nuevas pueden liderar",
+    "p": [
+     "Muchos de los mayores ganadores del mercado fueron empresas jóvenes con un producto nuevo, un nuevo tipo de servicio o un mercado en rápido crecimiento. A menudo salieron a la bolsa en los pocos años anteriores. Crecen rápido, y los inversores todavía las están descubriendo.",
+     "Otra razón es la oferta. Una emisión nueva no tiene años de compradores viejos esperando a precios más altos para vender sin pérdida. Una vez que la acción arranca, hay poca oferta arriba que la frene."
+    ]
+   },
+   {
+    "h": "Cómo se ve una base de IPO",
+    "p": [
+     "Después de empezar a cotizar, una acción nueva suele moverse de forma salvaje un tiempo, mientras los primeros tenedores y los nuevos compradores encuentran un precio. Luego, a menudo en unas semanas o unos meses, forma su primera base: un rango lateral, a menudo de 3 a 5 semanas, que puede tener 20% a 30% de profundidad o más, sobre todo al principio.",
+     "El pivot es el máximo de ese rango más $0.10. Un breakout a nuevos máximos históricos con volumen alto es la señal que los traders esperan."
+    ],
+    "diagram": "ipo-base"
+   },
+   {
+    "h": "El problema de la volatilidad",
+    "p": [
+     "Las emisiones nuevas oscilan mucho. Tienen historias cortas, menos acciones disponibles para operar y a menudo todavía no tienen ganancias. Un movimiento de 10% en un día no es raro. Eso significa:"
+    ],
+    "list": [
+     "Usa posiciones más chicas, dimensionadas con el [ATR](lesson:atr-and-adr), para que las oscilaciones normales entren en tu riesgo planeado.",
+     "Ten cuidado cerca del fin del período de **lock-up** (bloqueo), normalmente unos seis meses después de la IPO, cuando los insiders pueden vender por primera vez.",
+     "Espera menos datos: el [RS Rating](lesson:rs-rating) y las medias móviles necesitan historia, así que tómalos con cautela en los primeros meses.",
+     "Asegúrate de que la acción opere suficientes acciones y dólares por día para que puedas entrar y salir con facilidad."
+    ]
+   },
+   {
+    "h": "Cómo aparece en Ticker&Tape",
+    "p": [
+     "La detección de bases necesita suficiente historia de precios, así que una acción muy nueva puede no mostrar ninguna base por un tiempo. Una vez que se forma un rango, la plataforma lo etiqueta por profundidad como cualquier otra base y dibuja el pivot. Usa el gráfico diario para el timing, ya que el semanal tiene pocas barras.",
+     "Mira también la tabla trimestral de EPS y ventas. En empresas jóvenes, unas ventas que crecen rápido suelen ser la señal más clara de demanda real."
+    ]
+   }
+  ],
+  "mistakes": [
+   "Comprar el primer día de cotización, antes de que se forme cualquier base.",
+   "Usar una posición de tamaño completo en una acción que se mueve 10% por día.",
+   "Ignorar la fecha de vencimiento del lock-up.",
+   "Ver una base corta como debilidad cuando es normal en las emisiones nuevas."
+  ],
+  "takeaways": [
+   "Las IPO recientes pueden ser líderes porque crecen rápido y tienen poca oferta arriba.",
+   "Sus primeras bases suelen ser cortas, de pocas semanas, y volátiles.",
+   "Usa posiciones más chicas y compra solo en un breakout a nuevos máximos con volumen."
+  ],
+  "try": {
+   "label": "Abrir el screener",
+   "href": "/screener/"
+  },
+  "related": [
+   "what-is-a-base",
+   "atr-and-adr",
+   "sales-and-margins"
+  ]
+ },
+ {
+  "slug": "base-count",
+  "title": "Conteo de bases: etapa temprana vs tardía",
+  "desc": "Cómo contar bases: por qué las de primera y segunda etapa funcionan mejor, por qué las de tercera y cuarta fallan más y cuándo se reinicia el conteo.",
+  "intro": "Cada vez que una acción arma una nueva base durante una subida larga, el **conteo de bases** (base count) suma uno. Las primeras bases ofrecen las mejores probabilidades. Las tardías son más riesgosas, porque para entonces todos conocen la historia.",
+  "sections": [
+   {
+    "h": "Cómo contar",
+    "p": [
+     "La primera base después de que una acción sale de una caída larga o de un largo período lateral es la base de **etapa 1**, o de primera etapa. Si la acción rompe, sube y luego forma otra base, esa es de **etapa 2**. La siguiente es de etapa 3, y así sucesivamente.",
+     "Cuenta en el gráfico semanal. Una nueva base cuenta cuando la acción subió de forma significativa, normalmente 20% o más, por encima del pivot de la base anterior antes de volver a corregir."
+    ],
+    "diagram": "base-count"
+   },
+   {
+    "h": "Por qué las primeras bases funcionan mejor",
+    "p": [
+     "En la primera y la segunda etapa, pocos inversores notaron la acción. Los grandes fondos todavía están armando posiciones, lo que significa demanda sostenida durante meses. La historia de la empresa es nueva y las expectativas todavía son moderadas.",
+     "Para la tercera o cuarta base, la acción probablemente ya se duplicó o triplicó. Es conocida, muchos fondos ya la tienen y las expectativas son altas. Un trimestre decepcionante puede desatar una venta fuerte. Las bases tardías también suelen ser más amplias y desordenadas, señal de que la acción se está cansando."
+    ]
+   },
+   {
+    "h": "Una guía práctica",
+    "p": [
+     "Una forma simple de usar el conteo:"
+    ],
+    "list": [
+     "**Etapa 1 y 2**: las mejores probabilidades. Son las bases en las que conviene enfocarse.",
+     "**Etapa 3**: todavía posible, pero sé más selectivo y vende más rápido si falla.",
+     "**Etapa 4 y posteriores**: fallan seguido. Muchos traders las evitan o usan posiciones más chicas."
+    ]
+   },
+   {
+    "h": "Cuándo se reinicia el conteo",
+    "p": [
+     "El conteo vuelve a uno cuando la acción perfora el mínimo de su base anterior. Eso significa que devolvió su subida previa y está empezando un nuevo ciclo.",
+     "Una corrección profunda, a menudo de 40% a 50% o más, durante un mercado bajista, normalmente también reinicia el conteo. En Ticker&Tape, una caída de más de 50% se etiqueta como **corrección profunda**, una señal clara para reiniciar tu conteo.",
+     "Una [base sobre base](lesson:base-on-base) suele tratarse como parte de la misma etapa, ya que la acción apenas subió entre las dos."
+    ]
+   },
+   {
+    "h": "Usar el conteo de bases con otras herramientas",
+    "p": [
+     "El conteo de bases no es una regla por sí solo. Combínalo con el mercado: las bases tempranas suelen formarse justo después de una corrección del mercado, cuando empieza una nueva tendencia alcista. Por eso una nueva tendencia alcista, confirmada en la [página de amplitud](/breadth/), es un buen momento para buscar bases de primera y segunda etapa entre las acciones más fuertes."
+    ]
+   }
+  ],
+  "mistakes": [
+   "Olvidarse de contar y comprar una base de cuarta etapa como si fuera de primera.",
+   "No reiniciar el conteo después de que la acción perfora el mínimo de su base anterior.",
+   "Contar cada pequeña pausa como una base nueva."
+  ],
+  "takeaways": [
+   "Las bases de primera y segunda etapa tienen las mejores probabilidades; las de tercera en adelante fallan más.",
+   "Cuenta en el gráfico semanal; una base nueva sigue a una subida de alrededor de 20% o más.",
+   "El conteo se reinicia cuando la acción perfora el mínimo de su base anterior o tras una corrección profunda."
+  ],
+  "try": {
+   "label": "Abrir un gráfico semanal",
+   "href": "/chart/SPY/"
+  },
+  "related": [
+   "what-is-a-base",
+   "the-four-stages",
+   "base-on-base"
+  ]
+ },
+ {
+  "slug": "failed-breakouts",
+  "title": "Breakouts fallidos",
+  "desc": "Cómo se ve un breakout fallido, las reglas de venta que te protegen y por qué un breakout que falla te dice algo sobre la acción y el mercado.",
+  "intro": "No todos los breakouts funcionan. A veces una acción supera su pivot y luego vuelve a caer dentro de la base. Saber cómo se ve un **breakout fallido**, y actuar rápido, es lo que mantiene chicas las pérdidas chicas.",
+  "sections": [
+   {
+    "h": "Cómo se ve una falla",
+    "p": [
+     "Un breakout sano se aleja del pivot y se mantiene por encima. Un breakout fallido se da vuelta. La acción vuelve por debajo del pivot y sigue deslizándose dentro de la base, a menudo con volumen creciente.",
+     "En Ticker&Tape, una acción se etiqueta como **Failed breakout** (breakout fallido) cuando rompió y luego cerró más de 3% por debajo del pivot. Con un pivot de $50.10, un cierre por debajo de unos $48.60 activaría la etiqueta."
+    ],
+    "diagram": "failed-breakout"
+   },
+   {
+    "h": "Señales de alerta",
+    "p": [
+     "Las fallas suelen dar pistas temprano. Presta atención a esto:"
+    ],
+    "list": [
+     "El breakout llegó con poco volumen, menos de 40% sobre el promedio.",
+     "La acción cerró cerca del mínimo del día en el día del breakout.",
+     "La acción vuelve por debajo del pivot en pocos días, sobre todo con volumen alto.",
+     "Rompe la media de 10 días o la [línea de 50 días](lesson:the-50-day-line) poco después del breakout.",
+     "El mercado general empieza a mostrar [días de distribución](lesson:distribution-days)."
+    ]
+   },
+   {
+    "h": "Reglas de venta",
+    "p": [
+     "La regla más importante es simple: corta toda pérdida a no más de **7% a 8%** por debajo de tu precio de compra, sin excepciones. Si compraste en la zona de compra, un breakout fallido suele tocar ese límite o activar tu stop debajo de un nivel clave.",
+     "Muchos traders también venden antes, cuando la acción cierra bien adentro de la base, antes de llegar al 7% a 8% completo. Una acción que cierra más de 3% por debajo del pivot ya falló, y no hay razón para esperar una pérdida mayor. Nunca promedies a la baja, es decir, no compres más de una acción perdedora para bajar tu precio promedio."
+    ],
+    "diagram": "stop-loss"
+   },
+   {
+    "h": "Un breakout fallido es información",
+    "p": [
+     "Una falla no es solo una pérdida; es un mensaje. Si muchos breakouts fallan al mismo tiempo, el mercado puede estar debilitándose. Suele ser una advertencia más temprana que el propio índice. Revisa la [página de amplitud](/breadth/) y considera reducir tu exposición.",
+     "Para la acción en sí, una falla significa que la demanda todavía no era lo bastante fuerte. Puede necesitar más tiempo. Muchas buenas acciones fallan una vez y después arman una base mejor y rompen más tarde. Mantenla en tu watchlist, pero espera un setup nuevo y adecuado."
+    ]
+   },
+   {
+    "h": "Volver a entrar",
+    "p": [
+     "Si una acción que vendiste rebota y vuelve a superar el pivot con volumen fuerte, puedes recomprarla. Eso no es un error; es seguir las reglas. Usa el mismo plan: compra dentro del 5% sobre el pivot y pon tu stop. La [lección de stop-loss](lesson:stop-losses) explica cómo ubicarlo."
+    ]
+   }
+  ],
+  "mistakes": [
+   "Mantener un breakout fallido con la esperanza de que vuelva.",
+   "Comprar más acciones mientras la acción vuelve a caer dentro de la base.",
+   "Ignorar una ola de breakouts fallidos en muchas acciones.",
+   "Negarse a recomprar una acción que vuelve a armar un setup después de una falla."
+  ],
+  "takeaways": [
+   "Un breakout falla cuando la acción vuelve por debajo del pivot; en la plataforma, un cierre más de 3% por debajo.",
+   "Corta las pérdidas a no más de 7% a 8% por debajo de tu precio de compra.",
+   "Muchas fallas al mismo tiempo son una advertencia sobre el mercado."
+  ],
+  "live": "status:Failed breakout",
+  "try": {
+   "label": "Abrir tu portafolio",
+   "href": "/portfolio/"
+  },
+  "related": [
+   "pivot-and-buy-zone",
+   "stop-losses",
+   "volume-on-breakouts",
+   "distribution-days"
+  ]
+ }
+]

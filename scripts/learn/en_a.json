@@ -1,0 +1,385 @@
+[
+ {
+  "slug": "stocks-etfs-indexes",
+  "title": "Stocks, ETFs and indexes explained",
+  "desc": "What a stock, an ETF and a market index are, how tickers work, and why growth traders buy individual stocks but always watch the indexes.",
+  "intro": "Before you read a single chart, you need to know what you are looking at. Almost everything on Ticker&Tape is one of three things: a stock, an ETF or an index.",
+  "sections": [
+   {"h": "What a stock is",
+    "p": ["A **stock** (also called a share) is a small piece of ownership in a company. If a company has 100 million shares and you own 100, you own a tiny slice of that business. When the company grows its sales and profits, investors are usually willing to pay more for each share, and the price rises.",
+     "Stocks trade on an exchange, where buyers and sellers meet. The price you see is simply the last price at which someone bought and someone sold."],
+    "diagram": "stock-etf-index"},
+   {"h": "What an ETF is",
+    "p": ["An **ETF** (exchange-traded fund) is a basket of many stocks, or other assets, that trades like a single stock. Buy one share of an ETF and you own a small piece of everything inside the basket.",
+     "Some ETFs follow the whole market, like SPY (the S&P 500) or QQQ (the Nasdaq-100). Others hold one sector, such as semiconductors or banks, or one theme. You can browse them on the [ETFs page](/etfs/)."]},
+   {"h": "What an index is",
+    "p": ["An **index** is a number that measures a group of stocks. It is a scoreboard, not something you can buy directly. The most watched U.S. indexes are:"],
+    "list": ["**S&P 500**: 500 large U.S. companies, the standard benchmark for the market.",
+     "**Nasdaq Composite** and **Nasdaq-100**: heavy in technology and growth companies.",
+     "**Russell 2000**: smaller companies, often tracked through the ETF IWM.",
+     "**Dow Jones Industrial Average**: 30 large, well-known companies."]},
+   {"h": "Tickers",
+    "p": ["Every stock and ETF has a **ticker**, a short code of one to five letters used to look it up. SPY, QQQ and IWM are ETF tickers. On Ticker&Tape you can open any chart by typing the ticker, or by going straight to an address like [/chart/SPY/](/chart/SPY/).",
+     "A low price does not mean a stock is cheap. A $20 stock is not a better deal than a $400 stock; what matters is how the company is growing and how the price is acting."]},
+   {"h": "Why growth traders trade stocks but watch indexes",
+    "p": ["The method taught here, popularized by William O'Neil, looks for individual growth stocks: companies with fast-rising earnings whose shares are leading the market. The biggest gains historically came from these leaders, not from the average stock.",
+     "But roughly three out of four stocks move in the same direction as the general market. So even if you never buy an index fund, you check the S&P 500 and the Nasdaq every day. If the indexes are falling hard, even great stocks usually fall with them. You will learn how to judge this in [market direction](lesson:market-direction)."]}
+  ],
+  "mistakes": [
+   "Thinking a low share price means a stock is cheap or has more room to rise.",
+   "Ignoring the indexes and buying stocks while the whole market is in a correction.",
+   "Confusing an index (a measurement) with an ETF (something you can actually buy)."
+  ],
+  "takeaways": [
+   "A stock is a piece of one company; an ETF is a basket that trades like a stock; an index is a scoreboard.",
+   "Every stock and ETF has a ticker you use to find its chart.",
+   "Growth traders buy individual leaders but check the indexes every day."
+  ],
+  "try": {"label": "Open the SPY chart", "href": "/chart/SPY/"},
+  "related": ["how-the-market-works", "market-direction", "reading-a-ticker-and-tape-chart"]
+ },
+ {
+  "slug": "how-the-market-works",
+  "title": "How the stock market works: hours, liquidity, spreads",
+  "desc": "U.S. exchanges, regular hours from 9:30 to 4:00 ET, pre-market and after-hours, why earnings come out outside hours, and what liquidity and spreads mean.",
+  "intro": "The stock market is a meeting place for buyers and sellers. Knowing when it is open, who is trading and how prices are formed will save you from some expensive beginner surprises.",
+  "sections": [
+   {"h": "The U.S. exchanges",
+    "p": ["Most U.S. stocks are listed on the **New York Stock Exchange (NYSE)** or the **Nasdaq**. Today nearly all trading is electronic. When you send an order through your broker, it is matched with an order from someone on the other side within a fraction of a second.",
+     "A price only changes because buyers and sellers agree on a new one. If buyers are more eager, they pay up and the price rises. If sellers are more eager, they accept less and the price falls."]},
+   {"h": "Trading hours",
+    "p": ["The **regular session** runs from **9:30 a.m. to 4:00 p.m. Eastern Time (ET)**, New York time, Monday to Friday, except market holidays. Most of the day's volume, and the most reliable prices, happen during these hours. The first and last 30 minutes are usually the busiest.",
+     "Outside regular hours there is **extended-hours trading**:"],
+    "list": ["**Pre-market**: roughly 4:00 to 9:30 a.m. ET.",
+     "**After-hours**: roughly 4:00 to 8:00 p.m. ET.",
+     "Volume is much thinner, so prices can jump around and spreads are wider."],
+    "diagram": "market-hours"},
+   {"h": "Why earnings come out outside hours",
+    "p": ["Companies usually report their quarterly results before the open or after the close. This gives everyone time to read the numbers before the regular session starts. That is why a stock can open far above or below the prior close: a **gap**. Check the [earnings calendar](/earnings/) so a report never catches you by surprise, and see [gaps](lesson:gaps) to learn how to read them."]},
+   {"h": "Liquidity and the spread",
+    "p": ["**Liquidity** is how easily you can buy or sell without moving the price. A stock that trades millions of shares a day is liquid. One that trades a few thousand is not.",
+     "The **bid** is the highest price a buyer is offering; the **ask** is the lowest price a seller will accept. The gap between them is the **spread**. In a liquid stock the spread may be one cent; in a thin one it can be much larger, which is a hidden cost every time you trade. Growth traders prefer stocks with solid daily dollar volume so they can get in and out cleanly."]},
+   {"h": "Delayed vs live prices",
+    "p": ["Some data sources show prices delayed by 15 minutes or more. That is fine for studying charts after the close, but before you place an order always confirm the live bid and ask in your broker. Daily charts are built from the final official close, which is what most of our analysis uses."]}
+  ],
+  "mistakes": [
+   "Trading in the pre-market or after-hours without realizing how thin the volume is.",
+   "Holding a position into an earnings report you did not know was coming.",
+   "Buying illiquid stocks and losing money to wide spreads.",
+   "Placing an order based on a delayed quote."
+  ],
+  "takeaways": [
+   "The regular U.S. session is 9:30 a.m. to 4:00 p.m. New York time.",
+   "Earnings are reported outside regular hours, which is why stocks gap.",
+   "Liquid stocks with tight spreads are cheaper and safer to trade."
+  ],
+  "try": {"label": "Open the earnings calendar", "href": "/earnings/"},
+  "related": ["order-types", "stocks-etfs-indexes", "gaps", "economic-calendar"]
+ },
+ {
+  "slug": "order-types",
+  "title": "Order types: market, limit, stop and stop-limit",
+  "desc": "Market, limit, stop and stop-limit orders, good-till-canceled, slippage, and which order to use when buying a breakout or protecting a position.",
+  "intro": "An order is your instruction to the broker. Choosing the right type decides the price you get, whether you get filled at all, and how well you are protected when a trade goes wrong.",
+  "sections": [
+   {"h": "The basic order types",
+    "list": ["**Market order**: buy or sell right now at the best available price. You are almost sure to be filled, but you do not control the exact price.",
+     "**Limit order**: buy at this price or lower, or sell at this price or higher. You control the price, but you may not be filled if the stock never reaches it.",
+     "**Stop order (stop-loss)**: a resting order that turns into a market order once the price touches your stop level. Used mainly to cut a loss automatically.",
+     "**Stop-limit order**: when the stop price is touched, it becomes a limit order instead of a market order. You control the price, but in a fast drop it may never fill."],
+    "diagram": "order-types"},
+   {"h": "How long an order lasts",
+    "p": ["A **day order** expires at the close if it is not filled. A **good-till-canceled (GTC)** order stays active until it fills or you cancel it, often up to a few months depending on the broker. Stop-loss orders are usually entered as GTC so they keep protecting you every day.",
+     "Check whether your broker lets orders work in the pre-market and after-hours. Most stops only trigger during the regular session."]},
+   {"h": "Slippage",
+    "p": ["**Slippage** is the difference between the price you expected and the price you got. It happens with market and stop orders when the price moves fast or the stock is thin. If your stop is at $46 and the stock gaps down to $43 at the open, your stop fills near $43, not $46. No order type can fully protect you from an overnight gap."]},
+   {"h": "Buying a breakout",
+    "p": ["A breakout is when a stock moves above its **pivot**, the buy point of a base (see [pivot and buy zone](lesson:pivot-and-buy-zone)). Many traders use a **buy stop-limit**: for a $50.10 pivot, a stop at $50.10 and a limit around $51. The order only triggers if the stock actually breaks out, and the limit stops you from chasing it too far.",
+     "If you are watching live, a limit order placed slightly above the current ask also works. Avoid plain market orders in the first minutes after the open, when spreads are wide."]},
+   {"h": "Protecting a position",
+    "p": ["Once you are in, decide where you are wrong and place a **stop-loss** right away. A plain stop (which becomes a market order) is the most reliable way to get out when the stock is falling; a stop-limit can leave you holding a stock that keeps dropping below your limit. Learn where to put it in [stop-losses](lesson:stop-losses) and how many shares to buy in [position sizing](lesson:position-sizing)."]}
+  ],
+  "rules": {"title": "Which order to use", "rows": [
+   ["Get in or out right now", "Market order (liquid stocks, during regular hours)"],
+   ["Buy only at a set price or better", "Limit order"],
+   ["Buy a breakout without chasing", "Buy stop-limit: stop at the pivot, limit a little above"],
+   ["Cut a loss automatically", "Stop order, entered as GTC"]
+  ]},
+  "mistakes": [
+   "Using market orders in thin stocks or in the pre-market and getting a terrible fill.",
+   "Using a stop-limit to protect a position, then watching the price fall right through the limit.",
+   "Entering a trade without a stop-loss and planning to decide later.",
+   "Forgetting that a day order expired and assuming you are still protected."
+  ],
+  "takeaways": [
+   "Market orders guarantee a fill, limit orders guarantee a price; you cannot have both.",
+   "A buy stop-limit at the pivot is a common way to buy a breakout without chasing.",
+   "Protect every position with a plain stop order, and remember gaps can skip past it."
+  ],
+  "try": {"label": "Open the position size calculator", "href": "/portfolio/"},
+  "related": ["how-the-market-works", "stop-losses", "pivot-and-buy-zone", "position-sizing"]
+ },
+ {
+  "slug": "candlesticks-and-bars",
+  "title": "How to read candlesticks and bars",
+  "desc": "Open, high, low and close explained: candle bodies and wicks, OHLC bars, and what a close near the high or near the low tells you about buyers and sellers.",
+  "intro": "Every chart is built from the same four prices for each period: the open, the high, the low and the close. Candles and bars are just two ways of drawing them.",
+  "sections": [
+   {"h": "The four prices",
+    "list": ["**Open**: the first trade of the period.",
+     "**High**: the highest price reached.",
+     "**Low**: the lowest price reached.",
+     "**Close**: the last trade of the period. Traders watch it most because it shows where the battle between buyers and sellers ended."],
+    "p": ["On a daily chart each candle or bar is one day; on a weekly chart each one is a full week."]},
+   {"h": "Anatomy of a candle",
+    "p": ["A **candlestick** has a **body** and two **wicks** (also called shadows). The body spans from the open to the close. The wicks are thin lines that reach up to the high and down to the low.",
+     "If the close is above the open, the candle is an up candle, usually drawn green or hollow. If the close is below the open, it is a down candle, usually red or filled. A tall body means a strong move in one direction; a small body means indecision."],
+    "diagram": "candle-anatomy"},
+   {"h": "Bars show the same thing",
+    "p": ["An **OHLC bar** is a vertical line from the low to the high, with a small tick on the left for the open and a tick on the right for the close. Many traders in the O'Neil tradition prefer bars because they put the focus on the range and the close rather than on colors. On Ticker&Tape you can switch between candles and bars; use whichever you read more easily."],
+    "diagram": "bars-vs-candles"},
+   {"h": "Where the close lands",
+    "p": ["The most useful thing to read on any candle or bar is where the close sits inside the day's range."],
+    "list": ["**Close near the high**: buyers were in control into the end of the session. On a breakout day, this is what you want to see.",
+     "**Close near the low**: sellers won the day, even if the stock was up earlier. A breakout that closes near the low is a warning.",
+     "**Close in the middle**: a draw, often during quiet, sideways action.",
+     "**Long upper wick**: the stock rallied but was sold back down, a sign of supply overhead."]},
+   {"h": "Context matters more than one candle",
+    "p": ["Single-candle patterns with exotic names get a lot of attention, but on their own they are unreliable. A candle means much more when you read it together with [volume](lesson:reading-volume) and its place on the chart: at the pivot of a base, at the [50-day line](lesson:the-50-day-line), or after a long run. A strong close on heavy volume at a buy point is meaningful; the same candle in the middle of nowhere is not."]}
+  ],
+  "mistakes": [
+   "Trading single candle patterns without looking at volume or the bigger chart.",
+   "Judging a day by whether it closed up or down instead of where it closed in its range.",
+   "Ignoring long upper wicks that keep appearing near the same price."
+  ],
+  "takeaways": [
+   "Every candle or bar shows the open, high, low and close.",
+   "Where the close lands in the range tells you who won the day.",
+   "Read candles together with volume and their location on the chart."
+  ],
+  "try": {"label": "Open a chart", "href": "/chart/SPY/"},
+  "related": ["daily-and-weekly-charts", "reading-volume", "reading-a-ticker-and-tape-chart"]
+ },
+ {
+  "slug": "daily-and-weekly-charts",
+  "title": "Daily and weekly charts: why you need both",
+  "desc": "Why traders use weekly charts for the big picture and bases and daily charts for timing, and how many months of data to look at on each one.",
+  "intro": "The same stock can look calm on a weekly chart and chaotic on a daily one. Using both lets you see the forest and the trees.",
+  "sections": [
+   {"h": "What changes between the two",
+    "p": ["On a **daily chart** each candle or bar is one trading day. On a **weekly chart** each one sums up a whole week: the Monday open, the highest high, the lowest low and the Friday close. Weekly volume is the total for the five days.",
+     "Because a weekly bar condenses five days, it filters out a lot of noise. A scary two-day drop that looks dramatic on the daily may be a small dip inside a strong weekly uptrend."],
+    "diagram": "daily-weekly"},
+   {"h": "The weekly chart: the big picture",
+    "p": ["Start with the weekly. It answers the big questions:"],
+    "list": ["Is the stock in a long-term uptrend, a downtrend or going sideways?",
+     "Is it forming a proper base, and how long and deep is it? Bases are measured in weeks.",
+     "Are the weekly closes tight (closing at similar prices week after week), a sign that big holders are not selling?",
+     "Is it holding above the 10-week moving average, the weekly cousin of the 50-day line?"]},
+   {"h": "The daily chart: timing",
+    "p": ["Once the weekly looks good, move to the daily to plan the trade. The daily shows the exact pivot, the volume on the breakout day, the [50-day line](lesson:the-50-day-line), and where a sensible stop would go. Daily volume bars also reveal heavy selling or buying days that a weekly bar can hide.",
+     "A simple routine: weekly to decide if a stock deserves your attention, daily to decide when to act."]},
+   {"h": "How much history to look at",
+    "list": ["**Daily chart**: about 6 to 12 months. Enough to see the current base and the advance before it.",
+     "**Weekly chart**: about 2 to 5 years. Enough to see earlier bases, the long-term trend and where the stock sits in its [four stages](lesson:the-four-stages).",
+     "Zoom out further when a stock is near all-time highs or coming out of a long decline."],
+    "p": ["Too little history hides important context; too much squashes the recent action you need to read."]},
+   {"h": "When the two disagree",
+    "p": ["Sometimes the daily looks broken while the weekly looks fine, or the other way around. In general the weekly sets the trend and the daily warns you early. A daily break below a key level on heavy volume deserves respect, but one rough day inside a strong weekly base is usually just noise. When in doubt, wait for the next weekly close."]}
+  ],
+  "mistakes": [
+   "Only looking at daily charts and overreacting to normal pullbacks.",
+   "Buying from the weekly chart alone without checking the daily breakout volume.",
+   "Zooming in so far that the base and the prior uptrend disappear."
+  ],
+  "takeaways": [
+   "Weekly charts show the trend and the base; daily charts show the timing.",
+   "Look at about a year of daily data and a few years of weekly data.",
+   "The weekly sets the direction, the daily gives the early warnings."
+  ],
+  "try": {"label": "Open the SPY chart", "href": "/chart/SPY/"},
+  "related": ["candlesticks-and-bars", "log-vs-linear-scale", "what-is-a-base"]
+ },
+ {
+  "slug": "log-vs-linear-scale",
+  "title": "Log vs linear scale on stock charts",
+  "desc": "Linear vs logarithmic price scale explained: why percentage moves matter more than dollar moves, and why long-term and weekly charts should use log scale.",
+  "intro": "The price axis on a chart can be drawn two ways. Picking the right one changes how a stock's history looks, and how you judge its moves.",
+  "sections": [
+   {"h": "Linear scale",
+    "p": ["On a **linear scale**, every dollar takes the same vertical space. The distance from $10 to $20 looks exactly as tall as the distance from $100 to $110.",
+     "That sounds fair, but it hides something important. Going from $10 to $20 doubles your money: a 100% gain. Going from $100 to $110 is only 10%. On a linear chart, a stock that ran from $10 to $200 over several years looks flat for a long time and then shoots straight up at the end."]},
+   {"h": "Log scale",
+    "p": ["On a **logarithmic (log) scale**, equal percentage moves take the same vertical space. A move from $10 to $20 (+100%) looks exactly as tall as a move from $100 to $200 (+100%). Every doubling is the same height."],
+    "diagram": "log-linear"},
+   {"h": "Why percentages are what matter",
+    "p": ["As a trader you think in percentages. You risk 7% on a stop, you aim for gains of 20% to 25%, and a base that is 30% deep is judged by its percentage, not its dollar depth. A $5 drop is a disaster for a $20 stock and a rounding error for a $500 stock.",
+     "A log chart shows those moves honestly across a stock's whole history, so a base from three years ago and today's base can be compared fairly."]},
+   {"h": "When to use each",
+    "list": ["**Log scale**: weekly and long-term charts, stocks that have moved a lot, comparing bases over time. This is the standard for growth-stock analysis.",
+     "**Linear scale**: short-term daily charts over a few months, where the price range is narrow. Here both scales look almost identical.",
+     "Trendlines can look different on each scale. A line that holds on log may break on linear, so draw them on the scale you actually use. See [trendlines](lesson:trendlines)."]},
+   {"h": "Reading a log chart in practice",
+    "p": ["On a log chart, a steady uptrend where the stock gains a similar percentage each month looks like a straight line, while on linear it curves sharply upward. If a log chart starts to bend upward, the stock is truly accelerating; if it flattens, momentum is fading even though dollar gains may still look large.",
+     "On Ticker&Tape you can switch the price axis between log and linear on any chart. Try both on a stock that has risen a lot over five years and notice how different the early years look."]}
+  ],
+  "mistakes": [
+   "Judging a long-term chart on linear scale and thinking a stock went parabolic only recently.",
+   "Comparing the size of old and new bases on a linear chart.",
+   "Drawing a trendline on one scale and watching for breaks on the other."
+  ],
+  "takeaways": [
+   "Linear scale gives every dollar the same height; log scale gives every percentage the same height.",
+   "Traders think in percentages, so log scale tells the truer story.",
+   "Use log scale for weekly and long-term charts; on short daily charts the difference is small."
+  ],
+  "try": {"label": "Open a weekly chart", "href": "/chart/QQQ/"},
+  "related": ["daily-and-weekly-charts", "trendlines", "what-is-a-base"]
+ },
+ {
+  "slug": "reading-a-ticker-and-tape-chart",
+  "title": "How to read a Ticker&Tape chart",
+  "desc": "A tour of the Ticker&Tape chart: price, volume, moving averages, RS line and RS Rating, base and pivot, the data box, the EPS table and earnings markers.",
+  "intro": "A Ticker&Tape chart packs a lot of information into one screen. Here is a quick tour, top to bottom, with links to the lesson that explains each piece in depth.",
+  "sections": [
+   {"h": "Price and moving averages",
+    "p": ["The main panel shows price as daily or weekly candles or bars (see [candlesticks and bars](lesson:candlesticks-and-bars)). Two moving averages are drawn by default: the **50-day** and the **200-day** lines. They smooth out price and show the medium and long-term trend. You can add any simple or exponential average with the **Indicators** button.",
+     "Switch between daily and weekly at the top of the chart, and between linear and log scale on the price axis."],
+    "diagram": "chart-anatomy"},
+   {"h": "Base, pivot and buy zone",
+    "p": ["When the platform detects a base, such as a flat base or a cup with handle, it outlines it on the chart and marks the **pivot**, the buy point, plus the **buy zone** from the pivot up to 5% above it. A status label tells you where the stock is right now: near pivot, in buy zone, breakout, extended and so on. Learn more in [what is a base](lesson:what-is-a-base)."]},
+   {"h": "Volume",
+    "p": ["Below price you will find the volume bars, colored for up and down days, with a line for the **50-day average volume**. Bars far above that line show unusual interest. Breakouts should come on volume well above average. See [reading volume](lesson:reading-volume)."]},
+   {"h": "RS line and RS Rating",
+    "p": ["The **RS line** divides the stock's price by the S&P 500 (you can switch the benchmark to the Nasdaq-100 or a sector ETF). A rising line means the stock is beating the market. The **RS Rating**, from 1 to 99, ranks its 12-month performance against all other stocks. Leaders usually rate 80 or higher."]},
+   {"h": "Data box, EPS table and earnings markers",
+    "list": ["**Data box**: price, RS Rating, EPS and sales growth, industry group rank, ATR %, up/down volume ratio and more, all in one place.",
+     "**Quarterly EPS and sales table**: the company's recent growth, quarter by quarter, compared with a year earlier.",
+     "**Earnings markers**: small flags on the date axis showing past and upcoming earnings reports, so you are never surprised."]},
+   {"h": "Tools to work with",
+    "p": ["Use the drawing tools to add trendlines, horizontal levels, boxes and notes. Set alerts on a price, a moving average, a trendline or the pivot. When you are ready to plan a trade, the position size calculator turns your account risk and stop into a number of shares and can send the trade to your [portfolio](/portfolio/)."]}
+  ],
+  "takeaways": [
+   "Price, moving averages, volume and the RS line tell you trend, demand and leadership at a glance.",
+   "The base outline, pivot and status show where a stock stands relative to its buy point.",
+   "The data box and EPS table add the fundamentals without leaving the chart."
+  ],
+  "try": {"label": "Open the SPY chart", "href": "/chart/SPY/"},
+  "related": ["candlesticks-and-bars", "reading-volume", "rs-line", "what-is-a-base"]
+ },
+ {
+  "slug": "what-is-a-trend",
+  "title": "What is a trend? Uptrends, downtrends, ranges",
+  "desc": "How to spot an uptrend, a downtrend and a sideways range using highs and lows, why the trend is your friend, and why you should trade with the market.",
+  "intro": "A trend is simply the direction prices are moving. Learning to recognize it, and to trade with it instead of against it, is the foundation of everything else in this school.",
+  "sections": [
+   {"h": "Uptrend: higher highs and higher lows",
+    "p": ["Prices never move in a straight line. They zigzag. In an **uptrend**, each rally climbs above the previous peak (a **higher high**), and each pullback stops above the previous low (a **higher low**). Buyers are stepping in at higher and higher prices.",
+     "In a healthy uptrend the stock usually stays above a rising 50-day moving average, and up days tend to come on bigger volume than down days."],
+    "diagram": "uptrend"},
+   {"h": "Downtrend: lower highs and lower lows",
+    "p": ["A **downtrend** is the mirror image: each rally fails below the last peak (a **lower high**) and each drop breaks the last low (a **lower low**). Sellers are willing to accept less and less. Rallies in a downtrend often look tempting but tend to fade.",
+     "Growth traders do not buy stocks in downtrends, no matter how cheap they look. A stock that has fallen 50% can fall another 50%."],
+    "diagram": "downtrend"},
+   {"h": "Sideways: a range",
+    "p": ["Sometimes neither side wins and price moves **sideways** between a ceiling and a floor. This is a trading range. Ranges that form after a strong advance are often **bases**, where the stock digests its gains before the next leg up. The breakout from a range tells you which side finally won. See [support and resistance](lesson:support-and-resistance)."],
+    "diagram": "sideways"},
+   {"h": "The trend is your friend",
+    "p": ["The old saying \"the trend is your friend\" exists for a reason. A trend in motion tends to continue more often than it reverses. Buying stocks that are already going up feels uncomfortable to beginners, who like bargains, but it puts the odds on your side.",
+     "Trends exist on every timeframe. A stock can be in a weekly uptrend while pulling back for a few days on the daily. Decide which trend you are trading and judge it on the matching chart.",
+     "A trend ends when its pattern breaks. An uptrend is in trouble when a pullback undercuts the previous higher low and the next rally fails to make a new high. One red day is not a change of trend."]},
+   {"h": "Trade in the direction of the market",
+    "p": ["The most important trend is the one of the general market. Most stocks follow it, so buying breakouts in a falling market is like swimming against the current. Before every trade, check the market's direction on the [breadth page](/breadth/) and in the lesson on [market direction](lesson:market-direction)."]}
+  ],
+  "mistakes": [
+   "Buying a stock in a downtrend because it looks cheap after a big drop.",
+   "Calling a trend over after one down day instead of waiting for a lower low.",
+   "Fighting the general market's trend with new buys during a correction."
+  ],
+  "takeaways": [
+   "Uptrend = higher highs and higher lows; downtrend = lower highs and lower lows.",
+   "Sideways ranges after an advance often become bases.",
+   "Trade with the trend of the stock and of the market."
+  ],
+  "try": {"label": "Check market direction", "href": "/breadth/"},
+  "related": ["the-four-stages", "trendlines", "market-direction", "support-and-resistance"]
+ },
+ {
+  "slug": "the-four-stages",
+  "title": "The four stages of a stock",
+  "desc": "Stage 1 basing, stage 2 advancing, stage 3 topping and stage 4 declining: how moving averages and volume look in each, and why to buy only in stage 2.",
+  "intro": "Most stocks move through a repeating cycle of four stages. Knowing which stage a stock is in tells you whether it is worth buying at all.",
+  "sections": [
+   {"h": "The cycle at a glance",
+    "p": ["The four stages describe the life of a big move: a long quiet period, a strong advance, a choppy top and a decline. They are easiest to see on a [weekly chart](lesson:daily-and-weekly-charts) with the 30-week or 40-week moving average (roughly the 150 and 200-day lines)."],
+    "diagram": "stages"},
+   {"h": "Stage 1: basing",
+    "p": ["After a decline, selling dries up and the stock moves sideways for months. The long-term moving average flattens out and price crosses back and forth over it. Volume is usually light. Nothing is broken anymore, but nothing is happening either. Buying here ties up money for a long time with no reward."]},
+   {"h": "Stage 2: advancing",
+    "p": ["The stock breaks out of its stage 1 range, often on big volume, and starts making higher highs and higher lows. The 50-day line rises above the 200-day line and both point up. Price stays above them, pulling back to them now and then. Up weeks come on more volume than down weeks.",
+     "Stage 2 is where the big gains happen, and it is the only stage where growth traders buy. During the advance the stock pauses several times to form bases, each offering a new buy point."]},
+   {"h": "Stage 3: topping",
+    "p": ["The advance loses steam. Price swings wildly, moving averages flatten, and the stock starts to close below the 50-day line. Heavy volume shows up on down days: big holders are selling to latecomers. The stock may still make a new high, but the moves are sloppy and breakouts fail. This is a time to take profits, not to add."]},
+   {"h": "Stage 4: declining",
+    "p": ["Price breaks below its long-term moving average, which turns down. Lower highs and lower lows follow. Rallies are sold. Good news no longer helps. A stage 4 stock can look cheap for a very long time. Stay away until it builds a new stage 1 base, which can take many months or even years."]},
+   {"h": "Using the stages in practice",
+    "p": ["Before you study any setup, ask one question: which stage is this stock in? If the answer is not clearly stage 2, move on. This single filter removes most of the bad trades beginners make.",
+     "Stage 2 also has an early and a late part. The first and second bases after a stage 1 breakout tend to work best; bases later in the advance fail more often. You will learn why in [base count](lesson:base-count)."]}
+  ],
+  "rules": {"title": "How each stage looks", "rows": [
+   ["Stage 1: basing", "Sideways range, flat 200-day line, light volume"],
+   ["Stage 2: advancing", "Higher highs and lows, rising 50 and 200-day lines, volume on up weeks"],
+   ["Stage 3: topping", "Wide swings, flattening averages, heavy volume on down days"],
+   ["Stage 4: declining", "Below a falling 200-day line, lower highs and lows"]
+  ]},
+  "mistakes": [
+   "Buying in stage 4 because the stock is far below its old high.",
+   "Buying too early in stage 1 and waiting months for something to happen.",
+   "Holding through stage 3 hoping for the old leadership to return."
+  ],
+  "takeaways": [
+   "Stocks cycle through basing, advancing, topping and declining.",
+   "Buy only in stage 2, when price is above rising moving averages.",
+   "Heavy volume on down days and failing breakouts warn of stage 3."
+  ],
+  "live": "rs-leaders",
+  "related": ["what-is-a-trend", "the-200-day-line", "base-count", "moving-averages-basics"]
+ },
+ {
+  "slug": "trendlines",
+  "title": "How to draw and use trendlines",
+  "desc": "How to draw trendlines on lows in an uptrend and highs in a downtrend, log vs linear scale, what a trendline break means, and trendline alerts.",
+  "intro": "A trendline is a straight line that connects a series of lows or highs. It turns a vague feeling about a trend into something you can see, measure and set an alert on.",
+  "sections": [
+   {"h": "How to draw one",
+    "p": ["In an **uptrend**, connect two or more rising **lows** with a line and extend it to the right. In a **downtrend**, connect two or more falling **highs**. Two points create a line; a third touch that holds confirms it.",
+     "Use the major swing points, not every small wiggle. Most traders draw through the lows of the candles or bars, and accept a small wick poking through rather than forcing a perfect fit."],
+    "diagram": "trendline"},
+   {"h": "Angle and scale",
+    "p": ["Very steep trendlines break quickly and say little. Lines with a moderate slope that have been touched several times are the most meaningful.",
+     "On charts covering a long period, trendlines can look different on a log and a linear scale (see [log vs linear scale](lesson:log-vs-linear-scale)). A line that fits on log may cut through prices on linear. Pick one scale, normally log for weekly charts, and stick with it."]},
+   {"h": "What a break means",
+    "p": ["When price closes clearly through an uptrend line, the trend has at least slowed down. It does not always mean the stock will fall; it may simply go sideways for a while. Pay attention to volume: a break on heavy volume carries more weight than a quiet drift through the line.",
+     "Breaks of a **downtrend line** are useful too. In a base, the line connecting the falling highs of the handle or of the right side can give an earlier entry, though it is less proven than the classic pivot. See [pivot and buy zone](lesson:pivot-and-buy-zone)."]},
+   {"h": "How traders use them",
+    "list": ["To see at a glance whether a stock or index is still trending.",
+     "As a guide for where pullbacks might find support in an uptrend.",
+     "As a warning to tighten a stop or take some profit when a long uptrend line breaks.",
+     "Together with [support and resistance](lesson:support-and-resistance) levels and moving averages, never alone."]},
+   {"h": "Trendlines on Ticker&Tape",
+    "p": ["Open any chart, pick the trendline tool and click on two points. The line extends to the right automatically. You can then set a **trendline alert** so the platform tells you when price crosses it, instead of having to watch the screen all day."]}
+  ],
+  "mistakes": [
+   "Redrawing the line every time it breaks so it always fits.",
+   "Drawing lines that are too steep, which break almost immediately.",
+   "Treating every small break as a sell signal without checking volume and the bigger trend."
+  ],
+  "takeaways": [
+   "Draw uptrend lines along the lows and downtrend lines along the highs.",
+   "A clear break, especially on heavy volume, means the trend is changing or pausing.",
+   "Set a trendline alert so the chart watches the line for you."
+  ],
+  "try": {"label": "Draw a trendline on SPY", "href": "/chart/SPY/"},
+  "related": ["what-is-a-trend", "log-vs-linear-scale", "support-and-resistance"]
+ }
+]

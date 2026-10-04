@@ -1,0 +1,714 @@
+[
+ {
+  "slug": "what-moves-the-market",
+  "title": "Qué mueve al mercado de acciones",
+  "desc": "Cómo las tasas, la inflación, el empleo y el crecimiento mueven las acciones, por qué una buena noticia puede ser mala y por qué importa la reacción.",
+  "intro": "Las acciones no se mueven en el vacío. Las tasas de interés, la inflación, el empleo y el crecimiento económico forman el telón de fondo de cada gráfico que miras. No necesitas ser economista, pero sí saber qué datos importan y cómo suele reaccionar el mercado a ellos.",
+  "sections": [
+   {
+    "h": "Los cuatro grandes: tasas, inflación, empleo y crecimiento",
+    "p": [
+     "Casi todas las noticias que mueven al mercado entran en cuatro grupos. El primero y más poderoso son las **tasas de interés**, que fija el banco central de Estados Unidos, la Reserva Federal (la Fed). Tasas más bajas abaratan el crédito y hacen que las ganancias futuras de las empresas valgan más hoy, lo que suele ayudar a las acciones, sobre todo a las de crecimiento rápido. Tasas más altas hacen lo contrario.",
+     "Los otros tres grupos importan sobre todo por lo que implican para las tasas. Una inflación alta puede obligar a la Fed a mantener las tasas altas. Un mercado laboral muy fuerte puede alimentar la inflación. Un crecimiento débil puede traer recortes de tasas, pero también menos ganancias."
+    ],
+    "list": [
+     "**Inflación:** el CPI (índice de precios al consumidor) y el PCE (gastos de consumo personal, el indicador preferido de la Fed).",
+     "**Empleo:** el informe mensual de empleo (nóminas no agrícolas y tasa de desempleo) y los pedidos semanales de subsidio por desempleo.",
+     "**Crecimiento:** el PIB (la producción total de la economía) y las encuestas ISM de manufactura y servicios.",
+     "**Consumo:** las ventas minoristas, que muestran cuánto están comprando los consumidores."
+    ],
+    "diagram": "econ-calendar"
+   },
+   {
+    "h": "Por qué una buena noticia puede ser mala",
+    "p": [
+     "Los principiantes suelen confundirse cuando un informe de empleo fuerte hace caer las acciones. La razón es la Fed. Si la economía se ve demasiado caliente, los traders esperan que las tasas sigan altas por más tiempo, y eso pesa sobre los precios. Del mismo modo, un dato débil puede impulsar las acciones si aumenta las probabilidades de un recorte de tasas.",
+     "Esto cambia con el tiempo. Cuando los inversores temen una recesión, una mala noticia es simplemente mala, y una buena es bienvenida. El mismo dato puede significar cosas distintas en años distintos, así que no memorices una regla como \"empleo fuerte = acciones arriba\"."
+    ]
+   },
+   {
+    "h": "Las expectativas importan más que el dato",
+    "p": [
+     "Antes de cada publicación, los economistas publican un pronóstico, a menudo llamado consenso. Los precios ya reflejan ese pronóstico. Lo que mueve al mercado es la **sorpresa**: qué tan lejos queda el dato real de lo esperado y qué cambia en las perspectivas de tasas.",
+     "Por eso un dato que suena mal puede producir un rally (una subida fuerte). Si la inflación salió en 3,2% cuando los traders temían 3,5%, el mercado puede festejar una cifra que sigue siendo demasiado alta."
+    ]
+   },
+   {
+    "h": "Mira la reacción, no el pronóstico",
+    "p": [
+     "No puedes operar el pronóstico de forma confiable, y no lo necesitas. El método popularizado por William O'Neil lee al propio mercado. Después de una publicación importante, hazte preguntas simples: ¿los índices cerraron arriba o abajo? ¿Con más o menos volumen que el día anterior? ¿Las acciones líderes mantuvieron sus ganancias?",
+     "Un mercado que ignora las malas noticias muestra fortaleza. Un mercado que cae con buenas noticias muestra debilidad. La acción de los índices, medida con los [días de distribución](lesson:distribution-days) y la [dirección del mercado](lesson:market-direction), es el juez final. Los datos macro explican el movimiento; el precio y el volumen lo confirman."
+    ]
+   }
+  ],
+  "mistakes": [
+   "Intentar predecir los datos económicos y apostar fuerte antes de la publicación.",
+   "Suponer que un dato fuerte tiene que ser bueno para las acciones sin pensar en las tasas.",
+   "Ignorar el calendario y llevarse la sorpresa de un gran gap (salto de precio) el día del CPI o de la Fed.",
+   "Dejar que los titulares pesen más que lo que realmente hacen los índices y tus acciones."
+  ],
+  "takeaways": [
+   "Las tasas de interés son la principal fuerza macro detrás de los precios; inflación, empleo y crecimiento importan sobre todo por su efecto en las tasas.",
+   "El mercado reacciona a las sorpresas frente a lo esperado, no al dato en sí.",
+   "Juzga la noticia por la reacción del mercado en precio y volumen, no por tu propio pronóstico."
+  ],
+  "try": {
+   "label": "Abrir el calendario macro",
+   "href": "/macro/"
+  },
+  "related": [
+   "the-fed-and-rates",
+   "economic-calendar",
+   "market-direction"
+  ]
+ },
+ {
+  "slug": "the-fed-and-rates",
+  "title": "La Fed y las tasas de interés",
+  "desc": "Qué hace el FOMC, cómo afectan los recortes y subas de tasas a las acciones, qué es el dot plot y cómo leer las probabilidades de los futuros de fed funds.",
+  "intro": "La Reserva Federal es la institución más observada por el mercado de acciones. Sus decisiones sobre las tasas de interés repercuten en cada acción, sector e índice. Esto es lo que hace y cómo leer lo que los traders esperan de ella.",
+  "sections": [
+   {
+    "h": "Qué hace el FOMC",
+    "p": [
+     "Las decisiones de tasas de la Fed las toma el **FOMC** (Comité Federal de Mercado Abierto). Se reúne ocho veces al año, más o menos cada seis semanas. En cada reunión fija un rango objetivo para la **tasa de fed funds**, la tasa que se cobran los bancos entre sí por préstamos de un día. Esa tasa influye en todo, desde hipotecas y tarjetas de crédito hasta los rendimientos de los bonos del gobierno.",
+     "La Fed tiene dos tareas: mantener los precios estables (inflación cerca del 2%) y mantener alto el empleo. Cuando la inflación se acelera, sube las tasas para enfriar la economía. Cuando la economía se debilita, las baja para sostenerla."
+    ]
+   },
+   {
+    "h": "Recortes, pausas y subas",
+    "list": [
+     "**Recorte:** la tasa baja. El crédito se abarata. Suele ser favorable para las acciones, sobre todo las de crecimiento, salvo que el recorte llegue porque empieza una recesión.",
+     "**Pausa:** la tasa queda igual. El mercado se fija entonces en el comunicado y la conferencia de prensa para buscar pistas del próximo paso.",
+     "**Suba:** la tasa sube. El dinero se encarece, lo que suele presionar las valuaciones de las acciones."
+    ],
+    "p": [
+     "Los movimientos suelen ser de 0,25 puntos porcentuales (25 puntos básicos; un punto básico es 0,01%). Movimientos de 50 o 75 puntos básicos indican urgencia."
+    ]
+   },
+   {
+    "h": "El comunicado, la conferencia de prensa y el dot plot",
+    "p": [
+     "La decisión se publica a las 2:00 p.m. hora de Nueva York, y el presidente de la Fed da una conferencia de prensa a las 2:30. El mercado suele moverse con fuerza en ambas direcciones durante esa hora, así que el primer movimiento no siempre es el verdadero.",
+     "Cuatro veces al año la Fed también publica sus proyecciones, incluido el **dot plot** (gráfico de puntos). Cada punto muestra dónde cree un funcionario de la Fed que debería estar la tasa al final de los próximos años. Los puntos no son una promesa, pero muestran si los funcionarios se inclinan por más recortes o más subas de lo que espera el mercado."
+    ]
+   },
+   {
+    "h": "Cómo leer las probabilidades de los futuros de fed funds",
+    "p": [
+     "Los traders apuestan a las decisiones futuras de la Fed con **futuros de fed funds**. A partir de sus precios se puede calcular la probabilidad implícita de un recorte, una pausa o una suba en cada reunión próxima. La [página Macro](/macro/) muestra estas probabilidades para las próximas reuniones.",
+     "Si la probabilidad de un recorte en la próxima reunión es del 90%, el recorte ya está descontado y la decisión en sí casi no moverá las acciones. La sorpresa sería una pausa. Observa cómo cambian las probabilidades después de datos importantes como el CPI o el informe de empleo: un cambio brusco te dice que el dato modificó las perspectivas de tasas."
+    ],
+    "diagram": "fed-odds"
+   }
+  ],
+  "mistakes": [
+   "Tomar un recorte de tasas como automáticamente alcista; los recortes durante una desaceleración pueden venir con acciones en caída.",
+   "Operar los primeros minutos después de la decisión de las 2:00 p.m., cuando los movimientos suelen revertirse.",
+   "Leer el dot plot como un plan fijo y no como un conjunto de opiniones que cambian con los datos.",
+   "Ignorar las probabilidades y sorprenderse con una decisión que el mercado ya había descontado."
+  ],
+  "takeaways": [
+   "El FOMC fija la tasa de fed funds ocho veces al año; los recortes suelen ayudar a las acciones y las subas suelen pesar sobre ellas.",
+   "Lo que mueve al mercado es una decisión o perspectiva distinta de lo que ya descuentan los futuros de fed funds.",
+   "Revisa las probabilidades de recorte, pausa o suba en la página Macro antes de los días de la Fed y después de datos importantes."
+  ],
+  "try": {
+   "label": "Ver las probabilidades de la Fed",
+   "href": "/macro/"
+  },
+  "related": [
+   "what-moves-the-market",
+   "economic-calendar",
+   "market-direction"
+  ]
+ },
+ {
+  "slug": "economic-calendar",
+  "title": "Cómo usar el calendario económico",
+  "desc": "Qué datos económicos mueven las acciones, a qué hora salen en Nueva York y cómo manejar el riesgo en días de CPI, empleo y FOMC con un calendario semanal.",
+  "intro": "Los grandes datos económicos se publican según un calendario que puedes ver con semanas de anticipación. Revisarlo lleva dos minutos y te ayuda a no quedar descolocado por un gap repentino en los índices.",
+  "sections": [
+   {
+    "h": "Los datos que más importan",
+    "p": [
+     "Cada mes salen decenas de informes, pero solo unos pocos mueven al mercado entero de forma habitual. En la [página Macro](/macro/) aparecen marcados como de alta importancia. Los horarios de abajo son hora de Nueva York (ET), el reloj con el que funciona el mercado de EE. UU."
+    ],
+    "list": [
+     "**CPI** (inflación al consumidor): mensual, 8:30 a.m.",
+     "**Informe de empleo** (nóminas no agrícolas, desempleo): normalmente el primer viernes del mes, 8:30 a.m.",
+     "**PCE** (el indicador de inflación preferido de la Fed): mensual, 8:30 a.m.",
+     "**PIB** y **ventas minoristas**: 8:30 a.m.",
+     "Encuestas **ISM** de manufactura y servicios: 10:00 a.m.",
+     "**Pedidos de subsidio por desempleo**: todos los jueves, 8:30 a.m.",
+     "**Decisión del FOMC**: 2:00 p.m., conferencia de prensa a las 2:30, ocho veces al año."
+    ],
+    "diagram": "econ-calendar"
+   },
+   {
+    "h": "Por qué importa el horario",
+    "p": [
+     "La mayoría de los informes sale a las 8:30 a.m., una hora antes de la apertura de las 9:30. La reacción aparece en el pre-market (la operatoria previa a la apertura) y muchas veces como un gap en la apertura. El ISM a las 10:00 a.m. y la Fed a las 2:00 p.m. llegan durante la sesión, así que los precios pueden saltar mientras estás dentro de una operación.",
+     "Si operas desde fuera de EE. UU., convierte estos horarios a tu reloj una vez y anótalos. La página Macro ya los muestra en hora de Nueva York para que coincidan con el horario del mercado."
+    ]
+   },
+   {
+    "h": "Manejar el riesgo en días de CPI y de la Fed",
+    "p": [
+     "No tienes que dejar de operar en los días importantes, pero sí actuar con intención. Algunos hábitos prácticos:"
+    ],
+    "list": [
+     "Evita abrir una posición nueva justo antes de un dato importante. Espera la reacción y deja que el mercado muestre sus cartas.",
+     "Si una acción que tienes está cerca de tu stop (precio de salida para cortar la pérdida), un dato puede hacerla atravesar el stop con un gap. Considera reducir antes del evento.",
+     "Las tardes de FOMC, espera movimientos bruscos en ambos sentidos. No juzgues un breakout (ruptura) hasta el cierre.",
+     "Mantén el tamaño de las posiciones normal o más chico. Los días grandes no son para [aumentar el tamaño](lesson:position-sizing)."
+    ]
+   },
+   {
+    "h": "Un hábito semanal con el calendario",
+    "p": [
+     "Cada fin de semana, abre el calendario y anota los datos clave de la semana siguiente, junto con las [fechas de resultados](/earnings/) de las acciones que tienes o sigues. Escríbelos en tu plan. Esto encaja naturalmente en tu [rutina semanal](lesson:weekly-routine).",
+     "Luego, cada mañana, mira los eventos del día antes de la apertura. Saber que el CPI sale a las 8:30 explica un gran movimiento en el pre-market en lugar de sorprenderte."
+    ]
+   }
+  ],
+  "mistakes": [
+   "No saber que se viene un dato importante y comprar justo antes.",
+   "Leer los horarios en tu hora local y confundirlos con el horario del mercado.",
+   "Reaccionar a los primeros cinco minutos después de una decisión de la Fed en lugar de esperar el cierre.",
+   "Olvidar que las fechas de resultados de tus propias acciones importan tanto como los eventos macro."
+  ],
+  "takeaways": [
+   "Unos pocos datos mueven a todo el mercado: CPI, empleo, PCE, PIB, ventas minoristas, ISM, subsidios por desempleo y el FOMC.",
+   "La mayoría sale a las 8:30 a.m. hora de Nueva York; la decisión de la Fed llega a las 2:00 p.m.",
+   "Revisa el calendario cada fin de semana y cada mañana, y ten cuidado al abrir operaciones nuevas justo antes de eventos grandes."
+  ],
+  "try": {
+   "label": "Abrir el calendario económico",
+   "href": "/macro/"
+  },
+  "related": [
+   "what-moves-the-market",
+   "the-fed-and-rates",
+   "daily-routine"
+  ]
+ },
+ {
+  "slug": "position-sizing",
+  "title": "Tamaño de posición: cuántas acciones comprar",
+  "desc": "Aprende a dimensionar cada operación para que una pérdida cueste solo 0,5% a 1% de tu cuenta: la fórmula, el tamaño máximo y la calculadora de Ticker&Tape.",
+  "intro": "Cuántas acciones compras importa tanto como qué acción compras. El tamaño de posición convierte tu stop en una pérdida fija y pequeña, para que ninguna operación pueda dañar seriamente tu cuenta.",
+  "sections": [
+   {
+    "h": "Arriesga una porción pequeña de la cuenta",
+    "p": [
+     "Empieza por la cuenta, no por la acción. Decide cuánto de tu cuenta total estás dispuesto a perder si la operación sale mal. Muchos traders disciplinados arriesgan entre **0,5% y 1%** de la cuenta por operación. En una cuenta de $100.000, eso es entre $500 y $1.000.",
+     "Parece poco, y esa es la idea. Incluso los buenos traders se equivocan seguido. Con 1% de riesgo, diez pérdidas seguidas cuestan alrededor del 10% de la cuenta: duele, pero se recupera. Con 10% de riesgo por operación, la misma racha se llevaría la mayor parte."
+    ]
+   },
+   {
+    "h": "La fórmula de las acciones",
+    "p": [
+     "Una vez que sabes tu riesgo en dólares, la cantidad de acciones sale de la distancia entre tu entrada y tu [stop](lesson:stop-losses):"
+    ],
+    "list": [
+     "**Acciones = riesgo en dólares ÷ (precio de entrada − precio del stop)**",
+     "Ejemplo: cuenta de $100.000, riesgo del 1% = $1.000.",
+     "Planeas comprar una acción de $50 en su pivot (punto de compra) con un stop en $46,50, un stop del 7%. Riesgo por acción = $3,50.",
+     "Acciones = $1.000 ÷ $3,50 ≈ 285 acciones, una posición de unos $14.250."
+    ],
+    "diagram": "position-size"
+   },
+   {
+    "h": "Fija un tamaño máximo de posición",
+    "p": [
+     "La fórmula puede dar posiciones enormes cuando el stop es muy ajustado. Un stop del 2% con $1.000 de riesgo implicaría una posición de $50.000, la mitad de la cuenta. Un gap a la baja durante la noche puede atravesar un stop ajustado, así que pon un tope a cada posición. Muchos traders de crecimiento mantienen una posición completa en torno al 10% a 25% de la cuenta, según cuántas acciones quieran tener.",
+     "Usa el menor de los dos: el tamaño de la fórmula o tu máximo. Las acciones volátiles con rangos amplios (ver [ATR y ADR](lesson:atr-and-adr)) necesitan stops más amplios, que la fórmula convierte automáticamente en menos acciones."
+    ]
+   },
+   {
+    "h": "Cómo usar la calculadora de la plataforma",
+    "p": [
+     "La calculadora de tamaño de posición del gráfico y del [portafolio](/portfolio/) hace las cuentas por ti. Ingresa el tamaño de tu cuenta, el porcentaje que quieres arriesgar, tu entrada y tu stop. Te devuelve la cantidad de acciones y el valor de la posición, y puede enviar la operación planeada directo a tu portafolio para que el stop y el motivo queden registrados en tu [diario de trading](lesson:trading-journal)."
+    ]
+   }
+  ],
+  "rules": {
+   "title": "El tamaño de posición de un vistazo",
+   "rows": [
+    [
+     "Riesgo por operación",
+     "0,5% a 1% de la cuenta"
+    ],
+    [
+     "Acciones",
+     "Riesgo en dólares ÷ (entrada − stop)"
+    ],
+    [
+     "Stop típico",
+     "No más de 7% a 8% debajo de la entrada"
+    ],
+    [
+     "Posición máxima",
+     "Un tope fijo, a menudo 10% a 25% de la cuenta"
+    ],
+    [
+     "Si tienes dudas",
+     "Empieza con media posición y suma si funciona"
+    ]
+   ]
+  },
+  "mistakes": [
+   "Comprar una cantidad redonda de acciones o un monto fijo en dólares sin mirar el stop.",
+   "Arriesgar más en las operaciones de las que te sientes seguro; la confianza no es una ventaja.",
+   "Usar un stop muy ajustado para justificar una posición enorme.",
+   "Subir el riesgo después de una racha perdedora para recuperarlo."
+  ],
+  "takeaways": [
+   "Decide primero tu riesgo en dólares: 0,5% a 1% de la cuenta por operación.",
+   "Acciones = riesgo ÷ (entrada − stop), con un tope de tamaño máximo de posición.",
+   "Deja que la calculadora haga las cuentas y registra cada operación con su stop."
+  ],
+  "try": {
+   "label": "Abrir la calculadora de tamaño de posición",
+   "href": "/portfolio/"
+  },
+  "related": [
+   "stop-losses",
+   "exposure",
+   "atr-and-adr"
+  ]
+ },
+ {
+  "slug": "stop-losses",
+  "title": "Stop-loss: cortar las pérdidas rápido",
+  "desc": "Por qué cortar pérdidas al 7% u 8%, por qué nunca promediar a la baja, dónde poner el stop bajo niveles clave y cómo usar el ATR en acciones volátiles.",
+  "intro": "Todo trader se equivoca mucho. La diferencia entre sobrevivir y quebrar es qué tan rápido lo admites. Un stop-loss es un precio, decidido antes de comprar, en el que sales pase lo que pase.",
+  "sections": [
+   {
+    "h": "La regla del 7% al 8%",
+    "p": [
+     "El método popularizado por William O'Neil tiene una regla innegociable: vende cualquier acción que caiga 7% a 8% por debajo de tu precio de compra. Sin excepciones, sin esperar un rebote. Si compras a $50, sales alrededor de $46.",
+     "Las cuentas lo explican. Una pérdida del 10% necesita una ganancia del 11% para recuperarse. Una del 25% necesita 33%. Una del 50% necesita 100%. Las pérdidas chicas se recuperan fácil; las grandes pueden llevar años. Cortar las pérdidas rápido te mantiene en el juego el tiempo suficiente para que tus ganadoras paguen."
+    ],
+    "diagram": "stop-loss"
+   },
+   {
+    "h": "Nunca promedies a la baja",
+    "p": [
+     "Promediar a la baja significa comprar más de una acción mientras cae para bajar tu costo promedio. Parece inteligente, porque la acción está \"más barata\". En realidad estás poniendo más dinero en una posición que te está demostrando que te equivocaste, y convirtiendo una pérdida chica en una grande.",
+     "Haz lo contrario. Si vas a sumar, suma a las ganadoras que están funcionando, cerca de un punto de compra correcto, nunca a las perdedoras."
+    ]
+   },
+   {
+    "h": "Pon el stop debajo de un nivel real",
+    "p": [
+     "El 7% a 8% es un máximo, no un objetivo. Muchas veces un mejor stop está justo debajo de un nivel significativo: el mínimo del asa (handle), el piso de una zona ajustada o la [media de 50 días](lesson:the-50-day-line). Si la acción rompe ese nivel, el setup (la configuración) se rompió.",
+     "Si el stop lógico está a más de 8%, la entrada probablemente está demasiado lejos del [pivot](lesson:pivot-and-buy-zone). Saltea la operación o espera un mejor punto. Muchos traders con experiencia apuntan a stops del 3% al 5% cuando compran justo en el pivot."
+    ]
+   },
+   {
+    "h": "Acciones volátiles y ATR",
+    "p": [
+     "Algunas acciones se mueven 2% por día; otras, 6%. Un stop que sirve para una acción tranquila puede saltar por el ruido normal de una salvaje. Revisa el [ATR o ADR](lesson:atr-and-adr) en el recuadro de datos. Un stop más cerca que una a una vez y media el rango diario promedio va a saltar seguido por movimientos aleatorios.",
+     "La solución no es un stop más amplio con la misma posición. Mantén un stop razonable y compra menos acciones, para que el riesgo en dólares sea el mismo. Para eso está el [tamaño de posición](lesson:position-sizing)."
+    ]
+   },
+   {
+    "h": "Que el stop sea real",
+    "p": [
+     "Decide el stop antes de comprar y anótalo en tu diario. Puedes colocar una orden stop con tu broker o crear una alerta de precio en la plataforma y actuar cuando se active. Lo que importa es que lo respetes. Un stop que bajas cuando la acción se acerca no es un stop."
+    ]
+   }
+  ],
+  "mistakes": [
+   "Bajar el stop porque \"ya va a volver\".",
+   "Promediar a la baja en una acción que cae.",
+   "Poner un stop tan ajustado que el ruido diario normal lo active.",
+   "Decidir la salida después de comprar, cuando mandan las emociones."
+  ],
+  "takeaways": [
+   "Corta cada pérdida al 7% u 8% como máximo; menos es mejor cuando compras cerca del pivot.",
+   "Nunca promedies a la baja; suma solo a posiciones que funcionan.",
+   "Pon los stops debajo de niveles reales y en acciones volátiles ajusta la cantidad de acciones, no el riesgo."
+  ],
+  "related": [
+   "position-sizing",
+   "failed-breakouts",
+   "taking-profits"
+  ]
+ },
+ {
+  "slug": "taking-profits",
+  "title": "Tomar ganancias: cuándo vender una ganadora",
+  "desc": "Cuándo vender ganadoras: ganancias del 20% al 25%, la regla de las 8 semanas, vender con fuerza, señales en la media de 50 días y la idea del 3 a 1.",
+  "intro": "Comprar es la mitad del trabajo. Muchos traders cortan bien las pérdidas pero después devuelven sus ganancias porque nunca tuvieron un plan de venta. Estas pautas te ayudan a asegurar ganancias sin vender demasiado pronto a las verdaderas líderes.",
+  "sections": [
+   {
+    "h": "Toma la mayoría de las ganancias en 20% a 25%",
+    "p": [
+     "Una regla base simple: cuando una acción sube 20% a 25% desde un punto de compra correcto, considera vender la mayor parte o todo. Muchos breakouts avanzan eso y luego arman una nueva base, y a menudo retroceden lo suficiente como para borrar buena parte de la ganancia.",
+     "Combinado con una pérdida máxima del 7% al 8%, esto crea aproximadamente una **relación ganancia/pérdida de 3 a 1**. Puedes acertar solo un tercio o el 40% de las veces y aun así ganar dinero si tu ganancia promedio es unas tres veces tu pérdida promedio."
+    ],
+    "diagram": "profit-taking"
+   },
+   {
+    "h": "La regla de las 8 semanas",
+    "p": [
+     "Hay una excepción importante. Si una acción salta 20% o más en tres semanas o menos desde el breakout, puede ser una verdadera líder. Mantenla al menos ocho semanas desde el breakout (salvo que toque tu stop), en lugar de tomar el 20% rápido.",
+     "Esos arranques explosivos son los que a veces se convierten en ganadoras del 100% o más. La regla te protege de venderlas por costumbre."
+    ]
+   },
+   {
+    "h": "Vende con fuerza",
+    "p": [
+     "El momento más fácil para vender es cuando los compradores están ansiosos: en un día de suba, mientras la acción sube. Esperar la primera caída fuerte significa vender en debilidad, muchas veces a un precio peor. Señales de que una gran subida puede estar terminando:"
+    ],
+    "list": [
+     "La mayor ganancia diaria o el rango semanal más amplio de todo el movimiento, después de un largo avance.",
+     "Una seguidilla de varios días de suba con volumen alto, muy por encima de las medias móviles (una subida clímax).",
+     "Un [gap](lesson:gaps) de agotamiento tarde en el movimiento.",
+     "Una base de etapa avanzada, la tercera o cuarta desde el inicio de la tendencia (ver [conteo de bases](lesson:base-count))."
+    ]
+   },
+   {
+    "h": "Vende cuando se rompen medias móviles clave",
+    "p": [
+     "Para las acciones que decides mantener, las medias móviles sirven de guía para ir subiendo la salida. Un cierre claro debajo de la [media de 50 días](lesson:the-50-day-line) con volumen fuerte, sobre todo si la acción no la recupera en los días siguientes, es una señal de venta clásica. Quienes mantienen a más largo plazo suelen usar la **media de 10 semanas** en el gráfico semanal: un cierre semanal bien por debajo con volumen creciente es la señal para salir.",
+     "Vender por partes está bien. Podrías vender la mitad en 20% a 25% y mantener el resto con un stop en la media de 50 días. Así aseguras una ganancia y conservas algo de exposición por si la acción se convierte en una gran ganadora."
+    ]
+   }
+  ],
+  "rules": {
+   "title": "Pautas para tomar ganancias",
+   "rows": [
+    [
+     "Objetivo normal",
+     "Vender la mayor parte 20% a 25% sobre el punto de compra"
+    ],
+    [
+     "Regla de 8 semanas",
+     "Sube 20%+ en 3 semanas desde el breakout: mantener al menos 8 semanas"
+    ],
+    [
+     "Señales de clímax",
+     "Mayor ganancia del movimiento, gaps, muchos días de suba seguidos"
+    ],
+    [
+     "Salida dinámica",
+     "Cierre con volumen fuerte debajo de la media de 50 días (o 10 semanas)"
+    ],
+    [
+     "Objetivo ganancia/pérdida",
+     "Ganancia promedio unas 3 veces la pérdida promedio"
+    ]
+   ]
+  },
+  "mistakes": [
+   "Dejar que una ganancia del 20% se convierta en pérdida por no tener plan de venta.",
+   "Vender una acción que subió 20% en dos semanas en lugar de aplicar la regla de las 8 semanas.",
+   "Esperar a vender después de la primera caída fuerte en lugar de vender con fuerza.",
+   "Mantener bases de etapa avanzada con la misma confianza que las de primera etapa."
+  ],
+  "takeaways": [
+   "Toma la mayoría de las ganancias en 20% a 25%, salvo que la acción gane 20% en tres semanas o menos; en ese caso, mantenla ocho semanas.",
+   "Vende con fuerza y mantente atento a las señales de clímax después de avances largos.",
+   "Usa la media de 50 días o de 10 semanas como salida dinámica para las acciones que conservas."
+  ],
+  "related": [
+   "stop-losses",
+   "the-50-day-line",
+   "base-count",
+   "trading-journal"
+  ]
+ },
+ {
+  "slug": "exposure",
+  "title": "Exposición al mercado: cuánto invertir",
+  "desc": "Cuánto de tu cuenta invertir según la dirección del mercado, por qué el efectivo es una posición y cuántas acciones tener a la vez.",
+  "intro": "La exposición es la parte de tu cuenta invertida en acciones en cada momento. Manejarla bien es una de las herramientas de riesgo más poderosas que tienes, porque la mayoría de las acciones sigue al mercado general.",
+  "sections": [
+   {
+    "h": "Deja que el mercado fije tu exposición",
+    "p": [
+     "Alrededor de tres de cada cuatro acciones se mueven en la misma dirección que el mercado general. Incluso los mejores setups fallan más seguido en una corrección. Por eso, cuánto inviertes debería depender de la [dirección del mercado](lesson:market-direction), que se muestra en la [página Breadth](/breadth/)."
+    ],
+    "list": [
+     "**Tendencia alcista confirmada:** puedes ir subiendo hacia la exposición completa, 80% a 100% invertido, mientras tus operaciones funcionen.",
+     "**Tendencia alcista bajo presión:** deja de sumar, ajusta los stops, toma algunas ganancias. Muchos traders bajan a alrededor del 30% al 60%.",
+     "**Corrección:** protege el capital. Mayormente o totalmente en efectivo, quizás 0% a 20%, hasta que un [día de follow-through](lesson:follow-through-day) señale una nueva tendencia alcista."
+    ],
+    "diagram": "exposure"
+   },
+   {
+    "h": "El efectivo es una posición",
+    "p": [
+     "Estar en efectivo no es \"no hacer nada\". Es una decisión activa que protege tu cuenta cuando las probabilidades son malas y mantiene dinero listo para la próxima tendencia alcista. Algunas de las mayores ganancias llegan justo después de las correcciones, y los traders que se aferraron a acciones perdedoras durante la caída muchas veces no tienen ni el dinero ni la confianza para comprar a las nuevas líderes.",
+     "El efectivo también protege tu forma de pensar. Cuando no estás cargando pérdidas, puedes mirar el mercado con calma y detectar a las nuevas líderes mientras se arman."
+    ]
+   },
+   {
+    "h": "Entra de a poco, no de golpe",
+    "p": [
+     "La exposición debería seguir a los resultados, no a la esperanza. Cuando empieza una nueva tendencia alcista, arranca con una o dos posiciones. Si funcionan, suma más. Si tus primeras compras saltan por el stop, es una señal de que el mercado no está listo, y te quedas mayormente en efectivo. Tus propias operaciones son una segunda opinión útil sobre el mercado.",
+     "Sal de la misma manera. A medida que se acumulan días de distribución y las acciones empiezan a tocar sus stops, tu exposición baja de forma natural."
+    ]
+   },
+   {
+    "h": "Cuántas posiciones tener",
+    "p": [
+     "Para la mayoría de los traders individuales, entre **4 y 8 acciones** es suficiente. Con menos, un mal gap duele mucho. Con muchas más, no puedes seguir cada una de cerca y tus resultados empiezan a parecerse a los de un fondo indexado. Las cuentas chicas pueden concentrarse en menos nombres; las reglas de [tamaño de posición](lesson:position-sizing) siguen valiendo.",
+     "Reparte las posiciones entre distintos grupos de industria para que un mal día de un grupo no golpee todo a la vez."
+    ]
+   }
+  ],
+  "rules": {
+   "title": "Exposición según la dirección del mercado",
+   "rows": [
+    [
+     "Tendencia alcista confirmada",
+     "Subir hacia 80% a 100% invertido a medida que las operaciones funcionan"
+    ],
+    [
+     "Bajo presión",
+     "Sin compras nuevas, reducir, a menudo 30% a 60%"
+    ],
+    [
+     "Corrección",
+     "Mayormente efectivo, 0% a 20%"
+    ],
+    [
+     "Cantidad de acciones",
+     "Normalmente 4 a 8 posiciones"
+    ],
+    [
+     "Sumar",
+     "Solo cuando las posiciones actuales muestran ganancia"
+    ]
+   ]
+  },
+  "mistakes": [
+   "Quedarse totalmente invertido durante una corrección porque las acciones \"se ven baratas\".",
+   "Pasar de 0% a 100% invertido el primer día de una nueva tendencia alcista.",
+   "Tener tantas acciones que no puedes manejarlas.",
+   "Cargar varias acciones del mismo grupo."
+  ],
+  "takeaways": [
+   "La dirección del mercado debería definir cuánto de tu cuenta está invertido.",
+   "El efectivo es una posición que protege el capital en las correcciones.",
+   "Entra y sal de a poco según los resultados, y mantén una cantidad de posiciones manejable."
+  ],
+  "try": {
+   "label": "Ver la dirección del mercado",
+   "href": "/breadth/"
+  },
+  "related": [
+   "market-direction",
+   "position-sizing",
+   "follow-through-day"
+  ]
+ },
+ {
+  "slug": "trading-journal",
+  "title": "Cómo llevar un diario de trading",
+  "desc": "Cómo llevar un diario de trading: qué anotar en cada operación, cómo revisarlo cada semana y qué estadísticas importan, como la tasa de acierto.",
+  "intro": "Un diario convierte tus operaciones en lecciones. Sin él, recuerdas las grandes ganancias y olvidas por qué perdiste. Con él, puedes ver exactamente qué te funciona y qué no.",
+  "sections": [
+   {
+    "h": "Qué anotar en cada operación",
+    "p": [
+     "Escribe la entrada antes de comprar, no después. El plan es la parte más valiosa, porque después puedes comparar lo que pensabas hacer con lo que hiciste."
+    ],
+    "list": [
+     "**Setup:** el tipo de base y el pivot, por ejemplo una taza con asa que rompe con volumen.",
+     "**Entrada, stop y tamaño:** precio, precio del stop, cantidad de acciones y porcentaje de la cuenta en riesgo.",
+     "**Motivo:** por qué esta acción, por qué ahora. Dirección del mercado, RS Rating, ranking del grupo, resultados.",
+     "**Salida:** la fecha, el precio y por qué vendiste (stop, objetivo, señal de venta o emoción).",
+     "**Una nota o gráfico:** qué hiciste bien y qué cambiarías."
+    ],
+    "diagram": "position-size"
+   },
+   {
+    "h": "Las estadísticas que importan",
+    "p": [
+     "Después de 20 o 30 operaciones, unos números simples empiezan a contar una historia:"
+    ],
+    "list": [
+     "**Tasa de acierto:** la proporción de operaciones que ganaron dinero. Entre 40% y 50% es normal para quienes siguen tendencias.",
+     "**Ganancia promedio y pérdida promedio:** en porcentaje. El objetivo es que las ganancias sean unas dos a tres veces el tamaño de las pérdidas.",
+     "**Relación ganancia/pérdida:** ganancia promedio ÷ pérdida promedio. Un 40% de acierto con una relación de 3 a 1 es rentable.",
+     "**Mayor pérdida:** si es mucho más grande que 8%, no estás respetando tus [stops](lesson:stop-losses)."
+    ]
+   },
+   {
+    "h": "Revisa cada semana",
+    "p": [
+     "Reserva un momento una vez por semana, idealmente en tu [rutina semanal](lesson:weekly-routine), para repasar las operaciones de la semana. Mira cada gráfico otra vez con la cabeza fresca. ¿Compraste cerca del pivot o persiguiste el precio? ¿Respetaste tu stop? ¿Vendiste demasiado pronto o demasiado tarde?",
+     "Con el tiempo aparecen patrones. Quizás tus breakouts en mercados débiles suelen fallar, o tus pérdidas vienen de comprar acciones extendidas. Esos patrones se convierten en tus reglas personales."
+    ]
+   },
+   {
+    "h": "El diario del portafolio en Ticker&Tape",
+    "p": [
+     "El [portafolio](/portfolio/) reúne tus operaciones, tu P&L (ganancias y pérdidas) y tus estadísticas en un solo lugar. Cuando planeas una operación con la [calculadora de tamaño de posición](lesson:position-sizing), puedes enviarla al portafolio con la entrada y el stop ya cargados, y luego agregar tus notas en el diario. Las estadísticas se actualizan solas a medida que cierras operaciones, así que ves tu tasa de acierto y tu ganancia y pérdida promedio sin una planilla."
+    ]
+   }
+  ],
+  "mistakes": [
+   "Anotar solo las ganadoras, o escribir notas solo cuando algo sale mal.",
+   "Completar el motivo después de la operación, lo que reescribe la historia.",
+   "Juzgar el método con cinco operaciones en lugar de una muestra significativa.",
+   "Llevar un diario pero nunca revisarlo."
+  ],
+  "takeaways": [
+   "Anota setup, entrada, stop, tamaño y motivo de cada operación antes de comprar.",
+   "Sigue la tasa de acierto, la ganancia promedio, la pérdida promedio y la relación ganancia/pérdida.",
+   "Revisa cada semana y convierte los errores repetidos en reglas."
+  ],
+  "try": {
+   "label": "Abrir el diario del portafolio",
+   "href": "/portfolio/"
+  },
+  "related": [
+   "position-sizing",
+   "taking-profits",
+   "weekly-routine"
+  ]
+ },
+ {
+  "slug": "daily-routine",
+  "title": "Una rutina diaria para traders",
+  "desc": "Una rutina de trading diaria simple: qué revisar antes de la apertura, cómo manejar la sesión con alertas y volumen, y cómo repasar el día al cierre.",
+  "intro": "Los traders constantes siguen una rutina. Te mantiene preparado, frena las operaciones impulsivas y asegura que revises lo importante en el mismo orden todos los días. Esta es una rutina simple armada en torno a la plataforma.",
+  "sections": [
+   {
+    "h": "Antes de la apertura",
+    "p": [
+     "Date 20 a 30 minutos antes de la apertura de las 9:30 a.m. hora de Nueva York."
+    ],
+    "list": [
+     "**Dirección del mercado:** revisa el estado en la [página Breadth](/breadth/). Define si buscas comprar, mantener o proteger efectivo.",
+     "**Calendario macro:** ¿hay CPI, empleo o un evento de la Fed hoy? Anota el horario en la [página Macro](/macro/).",
+     "**Resultados:** ¿alguna de tus acciones o de tu watchlist (lista de seguimiento) presenta resultados hoy o después del cierre? Revisa el [calendario de resultados](/earnings/).",
+     "**Movimientos de la noche:** ¿qué acciones abrieron con gap al alza o a la baja en el pre-market, y por qué?",
+     "**El Daily Tape:** lee el informe diario en la [página Research](/research/) para ver un resumen del mercado y de las acciones cerca de puntos de compra.",
+     "**Plan:** anota las dos o tres acciones que comprarías hoy, con pivot, stop y cantidad de acciones."
+    ],
+    "diagram": "routine"
+   },
+   {
+    "h": "Durante la sesión",
+    "p": [
+     "El objetivo es ejecutar tu plan, no mirar cada movimiento. Pon alertas en los pivots y en los niveles de stop para que la plataforma te avise cuando pase algo.",
+     "Cuando una acción supera su pivot, mira el volumen. Un breakout con volumen bien por encima del promedio (ver [volumen en los breakouts](lesson:volume-on-breakouts)) merece que actúes; uno con poco volumen merece cautela. Compra dentro de la zona de compra, nunca más de 5% sobre el pivot, y coloca el stop enseguida. Si una acción toca su stop, vende. Sin discusión."
+    ]
+   },
+   {
+    "h": "Después del cierre",
+    "p": [
+     "Dedica 20 a 30 minutos después de las 4:00 p.m. a repasar el día."
+    ],
+    "list": [
+     "¿Cómo cerraron los índices, y con más o menos volumen? ¿Fue un día de distribución?",
+     "¿Cómo se comportaron tus acciones? Anota cualquier cosa rara en tu [diario](lesson:trading-journal).",
+     "Actualiza la watchlist: saca los setups rotos y agrega acciones de [Ideas](/ideas/) que estén formando bases ajustadas.",
+     "Mueve los stops si tus reglas lo indican y deja las alertas listas para mañana."
+    ]
+   },
+   {
+    "h": "Que sea corta y repetible",
+    "p": [
+     "Una rutina que puedes seguir todos los días le gana a una perfecta que te salteas. Si tienes un trabajo y no puedes mirar el mercado, haz la parte de antes de la apertura y la de después del cierre, y apóyate en alertas y órdenes stop durante el día. Muchos traders exitosos trabajan exactamente así."
+    ]
+   }
+  ],
+  "mistakes": [
+   "Empezar el día mirando acciones individuales antes de revisar la dirección del mercado.",
+   "Comprar por impulso durante la sesión sin un plan hecho de antemano.",
+   "Olvidar un reporte de resultados o una decisión de la Fed que estaba en el calendario.",
+   "Saltear el repaso después del cierre cuando el día salió mal."
+  ],
+  "takeaways": [
+   "Antes de la apertura: dirección del mercado, calendario macro, resultados, movimientos, Daily Tape y un plan escrito.",
+   "Durante la sesión: usa alertas, exige volumen en los breakouts y respeta los stops.",
+   "Después del cierre: repasa los índices y tus acciones, actualiza la watchlist y deja las alertas de mañana."
+  ],
+  "try": {
+   "label": "Leer el Daily Tape",
+   "href": "/research/"
+  },
+  "related": [
+   "weekly-routine",
+   "economic-calendar",
+   "market-direction"
+  ]
+ },
+ {
+  "slug": "weekly-routine",
+  "title": "La rutina de revisión semanal",
+  "desc": "Una rutina de fin de semana para traders de crecimiento: gráficos semanales, rankings de grupos, bases nuevas, depurar la watchlist y planificar la semana.",
+  "intro": "El fin de semana el mercado está cerrado y puedes pensar con claridad. Una revisión semanal de una o dos horas te da el panorama general que cuesta ver en el ruido del trading diario.",
+  "sections": [
+   {
+    "h": "Empieza por el mercado",
+    "p": [
+     "Mira los gráficos semanales del S&P 500 y del Nasdaq. ¿Están por encima de una media de 10 semanas en ascenso? ¿Cuántos [días de distribución](lesson:distribution-days) hay en el conteo? ¿Qué dice la [amplitud del mercado](lesson:market-breadth): hay más acciones marcando máximos nuevos o mínimos nuevos? Decide tu [exposición](lesson:exposure) objetivo para la semana antes de mirar cualquier acción individual.",
+     "Escribe un resumen del mercado en una línea, como \"tendencia alcista confirmada, las líderes se comportan bien, listo para sumar\". Te mantiene honesto cuando la semana se pone ruidosa."
+    ],
+    "diagram": "routine"
+   },
+   {
+    "h": "Revisa los grupos",
+    "p": [
+     "Abre los [rankings de grupos de industria](/groups/). ¿Qué grupos suben y cuáles caen? Las líderes suelen aparecer en grupo, así que una fortaleza nueva en un grupo es a menudo la primera pista de las próximas ganadoras. El gráfico de rotación sectorial muestra hacia dónde fluye el dinero a nivel de sectores.",
+     "Anota los grupos más fuertes y fíjate si las acciones de tu watchlist pertenecen a ellos. Una buena base en un grupo débil es una operación con menos probabilidades."
+    ]
+   },
+   {
+    "h": "Busca bases nuevas",
+    "p": [
+     "Los gráficos semanales son el mejor lugar para juzgar las bases. Recorre las acciones de [Ideas](/ideas/) y del [screener](/screener/) (buscador de acciones) y busca:"
+    ],
+    "list": [
+     "Bases correctas con cierres semanales ajustados y volumen que se seca.",
+     "Una línea RS en ascenso, idealmente cerca de máximos nuevos.",
+     "Fuerte crecimiento de ganancias y ventas.",
+     "Un pivot claro a pocos puntos porcentuales del precio actual."
+    ]
+   },
+   {
+    "h": "Depura la watchlist",
+    "p": [
+     "Una watchlist de 100 acciones no es una watchlist. Redúcela a los 10 a 20 mejores setups. Saca las acciones que se rompieron, cayeron debajo de su media de 50 días o están demasiado extendidas. Para cada nombre que conservas, anota el pivot, el stop y la cantidad de acciones, para poder actuar rápido durante la semana.",
+     "Lee el informe semanal en la [página Research](/research/), el Weekly Tape, para comparar tu lista con el resumen del mercado de la semana."
+    ]
+   },
+   {
+    "h": "Revisa tus operaciones y planifica el calendario",
+    "p": [
+     "Repasa las operaciones de la semana pasada en tu [diario](lesson:trading-journal) y anota una lección. Luego abre la [página Macro](/macro/) y el [calendario de resultados](/earnings/) y marca los días importantes que vienen: CPI, el informe de empleo, una reunión del FOMC, resultados de acciones que tienes. Decide de antemano cómo los vas a manejar. Cuando llegue el lunes, tu plan ya está escrito."
+    ]
+   }
+  ],
+  "mistakes": [
+   "Saltear la revisión semanal y operar solo con gráficos diarios.",
+   "Tener una watchlist enorme que en realidad no puedes seguir.",
+   "No revisar qué grupos lideran antes de elegir acciones.",
+   "Sorprenderse el miércoles por un evento que estuvo en el calendario todo el fin de semana."
+  ],
+  "takeaways": [
+   "Empieza por los índices y la amplitud del mercado, y luego decide tu exposición para la semana.",
+   "Usa los rankings de grupos y los gráficos semanales para encontrar las mejores bases nuevas, y reduce la watchlist a los mejores setups.",
+   "Revisa tu diario y marca de antemano las fechas macro y de resultados clave de la semana."
+  ],
+  "try": {
+   "label": "Ver las Ideas de hoy",
+   "href": "/ideas/"
+  },
+  "related": [
+   "daily-routine",
+   "trading-journal",
+   "leaders-and-laggards"
+  ]
+ }
+]

@@ -1,0 +1,714 @@
+[
+ {
+  "slug": "what-moves-the-market",
+  "title": "What moves the stock market",
+  "desc": "Learn how interest rates, inflation, jobs and growth data move stocks, why good news can be bad news, and why the market's reaction beats the forecast.",
+  "intro": "Stocks don't move in a vacuum. Interest rates, inflation, jobs and economic growth set the backdrop for every chart you look at. You don't need to be an economist, but you should know which numbers matter and how the market tends to react to them.",
+  "sections": [
+   {
+    "h": "The big four: rates, inflation, jobs and growth",
+    "p": [
+     "Most market-moving news fits into four buckets. The first and most powerful is **interest rates**, set by the U.S. central bank, the Federal Reserve (the Fed). Lower rates make borrowing cheaper and make future company profits worth more today, which tends to help stocks, especially fast-growing ones. Higher rates do the opposite.",
+     "The other three buckets mostly matter because of what they mean for rates. Hot inflation can force the Fed to keep rates high. A very strong jobs market can feed inflation. Weak growth can bring rate cuts, but also lower profits."
+    ],
+    "list": [
+     "**Inflation:** CPI (Consumer Price Index) and PCE (Personal Consumption Expenditures, the Fed's preferred gauge).",
+     "**Jobs:** the monthly employment report (nonfarm payrolls and the unemployment rate) and weekly jobless claims.",
+     "**Growth:** GDP (the total output of the economy) and the ISM surveys of manufacturing and services.",
+     "**Spending:** retail sales, which shows how much consumers are buying."
+    ],
+    "diagram": "econ-calendar"
+   },
+   {
+    "h": "Why good news can be bad news",
+    "p": [
+     "Beginners are often confused when a strong jobs report sends stocks lower. The reason is the Fed. If the economy looks too hot, traders expect rates to stay higher for longer, and that weighs on stock prices. In the same way, a weak report can lift stocks if it raises the odds of a rate cut.",
+     "This flips over time. When investors fear a recession, bad news is simply bad news, and good news is welcome. The same number can mean different things in different years, so don't memorize a rule like \"strong jobs = stocks up\"."
+    ]
+   },
+   {
+    "h": "Expectations matter more than the number",
+    "p": [
+     "Before every release, economists publish a forecast, often called the consensus. Prices already reflect that forecast. What moves the market is the **surprise**: how far the actual number lands from what was expected, and what it changes about the outlook for rates.",
+     "That is why a number that sounds bad can produce a rally. If inflation came in at 3.2% when traders feared 3.5%, the market may cheer a figure that is still too high."
+    ]
+   },
+   {
+    "h": "Watch the reaction, not the forecast",
+    "p": [
+     "You can't trade the forecast reliably, and you don't need to. The method popularized by William O'Neil reads the market itself. After a big release, ask simple questions: Did the indexes close higher or lower? On more or less volume than the day before? Did leading stocks hold their gains?",
+     "A market that shrugs off bad news is showing strength. A market that sells off on good news is showing weakness. The index action, measured by [distribution days](lesson:distribution-days) and [market direction](lesson:market-direction), is the final judge. Macro data explains the move; price and volume confirm it."
+    ]
+   }
+  ],
+  "mistakes": [
+   "Trying to predict economic numbers and betting big before the release.",
+   "Assuming a strong report must be good for stocks without thinking about rates.",
+   "Ignoring the calendar and getting surprised by a big gap on CPI or Fed day.",
+   "Letting news headlines override what the indexes and your stocks are actually doing."
+  ],
+  "takeaways": [
+   "Interest rates are the main macro force behind stock prices; inflation, jobs and growth matter mostly through their effect on rates.",
+   "The market reacts to surprises versus expectations, not to the raw number.",
+   "Judge the news by the market's reaction in price and volume, not by your own forecast."
+  ],
+  "try": {
+   "label": "Open the Macro calendar",
+   "href": "/macro/"
+  },
+  "related": [
+   "the-fed-and-rates",
+   "economic-calendar",
+   "market-direction"
+  ]
+ },
+ {
+  "slug": "the-fed-and-rates",
+  "title": "The Fed and interest rates",
+  "desc": "What the FOMC does, how rate cuts and hikes affect stocks, what the dot plot shows, and how to read cut, hold and hike odds from fed funds futures.",
+  "intro": "The Federal Reserve is the most watched institution in the stock market. Its decisions on interest rates ripple through every stock, sector and index. Here is what it does and how to read what traders expect from it.",
+  "sections": [
+   {
+    "h": "What the FOMC does",
+    "p": [
+     "The Fed's interest rate decisions are made by the **FOMC** (Federal Open Market Committee). It meets eight times a year, about every six weeks. At each meeting it sets a target range for the **fed funds rate**, the rate banks charge each other for overnight loans. That rate influences everything from mortgages to credit cards to the yields on government bonds.",
+     "The Fed has two jobs: keep prices stable (inflation near 2%) and keep employment high. When inflation runs hot, it raises rates to cool the economy. When the economy weakens, it cuts rates to support it."
+    ]
+   },
+   {
+    "h": "Cuts, holds and hikes",
+    "list": [
+     "**Cut:** the rate goes down. Borrowing gets cheaper. Usually supportive for stocks, especially growth stocks, unless the cut comes because a recession is starting.",
+     "**Hold:** the rate stays the same. The market then focuses on the statement and the press conference for clues about the next move.",
+     "**Hike:** the rate goes up. Money gets more expensive, which tends to pressure stock valuations."
+    ],
+    "p": [
+     "Moves are usually 0.25 percentage points (25 basis points; one basis point is 0.01%). Bigger moves of 50 or 75 basis points signal urgency."
+    ]
+   },
+   {
+    "h": "The statement, the press conference and the dot plot",
+    "p": [
+     "The decision is released at 2:00 p.m. New York time, and the Fed Chair holds a press conference at 2:30. Markets often swing sharply in both directions during that hour, so the first move is not always the real one.",
+     "Four times a year the Fed also publishes its projections, including the **dot plot**. Each dot shows where one Fed official thinks the rate should be at the end of the coming years. The dots are not a promise, but they show whether officials lean toward more cuts or more hikes than the market expects."
+    ]
+   },
+   {
+    "h": "Reading the odds from fed funds futures",
+    "p": [
+     "Traders bet on future Fed decisions with **fed funds futures**. From their prices you can work out the market's implied probability of a cut, a hold or a hike at each upcoming meeting. The [Macro page](/macro/) shows these odds for the next meetings.",
+     "If the odds of a cut at the next meeting are 90%, a cut is already priced in and the decision itself will barely move stocks. The surprise would be a hold. Watch how the odds change after big releases like CPI or the jobs report: a sharp shift tells you the data changed the outlook for rates."
+    ],
+    "diagram": "fed-odds"
+   }
+  ],
+  "mistakes": [
+   "Treating a rate cut as automatically bullish; cuts during a slowdown can come with falling stocks.",
+   "Trading the first minutes after the 2:00 p.m. decision, when moves often reverse.",
+   "Reading the dot plot as a fixed plan instead of a set of opinions that change with the data.",
+   "Ignoring the odds and being surprised by a decision the market had already priced in."
+  ],
+  "takeaways": [
+   "The FOMC sets the fed funds rate eight times a year; cuts tend to help stocks and hikes tend to weigh on them.",
+   "What moves markets is a decision or outlook that differs from what fed funds futures already price in.",
+   "Check the cut/hold/hike odds on the Macro page before Fed days and after major data releases."
+  ],
+  "try": {
+   "label": "See the Fed odds",
+   "href": "/macro/"
+  },
+  "related": [
+   "what-moves-the-market",
+   "economic-calendar",
+   "market-direction"
+  ]
+ },
+ {
+  "slug": "economic-calendar",
+  "title": "How to use the economic calendar",
+  "desc": "Which economic releases move stocks, what time they come out in New York, and how to manage risk around CPI, jobs and FOMC days using a weekly calendar.",
+  "intro": "Big economic releases come out on a schedule you can see weeks in advance. Checking the calendar takes two minutes and helps you avoid being blindsided by a sudden gap in the indexes.",
+  "sections": [
+   {
+    "h": "The releases that matter most",
+    "p": [
+     "Dozens of reports come out every month, but only a handful regularly move the whole market. These are marked as high importance on the [Macro page](/macro/). Times below are New York time (ET), the clock the U.S. market runs on."
+    ],
+    "list": [
+     "**CPI** (consumer inflation): monthly, 8:30 a.m.",
+     "**Jobs report** (nonfarm payrolls, unemployment): usually the first Friday of the month, 8:30 a.m.",
+     "**PCE** (the Fed's preferred inflation gauge): monthly, 8:30 a.m.",
+     "**GDP** and **retail sales**: 8:30 a.m.",
+     "**ISM** manufacturing and services surveys: 10:00 a.m.",
+     "**Jobless claims**: every Thursday, 8:30 a.m.",
+     "**FOMC decision**: 2:00 p.m., press conference at 2:30, eight times a year."
+    ],
+    "diagram": "econ-calendar"
+   },
+   {
+    "h": "Why the time matters",
+    "p": [
+     "Most reports come out at 8:30 a.m., an hour before the 9:30 open. The reaction shows up in pre-market trading and often as a gap at the open. The ISM at 10:00 a.m. and the Fed at 2:00 p.m. land during the session, so prices can jump while you are in a trade.",
+     "If you trade from outside the U.S., convert these times to your own clock once and write them down. The Macro page already shows them in New York time so they line up with the market's hours."
+    ]
+   },
+   {
+    "h": "Managing risk around CPI and Fed days",
+    "p": [
+     "You don't have to stop trading on big days, but you should be deliberate. Some practical habits:"
+    ],
+    "list": [
+     "Avoid opening a brand-new position right before a major release. Wait for the reaction and let the market show its hand.",
+     "If a stock you own is near your stop, know that a report can push it through the stop with a gap. Consider trimming before the event.",
+     "On FOMC afternoons, expect whipsaws. Don't judge a breakout until the close.",
+     "Keep position sizes normal or smaller. Big days are not the time to [size up](lesson:position-sizing)."
+    ]
+   },
+   {
+    "h": "A weekly calendar habit",
+    "p": [
+     "Every weekend, open the calendar and note the key releases for the coming week, along with the [earnings dates](/earnings/) of stocks you own or watch. Write them into your plan. This fits naturally into your [weekly routine](lesson:weekly-routine).",
+     "Then, each morning, glance at the day's events before the open. Knowing that CPI is out at 8:30 explains a big pre-market move instead of surprising you."
+    ]
+   }
+  ],
+  "mistakes": [
+   "Not knowing a big report is due and buying right before it.",
+   "Reading release times in your local clock and mixing them up with the market's hours.",
+   "Reacting to the first five minutes after a Fed decision instead of waiting for the close.",
+   "Forgetting that earnings dates for your own stocks are just as important as macro events."
+  ],
+  "takeaways": [
+   "A few releases move the whole market: CPI, jobs, PCE, GDP, retail sales, ISM, claims and the FOMC.",
+   "Most come out at 8:30 a.m. New York time; the Fed decision lands at 2:00 p.m.",
+   "Check the calendar every weekend and every morning, and be careful opening new trades right before big events."
+  ],
+  "try": {
+   "label": "Open the economic calendar",
+   "href": "/macro/"
+  },
+  "related": [
+   "what-moves-the-market",
+   "the-fed-and-rates",
+   "daily-routine"
+  ]
+ },
+ {
+  "slug": "position-sizing",
+  "title": "Position sizing: how many shares to buy",
+  "desc": "Learn to size every trade so a loss costs only 0.5% to 1% of your account: the shares formula, maximum position size and the Ticker&Tape calculator.",
+  "intro": "How many shares you buy matters as much as which stock you buy. Position sizing turns your stop into a fixed, small loss, so no single trade can seriously damage your account.",
+  "sections": [
+   {
+    "h": "Risk a small slice of the account",
+    "p": [
+     "Start with the account, not the stock. Decide how much of your total account you are willing to lose if the trade fails. Many disciplined traders risk **0.5% to 1%** of the account per trade. On a $100,000 account, that is $500 to $1,000.",
+     "That sounds small, and that is the point. Even good traders are wrong often. With 1% risk, ten losers in a row cost about 10% of the account, which is painful but recoverable. With 10% risk per trade, the same streak would wipe out most of it."
+    ]
+   },
+   {
+    "h": "The shares formula",
+    "p": [
+     "Once you know your risk in dollars, the number of shares comes from the distance between your entry and your [stop](lesson:stop-losses):"
+    ],
+    "list": [
+     "**Shares = risk in dollars ÷ (entry price − stop price)**",
+     "Example: $100,000 account, 1% risk = $1,000.",
+     "You plan to buy a $50 stock at its pivot with a stop at $46.50, a 7% stop. Risk per share = $3.50.",
+     "Shares = $1,000 ÷ $3.50 ≈ 285 shares, a position of about $14,250."
+    ],
+    "diagram": "position-size"
+   },
+   {
+    "h": "Set a maximum position size",
+    "p": [
+     "The formula can produce huge positions when the stop is very tight. A 2% stop with $1,000 risk would mean a $50,000 position, half the account. A gap down overnight can blow straight through a tight stop, so cap any single position. Many growth traders keep a full position around 10% to 25% of the account, depending on how many stocks they want to hold.",
+     "Use whichever is smaller: the size from the formula or your maximum. Volatile stocks with wide ranges (see [ATR and ADR](lesson:atr-and-adr)) need wider stops, which the formula automatically turns into fewer shares."
+    ]
+   },
+   {
+    "h": "Using the platform calculator",
+    "p": [
+     "The position size calculator on the chart and in the [portfolio](/portfolio/) does the math for you. Enter your account size, the percentage you want to risk, your entry and your stop. It returns the number of shares and the position value, and it can send the planned trade straight to your portfolio so the stop and reason are recorded in your [trading journal](lesson:trading-journal)."
+    ]
+   }
+  ],
+  "rules": {
+   "title": "Position sizing at a glance",
+   "rows": [
+    [
+     "Risk per trade",
+     "0.5% to 1% of the account"
+    ],
+    [
+     "Shares",
+     "Risk in dollars ÷ (entry − stop)"
+    ],
+    [
+     "Typical stop",
+     "No more than 7% to 8% below entry"
+    ],
+    [
+     "Maximum position",
+     "A fixed cap, often 10% to 25% of the account"
+    ],
+    [
+     "When unsure",
+     "Start with a half position and add if it works"
+    ]
+   ]
+  },
+  "mistakes": [
+   "Buying a round number of shares or a fixed dollar amount without looking at the stop.",
+   "Risking more on trades you feel sure about; confidence is not an edge.",
+   "Using a very tight stop to justify a huge position.",
+   "Raising risk after a losing streak to win it back."
+  ],
+  "takeaways": [
+   "Decide your dollar risk first: 0.5% to 1% of the account per trade.",
+   "Shares = risk ÷ (entry − stop), capped by a maximum position size.",
+   "Let the calculator do the math and log every trade with its stop."
+  ],
+  "try": {
+   "label": "Open the position size calculator",
+   "href": "/portfolio/"
+  },
+  "related": [
+   "stop-losses",
+   "exposure",
+   "atr-and-adr"
+  ]
+ },
+ {
+  "slug": "stop-losses",
+  "title": "Stop-losses: cutting losses short",
+  "desc": "Why traders cut losses at 7% to 8%, why you should never average down, where to put a stop below key levels, and how to handle volatile stocks with ATR.",
+  "intro": "Every trader is wrong a lot. The difference between surviving and blowing up is how quickly you admit it. A stop-loss is a price, decided before you buy, where you get out no matter what.",
+  "sections": [
+   {
+    "h": "The 7% to 8% rule",
+    "p": [
+     "The method popularized by William O'Neil has one non-negotiable rule: sell any stock that falls 7% to 8% below your purchase price. No exceptions, no waiting for a bounce. If you buy at $50, you are out by about $46.",
+     "The math explains why. A 10% loss needs an 11% gain to recover. A 25% loss needs 33%. A 50% loss needs 100%. Small losses are easy to make back; big ones can take years. Cutting losses short keeps you in the game long enough for your winners to pay."
+    ],
+    "diagram": "stop-loss"
+   },
+   {
+    "h": "Never average down",
+    "p": [
+     "Averaging down means buying more of a stock as it falls to lower your average cost. It feels smart, because the stock is \"cheaper\". In reality you are adding money to a position that is proving you wrong, and turning a small loss into a large one.",
+     "Do the opposite. If you add at all, add to winners that are working, near a proper buy point, never to losers."
+    ]
+   },
+   {
+    "h": "Put the stop below a real level",
+    "p": [
+     "7% to 8% is a maximum, not a target. Often a better stop sits just below a meaningful level: the low of the handle, the bottom of a tight area, or the [50-day line](lesson:the-50-day-line). If the stock breaks that level, the setup is broken.",
+     "If the logical stop is more than 8% away, the entry is probably too far from the [pivot](lesson:pivot-and-buy-zone). Skip the trade or wait for a better spot. Many experienced traders aim for stops of 3% to 5% when they buy right at the pivot."
+    ]
+   },
+   {
+    "h": "Volatile stocks and ATR",
+    "p": [
+     "Some stocks move 2% a day; others move 6%. A stop that is fine for a calm stock may be hit by normal noise in a wild one. Check the [ATR or ADR](lesson:atr-and-adr) in the data box. A stop closer than about one to one and a half times the average daily range will get hit often by random swings.",
+     "The answer is not a wider stop with the same position. Keep the stop sensible and buy fewer shares, so the dollar risk stays the same. That is what [position sizing](lesson:position-sizing) is for."
+    ]
+   },
+   {
+    "h": "Making the stop real",
+    "p": [
+     "Decide the stop before you buy and write it in your journal. You can place a stop order with your broker or set a price alert on the platform and act when it triggers. What matters is that you follow it. A stop you move lower when the stock gets close is not a stop."
+    ]
+   }
+  ],
+  "mistakes": [
+   "Moving the stop lower because \"it will come back\".",
+   "Averaging down into a falling stock.",
+   "Setting a stop so tight that normal daily noise triggers it.",
+   "Deciding the exit after buying, when emotions are in charge."
+  ],
+  "takeaways": [
+   "Cut every loss at 7% to 8% at most; smaller is better when you buy near the pivot.",
+   "Never average down; only add to positions that are working.",
+   "Place stops below real levels and adjust share count, not risk, for volatile stocks."
+  ],
+  "related": [
+   "position-sizing",
+   "failed-breakouts",
+   "taking-profits"
+  ]
+ },
+ {
+  "slug": "taking-profits",
+  "title": "Taking profits: when to sell a winner",
+  "desc": "When to sell winning stocks: taking gains at 20% to 25%, the 8-week hold rule, selling into strength, sell signals at the 50-day line and the 3-to-1 idea.",
+  "intro": "Buying is half the job. Many traders cut losses well but then give back their gains because they never had a plan for selling. These guidelines help you lock in profits without selling true leaders too early.",
+  "sections": [
+   {
+    "h": "Take most gains at 20% to 25%",
+    "p": [
+     "A simple base rule: when a stock is up 20% to 25% from a proper buy point, consider selling most or all of it. Many breakouts advance this much and then build a new base, often pulling back enough to erase a big part of the gain.",
+     "Combined with a 7% to 8% maximum loss, this creates roughly a **3-to-1 profit/loss ratio**. You can be right only a third or 40% of the time and still make money if your average gain is about three times your average loss."
+    ],
+    "diagram": "profit-taking"
+   },
+   {
+    "h": "The 8-week hold rule",
+    "p": [
+     "There is an important exception. If a stock jumps 20% or more within three weeks or less of breaking out, it may be a true leader. Hold it for at least eight weeks from the breakout (unless it hits your stop), instead of taking the quick 20%.",
+     "Those explosive starts are the ones that sometimes become 100% or bigger winners. The rule protects you from selling them out of habit."
+    ]
+   },
+   {
+    "h": "Sell into strength",
+    "p": [
+     "The easiest time to sell is when buyers are eager: on an up day, while the stock is rising. Waiting for the first sharp drop means selling into weakness, often at a worse price. Signs that a big run may be ending include:"
+    ],
+    "list": [
+     "The biggest daily gain or the widest weekly range of the whole move, after a long advance.",
+     "A burst of several up days in a row on high volume, far above the moving averages (a climax run).",
+     "An exhaustion [gap](lesson:gaps) late in the move.",
+     "A late-stage base, the third or fourth since the start of the trend (see [base count](lesson:base-count))."
+    ]
+   },
+   {
+    "h": "Sell on breaks of key moving averages",
+    "p": [
+     "For stocks you decide to hold, the moving averages act as trailing guides. A decisive close below the [50-day line](lesson:the-50-day-line) on heavy volume, especially if the stock can't recover it in the next days, is a classic sell signal. Longer-term holders often use the **10-week line** on the weekly chart instead: a weekly close well below it on rising volume is the signal to get out.",
+     "Selling in pieces is fine. You might sell half at 20% to 25% and hold the rest with a stop at the 50-day line. That way you lock in a profit and keep some exposure in case the stock becomes a big winner."
+    ]
+   }
+  ],
+  "rules": {
+   "title": "Profit-taking guidelines",
+   "rows": [
+    [
+     "Normal target",
+     "Sell most at 20% to 25% above the buy point"
+    ],
+    [
+     "8-week hold rule",
+     "Up 20%+ within 3 weeks of breakout: hold at least 8 weeks"
+    ],
+    [
+     "Climax signs",
+     "Biggest gain of the move, gaps, many straight up days"
+    ],
+    [
+     "Trailing exit",
+     "Heavy-volume close below the 50-day (or 10-week) line"
+    ],
+    [
+     "Profit/loss goal",
+     "Average gain about 3 times average loss"
+    ]
+   ]
+  },
+  "mistakes": [
+   "Letting a 20% gain turn into a loss because there was no sell plan.",
+   "Selling a stock that rocketed 20% in two weeks, instead of applying the 8-week rule.",
+   "Waiting to sell until after the first big drop instead of selling into strength.",
+   "Holding late-stage bases with the same confidence as first-stage ones."
+  ],
+  "takeaways": [
+   "Take most gains at 20% to 25%, unless the stock gains 20% in three weeks or less; then hold eight weeks.",
+   "Sell into strength and watch for climax signs after long advances.",
+   "Use the 50-day or 10-week line as a trailing exit for the shares you keep."
+  ],
+  "related": [
+   "stop-losses",
+   "the-50-day-line",
+   "base-count",
+   "trading-journal"
+  ]
+ },
+ {
+  "slug": "exposure",
+  "title": "Market exposure: how much to invest",
+  "desc": "How much of your account to put in stocks depending on market direction, why cash is a position, and how many stocks to hold at once as a growth trader.",
+  "intro": "Exposure is the share of your account invested in stocks at any moment. Getting it right is one of the most powerful risk tools you have, because most stocks follow the general market.",
+  "sections": [
+   {
+    "h": "Let the market set your exposure",
+    "p": [
+     "About three out of four stocks move in the same direction as the general market. Even great setups fail more often in a correction. So the amount you invest should depend on [market direction](lesson:market-direction), shown on the [Breadth page](/breadth/)."
+    ],
+    "list": [
+     "**Confirmed uptrend:** you can work up toward full exposure, 80% to 100% invested, as long as your trades are working.",
+     "**Uptrend under pressure:** stop adding, tighten stops, take some profits. Many traders drift down to around 30% to 60%.",
+     "**Correction:** protect capital. Mostly or fully in cash, perhaps 0% to 20%, until a [follow-through day](lesson:follow-through-day) signals a new uptrend."
+    ],
+    "diagram": "exposure"
+   },
+   {
+    "h": "Cash is a position",
+    "p": [
+     "Being in cash is not \"doing nothing\". It is an active decision that protects your account when the odds are poor and keeps money ready for the next uptrend. Some of the biggest gains come right after corrections, and traders who held onto losing stocks during the decline often have neither the money nor the confidence to buy the new leaders.",
+     "Cash also protects your thinking. When you are not nursing losses, you can look at the market calmly and spot the new leaders as they set up."
+    ]
+   },
+   {
+    "h": "Scale in, don't jump in",
+    "p": [
+     "Exposure should follow results, not hope. When a new uptrend begins, start with one or two positions. If they work, add more. If your first buys get stopped out, that is a sign the market isn't ready, and you stay mostly in cash. Your own trades are a useful second opinion on the market.",
+     "Scale out the same way. As distribution days pile up and stocks start hitting stops, your exposure falls naturally."
+    ]
+   },
+   {
+    "h": "How many positions to hold",
+    "p": [
+     "For most individual traders, somewhere between **4 and 8 stocks** is plenty. With fewer, one bad gap hurts a lot. With many more, you can't follow each one closely and your results start to look like an index fund. Smaller accounts can concentrate in fewer names; the [position sizing](lesson:position-sizing) rules still apply.",
+     "Spread positions across different industry groups so a single bad day for one group doesn't hit everything at once."
+    ]
+   }
+  ],
+  "rules": {
+   "title": "Exposure by market direction",
+   "rows": [
+    [
+     "Confirmed uptrend",
+     "Build toward 80% to 100% invested as trades work"
+    ],
+    [
+     "Under pressure",
+     "No new buys, trim, often 30% to 60%"
+    ],
+    [
+     "Correction",
+     "Mostly cash, 0% to 20%"
+    ],
+    [
+     "Number of stocks",
+     "Usually 4 to 8 positions"
+    ],
+    [
+     "Adding",
+     "Only when current positions show a profit"
+    ]
+   ]
+  },
+  "mistakes": [
+   "Staying fully invested through a correction because the stocks \"look cheap\".",
+   "Going from 0% to 100% invested on the first day of a new uptrend.",
+   "Holding so many stocks that you can't manage them.",
+   "Piling into several stocks from the same group."
+  ],
+  "takeaways": [
+   "Market direction should set how much of your account is invested.",
+   "Cash is a position that protects capital in corrections.",
+   "Scale in and out based on results, and keep the number of positions manageable."
+  ],
+  "try": {
+   "label": "Check market direction",
+   "href": "/breadth/"
+  },
+  "related": [
+   "market-direction",
+   "position-sizing",
+   "follow-through-day"
+  ]
+ },
+ {
+  "slug": "trading-journal",
+  "title": "Keeping a trading journal",
+  "desc": "How to keep a trading journal: what to record for every trade, how to review it weekly, and the stats that matter, like win rate and gain/loss ratio.",
+  "intro": "A journal turns your trades into lessons. Without one, you remember the big wins and forget why you lost. With one, you can see exactly what works for you and what doesn't.",
+  "sections": [
+   {
+    "h": "What to record for every trade",
+    "p": [
+     "Write the entry before you buy, not after. The plan is the most valuable part, because later you can compare what you intended with what you did."
+    ],
+    "list": [
+     "**Setup:** the base type and the pivot, for example a cup with handle breaking out on volume.",
+     "**Entry, stop and size:** price, stop price, number of shares and the percentage of the account at risk.",
+     "**Reason:** why this stock, why now. Market direction, RS Rating, group rank, earnings.",
+     "**Exit:** the date, price and why you sold (stop, target, sell signal or emotion).",
+     "**A note or chart:** what you did well and what you would change."
+    ],
+    "diagram": "position-size"
+   },
+   {
+    "h": "The stats that matter",
+    "p": [
+     "After 20 or 30 trades, simple numbers start to tell a story:"
+    ],
+    "list": [
+     "**Win rate:** the share of trades that made money. 40% to 50% is normal for trend followers.",
+     "**Average gain and average loss:** in percent. The goal is gains about two to three times the size of losses.",
+     "**Gain/loss ratio:** average gain ÷ average loss. A 40% win rate with a 3-to-1 ratio is profitable.",
+     "**Largest loss:** if it is much bigger than 8%, your [stops](lesson:stop-losses) are not being followed."
+    ]
+   },
+   {
+    "h": "Review every week",
+    "p": [
+     "Set aside time once a week, ideally in your [weekly routine](lesson:weekly-routine), to go through the past week's trades. Look at each chart again with fresh eyes. Did you buy near the pivot or chase? Did you follow your stop? Did you sell too early or too late?",
+     "Over time patterns appear. Maybe your breakouts in weak markets usually fail, or your losses come from buying extended stocks. Those patterns become your personal rules."
+    ]
+   },
+   {
+    "h": "The portfolio journal on Ticker&Tape",
+    "p": [
+     "The [portfolio](/portfolio/) keeps your trades, P&L (profit and loss) and stats in one place. When you plan a trade with the [position size calculator](lesson:position-sizing), you can send it to the portfolio with the entry and stop already filled in, then add your notes in the journal. The stats update automatically as you close trades, so you see your win rate and average gain and loss without a spreadsheet."
+    ]
+   }
+  ],
+  "mistakes": [
+   "Only recording winners, or only writing notes when something goes wrong.",
+   "Filling in the reason after the trade, which rewrites history.",
+   "Judging the method on five trades instead of a meaningful sample.",
+   "Keeping a journal but never reviewing it."
+  ],
+  "takeaways": [
+   "Record setup, entry, stop, size and reason for every trade before you buy.",
+   "Track win rate, average gain, average loss and the gain/loss ratio.",
+   "Review weekly and turn repeated mistakes into rules."
+  ],
+  "try": {
+   "label": "Open your portfolio journal",
+   "href": "/portfolio/"
+  },
+  "related": [
+   "position-sizing",
+   "taking-profits",
+   "weekly-routine"
+  ]
+ },
+ {
+  "slug": "daily-routine",
+  "title": "A daily routine for traders",
+  "desc": "A simple daily trading routine: what to check before the open, how to handle the session with alerts and volume, and how to review after the close.",
+  "intro": "Consistent traders follow a routine. It keeps you prepared, stops impulsive trades and makes sure you check the things that matter in the same order every day. Here is a simple one built around the platform.",
+  "sections": [
+   {
+    "h": "Before the open",
+    "p": [
+     "Give yourself 20 to 30 minutes before the 9:30 a.m. New York open."
+    ],
+    "list": [
+     "**Market direction:** check the status on the [Breadth page](/breadth/). It decides whether you are looking to buy, hold or protect cash.",
+     "**Macro calendar:** any CPI, jobs or Fed event today? Note the time on the [Macro page](/macro/).",
+     "**Earnings:** do any of your stocks or watchlist names report today or after the close? Check the [earnings calendar](/earnings/).",
+     "**Overnight movers:** which stocks gapped up or down in pre-market, and why?",
+     "**The Daily Tape:** read the Daily report on the [Research page](/research/) for a summary of the market and stocks near buy points.",
+     "**Plan:** list the two or three stocks you would buy today, with pivot, stop and share count."
+    ],
+    "diagram": "routine"
+   },
+   {
+    "h": "During the session",
+    "p": [
+     "The goal is to act on your plan, not to watch every tick. Set alerts at pivots and stop levels so the platform tells you when something happens.",
+     "When a stock clears its pivot, check the volume. A breakout running well above average volume (see [volume on breakouts](lesson:volume-on-breakouts)) is worth acting on; one on light volume deserves caution. Buy within the buy zone, never more than 5% above the pivot, and enter the stop right away. If a stock hits its stop, sell. No debate."
+    ]
+   },
+   {
+    "h": "After the close",
+    "p": [
+     "Spend 20 to 30 minutes after 4:00 p.m. reviewing the day."
+    ],
+    "list": [
+     "How did the indexes close, and on higher or lower volume? Was it a distribution day?",
+     "How did your stocks act? Note anything unusual in your [journal](lesson:trading-journal).",
+     "Update the watchlist: remove broken setups, add stocks from [Ideas](/ideas/) that are forming tight bases.",
+     "Move stops if your rules call for it, and set alerts for tomorrow."
+    ]
+   },
+   {
+    "h": "Keep it short and repeatable",
+    "p": [
+     "A routine you can follow every day beats a perfect one you skip. If you have a job and can't watch the market, do the before-open and after-close parts and rely on alerts and stop orders during the day. Many successful traders work exactly that way."
+    ]
+   }
+  ],
+  "mistakes": [
+   "Starting the day by looking at individual stocks before checking market direction.",
+   "Buying on impulse during the session without a plan made beforehand.",
+   "Forgetting an earnings report or a Fed decision that was on the calendar.",
+   "Skipping the after-close review when the day went badly."
+  ],
+  "takeaways": [
+   "Before the open: market direction, macro calendar, earnings, movers, Daily Tape and a written plan.",
+   "During the session: use alerts, demand volume on breakouts and respect stops.",
+   "After the close: review the indexes and your stocks, update the watchlist and set tomorrow's alerts."
+  ],
+  "try": {
+   "label": "Read the Daily Tape",
+   "href": "/research/"
+  },
+  "related": [
+   "weekly-routine",
+   "economic-calendar",
+   "market-direction"
+  ]
+ },
+ {
+  "slug": "weekly-routine",
+  "title": "The weekly review routine",
+  "desc": "A weekend routine for growth traders: reviewing weekly charts, industry group ranks and new bases, trimming the watchlist and planning the week ahead.",
+  "intro": "The weekend is when the market is closed and you can think clearly. A weekly review of an hour or two gives you the big picture that is hard to see in the noise of daily trading.",
+  "sections": [
+   {
+    "h": "Start with the market",
+    "p": [
+     "Look at the weekly charts of the S&P 500 and the Nasdaq. Are they above a rising 10-week line? How many [distribution days](lesson:distribution-days) are on the count? What does [market breadth](lesson:market-breadth) say: are more stocks making new highs or new lows? Decide your target [exposure](lesson:exposure) for the coming week before looking at any single stock.",
+     "Write a one-line summary of the market, such as \"confirmed uptrend, leaders acting well, ready to add\". It keeps you honest when the week gets noisy."
+    ],
+    "diagram": "routine"
+   },
+   {
+    "h": "Check the groups",
+    "p": [
+     "Open the [industry group rankings](/groups/). Which groups are moving up, which are falling? Leaders tend to come in clusters, so new strength in a group is often the first clue to the next winners. The sector rotation chart shows where money is flowing at the sector level.",
+     "Note the top groups and check whether the stocks on your watchlist belong to them. A good base in a weak group is a lower-odds trade."
+    ]
+   },
+   {
+    "h": "Scan for new bases",
+    "p": [
+     "Weekly charts are the best place to judge bases. Go through the stocks in [Ideas](/ideas/) and the [screener](/screener/) and look for:"
+    ],
+    "list": [
+     "Proper bases with tight weekly closes and volume drying up.",
+     "A rising RS line, ideally near new highs.",
+     "Strong earnings and sales growth.",
+     "A clear pivot within a few percent of the current price."
+    ]
+   },
+   {
+    "h": "Trim the watchlist",
+    "p": [
+     "A watchlist of 100 stocks is not a watchlist. Cut it down to the 10 to 20 best setups. Remove stocks that broke down, fell below their 50-day line or are too extended. For each name you keep, write the pivot, the stop and the share count, so you can act fast during the week.",
+     "Read the Weekly report on the [Research page](/research/), the Weekly Tape, to compare your list with the week's summary of the market."
+    ]
+   },
+   {
+    "h": "Review your trades and plan the calendar",
+    "p": [
+     "Go through last week's trades in your [journal](lesson:trading-journal) and note one lesson. Then open the [Macro page](/macro/) and the [earnings calendar](/earnings/) and mark the big days ahead: CPI, the jobs report, an FOMC meeting, earnings for stocks you own. Decide in advance how you will handle them. When Monday comes, your plan is already written."
+    ]
+   }
+  ],
+  "mistakes": [
+   "Skipping the weekly review and trading only from daily charts.",
+   "Keeping a huge watchlist that you can't actually follow.",
+   "Not checking which groups are leading before choosing stocks.",
+   "Being surprised on Wednesday by an event that was on the calendar all weekend."
+  ],
+  "takeaways": [
+   "Start with the indexes and breadth, then decide your exposure for the week.",
+   "Use group ranks and weekly charts to find the best new bases, and trim the watchlist to the top setups.",
+   "Review your journal and mark the week's key macro and earnings dates in advance."
+  ],
+  "try": {
+   "label": "Browse today's Ideas",
+   "href": "/ideas/"
+  },
+  "related": [
+   "daily-routine",
+   "trading-journal",
+   "leaders-and-laggards"
+  ]
+ }
+]

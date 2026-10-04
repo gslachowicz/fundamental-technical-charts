@@ -1,0 +1,543 @@
+[
+ {
+  "slug": "rsi",
+  "title": "RSI: the Relative Strength Index explained",
+  "desc": "Learn what the RSI measures, why strong stocks stay overbought, how to spot divergences and why growth traders use RSI only as a secondary tool.",
+  "intro": "The RSI is a momentum gauge that swings between 0 and 100. It tells you how hard a stock has been pushing up or down lately. It is useful, but it is not a buy or sell signal on its own.",
+  "sections": [
+   {
+    "h": "What the RSI measures",
+    "p": [
+     "The **Relative Strength Index (RSI)** compares the size of a stock's recent up days with the size of its recent down days, usually over the last 14 bars. If most of the recent movement was up, the RSI rises toward 100. If most was down, it falls toward 0.",
+     "Do not confuse it with **relative strength** in the O'Neil sense. The RSI only looks at the stock against its own past. The [RS line](lesson:rs-line) and [RS Rating](lesson:rs-rating) compare the stock with the market and with other stocks, which matters much more for finding leaders."
+    ],
+    "diagram": "rsi"
+   },
+   {
+    "h": "How to read 70 and 30",
+    "p": [
+     "Textbooks say an RSI above **70** is overbought and below **30** is oversold. Many beginners read that as sell above 70 and buy below 30. For growth stocks this is usually backwards.",
+     "A true leader breaking out of a base often pushes its RSI above 70 and keeps it there for weeks. Overbought here means strong demand, not a top. Selling a leader just because the RSI hit 75 can cut a big winner short. Meanwhile, a stock stuck below 30 is usually weak for a reason, and weak stocks tend to stay weak."
+    ],
+    "list": [
+     "Above 50 and rising: momentum is on the buyers' side.",
+     "Above 70 for a long stretch: often a sign of a powerful uptrend.",
+     "Below 50 and falling: sellers are in control.",
+     "Below 30: weak; wait for the stock to repair before you care about it."
+    ]
+   },
+   {
+    "h": "Divergences",
+    "p": [
+     "A **divergence** happens when price and the RSI disagree. A **bearish divergence** is when price makes a new high but the RSI makes a lower high. It says the push is losing energy. A **bullish divergence** is the opposite: price makes a lower low while the RSI makes a higher low.",
+     "Divergences are warnings, not orders. A stock can show a bearish divergence for weeks and keep climbing. Treat it as a reason to watch volume and the [50-day line](lesson:the-50-day-line) more closely, not as a reason to sell on the spot."
+    ]
+   },
+   {
+    "h": "How traders use it",
+    "p": [
+     "In this method, price, volume and the base come first. The RSI is a second opinion. Some traders like to see the RSI holding above 50 during a base and climbing as the stock nears its pivot. Others use a sharp RSI spike after a long run as one hint, among others, that a stock is getting extended.",
+     "On the platform, open any chart, click **Indicators** and add the RSI panel. Compare how it behaves on a leader and on a laggard."
+    ]
+   }
+  ],
+  "mistakes": [
+   "Selling a strong breakout just because the RSI is above 70.",
+   "Buying a falling stock because the RSI is below 30.",
+   "Acting on a divergence without any confirmation from price or volume.",
+   "Confusing the RSI with the RS line or the RS Rating."
+  ],
+  "takeaways": [
+   "The RSI measures a stock's momentum against its own past, on a 0 to 100 scale.",
+   "Strong growth stocks can stay overbought for weeks; that is a feature, not a flaw.",
+   "Use the RSI as a secondary tool after price, volume and relative strength."
+  ],
+  "try": {
+   "label": "Add RSI to a chart",
+   "href": "/chart/SPY/"
+  },
+  "related": [
+   "macd",
+   "rs-line",
+   "bollinger-and-keltner"
+  ]
+ },
+ {
+  "slug": "macd",
+  "title": "MACD: lines, histogram and crossovers",
+  "desc": "A beginner's guide to the MACD indicator: the MACD and signal lines, the histogram, crossovers, the zero line, and why MACD always lags price.",
+  "intro": "MACD turns two moving averages into a single momentum picture. It helps you see when a trend is speeding up or slowing down, but because it is built from averages, it always reacts after price.",
+  "sections": [
+   {
+    "h": "How MACD is built",
+    "p": [
+     "MACD stands for **Moving Average Convergence Divergence**. The standard setting uses three numbers: 12, 26 and 9.",
+     "If [moving averages](lesson:moving-averages-basics) are new to you, read that lesson first. MACD uses exponential moving averages (EMAs), which give more weight to recent prices."
+    ],
+    "list": [
+     "**MACD line**: the 12-day EMA minus the 26-day EMA. When the short average is above the long one, the line is positive.",
+     "**Signal line**: a 9-day EMA of the MACD line. It is a smoother, slower version.",
+     "**Histogram**: the MACD line minus the signal line, drawn as bars. Tall bars mean the gap is widening; shrinking bars mean it is narrowing."
+    ],
+    "diagram": "macd"
+   },
+   {
+    "h": "Crossovers and the zero line",
+    "p": [
+     "A **bullish crossover** is when the MACD line crosses above the signal line. A **bearish crossover** is when it crosses below. The histogram flips from negative to positive (or back) at the same moment.",
+     "The **zero line** matters too. When the MACD line is above zero, the 12-day average is above the 26-day average, so the short-term trend is up. A crossover above zero, during an uptrend, is stronger than one far below zero in a downtrend."
+    ]
+   },
+   {
+    "h": "Why MACD lags",
+    "p": [
+     "MACD is an average of averages. By the time it crosses, price has already moved. On a fast breakout from a base, the stock may be 5% to 10% above the pivot before MACD turns positive. That is why traders in this method do not buy on MACD crossovers. The buy point comes from the base and the [pivot](lesson:pivot-and-buy-zone), with volume.",
+     "MACD also gives many false signals when a stock moves sideways. In a tight range the lines cross back and forth every few days and mean very little."
+    ]
+   },
+   {
+    "h": "How traders use it",
+    "p": [
+     "Think of MACD as a speedometer. A shrinking histogram during a strong run says the advance is slowing, which can be an early hint to tighten your plan. A bearish divergence, where price makes a new high and MACD makes a lower high, is another warning sign, just like with the [RSI](lesson:rsi).",
+     "On the weekly chart, MACD can help you see whether the bigger trend is healthy. Add it from the **Indicators** button on any chart and compare it with the price action you already see."
+    ]
+   }
+  ],
+  "mistakes": [
+   "Buying every bullish crossover, even in sideways or falling stocks.",
+   "Waiting for MACD to confirm a breakout and buying far above the buy zone.",
+   "Ignoring the zero line and treating all crossovers as equal.",
+   "Using MACD instead of price, volume and the base."
+  ],
+  "takeaways": [
+   "MACD shows the gap between a 12-day and a 26-day EMA, plus a 9-day signal line and a histogram.",
+   "Crossovers above the zero line in an uptrend carry more weight.",
+   "MACD lags price, so use it to judge momentum, not to time your buys."
+  ],
+  "try": {
+   "label": "Add MACD to a chart",
+   "href": "/chart/QQQ/"
+  },
+  "related": [
+   "rsi",
+   "moving-averages-basics",
+   "bollinger-and-keltner"
+  ]
+ },
+ {
+  "slug": "bollinger-and-keltner",
+  "title": "Bollinger Bands and Keltner Channels",
+  "desc": "How Bollinger Bands and Keltner Channels measure volatility, why squeezes often come before big moves, and what it means when a stock rides the band.",
+  "intro": "Bollinger Bands and Keltner Channels draw an envelope around price. When the envelope gets narrow, the stock has gone quiet, and quiet often comes right before a big move.",
+  "sections": [
+   {
+    "h": "What the bands are",
+    "p": [
+     "**Bollinger Bands** start with a 20-day simple moving average. An upper band is drawn two standard deviations above it and a lower band two standard deviations below. Standard deviation is a measure of how widely prices have been swinging. When a stock moves wildly, the bands spread apart. When it calms down, they pinch together.",
+     "**Keltner Channels** look similar but are built differently. They use an exponential moving average, usually 20 days, with bands set a multiple of the [average true range](lesson:atr-and-adr) above and below. Because ATR changes more slowly, Keltner Channels are smoother."
+    ],
+    "diagram": "bollinger"
+   },
+   {
+    "h": "The squeeze",
+    "p": [
+     "The most useful idea here is the **squeeze**. When the Bollinger Bands get unusually narrow, volatility has dried up. Many traders define a squeeze as the Bollinger Bands moving inside the Keltner Channels.",
+     "This matches what O'Neil-style traders look for in a base: tight weekly closes and [volume drying up](lesson:volume-on-breakouts) near the lows of a handle or a flat base. Sellers have run out. When buyers return, the move out of that quiet zone can be fast."
+    ],
+    "list": [
+     "A squeeze tells you a move is likely, not which direction.",
+     "Let the base and the pivot tell you where to act.",
+     "Confirm the breakout with volume well above average."
+    ]
+   },
+   {
+    "h": "Riding the band",
+    "p": [
+     "Beginners often think a stock touching the upper band is too high and must come back. In a strong uptrend, the opposite happens: price can **ride the upper band** for days or weeks, closing near it again and again. That is a sign of persistent demand.",
+     "The same works in reverse. A stock that keeps hugging the lower band is in steady decline. Buying it just because it touched the lower band is trying to catch a falling knife."
+    ]
+   },
+   {
+    "h": "How traders use them",
+    "p": [
+     "Use the bands as context. A narrow band during a base supports the idea that the base is tight. A stock that ran far above the upper band in a few days may be stretched, so new buyers can wait for a calmer entry instead of chasing. A close back inside the bands after a long ride can be an early hint that the run is cooling.",
+     "On the platform, add Bollinger Bands or Keltner Channels as overlays from the **Indicators** button, or both at once to spot squeezes."
+    ]
+   }
+  ],
+  "mistakes": [
+   "Selling a strong stock just because it touched the upper band.",
+   "Buying a weak stock because it touched the lower band.",
+   "Treating a squeeze as a direction signal instead of a volatility signal.",
+   "Ignoring volume when price breaks out of a squeeze."
+  ],
+  "takeaways": [
+   "Bollinger Bands widen and narrow with volatility; Keltner Channels do the same more smoothly using ATR.",
+   "A squeeze means the stock has gone quiet, which often comes before a big move.",
+   "Strong stocks can ride the upper band; that is strength, not a sell signal."
+  ],
+  "try": {
+   "label": "Add bands to a chart",
+   "href": "/chart/SPY/"
+  },
+  "related": [
+   "atr-and-adr",
+   "volume-on-breakouts",
+   "rsi"
+  ]
+ },
+ {
+  "slug": "anchored-vwap",
+  "title": "Anchored VWAP: where buyers are in profit",
+  "desc": "Learn what anchored VWAP is, how to anchor it to earnings, a base low or a high, and how it shows whether the average buyer since then is in profit.",
+  "intro": "Anchored VWAP answers a simple question: since a given day, what price has the average buyer paid? If the stock is above that line, those buyers are in profit. If it is below, they are under water.",
+  "sections": [
+   {
+    "h": "What VWAP means",
+    "p": [
+     "**VWAP** stands for **volume-weighted average price**. Instead of averaging closing prices like a [moving average](lesson:moving-averages-basics), it weights each price by how many shares traded there. A day with huge volume counts much more than a quiet day.",
+     "Day traders use a VWAP that resets every morning. **Anchored VWAP** is different: you pick the starting day yourself, and the line keeps adding every bar from that point on. It shows the average cost of everyone who bought since your anchor."
+    ],
+    "diagram": "vwap"
+   },
+   {
+    "h": "Where to anchor it",
+    "p": [
+     "The anchor should be a day that changed the story for the stock. Big funds often build positions after these events, so the line becomes a rough map of their cost."
+    ],
+    "list": [
+     "**An earnings day**: especially a big [gap](lesson:gaps) up or down on heavy volume.",
+     "**A base low**: the lowest point of a cup or a correction, where the new advance started.",
+     "**A major high**: the peak before a correction. Buyers since then are often still under water and may sell when they get back to even.",
+     "**A breakout day**: to track whether buyers of the breakout are holding a gain."
+    ]
+   },
+   {
+    "h": "How to read it",
+    "p": [
+     "When price holds above an anchored VWAP, buyers since the anchor are in profit and have little reason to sell. Pullbacks to the line often find support, because those buyers defend their average cost.",
+     "When price falls below the line, the average buyer since the anchor is now losing money. Some will sell to get out, which adds supply. A line anchored to a prior high often acts as resistance for the same reason. This is the same logic behind [support and resistance](lesson:support-and-resistance): people remember what they paid."
+    ]
+   },
+   {
+    "h": "How traders use it",
+    "p": [
+     "Anchored VWAP is a tool for judging support, not a buy signal. A leader that pulls back to the VWAP anchored at its last earnings gap, on light volume, and bounces is acting well. A stock that slices below that line on heavy volume is telling you the post-earnings buyers are giving up.",
+     "On the platform, add anchored VWAP from the **Indicators** button and choose the anchor date. Try anchoring to the last earnings marker and to the low of the current base, then see which line price has respected."
+    ]
+   }
+  ],
+  "mistakes": [
+   "Anchoring to a random day with no news or volume behind it.",
+   "Treating a touch of the line as an automatic buy, without checking volume.",
+   "Using the intraday, daily-reset VWAP for swing trades that last weeks.",
+   "Drawing so many anchored lines that the chart stops telling you anything."
+  ],
+  "takeaways": [
+   "Anchored VWAP is the volume-weighted average price since a day you choose.",
+   "Anchor it to earnings, a base low, a breakout or a major high.",
+   "Above the line, buyers since the anchor are in profit; below it, they are losing money."
+  ],
+  "try": {
+   "label": "Add anchored VWAP to a chart",
+   "href": "/chart/SPY/"
+  },
+  "related": [
+   "support-and-resistance",
+   "gaps",
+   "the-50-day-line"
+  ]
+ },
+ {
+  "slug": "atr-and-adr",
+  "title": "ATR and ADR: measuring how much a stock moves",
+  "desc": "Average true range and average daily range % explained: how to tell volatile stocks from calm ones and use the numbers to size positions and set stops.",
+  "intro": "Every stock has its own rhythm. Some move 1% on a normal day, others move 6%. ATR and ADR measure that rhythm, so your stops and position sizes fit the stock you are actually trading.",
+  "sections": [
+   {
+    "h": "Average true range (ATR)",
+    "p": [
+     "The **true range** of a day is the biggest of three distances: today's high minus today's low, today's high minus yesterday's close, or yesterday's close minus today's low. Including yesterday's close captures [gaps](lesson:gaps) that a simple high-minus-low would miss.",
+     "**ATR** is the average of the true range, usually over 14 days. It is shown in dollars. A $50 stock with an ATR of $2 moves about $2 on a typical day. The platform's data box also shows **ATR %**, the ATR divided by price, so you can compare stocks at different prices."
+    ],
+    "diagram": "atr"
+   },
+   {
+    "h": "Average daily range (ADR %)",
+    "p": [
+     "**ADR %** is a simpler cousin. It averages each day's high-to-low range as a percentage of price, usually over 20 days. It ignores gaps, but it is easy to read: an ADR of 4% means the stock typically swings about 4% from low to high in a session.",
+     "Both numbers answer the same question: how much does this stock normally move? Use whichever you find easier, and stay consistent."
+    ]
+   },
+   {
+    "h": "Volatile vs calm stocks",
+    "list": [
+     "**Calm (ATR % or ADR % around 1% to 2%)**: large, mature companies and index ETFs like SPY. Moves are slower and stops can be tighter.",
+     "**Moderate (around 2% to 4%)**: many established growth leaders.",
+     "**Volatile (5% and up)**: young, fast-growing companies and recent IPOs. Big potential moves, but normal daily noise can hit a tight stop."
+    ]
+   },
+   {
+    "h": "Using ATR for stops and size",
+    "p": [
+     "The classic rule in this method is to cut a loss at 7% to 8% below your buy price. ATR helps you check whether that stop makes sense. If a stock's ATR % is 6%, a 7% stop is barely more than one normal day, so you may get shaken out by noise. Some traders then take a smaller position so they can give the stock more room while risking the same dollars.",
+     "Here is an example. You have a $100,000 account and risk 0.5% per trade, or $500. A $50 stock has an ATR of $2. A stop 1.5 ATR below entry is $3 away, at $47. Shares = $500 ÷ $3 = about 166 shares, roughly $8,300 of stock. The [position sizing](lesson:position-sizing) lesson walks through this in detail, and the [stop-losses](lesson:stop-losses) lesson covers where to place the stop."
+    ]
+   }
+  ],
+  "rules": {
+   "title": "Quick ATR reference",
+   "rows": [
+    [
+     "ATR",
+     "Average true range in dollars, usually 14 days, includes gaps"
+    ],
+    [
+     "ATR %",
+     "ATR divided by price; compares stocks at different prices"
+    ],
+    [
+     "ADR %",
+     "Average high-to-low range as a % of price, usually 20 days"
+    ],
+    [
+     "Stop check",
+     "A stop closer than about 1 ATR is likely to be hit by normal noise"
+    ],
+    [
+     "Size rule",
+     "Wider stop means fewer shares for the same dollar risk"
+    ]
+   ]
+  },
+  "mistakes": [
+   "Using the same tight stop on a calm stock and a wild one.",
+   "Keeping the same share count when the stop has to be wider.",
+   "Reading a high ATR as a sign of a better stock; it only means bigger swings.",
+   "Forgetting that ATR rises after a big gap and slowly drifts back."
+  ],
+  "takeaways": [
+   "ATR and ADR % measure how much a stock normally moves in a day.",
+   "Compare ATR % with your stop distance so normal noise does not stop you out.",
+   "A wider stop calls for a smaller position to keep your dollar risk the same."
+  ],
+  "try": {
+   "label": "Open the position size calculator",
+   "href": "/portfolio/"
+  },
+  "related": [
+   "position-sizing",
+   "stop-losses",
+   "bollinger-and-keltner"
+  ]
+ },
+ {
+  "slug": "rs-line",
+  "title": "The RS line: is the stock beating the market?",
+  "desc": "Learn how the relative strength line works, why a rising RS line means a stock is outperforming, and why an RS line new high before price is a key clue.",
+  "intro": "The RS line is one of the simplest and most useful lines on a growth-stock chart. It shows, at a glance, whether a stock is doing better or worse than the market.",
+  "sections": [
+   {
+    "h": "What the RS line is",
+    "p": [
+     "The **relative strength line** (RS line) is the stock's price divided by the S&P 500, plotted day by day. The actual value does not matter. Only the direction does.",
+     "If the stock rises 10% while the S&P 500 rises 5%, the RS line goes up. If the stock is flat while the index falls, the RS line still goes up, because the stock is holding better than the market. If the stock rises 3% while the index rises 8%, the RS line goes down: the stock is making money but lagging."
+    ],
+    "diagram": "rs-line"
+   },
+   {
+    "h": "How to read it",
+    "list": [
+     "**Rising line**: the stock is outperforming the market. Leaders have RS lines that slope up over months.",
+     "**Flat line**: the stock is moving in step with the market.",
+     "**Falling line**: the stock is underperforming, even if its price is going up.",
+     "**Line at a new high**: the stock is outperforming more than at any point in the period shown."
+    ]
+   },
+   {
+    "h": "RS line new high before price",
+    "p": [
+     "One of the strongest clues in this method is an RS line that hits a **new high before the price does**. It often happens while a stock is still in a base. The market may be weak, the stock may be a few percent below its old high, but it is holding up far better than the index.",
+     "That tells you big buyers are supporting the stock. When the market turns up, stocks like this are often the first to break out to new highs. On the chart the platform marks these new highs, and the **RS new high** list below shows stocks doing it today.",
+     "The reverse is a warning. A stock that breaks out to a new price high while its RS line is well below its own high is lagging the market, and its breakout is less trustworthy."
+    ]
+   },
+   {
+    "h": "Comparing with other benchmarks",
+    "p": [
+     "By default the RS line divides by the S&P 500. On the platform you can switch it to the Nasdaq-100 or to the stock's sector ETF. Against the Nasdaq-100, you see whether a tech stock beats other big tech names. Against its sector ETF, you see whether it leads its own group, which ties into [leaders and laggards](lesson:leaders-and-laggards).",
+     "You can also compare any two tickers directly on the [Compare page](/compare/). The RS line is the picture; the [RS Rating](lesson:rs-rating) turns relative strength into a single number."
+    ]
+   }
+  ],
+  "mistakes": [
+   "Thinking a rising price means a rising RS line; it does not if the market rises faster.",
+   "Reading the RS line's value instead of its direction.",
+   "Buying a breakout while the RS line is far below its prior high.",
+   "Ignoring an RS line new high just because the price has not broken out yet."
+  ],
+  "takeaways": [
+   "The RS line is price divided by the S&P 500; only its direction matters.",
+   "A rising RS line means the stock is beating the market.",
+   "An RS line new high before price is one of the best early signs of a future leader."
+  ],
+  "live": "rs-new-high",
+  "try": {
+   "label": "Compare a stock with SPY",
+   "href": "/compare/"
+  },
+  "related": [
+   "rs-rating",
+   "leaders-and-laggards",
+   "pivot-and-buy-zone"
+  ]
+ },
+ {
+  "slug": "rs-rating",
+  "title": "The RS Rating: ranking stocks from 1 to 99",
+  "desc": "What the RS Rating is, how the 1 to 99 percentile is calculated, why leaders usually score 80 or more and how to use it with the RS line.",
+  "intro": "The RS Rating turns a stock's price performance into one number from 1 to 99. It lets you sort thousands of stocks in seconds and focus on the ones the market is already rewarding.",
+  "sections": [
+   {
+    "h": "What the number means",
+    "p": [
+     "The **RS Rating** is a percentile rank. A rating of 90 means the stock has done better over the past year than 90% of all stocks in the universe. A rating of 30 means 70% of stocks did better.",
+     "It is a relative score, not a forecast. It tells you how a stock has performed compared with everything else, and nothing about its price, its earnings or its future on its own."
+    ],
+    "diagram": "rs-rating"
+   },
+   {
+    "h": "How it is calculated",
+    "p": [
+     "The platform measures each stock's price change over the last 12 months, split into four quarters. The **most recent quarter counts double**, so a stock that is gaining momentum now ranks higher than one whose big move happened a year ago.",
+     "Every stock gets a weighted score, all scores are sorted, and each stock receives its percentile from 1 to 99. Because it is relative, the ratings shift every day as stocks rise and fall against each other."
+    ]
+   },
+   {
+    "h": "Why leaders are usually 80+",
+    "p": [
+     "Studies of the biggest winning stocks over many decades, popularized by William O'Neil, found that they typically had RS Ratings of **80 or higher** before their big advance began, and many were above 90. Big moves tend to start in stocks that are already outperforming, not in stocks that have been left behind.",
+     "That is why many growth traders use 80 as a minimum filter. A stock rated 50 might look cheap, but it is average at best. The [screener](/screener/) lets you filter by RS Rating to start your search with stronger names."
+    ]
+   },
+   {
+    "h": "Combining the rating with the RS line",
+    "p": [
+     "The rating and the [RS line](lesson:rs-line) work best together. The rating is a 12-month snapshot. The line shows the direction right now. A stock rated 85 with a rising RS line is strong and getting stronger. A stock rated 85 with a falling RS line may be a former leader starting to fade.",
+     "Watch for ratings that climb fast. A stock moving from 60 to 85 in a few weeks, often after an earnings [gap](lesson:gaps), may be turning into a new leader. Check that its [industry group](lesson:leaders-and-laggards) is also strong."
+    ]
+   }
+  ],
+  "rules": {
+   "title": "Reading the RS Rating",
+   "rows": [
+    [
+     "90 to 99",
+     "Top 10% of all stocks; where many big winners come from"
+    ],
+    [
+     "80 to 89",
+     "Strong; a common minimum for growth candidates"
+    ],
+    [
+     "50 to 79",
+     "Average; needs a clear reason to be interesting"
+    ],
+    [
+     "Below 50",
+     "Lagging the majority of stocks; usually avoid"
+    ],
+    [
+     "Weighting",
+     "Last 12 months, most recent quarter counts double"
+    ]
+   ]
+  },
+  "mistakes": [
+   "Buying a low-rated stock because it looks cheap.",
+   "Treating a high rating as a buy signal without a proper base and pivot.",
+   "Ignoring a falling RS line on a stock that still has a high rating.",
+   "Comparing ratings from different dates as if they were fixed."
+  ],
+  "takeaways": [
+   "The RS Rating ranks a stock's 12-month performance from 1 to 99, with the latest quarter weighted double.",
+   "Most big winners had RS Ratings of 80 or higher before their major moves.",
+   "Use the rating with the RS line: the rating is the score, the line is the direction."
+  ],
+  "live": "rs-leaders",
+  "try": {
+   "label": "Filter by RS Rating",
+   "href": "/screener/"
+  },
+  "related": [
+   "rs-line",
+   "leaders-and-laggards",
+   "earnings-growth"
+  ]
+ },
+ {
+  "slug": "leaders-and-laggards",
+  "title": "Leaders and laggards: buy the best, not the cheapest",
+  "desc": "Why the best stocks come from the best industry groups, how group rank works, why to buy the leader over the cheap laggard, and sector rotation.",
+  "intro": "In every market rally, a small group of stocks does most of the work. They tend to come from a handful of strong industries. Your job is to find those leaders, not the stocks that look like bargains.",
+  "sections": [
+   {
+    "h": "Strong stocks travel in groups",
+    "p": [
+     "Big money rarely buys just one company. When funds get excited about an industry, they buy several of its best stocks. That is why winners tend to cluster: a strong group lifts its members, and a weak group drags even good companies down.",
+     "Research popularized by William O'Neil found that a large share of the biggest winners came from industries that were themselves among the market leaders. Checking the group is a simple way to put the odds on your side."
+    ]
+   },
+   {
+    "h": "Group rank on the platform",
+    "p": [
+     "The platform sorts stocks into industry groups based on GICS sub-industries, the standard classification used across the market. Each group is ranked by the [RS Ratings](lesson:rs-rating) of its stocks. Rank 1 is the strongest group.",
+     "The **group rank** appears in each chart's data box. On the [Groups page](/groups/) you can see the full ranking, which groups are rising and which are falling. Many traders focus on stocks from groups in the top 20% to 40% of the list."
+    ],
+    "diagram": "rs-line"
+   },
+   {
+    "h": "Buy the leader, not the laggard",
+    "p": [
+     "Inside a strong group, one or two stocks usually lead: the best earnings growth, the highest RS Rating, an [RS line](lesson:rs-line) at new highs and the cleanest base. Others lag behind.",
+     "Beginners are often tempted by the laggard. It has gone up less, so it looks cheaper and seems to have more room to catch up. In practice it usually lags for a reason: weaker sales, thinner margins or less fund interest. When the group cools off, laggards often fall first and hardest.",
+     "A $200 leader is not more expensive than a $20 laggard in any useful sense. What matters is how the business and the stock are performing."
+    ],
+    "list": [
+     "Compare the RS Rating of each stock in the group.",
+     "Check which RS line is making new highs.",
+     "Look at quarterly earnings and sales growth.",
+     "Prefer the stock with the cleanest base near its pivot."
+    ]
+   },
+   {
+    "h": "Sector rotation",
+    "p": [
+     "Leadership does not stay in one place forever. Money **rotates** between sectors as the economy and interest rates change. Technology might lead for a year, then energy or industrials take over.",
+     "The sector rotation chart on the [Groups page](/groups/) shows which sectors are gaining and losing relative strength. When a new sector starts climbing in the ranking, look inside it for stocks forming [bases](lesson:what-is-a-base). When your group starts sliding, be more careful with new buys there."
+    ]
+   }
+  ],
+  "mistakes": [
+   "Buying the cheapest stock in a hot group instead of the strongest.",
+   "Ignoring group rank and buying a strong-looking stock from a weak industry.",
+   "Holding on to a sector after leadership has clearly rotated away.",
+   "Judging a stock as expensive or cheap only by its share price."
+  ],
+  "takeaways": [
+   "Most big winners come from the strongest industry groups.",
+   "Inside a group, buy the leader with the best RS and earnings, not the laggard.",
+   "Watch the sector rotation chart to see where leadership is moving."
+  ],
+  "live": "top-groups",
+  "try": {
+   "label": "Open Industry groups",
+   "href": "/groups/"
+  },
+  "related": [
+   "rs-rating",
+   "rs-line",
+   "what-is-a-base"
+  ]
+ }
+]
