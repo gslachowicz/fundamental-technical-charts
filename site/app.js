@@ -1006,7 +1006,7 @@ function renderPanels(){
       <dt>Pivot</dt><dd>${fmtP(b.pivot)}</dd><dt>Buy zone (+5%)</dt><dd>${fmtP(b.pivot)} – ${fmtP(b.buyZoneTop)}</dd>
       <dt>Price vs pivot</dt><dd class="${b.distPct<0?'neg':''}">${fmtPct(b.distPct)}</dd>
       ${b.breakoutDate?`<dt>Breakout</dt><dd>${fmtD(iso(b.breakoutDate))}${b.breakoutVolPct!=null?` · vol ${fmtPct(b.breakoutVolPct,0)}`:""}</dd>`:""}</dl>
-      <p class="basetxt">${baseNote(b)}</p>`
+      <p class="basetxt">${baseNote(b)}</p><p class="baselearn"><a href="${learnUrl({"Cup with handle":"cup-with-handle","Cup":"cup-without-handle","Flat base":"flat-base","Deep correction":"base-count"}[b.type] || "what-is-a-base")}" target="_blank" rel="noopener">${esc(TX("Learn how to trade this base"))} →</a></p>`
     : `<div class="empty">No base detected. The stock is either trending at new highs without a 5-week consolidation, or has too little history.</div>`;
 
   const nm = view.weekly? ["10-week","40-week","10-week"] : ["50-day","200-day","50-day"];
@@ -1221,7 +1221,7 @@ document.addEventListener("keydown", e=>{
   if(e.key==="ArrowRight") step(1); else if(e.key==="ArrowLeft") step(-1);
   else if((e.key==="Delete" || e.key==="Backspace") && sel >= 0){ e.preventDefault(); delSel(); }
   else if(k==="t") setTool("tl"); else if(k==="h") setTool("hl"); else if(k==="r") setTool("rect"); else if(k==="n") setTool("note");
-  else if(k==="d") $("#pD").click(); else if(k==="w") $("#pW").click(); else if(k==="i") openInd(); else if(k==="a") openAlert();
+  else if(k==="d") $("#pD").click(); else if(k==="w") $("#pW").click(); else if(k==="i") openInd(); else if(k==="a") openAlert(); else if(k==="s") openSize();
 });
 
 async function openChart(sym){
@@ -2048,6 +2048,144 @@ $("#vPortfolio").addEventListener("click", e=>{
 $("#pfBench").onchange = e => { PF.bench = e.target.value; savePf(); renderPortfolio(); };
 addEventListener("resize", ()=>{ if(!$("#vPortfolio").hidden) drawPfChart(); });
 
+/* ================= SECTOR ROTATION (RRG) ================= */
+const RRG_SETS = {sectors:["XLK","XLC","XLY","XLF","XLV","XLI","XLE","XLB","XLP","XLU","XLRE"],
+  industries:["SMH","IGV","XBI","ITA","KRE","XHB","XRT","IYT","OIH","XME","TAN","JETS","SKYY","CIBR"],
+  styles:["QQQ","IWM","MDY","RSP","IWF","IWD","MTUM","SPLV","SPHB"],
+  countries:["EEM","EFA","FXI","KWEB","INDA","EWJ","EWZ","EWG","EWW","EWU"]};
+const RRG_Q = {lead:["Leading","#3c8a3a","rgba(60,138,58,.07)"], weak:["Weakening","#a86a00","rgba(168,106,0,.07)"], lag:["Lagging","#e0337f","rgba(224,51,127,.06)"], imp:["Improving","#1d3fc4","rgba(29,63,196,.06)"]};
+const RRG_COL = ["#1f3c6e","#d23a2a","#3c8a3a","#e07b1f","#7b4bb3","#0f7c86","#a0306a","#5a5d66","#1d3fc4","#a86a00","#2f7d32","#b23a48","#3b6ea5","#6b4f2a","#00838f"];
+let rrg = {set: store.get("tt:rrgSet") || "sectors", per: store.get("tt:rrgPer") || "w", tail: +(store.get("tt:rrgTail") || 8), data: null, tok: 0, heads: []};
+const rrgQuad = (x, y) => x >= 100 ? (y >= 100 ? "lead" : "weak") : (y >= 100 ? "imp" : "lag");
+// weekly (or daily) RS-Ratio and RS-Momentum: rs = price ÷ SPY; ratio = rs vs its 10-period average (smoothed); momentum = ratio vs 3 periods ago
+function rrgSeries(px, bx, per){
+  const bm = new Map(bx.map(b=>[b.t, b.c]));
+  let pts = px.filter(b=>bm.has(b.t)).map(b=>({t:b.t, rs: b.c / bm.get(b.t)}));
+  if(per === "w"){ const wk = new Map(); pts.forEach(p=>{ const d = new Date(p.t), k = Math.floor((p.t / 864e5 + 3) / 7); wk.set(k, p); }); pts = [...wk.values()]; }
+  const n = 10, lag = 3, out = [];
+  let e = null;
+  for(let i = n - 1; i < pts.length; i++){
+    let s = 0; for(let j = i - n + 1; j <= i; j++) s += pts[j].rs;
+    const raw = 100 * pts[i].rs / (s / n); e = e == null ? raw : e + (raw - e) * 0.5;
+    out.push({t: pts[i].t, x: e});
+  }
+  for(let i = 0; i < out.length; i++) out[i].y = i >= lag ? 100 + (out[i].x - out[i - lag].x) * 2.2 : null;
+  return out.filter(p=>p.y != null);
+}
+async function renderRrg(){
+  $$("#rrgSet button").forEach(b=>b.classList.toggle("on", b.dataset.s === rrg.set));
+  $$("#rrgPer button").forEach(b=>b.classList.toggle("on", b.dataset.p === rrg.per));
+  $$("#rrgTail button").forEach(b=>b.classList.toggle("on", +b.dataset.t === rrg.tail));
+  $("#rrgHelp").href = `${{es:"/es",pt:"/pt"}[I18N.lang] || ""}/learn/leaders-and-laggards/`;
+  const syms = rrg.set === "watch" ? (WL || []).filter(s=>!/[=^]/.test(s)).slice(0, 15) : RRG_SETS[rrg.set];
+  const tok = ++rrg.tok;
+  if(!syms.length){ rrg.data = []; $("#rrgList").innerHTML = `<div class="empty">${esc(TX("Add tickers to your watchlist to see them here."))}</div>`; drawRrg(); return; }
+  const [bench, ...B] = await Promise.all(["SPY", ...syms].map(s=>getBundle(s)));
+  if(tok !== rrg.tok || !bench) return;
+  const bx = cmpPx(bench, "SPY");
+  rrg.data = syms.map((s, i)=>{ const b = B[i]; if(!b || !b.prices) return null; const ser = rrgSeries(cmpPx(b, s), bx, rrg.per); if(ser.length < 2) return null;
+    const r = rowOf(s) || {}; return {s, name: b.name || r.name || s, ser, col: RRG_COL[i % RRG_COL.length]}; }).filter(Boolean);
+  drawRrg();
+  const order = {lead:0, imp:1, weak:2, lag:3};
+  const rows = rrg.data.map(d=>{ const h = d.ser[d.ser.length - 1], p = d.ser[Math.max(0, d.ser.length - 1 - rrg.tail)]; return {...d, h, q: rrgQuad(h.x, h.y), was: rrgQuad(p.x, p.y)}; })
+    .sort((a,b)=>order[a.q] - order[b.q] || b.h.x - a.h.x);
+  $("#rrgList").innerHTML = `<table class="tbl rrgtbl"><thead><tr><th class="l">${esc(TX("Ticker"))}</th><th class="l">${esc(TX("Quadrant"))}</th><th>RS-Ratio</th><th>RS-Mom</th></tr></thead><tbody>
+    ${rows.map(d=>`<tr data-go="${esc(d.s)}" tabindex="0"><td class="l"><i style="background:${d.col}"></i><b>${esc(d.s)}</b> <small>${esc(TX(d.name).slice(0, 26))}</small></td>
+      <td class="l" style="color:${RRG_Q[d.q][1]}">${esc(TX(RRG_Q[d.q][0]))}${d.was !== d.q ? ` <small>← ${esc(TX(RRG_Q[d.was][0]))}</small>` : ""}</td><td>${d.h.x.toFixed(1)}</td><td>${d.h.y.toFixed(1)}</td></tr>`).join("")}</tbody></table>`;
+}
+function drawRrg(){
+  const cv = $("#rrgCv"); if(!cv) return; const W = cv.clientWidth; if(!W) return;
+  const H = Math.min(520, Math.max(300, W * 0.78)), dpr = devicePixelRatio || 1; cv.style.height = H + "px"; cv.width = W * dpr; cv.height = H * dpr;
+  const g = cv.getContext("2d"); g.setTransform(dpr,0,0,dpr,0,0); g.fillStyle = "#fff"; g.fillRect(0,0,W,H);
+  const D = (rrg.data || []).map(d=>({...d, tail: d.ser.slice(-rrg.tail - 1)}));
+  let mxX = 1.5, mxY = 1.5; D.forEach(d=>d.tail.forEach(p=>{ mxX = Math.max(mxX, Math.abs(p.x - 100) * 1.12); mxY = Math.max(mxY, Math.abs(p.y - 100) * 1.12); }));
+  const pad = 26, X = v => pad + (v - (100 - mxX)) / (2 * mxX) * (W - 2 * pad), Y = v => pad + ((100 + mxY) - v) / (2 * mxY) * (H - 2 * pad);
+  const cx = X(100), cy = Y(100);
+  [["imp", pad, pad, cx, cy], ["lead", cx, pad, W - pad, cy], ["lag", pad, cy, cx, H - pad], ["weak", cx, cy, W - pad, H - pad]].forEach(([q, x1, y1, x2, y2])=>{
+    g.fillStyle = RRG_Q[q][2]; g.fillRect(x1, y1, x2 - x1, y2 - y1);
+    g.fillStyle = RRG_Q[q][1]; g.font = `700 12px ${FONT_L}`; g.textBaseline = "top"; g.textAlign = q === "imp" || q === "lag" ? "left" : "right";
+    g.fillText(TX(RRG_Q[q][0]).toUpperCase(), q === "imp" || q === "lag" ? x1 + 8 : x2 - 8, q === "imp" || q === "lead" ? y1 + 6 : y2 - 18); });
+  g.strokeStyle = C.ink2; g.lineWidth = 1; g.beginPath(); g.moveTo(cx, pad); g.lineTo(cx, H - pad); g.moveTo(pad, cy); g.lineTo(W - pad, cy); g.stroke();
+  g.fillStyle = C.ink2; g.font = `11px ${FONT_L}`; g.textAlign = "center"; g.textBaseline = "alphabetic";
+  g.fillText(`RS-Ratio →`, W / 2 + 50, H - 8); g.save(); g.translate(12, H / 2 - 40); g.rotate(-Math.PI / 2); g.fillText(`RS-Momentum →`, 0, 0); g.restore();
+  rrg.heads = [];
+  if(!D.length){ g.fillStyle = C.ink2; g.font = `14px ${FONT_L}`; g.textAlign = "center"; g.fillText(TX("Loading…"), W/2, H/2); return; }
+  D.forEach(d=>{ const P = d.tail.map(p=>[X(p.x), Y(p.y)]);
+    for(let i = 1; i < P.length; i++){ g.strokeStyle = d.col; g.globalAlpha = 0.25 + 0.75 * i / P.length; g.lineWidth = 1.8; g.beginPath(); g.moveTo(...P[i-1]); g.lineTo(...P[i]); g.stroke();
+      g.fillStyle = d.col; g.beginPath(); g.arc(P[i-1][0], P[i-1][1], 2, 0, 7); g.fill(); }
+    g.globalAlpha = 1; const [hx, hy] = P[P.length - 1];
+    g.fillStyle = d.col; g.beginPath(); g.arc(hx, hy, 5, 0, 7); g.fill(); g.strokeStyle = "#fff"; g.lineWidth = 1.5; g.stroke();
+    g.font = `700 12px ${FONT_D}`; g.textAlign = "left"; g.textBaseline = "middle"; g.lineWidth = 3; g.strokeStyle = "#fff"; g.strokeText(d.s, hx + 8, hy); g.fillText(d.s, hx + 8, hy);
+    rrg.heads.push({s: d.s, x: hx, y: hy}); });
+}
+$("#rrgBox").addEventListener("click", e=>{
+  const b = e.target.closest("button"); if(b){ const d = b.dataset;
+    if(d.s){ rrg.set = d.s; store.set("tt:rrgSet", d.s); renderRrg(); }
+    else if(d.p){ rrg.per = d.p; store.set("tt:rrgPer", d.p); renderRrg(); }
+    else if(d.t){ rrg.tail = +d.t; store.set("tt:rrgTail", d.t); renderRrg(); } return; }
+  const tr = e.target.closest("tr[data-go]"); if(tr){ go(tr.dataset.go); return; }
+  if(e.target.id === "rrgCv"){ const r = e.target.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
+    const h = rrg.heads.map(p=>({...p, d: Math.hypot(p.x - x, p.y - y)})).sort((a,b)=>a.d - b.d)[0]; if(h && h.d < 24) go(h.s); }
+});
+addEventListener("resize", ()=>{ if(!$("#vGroups").hidden) drawRrg(); });
+
+/* ================= INSTALLABLE APP + PUSH NOTIFICATIONS ================= */
+let installEvt = null;
+const isStandalone = () => matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+if("serviceWorker" in navigator && (location.protocol === "https:" || /^(localhost|127\.0\.0\.1)$/.test(location.hostname)))
+  addEventListener("load", ()=>navigator.serviceWorker.register("/sw.js").catch(()=>{}));
+addEventListener("beforeinstallprompt", e=>{ e.preventDefault(); installEvt = e; syncInstall(); });
+addEventListener("appinstalled", ()=>{ installEvt = null; syncInstall(); toast(TX("Ticker&Tape is installed. Open it from your home screen or app list.")); });
+function syncInstall(){ $$("[data-install]").forEach(b=>b.hidden = isStandalone()); }
+function openInstall(){
+  if(installEvt){ installEvt.prompt(); installEvt.userChoice.finally(()=>{ installEvt = null; syncInstall(); }); return; }
+  const ios = isIOS();
+  dlg(TX("Install the app"), `<p class="msub">${esc(TX("Ticker&Tape works as an app on your phone, tablet or computer: its own icon, full screen and alert notifications. It's free and updates itself."))}</p>
+    <ol class="insteps">${(ios ? ["On iPhone or iPad, open tickerandtape.com in Safari.", "Tap the Share button (the square with an arrow).", "Choose “Add to Home Screen” and tap Add.", "Open Ticker&Tape from your home screen and turn on notifications in your account menu."]
+      : ["Open tickerandtape.com in Chrome or Edge.", "Tap the menu (⋮) and choose “Install app” or “Add to Home screen”.", "On a computer, click the install icon at the right of the address bar.", "Open Ticker&Tape and turn on notifications in your account menu."]).map(x=>`<li>${esc(TX(x))}</li>`).join("")}</ol>`);
+}
+document.addEventListener("click", e=>{ if(e.target.closest("[data-install]")){ e.preventDefault(); openInstall(); } });
+document.addEventListener("click", e=>{ const a = e.target.closest("a[data-learn]"); if(a && I18N.lang !== "en"){ e.preventDefault(); location.href = learnUrl(a.dataset.learn || ""); } });
+syncInstall();
+const b64ToBytes = s => { s = s.replace(/-/g, "+").replace(/_/g, "/"); while(s.length % 4) s += "="; const b = atob(s), a = new Uint8Array(b.length); for(let i=0;i<b.length;i++) a[i] = b.charCodeAt(i); return a; };
+async function pushState(){
+  if(!("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) return "unsupported";
+  if(Notification.permission === "denied") return "denied";
+  try{ const reg = await navigator.serviceWorker.ready; const sub = await reg.pushManager.getSubscription(); return sub ? "on" : "off"; }catch(e){ return "off"; }
+}
+async function pushOn(){
+  const perm = await Notification.requestPermission(); if(perm !== "granted") throw new Error(TX("Notifications are blocked for this site. Allow them in your browser settings and try again."));
+  const reg = await navigator.serviceWorker.ready, {key} = await api("/push/key");
+  let sub = await reg.pushManager.getSubscription();
+  if(!sub) sub = await reg.pushManager.subscribe({userVisibleOnly: true, applicationServerKey: b64ToBytes(key)});
+  await api("/push/subscribe", {method:"POST", body: JSON.stringify(sub.toJSON())});
+  await api("/push/test", {method:"POST", body: JSON.stringify({lang: I18N.lang})}).catch(()=>{});
+}
+async function pushOff(){
+  const reg = await navigator.serviceWorker.ready, sub = await reg.pushManager.getSubscription(); if(!sub) return;
+  await api("/push/unsubscribe", {method:"POST", body: JSON.stringify({endpoint: sub.endpoint})}).catch(()=>{});
+  await sub.unsubscribe();
+}
+async function openPush(){
+  if(!auth.token){ openAuth("in"); return; }
+  const st = await pushState(), needInstall = isIOS() && !isStandalone();
+  const msg = needInstall ? TX("On iPhone and iPad, notifications work once Ticker&Tape is installed: tap Share, then “Add to Home Screen”, open the app from your home screen and come back here.")
+    : st === "unsupported" ? TX("This browser doesn't support notifications. Try Chrome, Edge, Firefox or Safari, or install the app.")
+    : st === "denied" ? TX("Notifications are blocked for this site. Allow them in your browser settings and try again.")
+    : st === "on" ? TX("Notifications are on for this device. Your alerts arrive here the moment they fire, even with the site closed.")
+    : TX("Get your price, moving average, trendline and breakout alerts as notifications on this device, even when the site is closed.");
+  dlg(TX("Notifications on this device"), `<p class="msub">${esc(msg)}</p>
+    ${needInstall ? `<button class="btn on wide" data-install>${esc(TX("How to install the app"))}</button>`
+      : st === "off" ? `<button class="btn on wide" id="pOn">${esc(TX("Turn on notifications"))}</button>`
+      : st === "on" ? `<button class="btn wide" id="pTest">${esc(TX("Send a test notification"))}</button><button class="lnk pfdel" id="pOff">${esc(TX("Turn off on this device"))}</button>` : ""}`, B=>{
+    const on = B.querySelector("#pOn"), off = B.querySelector("#pOff"), test = B.querySelector("#pTest");
+    if(on) on.onclick = async ()=>{ on.disabled = true; try{ await pushOn(); closeDlg(); toast(TX("Notifications are on. We sent you a test.")); }catch(e){ on.disabled = false; toast(e.message || TX("Could not turn on notifications.")); } };
+    if(off) off.onclick = async ()=>{ await pushOff(); closeDlg(); toast(TX("Notifications are off on this device.")); };
+    if(test) test.onclick = async ()=>{ try{ await api("/push/test", {method:"POST", body: JSON.stringify({lang: I18N.lang})}); toast(TX("Test sent.")); }catch(e){ toast(e.message); } };
+  });
+}
+
 /* ================= MACRO CALENDAR ================= */
 // data/macro.json, written every night by scripts/macro.py: official release dates, FRED values and the Fed odds
 let MAC = null, macLoading = null, macWeek = 0, macImp = +store.get("tt:macImp") || 1;
@@ -2452,13 +2590,14 @@ function renderAcct(){
 }
 function toggleMenu(on){
   const m = $("#acctMenu"); on = on==null ? m.hidden : on; m.hidden = !on; $("#acct").setAttribute("aria-expanded", on);
-  if(on) m.innerHTML = `<div class="who">Signed in as<br><b>${esc(auth.email)}</b></div><button data-a="alerts" role="menuitem">My alerts</button><button data-a="pw" role="menuitem">Change password</button><button data-a="out" role="menuitem">Sign out</button>`;
+  if(on) m.innerHTML = `<div class="who">Signed in as<br><b>${esc(auth.email)}</b></div><button data-a="alerts" role="menuitem">My alerts</button><button data-a="push" role="menuitem">Notifications on this device</button><button data-a="pw" role="menuitem">Change password</button><button data-a="out" role="menuitem">Sign out</button>`;
 }
 $("#acct").onclick = e => { e.stopPropagation(); if(auth.token) toggleMenu(); else openAuth("in"); };
 $("#acctMenu").addEventListener("click", async e=>{
   const a = e.target.closest("button[data-a]"); if(!a) return; toggleMenu(false);
   if(a.dataset.a==="pw") openAuth("pw");
   if(a.dataset.a==="alerts") openAlertsList();
+  if(a.dataset.a==="push") openPush();
   if(a.dataset.a==="out"){ try{ await api("/auth/logout", {method:"POST"}); }catch(err){} signedOut(); toast("Signed out."); }
 });
 document.addEventListener("click", e=>{ const m=$("#acctMenu"); if(!m.hidden && !e.composedPath().includes(m)) toggleMenu(false); });
@@ -2738,6 +2877,61 @@ function openAlert(){
   dlg(`${TX("New alert")} · ${sym}`, "", bind);
 }
 $("#bAlert").onclick = openAlert;
+
+// position size calculator: account × risk % ÷ (entry − stop) = shares, capped at a share of the account
+function openSize(){
+  if(!S || !S.px.length) return;
+  const R = chartRefs(), px = S.px, sym = S.symbol;
+  const tr = px.map((b,i)=> i ? Math.max(b.h - b.l, Math.abs(b.h - px[i-1].c), Math.abs(b.l - px[i-1].c)) : b.h - b.l).slice(-14);
+  const atr = tr.reduce((a,v)=>a + v, 0) / tr.length;
+  const st = {acct: cfg.acct || 100000, risk: cfg.riskPct || 1, cap: cfg.maxPos || 25, entry: +R.last.toFixed(2), stop: +(R.last * 0.92).toFixed(2)};
+  const n2 = v => +(+v).toFixed(2);
+  dlg(`${TX("Position size")} · ${esc(sym)}`, `
+    <div class="pfform">
+      <label class="fld"><span>${esc(TX("Account size (USD)"))}</span><input id="zA" type="number" min="0" step="any" value="${st.acct}"></label>
+      <label class="fld"><span>${esc(TX("Risk per trade (%)"))}</span><input id="zR" type="number" min="0.05" max="10" step="0.05" value="${st.risk}"></label>
+      <label class="fld"><span>${esc(TX("Entry price"))}</span><input id="zE" type="number" min="0" step="any" value="${st.entry}"></label>
+      <label class="fld"><span>${esc(TX("Stop price"))}</span><input id="zS" type="number" min="0" step="any" value="${st.stop}"></label>
+      <div class="pfpx pfwide" id="zChips"></div>
+      <label class="fld"><span>${esc(TX("Max position (% of account)"))}</span><input id="zC" type="number" min="1" max="100" step="1" value="${st.cap}"></label>
+    </div>
+    <div class="zout" id="zOut"></div>
+    <button class="btn on wide" id="zAdd">${esc(TX("Add to my portfolio"))}</button>
+    <p class="msub" style="margin-top:10px">${esc(TX("Common practice: risk 0.5% to 1% of the account per trade and keep stops within 7–8% of the entry."))} <a href="${{es:"/es",pt:"/pt"}[I18N.lang] || ""}/learn/position-sizing/" target="_blank" rel="noopener">${esc(TX("Learn more"))}</a></p>`, B=>{
+    const $z = q => B.querySelector(q);
+    const chips = () => { const e = +$z("#zE").value || st.entry, opts = [["−5%", e*0.95], ["−7%", e*0.93], ["−8%", e*0.92]];
+      if(R.d50 && R.d50 < e) opts.push([TX("50-day line"), R.d50 * 0.995]);
+      if(R.pivot && R.pivot < e && R.pivot > e * 0.85) opts.push([TX("Below the pivot"), R.pivot * 0.97]);
+      if(atr) opts.push(["2× ATR", e - 2 * atr]);
+      $z("#zChips").innerHTML = `<span class="pfpxh">${esc(TX("Stop at"))}</span>` + opts.map(([l,v])=>`<button type="button" class="pfchip" data-v="${n2(v)}">${esc(l)} <b>${fmtP(v)}</b></button>`).join("");
+      $z("#zChips").querySelectorAll("[data-v]").forEach(b=>b.onclick = ()=>{ $z("#zS").value = b.dataset.v; calc(); }); };
+    let res = null;
+    const calc = () => {
+      const A = +$z("#zA").value, r = +$z("#zR").value, e = +$z("#zE").value, sp = +$z("#zS").value, cap = +$z("#zC").value || 100;
+      const o = $z("#zOut"); res = null;
+      if(!(A > 0) || !(r > 0) || !(e > 0) || !(sp > 0)){ o.innerHTML = `<p class="msub">${esc(TX("Enter the account size, the risk, the entry and the stop."))}</p>`; return; }
+      if(sp >= e){ o.innerHTML = `<p class="msub neg">${esc(TX("The stop must be below the entry price."))}</p>`; return; }
+      const riskUsd = A * r / 100, per = e - sp, raw = Math.floor(riskUsd / per), maxSh = Math.floor(A * cap / 100 / e), sh = Math.max(0, Math.min(raw, maxSh)), capped = raw > maxSh;
+      const val = sh * e, stopPct = (sp / e - 1) * 100;
+      res = {sh, e, sp};
+      o.innerHTML = `<div class="zbig"><span>${esc(TX("Buy"))}</span><b>${sh.toLocaleString("en-US")}</b><span>${esc(TX("shares"))}</span></div>
+        <table class="ztbl"><tr><td>${esc(TX("Money at risk"))}</td><td>$${Math.round(sh * per).toLocaleString("en-US")} <small>(${(sh * per / A * 100).toFixed(2)}%)</small></td></tr>
+        <tr><td>${esc(TX("Risk per share"))}</td><td>${fmtP(per)} <small>(${stopPct.toFixed(1)}%)</small></td></tr>
+        <tr><td>${esc(TX("Position value"))}</td><td>$${Math.round(val).toLocaleString("en-US")} <small>(${(val / A * 100).toFixed(1)}% ${esc(TX("of the account"))})</small></td></tr>
+        <tr><td>${esc(TX("Target +20% / +25%"))}</td><td>${fmtP(e * 1.2)} / ${fmtP(e * 1.25)} <small>(${(0.2 / (per / e)).toFixed(1)}R / ${(0.25 / (per / e)).toFixed(1)}R)</small></td></tr></table>
+        ${capped ? `<p class="msub">${esc(TX("Capped by the maximum position size. Without the cap it would be"))} ${raw.toLocaleString("en-US")} ${esc(TX("shares"))}.</p>` : ""}
+        ${stopPct < -8.5 ? `<p class="msub neg">${esc(TX("This stop is more than 8% away: consider a tighter entry or a smaller position."))}</p>` : ""}`;
+      $z("#zAdd").disabled = !sh;
+    };
+    ["#zA","#zR","#zE","#zS","#zC"].forEach(id=>$z(id).addEventListener("input", ()=>{ if(id === "#zE") chips(); calc(); }));
+    const keep = () => { const A = +$z("#zA").value, r = +$z("#zR").value, c = +$z("#zC").value;
+      if(A > 0 && r > 0 && c > 0 && (A !== cfg.acct || r !== cfg.riskPct || c !== cfg.maxPos)){ cfg.acct = A; cfg.riskPct = r; cfg.maxPos = c; saveCfg(); } };
+    ["#zA","#zR","#zC"].forEach(id=>$z(id).addEventListener("change", keep));
+    $z("#zAdd").onclick = ()=>{ if(!res || !res.sh) return; keep(); closeDlg(); setTimeout(()=>pfTradeDlg({side:"buy", s: sym, q: res.sh, p: n2(res.e), stop: n2(res.sp)}), 60); };
+    chips(); calc();
+  });
+}
+$("#bSize").onclick = openSize;
 function openAlertsList(){
   if(!auth.token){ openAuth("in"); return; }
   const fmtT = t => t ? fmtLong(t*1000) : "";
@@ -2745,7 +2939,9 @@ function openAlertsList(){
   const row = a => `<div class="arow"><a href="/chart/${esc(a.symbol)}/" class="asym">${esc(a.symbol)}</a><span>${esc(TX(alertDesc(a)))}${a.note?` <i>${esc(a.note)}</i>`:""}${a.fired?`<small>${esc(TX("Fired"))} ${fmtT(a.fired)} · ${fmtP(a.fired_px)}</small>`:""}</span><button class="lnk" data-del="${a.id}" aria-label="${esc(TX("Delete alert"))}">×</button></div>`;
   dlg(TX("My alerts"), `<div class="alist">${act.length ? act.map(row).join("") : `<p class="msub">${esc(TX("No active alerts. Open any chart and tap 🔔 Alert to set one."))}</p>`}
     ${done.length ? `<h5>${esc(TX("Fired in the last 30 days"))}</h5>${done.map(row).join("")}` : ""}</div>
-    ${VERIFIED ? "" : `<p class="msub">${esc(TX("Confirm your email to also get alerts by email."))}</p>`}`, B=>{
+    ${VERIFIED ? "" : `<p class="msub">${esc(TX("Confirm your email to also get alerts by email."))}</p>`}
+    <p class="msub"><button class="lnk" data-openpush>${esc(TX("Get your alerts as notifications on this device"))}</button></p>`, B=>{
+    const op = B.querySelector("[data-openpush]"); if(op) op.onclick = ()=>{ closeDlg(); setTimeout(openPush, 60); };
     B.querySelectorAll("a.asym").forEach(a=>a.onclick = ()=>closeDlg());
     B.querySelectorAll("[data-del]").forEach(b=>b.onclick = async ()=>{ try{ await api("/alerts/"+b.dataset.del, {method:"DELETE"}); await loadAlerts(); openAlertsList(); }catch(e){ toast(e.message); } });
   });
@@ -2925,6 +3121,7 @@ $("#colMenu").addEventListener("click", e=>{ if(e.target.closest("[data-reset]")
 let GROUPS = null, groupsLoading = null, gSort = {k:"rank", asc:true}, gShow = "all";
 function loadGroups(){ if(!groupsLoading) groupsLoading = getJSON("groups.json").then(d=>{ GROUPS = d; }).catch(()=>{ GROUPS = {groups:[], total:0}; }); return groupsLoading; }
 function renderGroups(){
+  renderRrg();
   if(!GROUPS){ $("#gTbl").innerHTML = `<div class="empty">Loading…</div>`; loadGroups().then(()=>{ if(!$("#vGroups").hidden) renderGroups(); }); return; }
   const G = GROUPS.groups || [], T = GROUPS.total || G.length;
   if(!G.length){ $("#gTbl").innerHTML = `<div class="empty">The group ranking appears after the next nightly update.</div>`; $("#gStats").innerHTML = ""; return; }
@@ -3610,7 +3807,17 @@ function tourGo(d){ const n = tourI + d; if(n < 0) return; if(n >= TOUR.length) 
 $("#tNext").onclick = () => tourGo(1);
 $("#tBack").onclick = () => tourGo(-1);
 $("#tSkip").onclick = endTour;
-$("#help").onclick = e => { e.stopPropagation(); startTour(); };
+$("#help").onclick = e => { e.stopPropagation(); openHelp(); };
+function learnUrl(slug){ return `${{es:"/es",pt:"/pt"}[I18N.lang] || ""}/learn/${slug ? slug + "/" : ""}`; }
+function openHelp(){
+  const it = (k, t, d) => `<button class="hitem" data-h="${k}"><b>${esc(TX(t))}</b><span>${esc(TX(d))}</span></button>`;
+  dlg(TX("Help"), `<div class="hlist">${it("tour", "Take the tour", "A 1-minute walk through the main tools.")}${it("learn", "Trading school", "Free lessons from zero: charts, volume, bases, risk and more.")}
+    ${it("method", "How the ratings work", "RS Rating, Composite, bases and pivots, explained.")}${isStandalone() ? "" : it("install", "Install the app", "Its own icon, full screen and alert notifications.")}
+    ${it("mail", "Report a bug or suggest a feature", "Write to us: we read every message.")}</div>`, B=>{
+    B.querySelectorAll("[data-h]").forEach(b=>b.onclick = ()=>{ const k = b.dataset.h; closeDlg();
+      if(k === "tour") setTimeout(startTour, 80); else if(k === "learn") location.href = learnUrl(""); else if(k === "method") location.href = "/methodology/";
+      else if(k === "install") setTimeout(openInstall, 80); else location.href = "mailto:contacto@tickerandtape.com?subject=Ticker%26Tape%20feedback"; }); });
+}
 document.addEventListener("click", e=>{ if(e.target.closest("[data-tour]")) startTour(); });
 { const fy = document.getElementById("fYear"); if(fy) fy.textContent = String(new Date().getFullYear()); }
 document.addEventListener("keydown", e=>{

@@ -7,9 +7,8 @@
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" type="image/svg+xml" href="/img/logo.svg">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-<link rel="manifest" href="/site.webmanifest">
+<link rel="manifest" href="/site.webmanifest"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ticker&amp;Tape"><meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="theme-color" content="#1f3c6e">
-<meta name="apple-mobile-web-app-title" content="Ticker&amp;Tape">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Ticker&amp;Tape">
 <meta property="og:title" content="Ticker&amp;Tape · The complete research platform for stock traders">
@@ -23,7 +22,7 @@
 <meta name="description" content="O'Neil-style charts, RS Ratings, screeners, market breadth, trade ideas and earnings for every U.S. stock and ADR, all in one place. Built by traders, for traders.">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&family=Archivo+Narrow:wght@400;600;700&family=Libre+Franklin:wght@600;800&family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&display=swap">
-<link rel="stylesheet" href="/style.css?v=20261018a">
+<link rel="stylesheet" href="/style.css?v=20261019a">
 <style id="colcss"></style>
 </head>
 <body>
@@ -38,7 +37,7 @@
     <div class="acctmenu bellmenu" id="bellMenu" hidden role="menu"></div>
     <button class="btn acct" id="acct" aria-haspopup="true">Sign in</button>
     <div class="acctmenu" id="acctMenu" hidden role="menu"></div>
-    <button class="gear help" id="help" title="How Ticker&amp;Tape works (tour)" aria-label="Help: take the tour">?</button>
+    <button class="gear help" id="help" title="Help: tour, trading school, install the app" aria-label="Help">?</button>
     <button class="gear" id="gear" title="Settings" aria-label="Settings" aria-expanded="false" aria-controls="settings"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M19.4 13a7.5 7.5 0 0 0 0-2l2.1-1.6-2-3.5-2.5 1a7.6 7.6 0 0 0-1.7-1L15 3.3h-4l-.4 2.6a7.6 7.6 0 0 0-1.7 1l-2.5-1-2 3.5L6.6 11a7.5 7.5 0 0 0 0 2l-2.1 1.6 2 3.5 2.5-1c.5.4 1.1.7 1.7 1l.4 2.6h4l.4-2.6c.6-.3 1.2-.6 1.7-1l2.5 1 2-3.5zM13 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z" transform="translate(-1 0)"/></svg></button>
     <div class="settings" id="settings" hidden role="dialog" aria-label="Settings"></div>
   </nav>
@@ -111,6 +110,14 @@
         <p class="lede">Most big winners come from the strongest groups. Every GICS sub-industry, built from every U.S. stock and ADR worth $1 billion or more, ranked by the average relative strength of its stocks, with how the rank moved over 1, 3 and 6 weeks, equal-weight performance, the share of members above the 50-day line and the three strongest stocks in each group.</p>
       </div>
       <div class="istats" id="gStats"></div>
+    </section>
+    <section class="box rrgbox" id="rrgBox">
+      <h3><span>Sector rotation <small>relative rotation graph vs the S&amp;P 500</small></span><a href="/learn/leaders-and-laggards/" class="rrghelp" id="rrgHelp">How to read it</a></h3>
+      <div class="bar rrgbar"><div class="seg" role="group" aria-label="Set" id="rrgSet"><button data-s="sectors" class="on">Sectors</button><button data-s="industries">Industries</button><button data-s="styles">Styles</button><button data-s="countries">Countries</button><button data-s="watch">My watchlist</button></div>
+        <div class="seg" role="group" aria-label="Period" id="rrgPer"><button data-p="w" class="on">Weekly</button><button data-p="d">Daily</button></div>
+        <div class="seg" role="group" aria-label="Tail" id="rrgTail"><button data-t="4">4</button><button data-t="8" class="on">8</button><button data-t="12">12</button></div></div>
+      <div class="rrgwrap"><canvas id="rrgCv"></canvas><div class="rrglist" id="rrgList"></div></div>
+      <p class="fine rrgnote">Each line is the path of the last weeks and the dot is today. The usual rotation is clockwise: Improving, Leading, Weakening, Lagging. RS-Ratio (to the right = beating the S&amp;P 500) and RS-Momentum (up = gaining strength) are Ticker&amp;Tape's own approximation of the classic method.</p>
     </section>
     <div class="bar">
       <label class="gsel"><span class="vh">Sector</span><select id="gSector" aria-label="Sector"></select></label>
@@ -364,8 +371,8 @@
 
     <section class="w2pillars" aria-label="Product">
       <div><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 1 0 9 9h-2a7 7 0 1 1-2.05-4.95L14 10h7V3l-2.64 2.64A8.96 8.96 0 0 0 12 3Z"/></svg><b>Every session</b><span>Ratings and charts rebuilt after every close, prices updated throughout the day.</span></div>
-      <div><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h11v8H4V5Zm-2-2v12h15V3H2Zm16 4h4v14H8v-4h2v2h10V9h-2V7Z"/></svg><b>Every device</b><span>Desk, laptop or phone. One account keeps your lists, settings and drawings in sync.</span></div>
-      <div><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22Zm7-6v-5a7 7 0 0 0-5.5-6.84V3.5a1.5 1.5 0 0 0-3 0v.66A7 7 0 0 0 5 11v5l-2 2v1h18v-1l-2-2Z"/></svg><b>Alerts that reach you</b><span>Set a level on any chart and get an email and a notice on the site when it trades.</span></div>
+      <div><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h11v8H4V5Zm-2-2v12h15V3H2Zm16 4h4v14H8v-4h2v2h10V9h-2V7Z"/></svg><b>Every device</b><span>Desk, laptop or phone, or installed as an app. One account keeps your lists, settings and drawings in sync.</span></div>
+      <div><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22Zm7-6v-5a7 7 0 0 0-5.5-6.84V3.5a1.5 1.5 0 0 0-3 0v.66A7 7 0 0 0 5 11v5l-2 2v1h18v-1l-2-2Z"/></svg><b>Alerts that reach you</b><span>Set a level on any chart and get a phone notification, an email and a notice on the site when it trades.</span></div>
       <div><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm6.9 6h-2.95a15.7 15.7 0 0 0-1.38-3.56A8.03 8.03 0 0 1 18.9 8ZM12 4.04c.83 1.2 1.48 2.53 1.91 3.96h-3.82c.43-1.43 1.08-2.76 1.91-3.96ZM4.26 14a8.2 8.2 0 0 1 0-4h3.38a16.5 16.5 0 0 0 0 4H4.26Zm.82 2h2.95c.32 1.25.78 2.45 1.38 3.56A7.99 7.99 0 0 1 5.08 16Zm2.95-8H5.08a7.99 7.99 0 0 1 4.33-3.56A15.7 15.7 0 0 0 8.03 8ZM12 19.96A14.1 14.1 0 0 1 10.09 16h3.82A14.1 14.1 0 0 1 12 19.96ZM14.34 14H9.66a14.7 14.7 0 0 1 0-4h4.68a14.7 14.7 0 0 1 0 4Zm.25 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95a8.03 8.03 0 0 1-4.33 3.56ZM16.36 14a16.5 16.5 0 0 0 0-4h3.38a8.2 8.2 0 0 1 0 4h-3.38Z"/></svg><b>English · Español · Português</b><span>The whole interface in three languages, from Settings.</span></div>
     </section>
 
@@ -386,6 +393,21 @@
         <li><b>Open a free account.</b> An email and a password. Nothing else.</li>
         <li><b>Star the stocks you follow.</b> Any U.S. stock or ADR, big or small.</li>
         <li><b>Check the board after the close.</b> Leaders, setups and pivots, updated every trading day.</li>
+      </ol>
+    </section>
+
+    <section class="w2learn">
+      <div>
+        <p class="w2kick"><span>Trading school</span></p>
+        <h2>New to trading? Start here.</h2>
+        <p>A free course from zero: how to read a chart, trends, support and resistance, volume, moving averages, bases and buy points, fundamentals, the market and risk management. Short lessons, clear diagrams and live examples from today's market.</p>
+        <a class="btn on" href="/learn/" data-learn>Open the trading school →</a>
+      </div>
+      <ol>
+        <li><a href="/learn/candlesticks-and-bars/" data-learn="candlesticks-and-bars"><b>1</b>How to read candlesticks and bars</a></li>
+        <li><a href="/learn/reading-volume/" data-learn="reading-volume"><b>2</b>How to read volume</a></li>
+        <li><a href="/learn/cup-with-handle/" data-learn="cup-with-handle"><b>3</b>The cup with handle</a></li>
+        <li><a href="/learn/position-sizing/" data-learn="position-sizing"><b>4</b>Position sizing: how much to buy</a></li>
       </ol>
     </section>
 
@@ -522,7 +544,7 @@
         </div>
       </span>
       <span class="grp">
-        <button class="btn" id="bAlert" title="Get an alert when the price reaches a level">🔔 Alert</button>
+        <button class="btn" id="bAlert" title="Get an alert when the price reaches a level">🔔 Alert</button><button class="btn" id="bSize" title="Position size calculator: how many shares to buy for your risk">⚖ Size</button>
       </span>
       <span class="grp">
         <a class="btn xshare" id="bShare" href="/" target="_blank" rel="noopener" title="Share this chart on X"><svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><path fill="currentColor" d="M18.9 2H22l-6.8 7.8L23.2 22h-6.3l-4.9-6.4L6.4 22H3.3l7.3-8.3L1 2h6.4l4.4 5.9L18.9 2Zm-1.1 18.1h1.7L6.3 3.8H4.5l13.3 16.3Z"/></svg>Share</a>
@@ -601,6 +623,7 @@
       <div>
         <h4>Explore</h4>
         <ul>
+          <li><a href="/learn/" data-learn>Trading school</a></li>
           <li><a href="/">Market dashboard</a></li>
           <li><a href="/heatmap/">Heatmap</a></li>
           <li><a href="/breadth/">Market breadth</a></li>
@@ -617,6 +640,7 @@
         <h4>Help</h4>
         <ul>
           <li><button class="lnk" data-tour>Take the tour</button></li>
+          <li><button class="lnk" data-install>Install the app</button></li>
           <li><a href="/about/">About Ticker&amp;Tape</a></li>
           <li><a href="/methodology/">How the ratings work</a></li>
           <li><a href="/glossary/">Glossary</a></li>
@@ -660,7 +684,7 @@
   </div>
 </div>
 <div class="toast" id="toast" hidden></div>
-<script src="/i18n.js?v=20261018a"></script>
-<script src="/app.js?v=20261018a"></script>
+<script src="/i18n.js?v=20261019a"></script>
+<script src="/app.js?v=20261019a"></script>
 </body>
 </html>
