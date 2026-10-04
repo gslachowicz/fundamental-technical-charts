@@ -5,7 +5,8 @@ const ORIGINS = ["https://tickerandtape.com", "https://www.tickerandtape.com", "
 const SESSION_DAYS = 90;
 const PBKDF2_ITER = 100000;
 const MAX_VALUE = 64 * 1024;
-const KEY_RE = /^(watchlist|lists|notes|cfg|marks:[A-Z0-9.\-^=]{1,15})$/;
+const KEY_RE = /^(watchlist|lists|notes|cfg|portfolio|marks:[A-Z0-9.\-^=]{1,15})$/;
+const MAX_PORTFOLIO = 512 * 1024;   // the trade journal: a few thousand trades
 const SYM_RE = /^[A-Z0-9.\-^=]{1,15}$/;
 const EMAIL_RE = /^[^\s@]{1,64}@[^\s@]{1,190}\.[^\s@]{2,}$/;
 
@@ -482,10 +483,10 @@ export default {
       }
       if (path === "/tickers" && req.method === "GET") {
         // every ticker anyone has in a watchlist: the nightly data build adds the ones it does not cover yet
-        const { results } = await env.DB.prepare("SELECT key, value FROM user_data WHERE key IN ('watchlist', 'lists')").all();
+        const { results } = await env.DB.prepare("SELECT key, value FROM user_data WHERE key IN ('watchlist', 'lists', 'portfolio')").all();
         const set = new Set();
         for (const r of results) { try { const v = JSON.parse(r.value);
-          const all = r.key === "lists" ? (v.lists || []).flatMap(l => l.t || []) : v;
+          const all = r.key === "lists" ? (v.lists || []).flatMap(l => l.t || []) : r.key === "portfolio" ? (v.trades || []).map(t => t.s) : v;
           for (const s of all) if (SYM_RE.test(s)) set.add(s); } catch {} }
         try { const { results: al } = await env.DB.prepare("SELECT DISTINCT symbol FROM alerts WHERE fired IS NULL").all();
           for (const r of al) if (SYM_RE.test(r.symbol)) set.add(r.symbol); } catch {}
@@ -659,8 +660,14 @@ export default {
                 !Object.entries(value).every(([k, v]) => SYM_RE.test(k) && typeof v === "string" && v.length <= 280))
               return fail(req, "Invalid notes (up to 500 notes of 280 characters).");
           }
+          if (key === "portfolio") {
+            const T = value && Array.isArray(value.trades) ? value.trades : null;
+            if (!T || T.length > 3000 || !T.every(t => t && SYM_RE.test(String(t.s || "")) && (t.side === "buy" || t.side === "sell") &&
+                /^\d{4}-\d{2}-\d{2}$/.test(String(t.d || "")) && t.q > 0 && t.p > 0 && (t.note == null || String(t.note).length <= 500)))
+              return fail(req, "Invalid portfolio (up to 3,000 trades).");
+          }
           const txt = JSON.stringify(value ?? null);
-          if (txt.length > MAX_VALUE) return fail(req, "Too much data for one setting.", 413);
+          if (txt.length > (key === "portfolio" ? MAX_PORTFOLIO : MAX_VALUE)) return fail(req, "Too much data for one setting.", 413);
           await env.DB.prepare("INSERT INTO user_data (user_id, key, value, updated) VALUES (?, ?, ?, ?) " +
             "ON CONFLICT(user_id, key) DO UPDATE SET value = excluded.value, updated = excluded.updated")
             .bind(user.id, key, txt, now()).run();
