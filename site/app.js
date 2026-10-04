@@ -13,11 +13,12 @@ const store = {
   set(k,v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
 };
 /* ---------- clean URLs: /chart/NVDA/, /breadth/, /compare/ … (old #NVDA links still work and get rewritten) ---------- */
-const SECTIONS = ["watchlist","portfolio","screener","etfs","groups","heatmap","breadth","ideas","research","macro","earnings","compare","wall","welcome"];
+const SECTIONS = ["watchlist","portfolio","fundamentals","screener","etfs","groups","heatmap","breadth","ideas","research","macro","earnings","compare","wall","welcome"];
 function keyToPath(k){
   k = String(k || "").replace(/^#/, "").trim(); const low = k.toLowerCase();
   if(!k || low === "home") return "/";
   if(k === low && SECTIONS.includes(low)) return "/" + low + "/";     // sections are lowercase, tickers uppercase
+  if(low.startsWith("fundamentals/")) return "/fundamentals/?t=" + encodeURIComponent(k.slice(13).toUpperCase());
   if(low.startsWith("compare/")) return "/compare/?t=" + encodeURIComponent(k.slice(8)).replace(/%2C/gi, ",").replace(/%3A/gi, ":");
   return "/chart/" + encodeURIComponent(k.toUpperCase()).replace(/%3D/gi, "=").replace(/%5E/gi, "^") + "/";
 }
@@ -26,6 +27,7 @@ function pathToKey(){
   if((m = p.match(/^\/chart\/([^\/]+)\/?$/))) return decodeURIComponent(m[1]).toUpperCase();
   if((m = p.match(/^\/([a-z]+)\/?$/)) && SECTIONS.includes(m[1])){
     if(m[1] === "compare"){ const t = new URLSearchParams(location.search).get("t"); if(t) return "compare/" + t; }
+    if(m[1] === "fundamentals"){ const t = new URLSearchParams(location.search).get("t"); if(t) return "fundamentals/" + t; }
     return m[1]; }
   return "";
 }
@@ -1271,22 +1273,23 @@ function route(){
   if(raw.toLowerCase() === "alerts"){ history.replaceState(null, "", location.pathname); raw = ""; setTimeout(()=>{ if(auth.token) loadAlerts().then(openAlertsList); else openAuth("in"); }, 300); }
   // a path the site doesn't know (old or mistyped link): page not found, for visitors and members alike
   if(!location.hash && raw === "" && !/^\/(index\.html)?$/.test(location.pathname)){
-    ["#vWelcome","#vHome","#vScreener","#vChart","#vHeat","#vIdeas","#vResearch","#vMacro","#vPortfolio","#vEarn","#vBreadth","#vGroups","#vWall","#vCmp"].forEach(id=>$(id).hidden = true);
+    ["#vWelcome","#vHome","#vScreener","#vChart","#vHeat","#vIdeas","#vResearch","#vMacro","#vPortfolio","#vFin","#vEarn","#vBreadth","#vGroups","#vWall","#vCmp"].forEach(id=>$(id).hidden = true);
     $("#vNotFound").hidden = false; document.body.classList.add("on-welcome"); setTab(""); document.title = TX("Page not found · Ticker&Tape"); window.scrollTo(0,0); return; }
   if(location.hash) history.replaceState(null, "", keyToPath(raw));   // old #links → clean URL
   // signed-out visitors only get the welcome page, except for a chart link (shared on X, found on Google), which opens with a sign-up bar
-  { const l = raw.toLowerCase(), chartish = chartPath || (raw !== "" && l !== "home" && !SECTIONS.includes(l) && !l.startsWith("compare/"));
+  { const l = raw.toLowerCase(), chartish = chartPath || (raw !== "" && l !== "home" && !SECTIONS.includes(l) && !l.startsWith("compare/") && !l.startsWith("fundamentals/"));
     if(!auth.token && l !== "welcome" && !chartish){ history.replaceState(null, "", "/welcome/"); raw = "welcome"; } }
   const low = raw.toLowerCase();
   const isList = raw === low && ROUTES[low];
-  track(low === "" || low === "home" ? "home" : isList ? low : ["groups","heatmap","breadth","ideas","research","macro","portfolio","earnings","wall","welcome"].includes(low) ? low : low === "compare" || low.startsWith("compare/") ? "compare" : "chart", raw.toUpperCase());
+  track(low === "" || low === "home" ? "home" : isList ? low : ["groups","heatmap","breadth","ideas","research","macro","portfolio","earnings","wall","welcome"].includes(low) ? low : low === "compare" || low.startsWith("compare/") ? "compare" : low === "fundamentals" || low.startsWith("fundamentals/") ? "fundamentals" : "chart", raw.toUpperCase());
   const isHome = raw === "" || raw === "home";
-  ["#vWelcome","#vHome","#vScreener","#vChart","#vHeat","#vIdeas","#vResearch","#vMacro","#vPortfolio","#vEarn","#vBreadth","#vGroups","#vWall","#vCmp","#vNotFound"].forEach(id=>$(id).hidden = true); $("#hmTip").hidden = true; $("#gateBar").hidden = true;
+  ["#vWelcome","#vHome","#vScreener","#vChart","#vHeat","#vIdeas","#vResearch","#vMacro","#vPortfolio","#vFin","#vEarn","#vBreadth","#vGroups","#vWall","#vCmp","#vNotFound"].forEach(id=>$(id).hidden = true); $("#hmTip").hidden = true; $("#gateBar").hidden = true;
   $("#vNotFound").hidden = true; document.body.classList.toggle("on-welcome", raw === "welcome"); if(raw !== "welcome") $("#wSticky").classList.remove("on");
   document.body.classList.toggle("on-home", isHome);
   if(chartPath && raw){ setTab(""); $("#gateBar").hidden = !!auth.token; openChart(raw.toUpperCase()); return; }
   if(raw === "welcome"){ $("#vWelcome").hidden = false; setTab(""); document.title = "Ticker&Tape · The complete research platform for stock traders"; window.scrollTo(0,0); renderWelcome(); return; }
   if(low === "earnings"){ lastList = "earnings"; $("#vEarn").hidden = false; setTab("earn"); document.title = "Earnings calendar · Ticker&Tape"; window.scrollTo(0,0); renderEarn(); return; }
+  if(low === "fundamentals" || low.startsWith("fundamentals/")){ lastList = "fundamentals"; $("#vFin").hidden = false; setTab("fin"); const fs = raw.slice(13).toUpperCase(); document.title = `${fs ? fs + " " : ""}Financial statements · Ticker&Tape`; window.scrollTo(0,0); renderFin(fs || null); return; }
   if(low === "portfolio"){ lastList = "portfolio"; $("#vPortfolio").hidden = false; setTab("pf"); document.title = "Portfolio · Ticker&Tape"; window.scrollTo(0,0); renderPortfolio(); return; }
   if(low === "macro"){ lastList = "macro"; $("#vMacro").hidden = false; setTab("macro"); document.title = "Macro calendar and Fed odds · Ticker&Tape"; window.scrollTo(0,0); renderMacro(); return; }
   if(low === "research"){ lastList = "research"; $("#vResearch").hidden = false; setTab("research"); document.title = "Research · Ticker&Tape"; window.scrollTo(0,0); renderResearch(); return; }
@@ -2186,6 +2189,155 @@ async function openPush(){
   });
 }
 
+/* ================= FUNDAMENTALS: FINANCIAL STATEMENTS ================= */
+// data/f/SYM.json, built every night from SEC filings (10-K, 10-Q, 20-F): annual (up to 15 years) and quarterly (5 years)
+const FIN_ROWS = {
+  is: [["revenue","Revenue",1],["cogs","Cost of revenue"],["grossProfit","Gross profit",1],["rnd","Research and development"],["sga","Selling, general and administrative"],
+       ["opex","Total operating expenses"],["operatingIncome","Operating income (EBIT)",1],["dna","Depreciation and amortization"],["ebitda","EBITDA",1],["interestExpense","Interest expense"],
+       ["pretaxIncome","Pre-tax income"],["incomeTax","Income tax"],["netIncome","Net income",1],["epsBasic","EPS, basic"],["epsDiluted","EPS, diluted",1],["sharesDiluted","Diluted shares"]],
+  bs: [["cash","Cash and equivalents"],["shortInvestments","Short-term investments"],["cashAndInvestments","Cash and short-term investments",1],["receivables","Receivables"],["inventory","Inventory"],
+       ["currentAssets","Total current assets",1],["ppe","Property, plant and equipment"],["goodwill","Goodwill"],["intangibles","Intangible assets"],["totalAssets","Total assets",1],
+       ["payables","Accounts payable"],["shortDebt","Short-term debt"],["currentLiabilities","Total current liabilities",1],["longDebt","Long-term debt"],["totalDebt","Total debt",1],
+       ["totalLiabilities","Total liabilities",1],["equity","Shareholders' equity",1],["retainedEarnings","Retained earnings"],["netCash","Net cash (cash − debt)",1],["workingCapital","Working capital"],["sharesOut","Shares outstanding"]],
+  cf: [["cfo","Operating cash flow",1],["capex","Capital expenditures"],["fcf","Free cash flow",1],["dna","Depreciation and amortization"],["sbc","Stock-based compensation"],
+       ["acquisitions","Acquisitions"],["cfi","Investing cash flow",1],["buybacks","Share buybacks"],["dividends","Dividends paid"],["cff","Financing cash flow",1]],
+  ra: [["grossMargin","Gross margin",1],["opMargin","Operating margin",1],["ebitdaMargin","EBITDA margin"],["netMargin","Net margin",1],["fcfMargin","Free cash flow margin"],
+       ["revGrowth","Revenue growth (YoY)",1],["epsGrowth","EPS growth (YoY)",1],["roe","Return on equity",1],["roa","Return on assets"],["debtToEquity","Debt to equity"],
+       ["currentRatio","Current ratio"],["taxRate","Tax rate"],["rndPct","R&D, % of revenue"],["sbcPct","Stock-based comp, % of revenue"]]};
+const FIN_LABEL = Object.fromEntries(Object.values(FIN_ROWS).flat().map(([k,l])=>[k,l]));
+const FIN_KIND = k => /Margin|Growth|^roe$|^roa$|debtToEquity|taxRate|Pct$/.test(k) ? "pct" : k === "currentRatio" ? "x" : /^eps/.test(k) ? "ps" : /^shares/.test(k) ? "sh" : "usd";
+const FIN_DEF_SEL = {is:["revenue","netIncome"], bs:["cashAndInvestments","totalDebt"], cf:["cfo","fcf"], ra:["grossMargin","opMargin"]};
+const FIN_COLS = ["#1f3c6e","#d23a2a","#3c8a3a","#e07b1f","#7b4bb3","#0f7c86"];
+let FIN = {sym: store.get("tt:finSym") || "", st: store.get("tt:finSt") || "is", per: store.get("tt:finPer") || "a", sel: store.get("tt:finSel") || null, cmp: store.get("tt:finCmp") || [], type: store.get("tt:finType") || "bar", data: {}, hover: -1, plot: null};
+if(!Array.isArray(FIN.sel)) FIN.sel = FIN_DEF_SEL[FIN.st].slice();
+function finFile(sym){ if(!(sym in FIN.data)) FIN.data[sym] = getJSON(`f/${encodeURIComponent(sym.replace(/=/g,"_"))}.json`).catch(()=>null); return FIN.data[sym]; }
+function finSave(){ store.set("tt:finSym", FIN.sym); store.set("tt:finSt", FIN.st); store.set("tt:finPer", FIN.per); store.set("tt:finSel", FIN.sel); store.set("tt:finCmp", FIN.cmp); store.set("tt:finType", FIN.type); }
+const finCcy = c => !c || c === "USD" ? "$" : c + " ";
+function finFmt(v, k, ccy, short){
+  if(v == null || !isFinite(v)) return "—";
+  const kind = FIN_KIND(k);
+  if(kind === "pct") return v.toFixed(1) + "%";
+  if(kind === "x") return v.toFixed(2) + "×";
+  if(kind === "ps") return (v < 0 ? "−" : "") + finCcy(ccy) + Math.abs(v).toFixed(2);
+  const a = Math.abs(v), sgn = v < 0 ? "−" : "", cur = kind === "sh" ? "" : finCcy(ccy);
+  const [d, u] = a >= 1e12 ? [1e12, "T"] : a >= 1e9 ? [1e9, "B"] : a >= 1e6 ? [1e6, "M"] : a >= 1e3 ? [1e3, "K"] : [1, ""];
+  return sgn + cur + (a / d).toFixed(short ? (a / d >= 100 ? 0 : 1) : 2) + u;
+}
+// period labels: fiscal year (annual) or calendar quarter of the period end (quarterly), so different companies line up
+function finLabel(end, per){ const d = new Date(end + "T00:00:00Z"); const y = d.getUTCFullYear(), m = d.getUTCMonth();
+  if(per === "a"){ const fy = m <= 1 ? y : y; return "FY" + String(fy).slice(2); }
+  const q = Math.floor(((m + 12 - 0) % 12) / 3) + 1, yy = y; return `Q${q} '${String(yy).slice(2)}`; }
+function finSort(lbls){ const key = l => l.startsWith("FY") ? +l.slice(2) * 10 : +l.slice(-2) * 10 + +l[1]; return [...new Set(lbls)].sort((a,b)=>key(a) - key(b)); }
+async function renderFin(sym){
+  if(sym){ FIN.sym = sym.toUpperCase(); finSave(); }
+  if(!FIN.sym) FIN.sym = (S && S.symbol) || (WL && WL[0]) || "MSFT";
+  $("#finSym").value = FIN.sym;
+  $$("#finSt button").forEach(b=>b.classList.toggle("on", b.dataset.st === FIN.st));
+  $$("#finPer button").forEach(b=>b.classList.toggle("on", b.dataset.p === FIN.per));
+  $$("#finType button").forEach(b=>b.classList.toggle("on", b.dataset.t === FIN.type));
+  $("#finCmpList").innerHTML = FIN.cmp.map((s,i)=>`<span class="fchip" style="border-color:${FIN_COLS[(i+1) % FIN_COLS.length]}">${esc(s)}<button data-rm="${esc(s)}" aria-label="Remove">×</button></span>`).join("");
+  const syms = [FIN.sym, ...FIN.cmp];
+  $("#finTbl").innerHTML = `<div class="empty">${esc(TX("Loading…"))}</div>`;
+  const all = await Promise.all(syms.map(finFile));
+  if(syms[0] !== FIN.sym) return;
+  const d = all[0], r = rowOf(FIN.sym) || {};
+  $("#finName").innerHTML = `<b>${esc(FIN.sym)}</b> ${esc(r.name || (d && d.name) || "")}${r.sector ? ` <small>${esc(TX(r.sector))}</small>` : ""} <a href="/chart/${esc(FIN.sym)}/" data-go="${esc(FIN.sym)}">${esc(TX("Open the chart"))} →</a>`;
+  const P = d && (FIN.per === "q" ? d.quarterly : d.annual);
+  if(!d || !P || !P.end.length){
+    $("#finChartBox").hidden = true;
+    $("#finTbl").innerHTML = `<div class="empty">${esc(TX(d && FIN.per === "q" ? "Quarterly statements are not available for this company (foreign companies file only annual reports with the SEC)." : "Financial statements for this company are not available yet. They come from SEC filings and are added with the nightly update; the largest companies first."))}</div>`;
+    return; }
+  $("#finSrc").textContent = `${TX("Source: SEC filings")} (${d.src === "ifrs" ? "20-F, IFRS" : "10-K / 10-Q"}) · ${TX("Figures in")} ${d.ccy}${d.ccy !== "USD" ? " · " + TX("reported currency") : ""}`;
+  const rows = FIN_ROWS[FIN.st].filter(([k])=>P.rows[k] && P.rows[k].some(v=>v != null));
+  FIN.sel = FIN.sel.filter(k=>Object.values(FIN_ROWS).flat().some(x=>x[0] === k));
+  if(!FIN.sel.length) FIN.sel = FIN_DEF_SEL[FIN.st].slice();
+  const n = P.end.length, show = FIN.per === "q" ? 20 : 15, i0 = Math.max(0, n - show);
+  const cols = P.end.slice(i0);
+  $("#finTbl").innerHTML = `<div class="tablewrap ftbl"><table class="tbl"><thead><tr><th class="l">${esc(TX(FIN.per === "q" ? "Quarter" : "Fiscal year"))}</th>${cols.map(e=>`<th>${finLabel(e, FIN.per)}<small>${fmtD(iso(e))}</small></th>`).join("")}</tr></thead><tbody>
+    ${rows.map(([k, l, big])=>{ const on = FIN.sel.indexOf(k), vals = P.rows[k].slice(i0);
+      return `<tr data-k="${k}" class="${big ? "fbig" : ""} ${on >= 0 ? "fon" : ""}" tabindex="0" title="${esc(TX("Click to add to the chart"))}"><td class="l"><i style="${on >= 0 ? `background:${FIN_COLS[on % FIN_COLS.length]}` : ""}"></i>${esc(TX(l))}</td>
+        ${vals.map(v=>`<td class="${v < 0 ? "neg" : ""}">${finFmt(v, k, d.ccy, true)}</td>`).join("")}</tr>`; }).join("")}</tbody></table></div>`;
+  const tw = $("#finTbl .tablewrap"); if(tw) tw.scrollLeft = tw.scrollWidth;
+  $("#finChartBox").hidden = false;
+  drawFin(all, syms);
+}
+function finSeries(all, syms){
+  // one line per (company, item): values by period label
+  const out = [];
+  syms.forEach((s, ci)=>{ const d = all[ci]; const P = d && (FIN.per === "q" ? d.quarterly : d.annual); if(!P) return;
+    FIN.sel.forEach((k, ki)=>{ const v = P.rows[k]; if(!v) return; const m = {}; P.end.forEach((e,i)=>{ if(v[i] != null) m[finLabel(e, FIN.per)] = v[i]; });
+      out.push({s, k, ci, ki, m, ccy: d.ccy}); }); });
+  return out;
+}
+function drawFin(all, syms){
+  const cv = $("#finCv"); if(!cv) return; const W = cv.clientWidth; if(!W) return;
+  const H = W < 600 ? 260 : 320, dpr = devicePixelRatio || 1; cv.style.height = H + "px"; cv.width = W * dpr; cv.height = H * dpr;
+  const g = cv.getContext("2d"); g.setTransform(dpr,0,0,dpr,0,0); g.fillStyle = "#fff"; g.fillRect(0,0,W,H);
+  all = all || FIN.plot && FIN.plot.all; syms = syms || FIN.plot && FIN.plot.syms; if(!all) return;
+  const ser = finSeries(all, syms); FIN.plot = {all, syms, ser};
+  let labels = finSort(ser.flatMap(x=>Object.keys(x.m))); labels = labels.slice(-(FIN.per === "q" ? 20 : 15));
+  FIN.plot.labels = labels;
+  const legend = $("#finLegend");
+  const multi = syms.length > 1;
+  const colOf = x => multi ? FIN_COLS[x.ci % FIN_COLS.length] : FIN_COLS[x.ki % FIN_COLS.length];
+  const dashOf = x => multi ? [[], [6,4], [2,3], [8,3,2,3]][x.ki % 4] : [];
+  legend.innerHTML = ser.map(x=>`<span><i style="background:${colOf(x)}${multi && x.ki ? ";opacity:.6" : ""}"></i>${multi ? esc(x.s) + " · " : ""}${esc(TX(FIN_LABEL[x.k]))}</span>`).join("");
+  if(!ser.length || !labels.length){ g.fillStyle = C.ink2; g.font = `14px ${FONT_L}`; g.fillText(TX("Click a row of the table to chart it."), 16, 30); return; }
+  const left = ser.filter(x=>FIN_KIND(x.k) !== "pct" && FIN_KIND(x.k) !== "x"), right = ser.filter(x=>!left.includes(x));
+  const L = 64, R = right.length && left.length ? 54 : 14, T = 14, B = 26, pw = W - L - R, ph = H - T - B;
+  const rng = arr => { let lo = 0, hi = 0; arr.forEach(x=>labels.forEach(l=>{ const v = x.m[l]; if(v != null){ lo = Math.min(lo, v); hi = Math.max(hi, v); } })); if(hi === lo) hi = lo + 1; const p = (hi - lo) * 0.08; return [lo < 0 ? lo - p : lo, hi + p]; };
+  const [l0, l1] = left.length ? rng(left) : [0, 1], [r0, r1] = right.length ? rng(right) : [0, 1];
+  const yl = v => T + (l1 - v) / (l1 - l0) * ph, yr = v => T + (r1 - v) / (r1 - r0) * ph;
+  const slot = pw / labels.length, x = i => L + slot * (i + 0.5);
+  g.font = `11px ${FONT_D}`; g.textBaseline = "middle"; g.strokeStyle = C.grid; g.setLineDash([1,3]);
+  const axisOf = left.length ? left[0] : right[0];
+  for(const v of linTicks(left.length ? l0 : r0, left.length ? l1 : r1, ph)){ const y = left.length ? yl(v) : yr(v); g.beginPath(); g.moveTo(L, y); g.lineTo(L + pw, y); g.stroke(); g.fillStyle = C.ink2; g.textAlign = "right"; g.fillText(finFmt(v, axisOf.k, axisOf.ccy, true), L - 6, y); }
+  if(left.length && right.length) for(const v of linTicks(r0, r1, ph)){ g.fillStyle = C.ink2; g.textAlign = "left"; g.fillText(finFmt(v, right[0].k, right[0].ccy, true), L + pw + 6, yr(v)); }
+  g.setLineDash([]);
+  const z = left.length ? yl(0) : yr(0); g.strokeStyle = C.ink2; g.beginPath(); g.moveTo(L, z); g.lineTo(L + pw, z); g.stroke();
+  g.textAlign = "center"; g.textBaseline = "alphabetic"; g.fillStyle = C.ink2; g.font = `11px ${FONT_L}`;
+  const every = Math.ceil(labels.length / Math.max(1, Math.floor(pw / 52)));
+  labels.forEach((l,i)=>{ if(i % every === 0 || i === labels.length - 1) g.fillText(l, x(i), H - 8); });
+  // bars for money items (when "Bars"), lines for the rest
+  const bars = FIN.type === "bar" ? left : [], lines = ser.filter(s=>!bars.includes(s));
+  if(bars.length){ const bw = Math.min(28, slot * 0.8 / bars.length);
+    bars.forEach((s, j)=>{ g.fillStyle = colOf(s); g.globalAlpha = multi && s.ki ? 0.55 : 0.9;
+      labels.forEach((l,i)=>{ const v = s.m[l]; if(v == null) return; const bx = x(i) - bw * bars.length / 2 + j * bw, y = yl(v); g.fillRect(bx, Math.min(y, z), bw - 1, Math.abs(z - y) || 1); }); });
+    g.globalAlpha = 1; }
+  lines.forEach(s=>{ const Y = left.includes(s) ? yl : yr; g.strokeStyle = colOf(s); g.lineWidth = 2.2; g.setLineDash(dashOf(s)); g.beginPath(); let st = false;
+    labels.forEach((l,i)=>{ const v = s.m[l]; if(v == null){ st = false; return; } if(!st){ g.moveTo(x(i), Y(v)); st = true; } else g.lineTo(x(i), Y(v)); }); g.stroke(); g.setLineDash([]);
+    g.fillStyle = colOf(s); labels.forEach((l,i)=>{ const v = s.m[l]; if(v != null){ g.beginPath(); g.arc(x(i), Y(v), 2.6, 0, 7); g.fill(); } }); });
+  g.lineWidth = 1;
+  if(FIN.hover >= 0 && FIN.hover < labels.length){ const hx = x(FIN.hover); g.strokeStyle = "rgba(21,23,28,.35)"; g.beginPath(); g.moveTo(hx, T); g.lineTo(hx, T + ph); g.stroke();
+    const lab = labels[FIN.hover], tt = $("#finTip");
+    tt.innerHTML = `<b>${esc(lab)}</b>` + ser.map(s=>`<span><i style="background:${colOf(s)}"></i>${multi ? esc(s.s) + " · " : ""}${esc(TX(FIN_LABEL[s.k]))}: <b>${finFmt(s.m[lab], s.k, s.ccy)}</b></span>`).join("");
+    tt.hidden = false; const bx = cv.getBoundingClientRect().width; tt.style.left = Math.min(bx - 230, Math.max(0, hx + 12)) + "px"; }
+  else $("#finTip").hidden = true;
+}
+function finCsv(){
+  finFile(FIN.sym).then(d=>{ const P = d && (FIN.per === "q" ? d.quarterly : d.annual); if(!P) return;
+    const rows = FIN_ROWS[FIN.st].filter(([k])=>P.rows[k]);
+    const csv = [["Item", ...P.end].join(","), ...rows.map(([k,l])=>[`"${l}"`, ...P.rows[k].map(v=>v == null ? "" : v)].join(","))].join("\n");
+    const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], {type:"text/csv"})); a.download = `${FIN.sym}-${FIN.st}-${FIN.per === "q" ? "quarterly" : "annual"}.csv`; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href), 2000); });
+}
+$("#vFin").addEventListener("click", e=>{
+  const b = e.target.closest("button,[data-go],tr[data-k]"); if(!b) return; const d = b.dataset;
+  if(d.st){ FIN.st = d.st; FIN.sel = FIN_DEF_SEL[d.st].slice(); finSave(); renderFin(); }
+  else if(d.p){ FIN.per = d.p; finSave(); renderFin(); }
+  else if(d.t){ FIN.type = d.t; finSave(); $$("#finType button").forEach(x=>x.classList.toggle("on", x.dataset.t === FIN.type)); drawFin(); }
+  else if(d.rm){ FIN.cmp = FIN.cmp.filter(s=>s !== d.rm); finSave(); renderFin(); }
+  else if(d.k){ const i = FIN.sel.indexOf(d.k); if(i >= 0) FIN.sel.splice(i, 1); else { FIN.sel.push(d.k); if(FIN.sel.length > 4) FIN.sel.shift(); } finSave(); renderFin(); }
+  else if(b.id === "finCsv") finCsv();
+  else if(d.go){ e.preventDefault(); go(d.go); }
+});
+$("#finSym").addEventListener("change", e=>{ const s = e.target.value.trim().toUpperCase().replace(/\./g, "-"); if(/^[A-Z0-9\-]{1,10}$/.test(s)){ history.replaceState(null, "", keyToPath("fundamentals/" + s)); renderFin(s); } });
+$("#finCmpIn").addEventListener("change", e=>{ const s = e.target.value.trim().toUpperCase().replace(/\./g, "-"); e.target.value = "";
+  if(/^[A-Z0-9\-]{1,10}$/.test(s) && s !== FIN.sym && !FIN.cmp.includes(s)){ FIN.cmp = [...FIN.cmp, s].slice(-4); finSave(); renderFin(); } });
+$("#finCv").addEventListener("pointermove", e=>{ if(!FIN.plot || !FIN.plot.labels) return; const r = e.target.getBoundingClientRect(), L = 64, R = 14, pw = r.width - L - R;
+  const i = Math.floor((e.clientX - r.left - L) / (pw / FIN.plot.labels.length)); if(i !== FIN.hover){ FIN.hover = i; drawFin(); } });
+$("#finCv").addEventListener("mouseleave", ()=>{ FIN.hover = -1; drawFin(); });
+addEventListener("resize", ()=>{ if(!$("#vFin").hidden) drawFin(); });
+
 /* ================= MACRO CALENDAR ================= */
 // data/macro.json, written every night by scripts/macro.py: official release dates, FRED values and the Fed odds
 let MAC = null, macLoading = null, macWeek = 0, macImp = +store.get("tt:macImp") || 1;
@@ -2932,6 +3084,7 @@ function openSize(){
   });
 }
 $("#bSize").onclick = openSize;
+$("#bFin").onclick = () => { if(S) go("fundamentals/" + S.symbol); };
 function openAlertsList(){
   if(!auth.token){ openAuth("in"); return; }
   const fmtT = t => t ? fmtLong(t*1000) : "";
