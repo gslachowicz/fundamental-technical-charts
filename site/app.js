@@ -13,7 +13,7 @@ const store = {
   set(k,v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
 };
 /* ---------- clean URLs: /chart/NVDA/, /breadth/, /compare/ … (old #NVDA links still work and get rewritten) ---------- */
-const SECTIONS = ["watchlist","screener","etfs","groups","heatmap","breadth","ideas","research","macro","earnings","compare","wall","welcome"];
+const SECTIONS = ["watchlist","portfolio","screener","etfs","groups","heatmap","breadth","ideas","research","macro","earnings","compare","wall","welcome"];
 function keyToPath(k){
   k = String(k || "").replace(/^#/, "").trim(); const low = k.toLowerCase();
   if(!k || low === "home") return "/";
@@ -1139,6 +1139,7 @@ function applyLive(){
   if(S && !$("#vChart").hidden){ patchS(); renderPanels(); draw(); }
   if(!$("#vCmp").hidden) renderCmp();
   if(!$("#vWelcome").hidden) renderWelcome();
+  if(!$("#vPortfolio").hidden && PF.trades.length) pfCompute().then(c=>{ if(c){ pfCalc = c; renderPortfolio(); } });
 }
 async function loadLive(){
   if(!LIVE_URL || !META) return;
@@ -1270,7 +1271,7 @@ function route(){
   if(raw.toLowerCase() === "alerts"){ history.replaceState(null, "", location.pathname); raw = ""; setTimeout(()=>{ if(auth.token) loadAlerts().then(openAlertsList); else openAuth("in"); }, 300); }
   // a path the site doesn't know (old or mistyped link): page not found, for visitors and members alike
   if(!location.hash && raw === "" && !/^\/(index\.html)?$/.test(location.pathname)){
-    ["#vWelcome","#vHome","#vScreener","#vChart","#vHeat","#vIdeas","#vResearch","#vMacro","#vEarn","#vBreadth","#vGroups","#vWall","#vCmp"].forEach(id=>$(id).hidden = true);
+    ["#vWelcome","#vHome","#vScreener","#vChart","#vHeat","#vIdeas","#vResearch","#vMacro","#vPortfolio","#vEarn","#vBreadth","#vGroups","#vWall","#vCmp"].forEach(id=>$(id).hidden = true);
     $("#vNotFound").hidden = false; document.body.classList.add("on-welcome"); setTab(""); document.title = TX("Page not found · Ticker&Tape"); window.scrollTo(0,0); return; }
   if(location.hash) history.replaceState(null, "", keyToPath(raw));   // old #links → clean URL
   // signed-out visitors only get the welcome page, except for a chart link (shared on X, found on Google), which opens with a sign-up bar
@@ -1278,14 +1279,15 @@ function route(){
     if(!auth.token && l !== "welcome" && !chartish){ history.replaceState(null, "", "/welcome/"); raw = "welcome"; } }
   const low = raw.toLowerCase();
   const isList = raw === low && ROUTES[low];
-  track(low === "" || low === "home" ? "home" : isList ? low : ["groups","heatmap","breadth","ideas","research","macro","earnings","wall","welcome"].includes(low) ? low : low === "compare" || low.startsWith("compare/") ? "compare" : "chart", raw.toUpperCase());
+  track(low === "" || low === "home" ? "home" : isList ? low : ["groups","heatmap","breadth","ideas","research","macro","portfolio","earnings","wall","welcome"].includes(low) ? low : low === "compare" || low.startsWith("compare/") ? "compare" : "chart", raw.toUpperCase());
   const isHome = raw === "" || raw === "home";
-  ["#vWelcome","#vHome","#vScreener","#vChart","#vHeat","#vIdeas","#vResearch","#vMacro","#vEarn","#vBreadth","#vGroups","#vWall","#vCmp","#vNotFound"].forEach(id=>$(id).hidden = true); $("#hmTip").hidden = true; $("#gateBar").hidden = true;
+  ["#vWelcome","#vHome","#vScreener","#vChart","#vHeat","#vIdeas","#vResearch","#vMacro","#vPortfolio","#vEarn","#vBreadth","#vGroups","#vWall","#vCmp","#vNotFound"].forEach(id=>$(id).hidden = true); $("#hmTip").hidden = true; $("#gateBar").hidden = true;
   $("#vNotFound").hidden = true; document.body.classList.toggle("on-welcome", raw === "welcome"); if(raw !== "welcome") $("#wSticky").classList.remove("on");
   document.body.classList.toggle("on-home", isHome);
   if(chartPath && raw){ setTab(""); $("#gateBar").hidden = !!auth.token; openChart(raw.toUpperCase()); return; }
   if(raw === "welcome"){ $("#vWelcome").hidden = false; setTab(""); document.title = "Ticker&Tape · The complete research platform for stock traders"; window.scrollTo(0,0); renderWelcome(); return; }
   if(low === "earnings"){ lastList = "earnings"; $("#vEarn").hidden = false; setTab("earn"); document.title = "Earnings calendar · Ticker&Tape"; window.scrollTo(0,0); renderEarn(); return; }
+  if(low === "portfolio"){ lastList = "portfolio"; $("#vPortfolio").hidden = false; setTab("pf"); document.title = "Portfolio · Ticker&Tape"; window.scrollTo(0,0); renderPortfolio(); return; }
   if(low === "macro"){ lastList = "macro"; $("#vMacro").hidden = false; setTab("macro"); document.title = "Macro calendar and Fed odds · Ticker&Tape"; window.scrollTo(0,0); renderMacro(); return; }
   if(low === "research"){ lastList = "research"; $("#vResearch").hidden = false; setTab("research"); document.title = "Research · Ticker&Tape"; window.scrollTo(0,0); renderResearch(); return; }
   if(low === "ideas"){ lastList = "ideas"; $("#vIdeas").hidden = false; setTab("ideas"); document.title = "Trade ideas · Ticker&Tape"; window.scrollTo(0,0); renderIdeas(); return; }
@@ -1694,6 +1696,282 @@ function setShare(){
   a.href = xShareUrl(S.symbol, bits.join(" · ") + (bits.length ? " — " : "") + "daily chart on Ticker&Tape");
 }
 
+/* ================= PORTFOLIO AND TRADE JOURNAL ================= */
+// PF = {trades:[{id, s, side:"buy"|"sell", d:"YYYY-MM-DD", q, p, fee, stop, setup, note}], bench:"SPY", hide:false}
+// Saved on this device and in the account ("portfolio" in user_data). Positions, P&L and stats are calculated from the trades
+// (FIFO lots), with quantities adjusted for stock splits and the latest price (live during the session).
+const PF_SETUPS = ["Breakout", "Pullback to 21-day EMA", "Pullback to 50-day line", "Earnings gap", "Base on base", "High tight flag", "Reversal", "Other"];
+const PF_BENCH = ["SPY", "QQQ", "IWM", "RSP", "DIA"];
+const PF_RANGES = {"3M":63, "6M":126, "YTD":"ytd", "1Y":252, "All":0};
+let PF = normPf(store.get("tt:pf")), pfCalc = null, pfTok = 0, pfRange = store.get("tt:pfRange") || "All", pfTab = "pos";
+function normPf(o){
+  o = o && typeof o === "object" ? o : {};
+  const T = Array.isArray(o.trades) ? o.trades.filter(t=>t && /^[A-Z0-9.\-^=]{1,15}$/.test(t.s||"") && (t.side==="buy"||t.side==="sell") && /^\d{4}-\d{2}-\d{2}$/.test(t.d||"") && t.q>0 && t.p>0) : [];
+  return {trades: T.map(t=>({id: t.id || Math.random().toString(36).slice(2,10), s:t.s, side:t.side, d:t.d, q:+t.q, p:+t.p, fee:+t.fee||0,
+    stop: t.stop>0 ? +t.stop : null, setup: String(t.setup||"").slice(0,40), note: String(t.note||"").slice(0,500)})),
+    bench: PF_BENCH.includes(o.bench) ? o.bench : "SPY", hide: !!o.hide};
+}
+let pfWarned = false;
+function savePf(){
+  store.set("tt:pf", PF); pfCalc = null;
+  if(!auth.token) return;
+  clearTimeout(savePf.t);
+  savePf.t = setTimeout(()=>api("/data/portfolio", {method:"PUT", body: JSON.stringify({value: PF})})
+    .catch(()=>{ if(!pfWarned){ pfWarned = true; toast(TX("Your portfolio is saved on this device. It will sync to your account shortly.")); } }), 600);
+}
+const pfMoney = v => PF.hide ? "•••" : v==null || !isFinite(v) ? "—" : (v < 0 ? "−$" : "$") + Math.abs(v).toLocaleString("en-US", {minimumFractionDigits: 2, maximumFractionDigits: 2});
+const pfSigned = v => PF.hide ? "•••" : v==null || !isFinite(v) ? "—" : (v > 0 ? "+" : v < 0 ? "−" : "") + "$" + Math.abs(v).toLocaleString("en-US", {minimumFractionDigits: 2, maximumFractionDigits: 2});
+const pfQty = q => PF.hide ? "•••" : (+q).toLocaleString("en-US", {maximumFractionDigits: 4});
+const cls_ = v => v == null ? "" : v < 0 ? "neg" : v > 0 ? "pos" : "";
+
+// split factor between a trade date and today: a 10-for-1 split after the trade turns 1 share at $500 into 10 at $50
+function splitFactor(bundle, d){ let f = 1; for(const [sd, r] of (bundle && bundle.splits) || []) if(sd > d && r > 0) f *= r; return f; }
+
+async function pfCompute(){
+  const tok = ++pfTok;
+  const syms = [...new Set(PF.trades.map(t=>t.s))], bsym = PF.bench;
+  const B = {}; await Promise.all([...syms, bsym].map(async s=>{ B[s] = await getBundle(s); }));
+  if(tok !== pfTok) return null;
+  const trades = PF.trades.map((t, i)=>({...t, i})).sort((a,b)=> a.d < b.d ? -1 : a.d > b.d ? 1 : (a.side === "buy" ? -1 : 1) - (b.side === "buy" ? -1 : 1) || a.i - b.i)
+    .map(t=>{ const f = splitFactor(B[t.s], t.d); return {...t, qa: t.q * f, pa: t.p / f}; });
+  // FIFO lots
+  const lots = {}, closed = [], realizedBy = {};
+  for(const t of trades){
+    lots[t.s] = lots[t.s] || [];
+    if(t.side === "buy"){ lots[t.s].push({q: t.qa, cost: (t.pa * t.qa + t.fee) / t.qa, d: t.d, setup: t.setup, id: t.id, stop: t.stop}); continue; }
+    let left = t.qa; const net = (t.pa * t.qa - t.fee) / t.qa; let pnl = 0, costSum = 0, firstD = null, setup = "", qty = 0;
+    while(left > 1e-9 && lots[t.s].length){ const l = lots[t.s][0], take = Math.min(left, l.q);
+      pnl += (net - l.cost) * take; costSum += l.cost * take; qty += take; firstD = firstD || l.d; setup = setup || l.setup; l.q -= take; left -= take; if(l.q <= 1e-9) lots[t.s].shift(); }
+    if(qty > 0){ closed.push({s: t.s, id: t.id, entry: firstD, exit: t.d, q: qty, pnl, pct: costSum ? pnl / costSum * 100 : 0, setup,
+      days: Math.round((iso(t.d) - iso(firstD)) / 864e5)}); realizedBy[t.id] = pnl; }
+  }
+  // price series per symbol (with today's live bar) and the daily valuation from the first trade
+  const px = {}; for(const s of [...syms, bsym]) if(B[s] && B[s].prices) px[s] = cmpPx(B[s], s);
+  const first = trades.length ? trades[0].d : null;
+  const days = new Set(); for(const s of syms) (px[s] || []).forEach(b=>{ if(first && b.t >= iso(first)) days.add(b.t); });
+  (px[bsym] || []).forEach(b=>{ if(first && b.t >= iso(first)) days.add(b.t); });
+  const D = [...days].sort((a,b)=>a-b);
+  const close = {}; for(const s of Object.keys(px)){ const m = new Map(px[s].map(b=>[b.t, b.c])); close[s] = m; }
+  const last = {}, held = {}; let ti = 0, prevV = 0, eq = 1, beq = 1, bprev = null, peak = 1, maxDD = 0;
+  const series = [];
+  for(const t of D){
+    let cf = 0;
+    while(ti < trades.length && iso(trades[ti].d) <= t){ const x = trades[ti]; held[x.s] = (held[x.s] || 0) + (x.side === "buy" ? x.qa : -x.qa);
+      cf += x.side === "buy" ? x.pa * x.qa + x.fee : -(x.pa * x.qa - x.fee); ti++; }
+    let v = 0;
+    for(const s of Object.keys(held)){ const c = close[s] && close[s].get(t); if(c != null) last[s] = c; if(held[s] > 1e-9 && last[s] != null) v += held[s] * last[s]; }
+    const base = prevV + Math.max(cf, 0);   // money at work today: yesterday's value plus new buys
+    const pnl = v - prevV - cf;
+    if(base > 0) eq *= 1 + pnl / base;
+    const bc = close[bsym] && close[bsym].get(t); if(bc != null){ if(bprev != null) beq *= bc / bprev; bprev = bc; }
+    peak = Math.max(peak, eq); maxDD = Math.min(maxDD, eq / peak - 1);
+    series.push({t, v, cf, pnl, eq, beq});
+    prevV = v;
+  }
+  // open positions
+  const pos = [];
+  for(const s of Object.keys(lots)){ const L = lots[s].filter(l=>l.q > 1e-9); if(!L.length) continue;
+    const q = L.reduce((a,l)=>a + l.q, 0), cost = L.reduce((a,l)=>a + l.q * l.cost, 0), P = px[s];
+    const lastPx = P && P.length ? P[P.length-1].c : null, prevPx = P && P.length > 1 ? P[P.length-2].c : null;
+    const stop = [...L].reverse().find(l=>l.stop)?.stop || null;
+    pos.push({s, q, avg: cost / q, cost, last: lastPx, value: lastPx != null ? q * lastPx : null, upnl: lastPx != null ? q * lastPx - cost : null,
+      upct: lastPx != null ? (lastPx / (cost / q) - 1) * 100 : null, day: lastPx != null && prevPx ? (lastPx / prevPx - 1) * 100 : null,
+      dayPnl: lastPx != null && prevPx ? q * (lastPx - prevPx) : null, stop, toStop: stop && lastPx ? (lastPx / stop - 1) * 100 : null, since: L[0].d, missing: !P}); }
+  const mv = pos.reduce((a,p)=>a + (p.value || 0), 0);
+  pos.forEach(p=>{ p.w = mv && p.value ? p.value / mv * 100 : null; });
+  pos.sort((a,b)=>(b.value||0) - (a.value||0));
+  return {trades, closed, realizedBy, pos, series, mv, maxDD: maxDD * 100, px};
+}
+// P&L over a window ending today: dollars and time-weighted %
+function pfPeriod(series, fromT){
+  const S = series.filter(x=>x.t >= fromT); if(!S.length) return {usd: null, pct: null};
+  const i0 = series.indexOf(S[0]), e0 = i0 > 0 ? series[i0-1].eq : 1, e1 = series[series.length-1].eq;
+  return {usd: S.reduce((a,x)=>a + x.pnl, 0), pct: (e1 / e0 - 1) * 100};
+}
+function pfStats(c){
+  const W = c.closed.filter(x=>x.pnl > 0), Lo = c.closed.filter(x=>x.pnl <= 0);
+  const avg = a => a.length ? a.reduce((s,x)=>s + x.pct, 0) / a.length : null;
+  const gw = W.reduce((s,x)=>s + x.pnl, 0), gl = -Lo.reduce((s,x)=>s + x.pnl, 0);
+  const bySetup = {}; c.closed.forEach(x=>{ const k = x.setup || TX("No setup"); (bySetup[k] = bySetup[k] || []).push(x); });
+  return {n: c.closed.length, win: c.closed.length ? W.length / c.closed.length * 100 : null, avgW: avg(W), avgL: avg(Lo),
+    ratio: avg(W) != null && avg(Lo) ? Math.abs(avg(W) / avg(Lo)) : null, pf: gl ? gw / gl : null,
+    days: c.closed.length ? c.closed.reduce((s,x)=>s + x.days, 0) / c.closed.length : null,
+    best: c.closed.slice().sort((a,b)=>b.pct - a.pct)[0], worst: c.closed.slice().sort((a,b)=>a.pct - b.pct)[0],
+    setups: Object.entries(bySetup).map(([k,a])=>({k, n:a.length, win: a.filter(x=>x.pnl > 0).length / a.length * 100, avg: avg(a), pnl: a.reduce((s,x)=>s + x.pnl, 0)})).sort((a,b)=>b.n - a.n)};
+}
+
+async function renderPortfolio(){
+  $("#pfHide").classList.toggle("on", PF.hide); $("#pfHide").setAttribute("aria-pressed", PF.hide); $("#pfHide").textContent = TX(PF.hide ? "Show amounts" : "Hide amounts");
+  $("#pfBench").innerHTML = PF_BENCH.map(b=>`<option value="${b}" ${b===PF.bench?"selected":""}>${b}</option>`).join("");
+  $$("#pfTabs button").forEach(b=>b.classList.toggle("on", b.dataset.t === pfTab));
+  $$("#pfRange button").forEach(b=>b.classList.toggle("on", b.dataset.r === pfRange));
+  if(!PF.trades.length){
+    $("#pfKpis").innerHTML = ""; $("#pfChartBox").hidden = true; $("#pfBody").innerHTML = `<div class="pfempty"><h3>${esc(TX("Start your portfolio"))}</h3>
+      <p>${esc(TX("Add your trades (date, price and quantity) and Ticker&Tape keeps your positions, P&L, stats and journal up to date, and compares you with the market."))}</p>
+      <div class="ctas"><button class="btn on" data-pf="add">＋ ${esc(TX("Add a trade"))}</button><button class="btn" data-pf="import">${esc(TX("Import a CSV from your broker"))}</button></div>
+      <p class="fine">${esc(TX("Your portfolio is private: only you can see it."))}</p></div>`; return; }
+  if(!pfCalc){ $("#pfBody").innerHTML = `<div class="empty">${esc(TX("Loading…"))}</div>`; const c = await pfCompute(); if(!c) return; pfCalc = c; }
+  const c = pfCalc, S = c.series, nowT = S.length ? S[S.length-1].t : Date.now(), dd = new Date(nowT);
+  const yStart = Date.UTC(dd.getUTCFullYear(), 0, 1), mStart = Date.UTC(dd.getUTCFullYear(), dd.getUTCMonth(), 1), qStart = Date.UTC(dd.getUTCFullYear(), Math.floor(dd.getUTCMonth()/3)*3, 1);
+  const wStart = nowT - ((dd.getUTCDay() + 6) % 7) * 864e5;
+  const P = {day: S.length ? {usd: S[S.length-1].pnl, pct: S.length > 1 && S[S.length-2].eq ? (S[S.length-1].eq / S[S.length-2].eq - 1) * 100 : null} : {}, week: pfPeriod(S, wStart), month: pfPeriod(S, mStart), quarter: pfPeriod(S, qStart), year: pfPeriod(S, yStart), all: pfPeriod(S, 0)};
+  const realized = c.closed.reduce((a,x)=>a + x.pnl, 0), unreal = c.pos.reduce((a,p)=>a + (p.upnl || 0), 0);
+  const kpi = (l, usd, pct, sub) => `<div class="pfk"><span>${esc(TX(l))}</span><b class="${cls_(usd ?? pct)}">${usd !== undefined ? pfSigned(usd) : ""}</b><small class="${cls_(pct)}">${pct != null ? fmtPct(pct, 2) : ""}${sub ? " " + sub : ""}</small></div>`;
+  $("#pfKpis").innerHTML = `<div class="pfk big"><span>${esc(TX("Market value"))}</span><b>${PF.hide ? "•••" : "$" + Math.round(c.mv).toLocaleString("en-US")}</b><small>${c.pos.length} ${esc(TX(c.pos.length === 1 ? "position" : "positions"))}</small></div>`
+    + kpi("Today", P.day.usd, P.day.pct) + kpi("This week", P.week.usd, P.week.pct) + kpi("This month", P.month.usd, P.month.pct) + kpi("This quarter", P.quarter.usd, P.quarter.pct)
+    + kpi("Year to date", P.year.usd, P.year.pct) + kpi("Realized P&L", realized, null) + kpi("Unrealized P&L", unreal, null);
+  $("#pfChartBox").hidden = false; drawPfChart();
+  const st = pfStats(c);
+  if(pfTab === "pos"){
+    $("#pfBody").innerHTML = c.pos.length ? `<div class="tablewrap"><table class="tbl pftbl"><thead><tr><th>${esc(TX("Ticker"))}</th><th>${esc(TX("Qty"))}</th><th>${esc(TX("Avg cost"))}</th><th>${esc(TX("Last"))}</th><th>${esc(TX("Day"))}</th><th>${esc(TX("Value"))}</th><th>${esc(TX("P&L"))}</th><th>%</th><th>${esc(TX("Weight"))}</th><th>${esc(TX("Stop"))}</th><th>${esc(TX("To stop"))}</th><th>RS</th><th>${esc(TX("Setup"))}</th><th></th></tr></thead><tbody>
+      ${c.pos.map(p=>{ const r = rowOf(p.s) || {}, b = r.base || {}; const near = p.toStop != null && p.toStop < 3, broke = p.toStop != null && p.toStop < 0;
+        return `<tr data-go="${esc(p.s)}" tabindex="0"><td><b>${esc(p.s)}</b>${p.missing ? `<small class="pfmiss" title="${esc(TX("Price loads after the next nightly update"))}"> ⏳</small>` : ""}<br><small>${esc((r.name||"").slice(0,24))}</small></td>
+          <td>${pfQty(p.q)}</td><td>${fmtP(p.avg)}</td><td>${fmtP(p.last)}</td><td class="${cls_(p.day)}">${fmtPct(p.day, 2)}</td><td>${pfMoney(p.value)}</td>
+          <td class="${cls_(p.upnl)}">${pfSigned(p.upnl)}</td><td class="${cls_(p.upct)}">${fmtPct(p.upct, 1)}</td><td>${p.w != null ? p.w.toFixed(1) + "%" : "—"}</td>
+          <td>${p.stop ? fmtP(p.stop) : `<button class="lnk" data-pfstop="${esc(p.s)}">${esc(TX("Set"))}</button>`}</td><td class="${near ? "neg pfwarn" : ""}" title="${esc(TX(broke ? "The price is below your stop" : "Room between the price and your stop"))}">${p.toStop != null ? (broke ? "⚠ " : "") + fmtPct(p.toStop, 1) : "—"}</td>
+          <td>${r.rsRating ?? "—"}</td><td>${esc(b.status || "")}</td><td class="pfact"><button class="btn sm" data-pfsell="${esc(p.s)}">${esc(TX("Sell ›"))}</button></td></tr>`; }).join("")}
+      </tbody></table></div>` : `<div class="empty">${esc(TX("No open positions. Your closed trades are in the journal."))}</div>`;
+  } else if(pfTab === "journal"){
+    const T = PF.trades.slice().sort((a,b)=>b.d.localeCompare(a.d));
+    $("#pfBody").innerHTML = `<div class="tablewrap"><table class="tbl pftbl"><thead><tr><th>${esc(TX("Date"))}</th><th>${esc(TX("Side"))}</th><th>${esc(TX("Ticker"))}</th><th>${esc(TX("Qty"))}</th><th>${esc(TX("Price"))}</th><th>${esc(TX("Fee"))}</th><th>${esc(TX("Stop"))}</th><th class="l">${esc(TX("Setup"))}</th><th>${esc(TX("Realized"))}</th><th class="l">${esc(TX("Note"))}</th><th></th></tr></thead><tbody>
+      ${T.map(t=>`<tr><td>${esc(fmtLong(iso(t.d)))}</td><td><span class="pfside ${t.side}">${esc(TX(t.side === "buy" ? "Buy" : "Sell"))}</span></td><td><b>${esc(t.s)}</b></td><td>${pfQty(t.q)}</td><td>${fmtP(t.p)}</td><td>${t.fee ? pfMoney(t.fee) : ""}</td>
+        <td>${t.stop ? fmtP(t.stop) : ""}</td><td class="l">${esc(t.setup)}</td><td class="${cls_(c.realizedBy[t.id])}">${c.realizedBy[t.id] != null ? pfSigned(c.realizedBy[t.id]) : ""}</td><td class="pfnote">${esc(t.note)}</td>
+        <td class="pfact"><button class="lnk" data-pfedit="${t.id}">${esc(TX("Edit"))}</button></td></tr>`).join("")}</tbody></table></div>`;
+  } else {
+    const secMap = {}; c.pos.forEach(p=>{ const k = (rowOf(p.s) || {}).sector || TX("Other"); secMap[k] = (secMap[k] || 0) + (p.w || 0); });
+    const sec = Object.entries(secMap).sort((a,b)=>b[1]-a[1]);
+    const box = (l, v, sub) => `<div class="pfk"><span>${esc(TX(l))}</span><b>${v}</b>${sub ? `<small>${sub}</small>` : ""}</div>`;
+    $("#pfBody").innerHTML = `<div class="pfkpis pfstats">${box("Closed trades", st.n)}${box("Win rate", st.win != null ? st.win.toFixed(0) + "%" : "—")}${box("Average gain", fmtPct(st.avgW, 1))}${box("Average loss", fmtPct(st.avgL, 1))}
+        ${box("Gain / loss ratio", st.ratio != null ? st.ratio.toFixed(2) : "—")}${box("Profit factor", st.pf != null ? st.pf.toFixed(2) : "—")}${box("Average days held", st.days != null ? st.days.toFixed(0) : "—")}${box("Max drawdown", fmtPct(c.maxDD, 1))}
+        ${box("Best trade", st.best ? `${esc(st.best.s)} ${fmtPct(st.best.pct, 1)}` : "—")}${box("Worst trade", st.worst ? `${esc(st.worst.s)} ${fmtPct(st.worst.pct, 1)}` : "—")}</div>
+      <div class="pfcols"><div class="box"><h3>${esc(TX("Results by setup"))}</h3><div class="tablewrap"><table class="tbl"><thead><tr><th class="l">${esc(TX("Setup"))}</th><th>${esc(TX("Trades"))}</th><th>${esc(TX("Win rate"))}</th><th>${esc(TX("Average"))}</th><th>${esc(TX("P&L"))}</th></tr></thead><tbody>
+        ${st.setups.map(x=>`<tr><td class="l">${esc(x.k)}</td><td>${x.n}</td><td>${x.win.toFixed(0)}%</td><td class="${cls_(x.avg)}">${fmtPct(x.avg, 1)}</td><td class="${cls_(x.pnl)}">${pfSigned(x.pnl)}</td></tr>`).join("") || `<tr><td colspan="5">${esc(TX("Close a trade to see results by setup."))}</td></tr>`}</tbody></table></div></div>
+      <div class="box"><h3>${esc(TX("Exposure by sector"))}</h3><div class="in">${sec.map(([k,w])=>`<div class="pfbar"><span>${esc(TX(k))}</span><i style="width:${Math.max(2, w).toFixed(1)}%"></i><b>${w.toFixed(1)}%</b></div>`).join("") || esc(TX("No open positions."))}</div></div></div>
+      <h3 class="mch">${esc(TX("Closed trades"))}</h3><div class="tablewrap"><table class="tbl pftbl"><thead><tr><th>${esc(TX("Ticker"))}</th><th>${esc(TX("Entry"))}</th><th>${esc(TX("Exit"))}</th><th>${esc(TX("Days"))}</th><th>${esc(TX("Qty"))}</th><th>${esc(TX("P&L"))}</th><th>%</th><th>${esc(TX("Setup"))}</th></tr></thead><tbody>
+        ${c.closed.slice().reverse().map(x=>`<tr><td><b>${esc(x.s)}</b></td><td>${esc(fmtLong(iso(x.entry)))}</td><td>${esc(fmtLong(iso(x.exit)))}</td><td>${x.days}</td><td>${pfQty(x.q)}</td><td class="${cls_(x.pnl)}">${pfSigned(x.pnl)}</td><td class="${cls_(x.pct)}">${fmtPct(x.pct, 1)}</td><td>${esc(x.setup)}</td></tr>`).join("") || `<tr><td colspan="8">${esc(TX("No closed trades yet."))}</td></tr>`}</tbody></table></div>`;
+  }
+}
+// portfolio vs benchmark, time-weighted, from the start of the range
+function drawPfChart(){
+  const cv = $("#pfcv"); if(!cv || !pfCalc) return; const W = cv.clientWidth; if(!W) return;
+  const H = W < 600 ? 220 : 280, dpr = devicePixelRatio || 1; cv.style.height = H + "px"; cv.width = W * dpr; cv.height = H * dpr;
+  const g = cv.getContext("2d"); g.setTransform(dpr,0,0,dpr,0,0); g.fillStyle = C.plate; g.fillRect(0,0,W,H);
+  let S = pfCalc.series; if(!S.length) return;
+  const r = PF_RANGES[pfRange], lastT = S[S.length-1].t;
+  if(r === "ytd"){ const y0 = Date.UTC(new Date(lastT).getUTCFullYear(), 0, 1); S = S.filter(x=>x.t >= y0); } else if(r) S = S.slice(-r);
+  if(S.length < 2){ g.fillStyle = C.ink2; g.font = `14px ${FONT_L}`; g.fillText(TX("The chart appears after your first full day."), 14, 24); return; }
+  const e0 = S[0].eq, b0 = S[0].beq, a = S.map(x=>(x.eq / e0 - 1) * 100), b = S.map(x=>(x.beq / b0 - 1) * 100);
+  const L = 6, R = 62, T = 26, B = 22, pw = W - L - R, ph = H - T - B;
+  let lo = Math.min(0, ...a, ...b), hi = Math.max(0, ...a, ...b); const pad = (hi - lo) * .08 || 1; lo -= pad; hi += pad;
+  const x = i => L + i / (S.length - 1) * pw, y = v => T + (hi - v) / (hi - lo) * ph;
+  g.strokeStyle = C.grid; g.setLineDash([1,3]); g.font = `11px ${FONT_D}`; g.fillStyle = C.ink2; g.textBaseline = "middle"; g.textAlign = "left";
+  for(const v of linTicks(lo, hi, ph)){ g.beginPath(); g.moveTo(L, y(v)); g.lineTo(L + pw, y(v)); g.stroke(); g.fillText((v > 0 ? "+" : "") + v.toFixed(Math.abs(hi - lo) < 6 ? 1 : 0) + "%", L + pw + 5, y(v)); }
+  g.setLineDash([]); g.strokeStyle = C.ink2; g.beginPath(); g.moveTo(L, y(0)); g.lineTo(L + pw, y(0)); g.stroke();
+  let lm = -1; g.textAlign = "center"; g.textBaseline = "alphabetic";
+  let lx = -99; S.forEach((s, i)=>{ const d = new Date(s.t), m = d.getUTCMonth(); if(m !== lm && i && x(i) - lx > 40){ g.fillStyle = C.ink2; g.fillText(m === 0 ? String(d.getUTCFullYear()) : MON[m], x(i), H - 6); lx = x(i); } lm = m; });
+  const line = (arr, col, w) => { g.strokeStyle = col; g.lineWidth = w; g.beginPath(); arr.forEach((v,i)=> i ? g.lineTo(x(i), y(v)) : g.moveTo(x(i), y(v))); g.stroke(); };
+  line(b, "#8a8f9c", 1.4); line(a, C.navy, 2);
+  g.font = `700 12px ${FONT_L}`; g.textAlign = "left"; g.textBaseline = "top";
+  g.fillStyle = C.navy; g.fillText(`${TX("My portfolio")} ${fmtPct(a[a.length-1], 1)}`, L + 4, 6);
+  const t1 = `${TX("My portfolio")} ${fmtPct(a[a.length-1], 1)}`; g.fillStyle = "#6b6f7a"; g.fillText(`${PF.bench} ${fmtPct(b[b.length-1], 1)}`, L + 18 + g.measureText(t1).width, 6);
+  g.lineWidth = 1;
+}
+
+// add, edit, sell, stop
+function pfTradeDlg(init){
+  const t = {side:"buy", d: nyToday(), q:"", p:"", fee:"", stop:"", setup:"", note:"", s:"", ...(init||{})}, editing = !!(init && init.id);
+  dlg(TX(editing ? "Edit trade" : "Add a trade"), `
+    <div class="seg aseg"><button data-side="buy" class="${t.side==="buy"?"on":""}">${esc(TX("Buy"))}</button><button data-side="sell" class="${t.side==="sell"?"on":""}">${esc(TX("Sell"))}</button></div>
+    <div class="pfform">
+      <label class="fld"><span>${esc(TX("Ticker"))}</span><input id="tS" value="${esc(t.s)}" maxlength="15" spellcheck="false" autocomplete="off" list="symlist" style="text-transform:uppercase"></label>
+      <label class="fld"><span>${esc(TX("Date"))}</span><input id="tD" type="date" value="${esc(t.d)}" max="${esc(nyToday())}"></label>
+      <label class="fld"><span>${esc(TX("Quantity"))}</span><input id="tQ" type="number" min="0" step="any" value="${esc(t.q)}"></label>
+      <label class="fld"><span>${esc(TX("Price"))}</span><input id="tP" type="number" min="0" step="any" value="${esc(t.p)}"></label>
+      <label class="fld"><span>${esc(TX("Fees (optional)"))}</span><input id="tF" type="number" min="0" step="any" value="${esc(t.fee || "")}"></label>
+      <label class="fld"><span>${esc(TX("Stop (optional)"))}</span><input id="tStop" type="number" min="0" step="any" value="${esc(t.stop || "")}" placeholder="${esc(TX("7–8% below your price"))}"></label>
+      <label class="fld pfwide"><span>${esc(TX("Setup"))}</span><input id="tSet" value="${esc(t.setup)}" list="pfSetups" maxlength="40"><datalist id="pfSetups">${PF_SETUPS.map(x=>`<option value="${esc(x)}">`).join("")}</datalist></label>
+      <label class="fld pfwide"><span>${esc(TX("Note (optional)"))}</span><input id="tN" value="${esc(t.note)}" maxlength="500" placeholder="${esc(TX("Why you took it, what you expect, what you learned"))}"></label>
+    </div>
+    <label class="chk" id="tAlertRow"><input type="checkbox" id="tAlert" ${auth.token ? "checked" : "disabled"}> ${esc(TX("Alert me if the price falls to my stop"))}</label>
+    <button class="btn on wide" id="tOk">${esc(TX(editing ? "Save" : "Add trade"))}</button>
+    ${editing ? `<button class="lnk pfdel" id="tDel">${esc(TX("Delete this trade"))}</button>` : ""}`, B=>{
+    let side = t.side;
+    const sync = () => { B.querySelectorAll("[data-side]").forEach(b=>b.classList.toggle("on", b.dataset.side === side)); B.querySelector("#tAlertRow").hidden = side !== "buy"; };
+    B.querySelectorAll("[data-side]").forEach(b=>b.onclick = ()=>{ side = b.dataset.side; sync(); }); sync();
+    B.querySelector("#tP").addEventListener("change", e=>{ const st = B.querySelector("#tStop"); if(side === "buy" && !st.value && +e.target.value > 0) st.value = (+e.target.value * 0.92).toFixed(2); });
+    B.querySelector("#tOk").onclick = async ()=>{
+      const s = B.querySelector("#tS").value.trim().toUpperCase().replace(/\./g, "-"), d = B.querySelector("#tD").value, q = +B.querySelector("#tQ").value, p = +B.querySelector("#tP").value;
+      if(!/^[A-Z0-9\-^=]{1,15}$/.test(s)){ toast(TX("Enter a valid ticker.")); return; }
+      if(!/^\d{4}-\d{2}-\d{2}$/.test(d) || d > nyToday()){ toast(TX("Enter a valid date.")); return; }
+      if(!(q > 0) || !(p > 0)){ toast(TX("Enter the quantity and the price.")); return; }
+      const rec = {id: t.id || Math.random().toString(36).slice(2,10), s, side, d, q, p, fee: +B.querySelector("#tF").value || 0, stop: +B.querySelector("#tStop").value || null,
+        setup: B.querySelector("#tSet").value.trim(), note: B.querySelector("#tN").value.trim()};
+      if(side === "sell" && !editing){ const held = PF.trades.filter(x=>x.s === s && x.d <= d).reduce((a,x)=>a + (x.side === "buy" ? x.q : -x.q), 0);
+        if(q > held + 1e-9){ toast(`${TX("You only hold")} ${held} ${s}.`); return; } }
+      PF.trades = editing ? PF.trades.map(x=>x.id === rec.id ? rec : x) : [...PF.trades, rec];
+      PF = normPf(PF); savePf(); closeDlg(); renderPortfolio();
+      if(side === "buy" && rec.stop && B.querySelector("#tAlert") && B.querySelector("#tAlert").checked && auth.token){
+        try{ await api("/alerts", {method:"POST", body: JSON.stringify({symbol: s, kind:"price", level: rec.stop, dir:"below", note: TX("Stop on my position"), email: true})}); loadAlerts(); toast(`${TX("Trade saved and stop alert set at")} ${fmtP(rec.stop)}.`); }
+        catch(e){ toast(TX("Trade saved.")); }
+      } else toast(TX("Trade saved."));
+    };
+    const del = B.querySelector("#tDel"); if(del) del.onclick = ()=>{ if(!confirm(TX("Delete this trade?"))) return; PF.trades = PF.trades.filter(x=>x.id !== t.id); savePf(); closeDlg(); renderPortfolio(); };
+  });
+}
+// CSV: Date, Symbol, Side, Quantity, Price, Fees (column names in English or Spanish; a negative quantity is a sale)
+function pfParseCsv(txt){
+  const lines = txt.replace(/\r/g, "").split("\n").filter(l=>l.trim()); if(lines.length < 2) return [];
+  const sep = [",", ";", "\t"].sort((a,b)=>lines[0].split(b).length - lines[0].split(a).length)[0];
+  const split = l => { const out = []; let cur = "", q = false; for(const ch of l){ if(ch === '"') q = !q; else if(ch === sep && !q){ out.push(cur); cur = ""; } else cur += ch; } out.push(cur); return out.map(x=>x.trim()); };
+  const H = split(lines[0]).map(h=>h.toLowerCase());
+  const col = re => H.findIndex(h=>re.test(h));
+  const ci = {d: col(/date|fecha|trade date/), s: col(/symbol|ticker|s[ií]mbolo|especie/), side: col(/side|action|type|operaci|tipo/), q: col(/quantity|qty|shares|cantidad|nominales/), p: col(/price|precio/), fee: col(/fee|commission|comisi/)};
+  if(ci.d < 0 || ci.s < 0 || ci.q < 0 || ci.p < 0) return null;
+  const num = v => +String(v || "").replace(/[$\s]/g, "").replace(/\.(?=\d{3}(\D|$))/g, "").replace(",", ".");
+  const date = v => { v = String(v || "").trim(); let m;
+    if((m = v.match(/^(\d{4})-(\d{2})-(\d{2})/))) return `${m[1]}-${m[2]}-${m[3]}`;
+    if((m = v.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/))){ let [, a, b, y] = m; y = y.length === 2 ? "20" + y : y; const us = +a <= 12 && +b > 12 ? true : !(+a > 12);
+      const mo = us ? a : b, da = us ? b : a; return `${y}-${String(mo).padStart(2,"0")}-${String(da).padStart(2,"0")}`; }
+    const t = Date.parse(v); return isFinite(t) ? new Date(t).toISOString().slice(0,10) : null; };
+  const out = [];
+  for(const l of lines.slice(1)){ const c = split(l), q = num(c[ci.q]), p = num(c[ci.p]), d = date(c[ci.d]), s = String(c[ci.s] || "").toUpperCase().replace(/\./g, "-").trim();
+    let side = ci.side >= 0 ? String(c[ci.side]).toLowerCase() : ""; side = /sell|venta|vend/.test(side) || q < 0 ? "sell" : "buy";
+    if(d && s && Math.abs(q) > 0 && p > 0) out.push({s, side, d, q: Math.abs(q), p, fee: ci.fee >= 0 ? Math.abs(num(c[ci.fee])) || 0 : 0}); }
+  return out;
+}
+function pfImport(){
+  dlg(TX("Import trades"), `<p class="msub">${esc(TX("Upload the CSV your broker exports with your trades. It needs columns for date, ticker, quantity and price; side (buy or sell) and fees are optional, and a negative quantity counts as a sale."))}</p>
+    <label class="fld"><span>${esc(TX("CSV file"))}</span><input type="file" id="pfFile" accept=".csv,text/csv,.txt"></label><p class="msub" id="pfPrev"></p>
+    <button class="btn on wide" id="pfImp" disabled>${esc(TX("Import"))}</button>`, B=>{
+    let rows = [];
+    B.querySelector("#pfFile").onchange = async e => { const f = e.target.files[0]; if(!f) return; const r = pfParseCsv(await f.text());
+      if(r === null){ B.querySelector("#pfPrev").textContent = TX("We could not find the date, ticker, quantity and price columns in this file."); return; }
+      rows = r; B.querySelector("#pfPrev").textContent = `${rows.length} ${TX("trades found")}${rows.length ? ": " + rows.slice(0,3).map(x=>`${x.d} ${x.side} ${x.q} ${x.s} @ ${x.p}`).join(" · ") + (rows.length > 3 ? " …" : "") : ""}`;
+      B.querySelector("#pfImp").disabled = !rows.length; };
+    B.querySelector("#pfImp").onclick = ()=>{ PF.trades = [...PF.trades, ...rows.map(x=>({...x, id: Math.random().toString(36).slice(2,10)}))]; PF = normPf(PF); savePf(); closeDlg(); toast(`${rows.length} ${TX("trades imported.")}`); renderPortfolio(); };
+  });
+}
+function pfExport(){
+  const rows = [["Date","Symbol","Side","Quantity","Price","Fees","Stop","Setup","Note"], ...PF.trades.slice().sort((a,b)=>a.d.localeCompare(b.d)).map(t=>[t.d, t.s, t.side, t.q, t.p, t.fee || 0, t.stop || "", t.setup, t.note])];
+  const csv = rows.map(r=>r.map(v=>/[",\n]/.test(String(v)) ? `"${String(v).replace(/"/g, '""')}"` : v).join(",")).join("\n");
+  const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], {type:"text/csv"})); a.download = `tickerandtape-trades-${nyToday()}.csv`; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href), 2000);
+}
+$("#vPortfolio").addEventListener("click", e=>{
+  const b = e.target.closest("button,[data-go]"); if(!b) return; const d = b.dataset;
+  if(d.pf === "add" || b.id === "pfAdd") pfTradeDlg();
+  else if(d.pf === "import" || b.id === "pfImport") pfImport();
+  else if(b.id === "pfExport") pfExport();
+  else if(b.id === "pfHide"){ PF.hide = !PF.hide; savePf(); renderPortfolio(); }
+  else if(d.t){ pfTab = d.t; renderPortfolio(); }
+  else if(d.r){ pfRange = d.r; store.set("tt:pfRange", pfRange); $$("#pfRange button").forEach(x=>x.classList.toggle("on", x.dataset.r === pfRange)); drawPfChart(); }
+  else if(d.pfsell){ e.stopPropagation(); const p = pfCalc && pfCalc.pos.find(x=>x.s === d.pfsell); pfTradeDlg({side:"sell", s: d.pfsell, q: p ? +p.q.toFixed(4) : "", p: p && p.last ? +p.last.toFixed(2) : ""}); }
+  else if(d.pfstop){ e.stopPropagation(); const buys = PF.trades.filter(x=>x.s === d.pfstop && x.side === "buy"); const lastBuy = buys[buys.length-1]; if(lastBuy) pfTradeDlg({...lastBuy}); }
+  else if(d.pfedit){ const t = PF.trades.find(x=>x.id === d.pfedit); if(t) pfTradeDlg({...t}); }
+  else if(d.go){ go(d.go); }
+});
+$("#pfBench").onchange = e => { PF.bench = e.target.value; savePf(); renderPortfolio(); };
+addEventListener("resize", ()=>{ if(!$("#vPortfolio").hidden) drawPfChart(); });
+
 /* ================= MACRO CALENDAR ================= */
 // data/macro.json, written every night by scripts/macro.py: official release dates, FRED values and the Fed odds
 let MAC = null, macLoading = null, macWeek = 0, macImp = +store.get("tt:macImp") || 1;
@@ -2032,7 +2310,7 @@ if(SESSION_MSG){   // ended while the site was closed: drop the token before any
   fetch((/^(localhost|127\.0\.0\.1)$/.test(location.hostname) ? "http://127.0.0.1:8787" : "https://api.tickerandtape.com") + "/auth/logout",
     {method:"POST", headers:{"Content-Type":"application/json", Authorization:"Bearer " + tk}}).catch(()=>{});
   auth.token = auth.email = null;
-  try{ ["tt:token","tt:email","tt:wl","tt:lists","tt:notes","tt:notifSeen","tt:loginAt"].forEach(k=>localStorage.removeItem(k)); }catch(e){}
+  try{ ["tt:token","tt:email","tt:wl","tt:lists","tt:notes","tt:notifSeen","tt:loginAt","tt:pf"].forEach(k=>localStorage.removeItem(k)); }catch(e){}
 }
 const beat = () => store.set("tt:alive", Date.now());
 let ending = false;
@@ -2070,6 +2348,8 @@ async function pullData(fresh, isNew){
   if(d.cfg && typeof d.cfg==="object"){ cfg = normCfg(d.cfg); cfg.ind = normInd(cfg.ind); cfg.tpl = normTpl(cfg.tpl); cfg.draw = normDraw(cfg.draw); syncBox(); store.set("ink:cfg", cfg); redrawAll(); renderScreenBtns(); applyCols();
     if(cfg.lang && cfg.lang !== I18N.lang && I18N.setLang) I18N.setLang(cfg.lang); }
   else if(fresh){ push("cfg", cfg); }
+  if(d.portfolio && typeof d.portfolio === "object" && Array.isArray(d.portfolio.trades) && (d.portfolio.trades.length || !(fresh && PF.trades.length))){ PF = normPf(d.portfolio); store.set("tt:pf", PF); pfCalc = null; if(!$("#vPortfolio").hidden) renderPortfolio(); }
+  else if(fresh && PF.trades.length) savePf();
   const remote = new Set();
   for(const [k,v] of Object.entries(d)){ if(k.startsWith("marks:")){ remote.add(k); store.set("ink:" + k, v); } }
   if(fresh) localMarkKeys().forEach(k=>{ const key = k.slice(4); const v = store.get(k); if(!remote.has(key) && Array.isArray(v) && v.length) push(key, v); });
@@ -2081,8 +2361,8 @@ async function pullData(fresh, isNew){
 }
 function signedOut(expired){
   auth.token = auth.email = null;
-  try{ ["tt:token","tt:email","tt:wl","tt:lists","tt:notes","tt:notifSeen","tt:loginAt"].forEach(k=>localStorage.removeItem(k)); localMarkKeys().forEach(k=>localStorage.removeItem(k)); }catch(e){}
-  WL = null; LISTS = null; NOTES = {}; ALERTS = []; NOTIF = {items:[], unread:0}; clearInterval(notifTimer); $("#vBar").hidden = true; renderBell(); if(S) renderTkNote(); if(S){ S.marks = []; draw(); } if(!$("#vIdeas").hidden) renderIdeas();
+  try{ ["tt:token","tt:email","tt:wl","tt:lists","tt:notes","tt:notifSeen","tt:loginAt","tt:pf"].forEach(k=>localStorage.removeItem(k)); localMarkKeys().forEach(k=>localStorage.removeItem(k)); }catch(e){}
+  WL = null; LISTS = null; NOTES = {}; PF = normPf(null); pfCalc = null; ALERTS = []; NOTIF = {items:[], unread:0}; clearInterval(notifTimer); $("#vBar").hidden = true; renderBell(); if(S) renderTkNote(); if(S){ S.marks = []; draw(); } if(!$("#vIdeas").hidden) renderIdeas();
   renderAcct(); updateStar(); if(!$("#vScreener").hidden) renderScreener();
   if(expired) toast("Your session expired. Sign in again to sync your watchlist.");
   route();
