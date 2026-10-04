@@ -803,14 +803,17 @@ def fin_cache_get(sym: str):
         return None, 0
     try:
         d = json.loads(p.read_text())
-        return d.get("fin"), d.get("ts", 0)
+        f = d.get("fin") or {}
+        if f.get("src") == "ifrs" and d.get("v", 1) < 2:   # v1 could mix a reported currency with USD translations
+            return f, 0
+        return f, d.get("ts", 0)
     except Exception:  # noqa: BLE001
         return None, 0
 
 
 def fin_cache_put(sym: str, fin: dict) -> None:
     (CACHE / "fin").mkdir(parents=True, exist_ok=True)
-    (CACHE / "fin" / f"{sym}.json").write_text(jdumps({"ts": time.time(), "fin": fin}, separators=(",", ":")))
+    (CACHE / "fin" / f"{sym}.json").write_text(jdumps({"ts": time.time(), "v": 2, "fin": fin}, separators=(",", ":")))
 
 
 def sec_periods(g: dict, tags: list[str], unit: str, take_max: bool = True) -> dict:

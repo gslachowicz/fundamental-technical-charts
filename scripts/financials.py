@@ -86,8 +86,8 @@ def _num(v):
 def _unit_rows(fact: dict, kind: str, ccy: str | None):
     units = fact.get("units") or {}
     if kind == "usd":
-        if ccy and ccy in units:
-            return units[ccy], ccy
+        if ccy:
+            return (units[ccy], ccy) if ccy in units else ([], None)   # never mix currencies
         if "USD" in units:
             return units["USD"], "USD"
         money = [(k, v) for k, v in units.items() if len(k) == 3 and k.isupper()]
@@ -152,12 +152,13 @@ def statements(company_facts: dict, years: int = 15, quarters: int = 20) -> dict
     if not facts:
         return None
     # reporting currency: the money unit of revenue / net income / assets
-    ccy = None
-    for t in (["Revenue", "ProfitLoss", "Assets"] if use_ifrs else ["Revenues", "NetIncomeLoss", "Assets", "RevenueFromContractWithCustomerExcludingAssessedTax"]):
-        if t in facts:
-            _, ccy = _unit_rows(facts[t], "usd", None)
-            if ccy:
-                break
+    # (some foreign filers add a convenience translation in USD for the latest year: the unit with the most facts wins)
+    count: dict = {}
+    for t in (["Revenue", "ProfitLoss", "Assets", "Equity", "CashAndCashEquivalents"] if use_ifrs else ["Revenues", "NetIncomeLoss", "Assets", "RevenueFromContractWithCustomerExcludingAssessedTax"]):
+        for u, rows in ((facts.get(t) or {}).get("units") or {}).items():
+            if len(u) == 3 and u.isupper():
+                count[u] = count.get(u, 0) + len(rows)
+    ccy = max(count, key=count.get) if count else None
     annual: dict = {}
     qtr: dict = {}
     raw = {}
