@@ -1971,6 +1971,13 @@ def build_pages(root: Path, all_rows: list[dict], day: str) -> None:
         write(f"chart/{s}", page(f"/chart/{s}/", title, desc, img))
         urls.append((f"{SITE_URL}/chart/{s}/", "daily", "0.6" if not r.get("etf") else "0.5"))
     (root / "404.html").write_text(page("/404.html", "Ticker&Tape", "", index=False))
+    try:   # the trading school: static lessons in three languages, with today's live examples
+        import learn as _learn
+        for pth in _learn.build(root, day):
+            urls.append((SITE_URL + pth, "weekly", "0.5"))
+    except Exception as e:  # noqa: BLE001
+        traceback.print_exc()
+        log(f"trading school failed: {e}")
     for sp in STATIC_PAGES:
         if (root / sp.rstrip("/")).exists() or (root / sp).exists():
             urls.append((f"{SITE_URL}/{sp}", "monthly", "0.4"))
