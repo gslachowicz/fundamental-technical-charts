@@ -1156,3 +1156,13 @@ button.w2new{cursor:pointer}
 .mccard b{font:700 22px var(--f-data);color:var(--navy)}
 .mccard small{font:12px var(--f-label);color:var(--ink2)}
 @media (max-width:900px){.mcfed{grid-template-columns:1fr}.mcev{grid-template-columns:70px 40px minmax(0,1fr)}.mcv{grid-column:3}}
+
+/* ===== chart: Draw menu ===== */
+.drawgrp{position:relative}
+.drawmenu{position:absolute;top:calc(100% + 6px);left:6px;z-index:45;background:var(--plate);border:1px solid var(--ink);box-shadow:6px 6px 0 rgba(21,23,28,.15);padding:10px;display:grid;gap:8px;min-width:280px}
+.dmtools{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.dmrow{display:flex;flex-wrap:wrap;gap:6px;align-items:center;border-top:1px solid var(--rule);padding-top:8px}
+#bDraw.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+.indchk{display:grid;grid-template-columns:1fr 1fr;gap:6px 12px;margin:0 16px 6px}
+.indchk .chk{margin:0}
+@media (max-width:600px){.indchk{grid-template-columns:1fr}.drawmenu{left:auto;right:0}}

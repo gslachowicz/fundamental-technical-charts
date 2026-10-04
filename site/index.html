@@ -23,7 +23,7 @@
 <meta name="description" content="O'Neil-style charts, RS Ratings, screeners, market breadth, trade ideas and earnings for every U.S. stock and ADR, all in one place. Built by traders, for traders.">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&family=Archivo+Narrow:wght@400;600;700&family=Libre+Franklin:wght@600;800&family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&display=swap">
-<link rel="stylesheet" href="/style.css?v=20261015a">
+<link rel="stylesheet" href="/style.css?v=20261016a">
 <style id="colcss"></style>
 </head>
 <body>
@@ -487,24 +487,20 @@
         <button data-r="6">6M</button><button data-r="12">1Y</button><button data-r="18" class="on">18M</button><button data-r="36">3Y</button>
       </div>
       <span class="grp">
-        <button class="btn on" id="tBox" aria-pressed="true">Data box</button>
-        <button class="btn on" id="tPiv" aria-pressed="true">Pivots</button>
-        <button class="btn on" id="tBase" aria-pressed="true">Base</button>
-        <button class="btn on" id="tIdx" aria-pressed="true" title="S&amp;P 500 line at the top">S&amp;P</button>
-        <button class="btn on" id="tRs" aria-pressed="true" title="Relative strength line vs the S&amp;P 500">RS line</button>
-      </span>
-      <span class="grp">
         <button class="btn" id="bInd" title="Moving averages and studies (I)">Indicators</button>
       </span>
-      <span class="grp drawgrp" role="group" aria-label="Drawing tools">
-        <button class="btn" id="bTrend" aria-pressed="false" title="Trendline (T): drag on the chart, or click two points">Trend</button>
-        <button class="btn" id="bLine" aria-pressed="false" title="Horizontal line (H): drag along a price level, or click once to draw it to today">Level</button>
-        <button class="btn" id="bRect" aria-pressed="false" title="Rectangle (R): drag over a base or a zone">Box</button>
-        <button class="btn" id="bNote" aria-pressed="false" title="Note (N): click a bar and type a note with an arrow">Note</button>
-        <span class="dstyle"><button class="btn" id="dStyle" aria-haspopup="true" aria-expanded="false" title="Color, width and style"><i class="dsw" id="dSw"></i>▾</button><div class="drawpop" id="drawPop" hidden></div></span>
-        <button class="btn" id="bDel" hidden title="Delete the selected drawing (Delete)">Delete</button>
-        <button class="btn" id="bUndo" title="Undo (Ctrl+Z)">Undo</button>
-        <button class="btn" id="bClr">Clear drawings</button>
+      <span class="grp drawgrp">
+        <button class="btn" id="bDraw" aria-haspopup="true" aria-expanded="false" title="Drawing tools: trendlines, levels, boxes and notes (T, H, R, N)"><span>Draw</span> ▾</button>
+        <div class="drawmenu" id="drawMenu" hidden role="menu" aria-label="Drawing tools">
+          <div class="dmtools"><button class="btn" id="bTrend" aria-pressed="false" title="Trendline (T): drag on the chart, or click two points">Trend</button>
+          <button class="btn" id="bLine" aria-pressed="false" title="Horizontal line (H): drag along a price level, or click once to draw it to today">Level</button>
+          <button class="btn" id="bRect" aria-pressed="false" title="Rectangle (R): drag over a base or a zone">Box</button>
+          <button class="btn" id="bNote" aria-pressed="false" title="Note (N): click a bar and type a note with an arrow">Note</button></div>
+          <div class="dmrow"><span class="dstyle"><button class="btn" id="dStyle" aria-haspopup="true" aria-expanded="false" title="Color, width and style"><i class="dsw" id="dSw"></i>Style ▾</button><div class="drawpop" id="drawPop" hidden></div></span>
+          <button class="btn" id="bDel" hidden title="Delete the selected drawing (Delete)">Delete</button>
+          <button class="btn" id="bUndo" title="Undo (Ctrl+Z)">Undo</button>
+          <button class="btn" id="bClr">Clear drawings</button></div>
+        </div>
       </span>
       <span class="grp">
         <button class="btn" id="bAlert" title="Get an alert when the price reaches a level">🔔 Alert</button>
@@ -645,7 +641,7 @@
   </div>
 </div>
 <div class="toast" id="toast" hidden></div>
-<script src="/i18n.js?v=20261015a"></script>
-<script src="/app.js?v=20261015a"></script>
+<script src="/i18n.js?v=20261016a"></script>
+<script src="/app.js?v=20261016a"></script>
 </body>
 </html>

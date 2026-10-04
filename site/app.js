@@ -300,7 +300,7 @@ const SECTOR_ETF = {"Information Technology":"XLK","Technology":"XLK","Financial
   "Materials":"XLB","Basic Materials":"XLB","Utilities":"XLU","Real Estate":"XLRE","Communication Services":"XLC"};
 const IND_DEF = {mas:[{t:"sma",n:50,c:"#d23a2a",w:2},{t:"sma",n:200,c:"#15171c",w:1}],
   bb:{on:false,n:20,k:2,c:"#7b4bb3"}, kc:{on:false,n:20,k:1.5,c:"#0f7c86"}, vwap:{on:false,a:"earn",c:"#a86a00"},
-  vol:true, box:true, strip:true, panes:[], rsi:{n:14}, macd:{f:12,s:26,g:9}, adr:{n:20}, atr:{n:14}, rvol:{n:50}, rs:"spx"};
+  vol:true, box:true, strip:true, piv:true, base:true, idx:true, rsl:true, panes:[], rsi:{n:14}, macd:{f:12,s:26,g:9}, adr:{n:20}, atr:{n:14}, rvol:{n:50}, rs:"spx"};
 const clampN = (v, lo, hi, d) => { v = Math.round(+v); return v >= lo && v <= hi ? v : d; };
 function normInd(o){
   const legacy = !o || typeof o !== "object";
@@ -314,6 +314,7 @@ function normInd(o){
     kc: sub("kc", (v,d)=>({on:!!v.on, n:clampN(v.n,5,100,d.n), k:[1,1.5,2,2.5,3].includes(+v.k)?+v.k:d.k, c:HEX.test(v.c||"")?v.c:d.c})),
     vwap: sub("vwap", (v,d)=>({on:!!v.on, a:["earn","base","hi","lo"].includes(v.a)?v.a:d.a, c:HEX.test(v.c||"")?v.c:d.c})),
     vol: o.vol !== false, box: o.box !== false, strip: o.strip !== false,
+    piv: o.piv !== false, base: o.base !== false, idx: o.idx !== false, rsl: o.rsl !== false,
     panes: (Array.isArray(o.panes) ? o.panes : []).filter((p,i,a)=>PANES[p] && a.indexOf(p)===i).slice(0, IND_MAX_PANES),
     rsi: {n: clampN((o.rsi||{}).n, 2, 50, 14)}, macd: {f: clampN((o.macd||{}).f, 2, 50, 12), s: clampN((o.macd||{}).s, 3, 100, 26), g: clampN((o.macd||{}).g, 2, 50, 9)},
     adr: {n: clampN((o.adr||{}).n, 2, 100, 20)}, atr: {n: clampN((o.atr||{}).n, 2, 100, 14)}, rvol: {n: clampN((o.rvol||{}).n, 5, 200, 50)},
@@ -326,7 +327,7 @@ const maOnWeekly = m => m.n >= 25;
 const LW_MA = {1:1.2, 2:1.6, 3:2.3};
 function saveInd(){ store.set("ink:cfg", cfg); push("cfg", cfg); }
 // the data box follows the user's style (cfg.ind.box); the Data box button switches it and saves it
-function syncBox(){ view.box = cfg.ind.box; const b = $("#tBox"); if(b){ b.classList.toggle("on", view.box); b.setAttribute("aria-pressed", view.box); } if(S && !$("#vChart").hidden) renderDbox(); }
+function syncBox(){ for(const k of ["box","piv","base","idx","rsl"]) view[k] = cfg.ind[k]; if(S && !$("#vChart").hidden) renderDbox(); }
 
 // benchmark for the RS line and the index line on top: the S&P 500 (bench.json) or another ETF's prices
 const benchX = new Map();
@@ -401,6 +402,8 @@ function openInd(){
     <div class="indrow"><label class="chk"><input type="checkbox" id="iVol" ${I.vol?"checked":""}> ${esc(TX("Volume"))}</label></div>
     ${Object.entries(PANES).map(([k,l])=>`<div class="indrow"><label class="chk"><input type="checkbox" data-pane="${k}" ${I.panes.includes(k)?"checked":""} ${!I.panes.includes(k)&&I.panes.length>=IND_MAX_PANES?"disabled":""}> ${esc(TX(l))}</label>
       ${k==="macd" ? num("macd","f",I.macd.f,2,50,"Fast")+num("macd","s",I.macd.s,3,100,"Slow")+num("macd","g",I.macd.g,2,50,"Signal") : num(k,"n",I[k].n,2,200,"Length")}</div>`).join("")}
+    <h5 class="indh">${esc(TX("Chart elements"))}</h5>
+    <div class="indchk">${[["piv","Swing pivots (unbroken highs and lows)"],["base","Base, pivot and buy zone"],["idx","S&P 500 line at the top"],["rsl","RS line and RS Rating"]].map(([k,l])=>`<label class="chk"><input type="checkbox" data-el="${k}" ${I[k]?"checked":""}> ${esc(TX(l))}</label>`).join("")}</div>
     <h5 class="indh">${esc(TX("Fundamentals on the chart"))}</h5>
     <div class="indrow"><label class="chk"><input type="checkbox" id="iBox" ${I.box?"checked":""}> ${esc(TX("Data box (annual EPS and sales, ratings)"))}</label></div>
     <div class="indrow"><label class="chk"><input type="checkbox" id="iStrip" ${I.strip?"checked":""}> ${esc(TX("Quarterly table under the volume (EPS, sales, margin)"))}</label></div>
@@ -424,6 +427,7 @@ function openInd(){
     B.querySelector("[data-va]").onchange = e => { I.vwap.a = e.target.value; I.vwap.on = true; re(); };
     B.querySelector("#iVol").onchange = e => { I.vol = e.target.checked; re(); };
     B.querySelector("#iBox").onchange = e => { I.box = e.target.checked; re(); };
+    B.querySelectorAll("[data-el]").forEach(c=>c.onchange = ()=>{ I[c.dataset.el] = c.checked; re(); });
     B.querySelector("#iStrip").onchange = e => { I.strip = e.target.checked; re(); };
     B.querySelectorAll("[data-pane]").forEach(c=>c.onchange = ()=>{ const k = c.dataset.pane; I.panes = c.checked ? [...I.panes, k] : I.panes.filter(p=>p!==k); re(); });
     B.querySelectorAll("[data-rs]").forEach(b=>b.onclick = ()=>{ I.rs = b.dataset.rs; re(); });
@@ -445,7 +449,7 @@ function openInd(){
 
 /* ================= CHART ================= */
 let S = null;               // current ticker bundle
-let view = { weekly:false, months:18, box:cfg.ind.box, piv:true, base:true, idx:true, rsl:true };
+let view = { weekly:false, months:18, box:cfg.ind.box, piv:cfg.ind.piv, base:cfg.ind.base, idx:cfg.ind.idx, rsl:cfg.ind.rsl };
 let tool = null, geo = null, hover = -1, drag = null, pendingNote = null;
 const cv = $("#cv"), ctx = cv.getContext("2d");
 const marksKey = sym => "ink:marks:"+sym;
@@ -879,13 +883,20 @@ function commitNote(inp){ const v=inp.value.trim(); if(v && pendingNote){ S.mark
 $("#noteIn").addEventListener("keydown", e=>{ if(e.key==="Enter") commitNote(e.target); if(e.key==="Escape"){ pendingNote=null; e.target.hidden=true; } });
 $("#noteIn").addEventListener("blur", e=>setTimeout(()=>{ if(!e.target.hidden) commitNote(e.target); },120));
 const TOOL_BTN = {tl:"#bTrend", hl:"#bLine", rect:"#bRect", note:"#bNote"};
+const TOOL_NAME = {tl:"Trend", hl:"Level", rect:"Box", note:"Note"};
 function setTool(t){ tool = tool===t ? null : t; drag = null; Object.entries(TOOL_BTN).forEach(([k,id])=>{ $(id).classList.toggle("on", tool===k); $(id).setAttribute("aria-pressed", tool===k); });
-  if(tool){ sel = -1; } updDrawBar(); draw(); }
+  if(tool){ sel = -1; drawMenu(false); }
+  const b = $("#bDraw"); b.classList.toggle("on", !!tool); b.querySelector("span").textContent = tool ? `${TX("Drawing")}: ${TX(TOOL_NAME[tool])}` : TX("Draw");
+  updDrawBar(); draw(); }
+function drawMenu(open){ const m = $("#drawMenu"); open = open == null ? m.hidden : open; m.hidden = !open; $("#bDraw").setAttribute("aria-expanded", open); if(!open) $("#drawPop").hidden = true; }
+$("#bDraw").onclick = e => { e.stopPropagation(); if(tool){ setTool(tool); return; } drawMenu(); };
+$("#drawMenu").addEventListener("click", e=>e.stopPropagation());
+document.addEventListener("click", ()=>{ if(!$("#drawMenu").hidden) drawMenu(false); });
 Object.entries(TOOL_BTN).forEach(([k,id])=>$(id).onclick=()=>setTool(k));
 function delSel(){ if(!S || sel < 0 || !S.marks[sel]) return; S.marks.splice(sel, 1); sel = -1; saveMarks(); draw(); updDrawBar(); }
 $("#bUndo").onclick=()=>{ if(!S) return; S.marks.pop(); sel = -1; saveMarks(); draw(); updDrawBar(); };
 $("#bClr").onclick=()=>{ if(!S || !S.marks.length) return; if(!confirm(TX("Delete every drawing on this chart?"))) return; S.marks=[]; sel = -1; saveMarks(); draw(); updDrawBar(); };
-$("#bDel").onclick = delSel;
+$("#bDel").onclick = ()=>{ delSel(); drawMenu(false); };
 // the style bar: color, width, line style, arrow and extend. It styles the next drawing, or the selected one.
 function updDrawBar(){
   const m = S && sel >= 0 ? S.marks[sel] : null, D = m && m.k !== "note" ? {...cfg.draw, ...normDraw(m)} : cfg.draw;
@@ -1191,8 +1202,6 @@ function renderDbox(){
 $("#pD").onclick=()=>{ view.weekly=false; $("#pD").classList.add("on"); $("#pW").classList.remove("on"); renderPanels(); draw(); };
 $("#pW").onclick=()=>{ view.weekly=true; $("#pW").classList.add("on"); $("#pD").classList.remove("on"); renderPanels(); draw(); };
 $$("#rangeSeg button").forEach(b=>b.onclick=()=>{ view.months=+b.dataset.r; $$("#rangeSeg button").forEach(x=>x.classList.toggle("on",x===b)); draw(); });
-for(const [id,key] of [["#tBox","box"],["#tPiv","piv"],["#tBase","base"],["#tIdx","idx"],["#tRs","rsl"]]){
-  $(id).onclick=()=>{ view[key]=!view[key]; if(key === "box"){ cfg.ind.box = view.box; saveInd(); } $(id).classList.toggle("on",view[key]); $(id).setAttribute("aria-pressed",view[key]); draw(); renderDbox(); }; }
 function step(d){ const cur = CUR || (S && S.symbol); if(!cur) return; const L = order.length ? order : ROWS.map(r=>r.symbol); const i=L.indexOf(cur); if(i<0) return; go(L[(i+d+L.length)%L.length]); }
 function setNavPos(){   // "3 of 30 · Trade ideas" next to the ‹ › arrows
   const el = $("#bPos"); if(!el || !S) return; const L = order.length ? order : ROWS.map(r=>r.symbol); const i = L.indexOf(S.symbol);
@@ -3184,8 +3193,8 @@ const TOUR = [
    b:"Switch between daily and weekly bars, and pick the time range next to it: 6 months to 3 years."},
   {v:"c", sel:"#bInd", t:"Your own indicators",
    b:"Add any moving average, Bollinger Bands, Keltner Channels, an anchored VWAP, and panels with RSI, MACD, ADR %, ATR or relative volume. Save your setup as a template."},
-  {v:"c", sel:"#bTrend", up:true, t:"Draw and take notes",
-   b:"Trend, Level and Box draw on the chart; pick the color, width and style with the swatch. Click a drawing to restyle or delete it. Shortcuts: T, H, R, N, Delete and Ctrl+Z. Your drawings sync to your account."},
+  {v:"c", sel:"#bDraw", t:"Draw and take notes",
+   b:"Draw opens the tools: Trend, Level, Box and Note, plus the color, width and style. Click a drawing to restyle or delete it. Shortcuts: T, H, R, N, Delete and Ctrl+Z. Your drawings sync to your account."},
   {v:"c", sel:".boxes", t:"Fundamentals under the chart",
    b:"Peers, chart statistics, annual and quarterly earnings and sales, the base analysis, analysts and news. Further down: insider buying and selling, and the largest institutional holders."},
   {v:"*", sel:"#gear", t:"Make the chart yours",
